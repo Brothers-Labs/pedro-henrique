@@ -1,0 +1,21 @@
+<section class="favorites container" aria-labelledby="favoritos-titulo">
+  <app-section-heading
+    emoji="💖"
+    eyebrow="Minhas coisas favoritas"
+    title="O que eu escolho quando posso escolher"
+  />
+
+  <ul class="favorites__grid">
+    @for (favorite of favorites; track favorite.category; let index = $index) {
+      <li
+        class="favorites__item"
+        [attr.data-color]="colorFor(index)"
+        [appReveal]="revealDelay(index)"
+      >
+        <span class="favorites__emoji" aria-hidden="true">{{ favorite.emoji }}</span>
+        <span class="favorites__category">{{ favorite.category }}</span>
+        <span class="favorites__value">{{ favorite.value }}</span>
+      </li>
+    }
+  </ul>
+</section>

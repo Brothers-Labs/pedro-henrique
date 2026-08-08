@@ -1,0 +1,30 @@
+<footer class="footer">
+  <div class="footer__inner container">
+    <div class="footer__about">
+      <p class="footer__emoji" aria-hidden="true">{{ profile.avatarEmoji }}</p>
+      <h2 class="footer__title">Obrigado por visitar!</h2>
+      <p class="footer__text">
+        Este site foi feito com muita tinta imaginária, código de verdade e a ajuda da família do
+        {{ profile.firstName }}.
+      </p>
+    </div>
+
+    <nav class="footer__nav" aria-label="Mapa do site">
+      <h3 class="footer__nav-title">Ir para</h3>
+      <ul class="footer__list">
+        @for (section of sections; track section.id) {
+          <li>
+            <a class="footer__link" [routerLink]="section.route">
+              <span aria-hidden="true">{{ section.emoji }}</span>
+              {{ section.label }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+
+  <p class="footer__note">
+    © {{ currentYear }} {{ profile.fullName }} · Feito com Angular, cores fortes e muita brincadeira.
+  </p>
+</footer>

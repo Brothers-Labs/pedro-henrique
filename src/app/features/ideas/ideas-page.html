@@ -1,0 +1,66 @@
+<div class="ideas container">
+  <app-page-intro
+    emoji="💡"
+    title="Minhas ideias"
+    subtitle="Invenções que eu quero construir — algumas já saíram do papel."
+    color="yellow"
+  />
+
+  <div class="ideas__filters" role="group" aria-label="Filtrar por status da ideia">
+    @for (option of statusOptions; track option.value) {
+      <button
+        type="button"
+        class="ideas__filter"
+        [class.ideas__filter--active]="activeStatus() === option.value"
+        [attr.aria-pressed]="activeStatus() === option.value"
+        (click)="toggleStatus(option.value)"
+      >
+        <span aria-hidden="true">{{ option.emoji }}</span>
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  @if (ideas().length) {
+    <ul class="ideas__grid">
+      @for (idea of ideas(); track idea.id; let index = $index) {
+        <li
+          class="ideas__card"
+          [attr.data-color]="idea.color"
+          [appReveal]="revealDelay(index)"
+        >
+          <header class="ideas__header">
+            <span class="ideas__emoji" aria-hidden="true">{{ idea.emoji }}</span>
+            <span class="ideas__status">
+              <span aria-hidden="true">{{ statusEmoji(idea.status) }}</span>
+              {{ statusLabel(idea.status) }}
+            </span>
+          </header>
+
+          <h2 class="ideas__title">{{ idea.title }}</h2>
+          <p class="ideas__pitch">{{ idea.pitch }}</p>
+
+          <p class="ideas__why">
+            <strong>Por que é útil:</strong>
+            {{ idea.whyItMatters }}
+          </p>
+
+          <div class="ideas__materials">
+            <h3 class="ideas__materials-title">Do que eu preciso</h3>
+            <ul class="ideas__materials-list">
+              @for (material of idea.materials; track material) {
+                <li>{{ material }}</li>
+              }
+            </ul>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <app-empty-state
+      emoji="💭"
+      title="Nenhuma ideia nesse estágio"
+      message="Clique de novo no filtro para ver todas as invenções."
+    />
+  }
+</div>

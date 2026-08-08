@@ -1,0 +1,23 @@
+<section class="achievements" aria-labelledby="medalhas-titulo">
+  <div class="container">
+    <app-section-heading
+      emoji="🏅"
+      eyebrow="Minhas medalhas"
+      title="Coisas que eu consegui fazer"
+      subtitle="Cada uma custou treino, coragem e algumas tentativas."
+    />
+
+    <ul class="achievements__list">
+      @for (achievement of achievements; track achievement.title; let index = $index) {
+        <li class="achievements__item" [appReveal]="revealDelay(index)">
+          <span class="achievements__medal" aria-hidden="true">{{ achievement.emoji }}</span>
+          <div class="achievements__content">
+            <p class="achievements__year">{{ achievement.year }}</p>
+            <h3 class="achievements__title">{{ achievement.title }}</h3>
+            <p class="achievements__description">{{ achievement.description }}</p>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

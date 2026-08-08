@@ -1,0 +1,161 @@
+@use 'mixins' as *;
+
+.guestbook {
+  padding-block: var(--space-8);
+
+  &__layout {
+    display: grid;
+    gap: var(--space-6);
+    align-items: start;
+
+    @include from($breakpoint-lg) {
+      grid-template-columns: 1fr 1.15fr;
+    }
+  }
+
+  &__form {
+    @include card-surface;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
+  }
+
+  &__emojis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    border: 0;
+
+    legend {
+      margin-bottom: var(--space-2);
+    }
+  }
+
+  &__emoji {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &--selected {
+      border-color: var(--border-strong);
+      background: var(--color-yellow-soft);
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  &__confirmation {
+    min-height: 1.5rem;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-mint);
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+  }
+
+  &__note {
+    @include card-surface(var(--color-yellow-soft));
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    transform: rotate(-1deg);
+
+    &:nth-child(even) {
+      background: var(--color-blue-soft);
+      transform: rotate(1.2deg);
+    }
+
+    &:nth-child(3n) {
+      background: var(--color-mint-soft);
+    }
+  }
+
+  &__note-emoji {
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  &__note-text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text-strong);
+  }
+
+  &__note-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-2);
+    border-top: 2px dashed rgb(42 35 80 / 20%);
+    font-size: var(--text-xs);
+  }
+
+  &__note-author {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__note-date {
+    color: var(--text-soft);
+  }
+
+  &__remove {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-size: var(--text-xs);
+    line-height: 1;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+
+    .guestbook__note:hover &,
+    &:focus-visible {
+      opacity: 1;
+    }
+  }
+
+  &__empty {
+    @include card-surface(var(--surface-muted));
+
+    grid-column: 1 / -1;
+    padding: var(--space-6);
+    text-align: center;
+    border-style: dashed;
+  }
+}

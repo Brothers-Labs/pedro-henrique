@@ -1,0 +1,68 @@
+<article class="video-card">
+  <div class="video-card__player">
+    <video
+      class="video-card__video"
+      [src]="video().sourceUrl"
+      [poster]="video().posterDataUrl ?? ''"
+      controls
+      preload="metadata"
+      playsinline
+    ></video>
+
+    @if (video().durationInSeconds > 0) {
+      <span class="video-card__duration">{{ video().durationInSeconds | duration }}</span>
+    }
+  </div>
+
+  <div class="video-card__body">
+    <h3 class="video-card__title">{{ video().title }}</h3>
+    <p class="video-card__description">{{ video().description }}</p>
+
+    <dl class="video-card__meta">
+      <div>
+        <dt>Gravado em</dt>
+        <dd>
+          <time [attr.datetime]="video().recordedAt">
+            {{ video().recordedAt | date: "d 'de' MMMM 'de' y" : 'UTC' }}
+          </time>
+        </dd>
+      </div>
+      <div>
+        <dt>Adicionado em</dt>
+        <dd>{{ video().uploadedAt | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+      <div>
+        <dt>Tamanho</dt>
+        <dd>{{ video().sizeInBytes | fileSize }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <footer class="video-card__footer">
+    @if (isConfirmingRemoval()) {
+      <p class="video-card__confirm">Apagar este vídeo para sempre?</p>
+      <div class="video-card__confirm-actions">
+        <button type="button" class="button button--small" (click)="cancelRemoval()">
+          Não, cancelar
+        </button>
+        <button
+          type="button"
+          class="button button--small button--primary"
+          (click)="confirmRemoval()"
+        >
+          Sim, apagar
+        </button>
+      </div>
+    } @else {
+      <button
+        type="button"
+        class="button button--small button--ghost"
+        (click)="askForConfirmation()"
+        [attr.aria-label]="'Apagar o vídeo ' + video().title"
+      >
+        <span aria-hidden="true">🗑️</span>
+        Apagar
+      </button>
+    }
+  </footer>
+</article>

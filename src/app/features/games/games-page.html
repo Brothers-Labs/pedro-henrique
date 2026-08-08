@@ -1,0 +1,45 @@
+<div class="games container">
+  <app-page-intro
+    emoji="🎮"
+    title="Vamos brincar?"
+    subtitle="Escolha um jogo. Pode jogar quantas vezes quiser."
+    color="mint"
+  />
+
+  <div class="games__tabs" role="tablist" aria-label="Escolha um jogo">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="games__tab"
+        role="tab"
+        [id]="'aba-' + tab.id"
+        [attr.aria-selected]="activeGame() === tab.id"
+        [attr.aria-controls]="'painel-' + tab.id"
+        [class.games__tab--active]="activeGame() === tab.id"
+        (click)="selectGame(tab.id)"
+      >
+        <span aria-hidden="true">{{ tab.emoji }}</span>
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <div
+    class="games__panel"
+    role="tabpanel"
+    [id]="'painel-' + activeGame()"
+    [attr.aria-labelledby]="'aba-' + activeGame()"
+  >
+    @switch (activeGame()) {
+      @case ('memoria') {
+        <app-memory-game />
+      }
+      @case ('velha') {
+        <app-tic-tac-toe />
+      }
+      @case ('quiz') {
+        <app-quiz-game />
+      }
+    }
+  </div>
+</div>

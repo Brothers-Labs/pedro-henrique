@@ -1,0 +1,47 @@
+<header class="header">
+  <div class="header__inner container">
+    <a class="brand" routerLink="/" (click)="closeMenu()">
+      <span class="brand__badge" aria-hidden="true">{{ profile.avatarEmoji }}</span>
+      <span class="brand__text">
+        <strong class="brand__name">{{ profile.firstName }}</strong>
+        <small class="brand__role">{{ age }} anos de aventuras</small>
+      </span>
+    </a>
+
+    <button
+      type="button"
+      class="header__toggle"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-controls="menu-principal"
+      (click)="toggleMenu()"
+    >
+      <span aria-hidden="true">{{ isMenuOpen() ? '✕' : '☰' }}</span>
+      <span class="visually-hidden">{{ isMenuOpen() ? 'Fechar menu' : 'Abrir menu' }}</span>
+    </button>
+
+    <nav
+      id="menu-principal"
+      class="nav"
+      [class.nav--open]="isMenuOpen()"
+      aria-label="Menu principal"
+    >
+      <ul class="nav__list">
+        @for (section of sections; track section.id) {
+          <li>
+            <a
+              class="nav__link"
+              [attr.data-color]="section.color"
+              [routerLink]="section.route"
+              routerLinkActive="nav__link--active"
+              [routerLinkActiveOptions]="{ exact: section.route === '/' }"
+              (click)="closeMenu()"
+            >
+              <span aria-hidden="true">{{ section.emoji }}</span>
+              {{ section.label }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

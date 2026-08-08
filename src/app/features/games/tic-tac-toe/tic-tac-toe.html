@@ -1,0 +1,28 @@
+<section class="velha" aria-labelledby="velha-titulo">
+  <header class="velha__header">
+    <h3 id="velha-titulo" class="velha__title">Jogo da velha</h3>
+    <p class="velha__subtitle">Você é o ❌ e joga primeiro. Eu sou o ⭕.</p>
+  </header>
+
+  <p class="velha__status" role="status" aria-live="polite">{{ statusMessage() }}</p>
+
+  <div class="velha__board" role="grid" aria-label="Tabuleiro do jogo da velha">
+    @for (cell of board(); track $index) {
+      <button
+        type="button"
+        class="velha__cell"
+        [class.velha__cell--winning]="isWinningCell($index)"
+        [disabled]="cell !== null || isFinished() || isComputerThinking()"
+        [attr.aria-label]="cellLabel($index)"
+        (click)="play($index)"
+      >
+        <span aria-hidden="true">{{ cell }}</span>
+      </button>
+    }
+  </div>
+
+  <button type="button" class="button button--secondary" (click)="restart()">
+    <span aria-hidden="true">🔄</span>
+    Jogar de novo
+  </button>
+</section>

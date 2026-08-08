@@ -1,0 +1,131 @@
+@use 'mixins' as *;
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgb(255 250 243 / 92%);
+  backdrop-filter: blur(10px);
+  border-bottom: 3px solid var(--border-strong);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: var(--header-height);
+    padding-block: var(--space-2);
+  }
+
+  &__toggle {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-yellow);
+    font-size: 1.25rem;
+
+    @include from($breakpoint-lg) {
+      display: none;
+    }
+  }
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+
+  &__badge {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-pink-soft);
+    font-size: 1.5rem;
+    animation: float-soft 4s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  &__name {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-strong);
+  }
+
+  &__role {
+    font-size: var(--text-xs);
+    color: var(--text-soft);
+  }
+}
+
+.nav {
+  @include until($breakpoint-lg) {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    display: none;
+    padding: var(--space-4);
+    background: var(--surface-page);
+    border-bottom: 3px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
+
+    &--open {
+      display: block;
+      animation: rise-in 220ms ease both;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+
+    @include until($breakpoint-lg) {
+      flex-direction: column;
+    }
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 2px solid transparent;
+    border-radius: var(--radius-pill);
+    color: var(--text-strong);
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+
+    &:hover {
+      background: var(--tone-soft);
+      border-color: var(--border-strong);
+    }
+
+    // Tons pastel garantem contraste com o texto escuro em qualquer cor do tema.
+    &--active {
+      background: var(--tone-soft);
+      border-color: var(--border-strong);
+      box-shadow: inset 0 -4px 0 var(--tone);
+    }
+  }
+}

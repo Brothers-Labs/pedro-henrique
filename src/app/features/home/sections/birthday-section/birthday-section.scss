@@ -1,0 +1,66 @@
+@use 'mixins' as *;
+
+.birthday {
+  padding-block: var(--space-8);
+
+  &__card {
+    @include card-surface(var(--color-purple-soft));
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-7) var(--space-5);
+    text-align: center;
+    box-shadow: var(--shadow-pop);
+  }
+
+  &__emoji {
+    font-size: 3.5rem;
+    line-height: 1;
+    animation: float-soft 3s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__title {
+    font-size: var(--text-2xl);
+  }
+
+  &__count {
+    display: inline-block;
+    padding-inline: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-yellow);
+    color: var(--text-strong);
+  }
+
+  &__text {
+    max-width: 34rem;
+    font-size: var(--text-lg);
+  }
+
+  &__wishlist {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--surface-card);
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+  }
+}

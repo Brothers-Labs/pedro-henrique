@@ -35,7 +35,7 @@ export type ThemeColor = 'pink' | 'blue' | 'yellow' | 'mint' | 'purple' | 'orang
 export interface Profile {
   readonly firstName: string;
   readonly fullName: string;
-  readonly age: number;
+  /** Data de nascimento em ISO (`yyyy-MM-dd`); a idade é sempre derivada dela. */
   readonly birthDate: string;
   readonly tagline: string;
   readonly introduction: readonly string[];

@@ -1,0 +1,78 @@
+@use 'mixins' as *;
+
+.powers {
+  padding-block: var(--space-8);
+
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--space-5);
+    list-style: none;
+    padding: 0;
+  }
+
+  &__item {
+    @include card-surface;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    border-top: 10px solid var(--tone);
+    transition: transform var(--transition-base);
+
+    &:hover {
+      transform: translateY(-6px) rotate(-1deg);
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  &__emoji {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--tone-soft);
+    font-size: 1.75rem;
+  }
+
+  &__name {
+    font-size: var(--text-lg);
+  }
+
+  &__description {
+    flex: 1;
+    color: var(--text-soft);
+    font-size: var(--text-sm);
+  }
+
+  &__meter {
+    height: 0.9rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    overflow: hidden;
+  }
+
+  &__meter-fill {
+    display: block;
+    height: 100%;
+    background: var(--tone);
+    border-radius: inherit;
+  }
+
+  &__level {
+    align-self: flex-end;
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    color: var(--text-soft);
+  }
+}

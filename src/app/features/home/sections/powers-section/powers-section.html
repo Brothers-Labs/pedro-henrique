@@ -1,0 +1,30 @@
+<section class="powers container" aria-labelledby="poderes-titulo">
+  <app-section-heading
+    emoji="⚡"
+    eyebrow="Meus superpoderes"
+    title="No que eu sou muito bom"
+    subtitle="Cada barra mostra o quanto eu já treinei esse poder."
+  />
+
+  <ul class="powers__list">
+    @for (power of powers; track power.name; let index = $index) {
+      <li class="powers__item" [attr.data-color]="power.color" [appReveal]="revealDelay(index)">
+        <p class="powers__emoji" aria-hidden="true">{{ power.emoji }}</p>
+        <h3 class="powers__name">{{ power.name }}</h3>
+        <p class="powers__description">{{ power.description }}</p>
+
+        <div
+          class="powers__meter"
+          role="meter"
+          [attr.aria-valuenow]="power.level"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="'Nível do poder ' + power.name"
+        >
+          <span class="powers__meter-fill" [style.width.%]="power.level"></span>
+        </div>
+        <p class="powers__level">{{ power.level }}/100</p>
+      </li>
+    }
+  </ul>
+</section>

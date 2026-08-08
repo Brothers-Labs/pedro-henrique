@@ -85,6 +85,18 @@ a {
   color: var(--text-strong);
 }
 
+/**
+ * Tema por elemento: qualquer componente que exponha `data-color` recebe o par
+ * de cores correspondente em `--tone` / `--tone-soft`, evitando repetir o mapa
+ * de cores em cada folha de estilo.
+ */
+@each $name in (pink, blue, yellow, mint, purple, orange) {
+  [data-color='#{$name}'] {
+    --tone: var(--color-#{$name});
+    --tone-soft: var(--color-#{$name}-soft);
+  }
+}
+
 /* Utilitários ------------------------------------------------------------ */
 .container {
   @include container;

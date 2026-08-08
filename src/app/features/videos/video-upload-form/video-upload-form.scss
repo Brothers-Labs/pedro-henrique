@@ -1,0 +1,102 @@
+@use 'mixins' as *;
+
+.upload {
+  @include card-surface;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xl);
+  }
+
+  &__hint {
+    font-size: var(--text-sm);
+    color: var(--text-soft);
+  }
+
+  &__dropzone {
+    position: relative;
+    border: 3px dashed var(--color-orange);
+    border-radius: var(--radius-md);
+    background: var(--color-orange-soft);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+
+    &--active {
+      border-color: var(--border-strong);
+      background: var(--color-yellow-soft);
+    }
+
+    &:focus-within {
+      border-color: var(--border-strong);
+    }
+  }
+
+  &__dropzone-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-4);
+    text-align: center;
+    cursor: pointer;
+  }
+
+  &__dropzone-emoji {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  &__dropzone-text {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+  }
+
+  /* O input real fica invisível, mas continua acessível pelo teclado. */
+  &__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &__file {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
+  &__file-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--text-strong);
+    overflow-wrap: anywhere;
+  }
+
+  &__file-size {
+    font-size: var(--text-xs);
+    color: var(--text-soft);
+  }
+
+  &__error {
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid #c92a5a;
+    border-radius: var(--radius-md);
+    background: var(--color-pink-soft);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: #8f1338;
+  }
+}

@@ -1,0 +1,52 @@
+<section class="memory" aria-labelledby="memoria-titulo">
+  <header class="memory__header">
+    <div>
+      <h3 id="memoria-titulo" class="memory__title">Jogo da memória</h3>
+      <p class="memory__subtitle">Encontre os oito pares de figurinhas.</p>
+    </div>
+
+    <dl class="memory__scoreboard">
+      <div>
+        <dt>Jogadas</dt>
+        <dd>{{ moves() }}</dd>
+      </div>
+      <div>
+        <dt>Pares</dt>
+        <dd>{{ matchedPairs() }}/{{ totalPairs }}</dd>
+      </div>
+    </dl>
+  </header>
+
+  @if (hasWon()) {
+    <p class="memory__win" role="status">
+      <span aria-hidden="true">🎉</span>
+      Você achou todos os pares em {{ moves() }} jogadas!
+    </p>
+  }
+
+  <ul class="memory__board">
+    @for (card of cards(); track card.id) {
+      <li>
+        <button
+          type="button"
+          class="memory__card"
+          [class.memory__card--flipped]="card.isFlipped || card.isMatched"
+          [class.memory__card--matched]="card.isMatched"
+          [disabled]="card.isMatched"
+          [attr.aria-label]="
+            card.isFlipped || card.isMatched ? 'Carta ' + card.emoji : 'Carta virada para baixo'
+          "
+          (click)="flip(card.id)"
+        >
+          <span class="memory__face memory__face--back" aria-hidden="true">?</span>
+          <span class="memory__face memory__face--front" aria-hidden="true">{{ card.emoji }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <button type="button" class="button button--secondary" (click)="restart()">
+    <span aria-hidden="true">🔄</span>
+    Embaralhar de novo
+  </button>
+</section>

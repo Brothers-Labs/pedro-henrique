@@ -1,0 +1,26 @@
+<section class="about container" aria-labelledby="sobre-titulo">
+  <app-section-heading
+    emoji="🙋"
+    eyebrow="Quem sou eu"
+    title="Um pouquinho sobre mim"
+    subtitle="Se a gente ainda não se conhece, aqui vai a apresentação oficial."
+  />
+
+  <div class="about__grid">
+    <article class="about__card" appReveal>
+      @for (paragraph of profile.introduction; track $index) {
+        <p class="about__paragraph">{{ paragraph }}</p>
+      }
+    </article>
+
+    <aside class="about__side" [appReveal]="150">
+      <h3 class="about__side-title">Meu dia perfeito</h3>
+      <ol class="about__routine">
+        <li><span aria-hidden="true">🥞</span> Panqueca no café da manhã</li>
+        <li><span aria-hidden="true">🎨</span> Desenhar um monstro novo</li>
+        <li><span aria-hidden="true">⚽</span> Jogar bola até cansar</li>
+        <li><span aria-hidden="true">🍿</span> Filme com pipoca à noite</li>
+      </ol>
+    </aside>
+  </div>
+</section>

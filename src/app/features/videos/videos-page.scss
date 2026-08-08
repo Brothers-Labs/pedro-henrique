@@ -1,0 +1,87 @@
+@use 'mixins' as *;
+
+.videos {
+  padding-block: var(--space-7) var(--space-8);
+
+  &__layout {
+    display: grid;
+    gap: var(--space-6);
+    align-items: start;
+
+    @include from($breakpoint-lg) {
+      grid-template-columns: 22rem 1fr;
+    }
+  }
+
+  &__collection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xl);
+  }
+
+  &__badge {
+    display: grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding-inline: var(--space-2);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-orange-soft);
+    font-size: var(--text-sm);
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  &__control {
+    flex: 1 1 12rem;
+
+    .field__control {
+      padding: var(--space-2) var(--space-3);
+      border-width: 2px;
+    }
+  }
+
+  &__feedback {
+    min-height: 1.5rem;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-mint);
+  }
+
+  &__loading {
+    @include card-surface(var(--surface-muted));
+
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--text-soft);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+    gap: var(--space-5);
+    padding: 0;
+    list-style: none;
+  }
+}

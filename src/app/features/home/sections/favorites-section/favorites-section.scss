@@ -1,0 +1,56 @@
+@use 'mixins' as *;
+
+.favorites {
+  padding-block: var(--space-8);
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+  }
+
+  &__item {
+    @include card-surface;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-5) var(--space-3);
+    text-align: center;
+    border-bottom: 8px solid var(--tone);
+  }
+
+  &__emoji {
+    font-size: 2.5rem;
+    line-height: 1;
+    transition: transform var(--transition-base);
+
+    .favorites__item:hover & {
+      transform: scale(1.25) rotate(-8deg);
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      .favorites__item:hover & {
+        transform: none;
+      }
+    }
+  }
+
+  &__category {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+
+  &__value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+}

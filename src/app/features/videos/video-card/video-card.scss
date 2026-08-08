@@ -1,0 +1,103 @@
+@use 'mixins' as *;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.video-card {
+  @include card-surface;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-bottom-width: 8px;
+  border-bottom-color: var(--color-orange);
+
+  &__player {
+    position: relative;
+    background: var(--surface-inverse);
+  }
+
+  &__video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    border-bottom: 3px solid var(--border-strong);
+  }
+
+  &__duration {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-4);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    background: rgb(42 35 80 / 85%);
+    color: #ffffff;
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--text-lg);
+  }
+
+  &__description {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-2) 0 0;
+    padding-top: var(--space-3);
+    border-top: 2px dashed var(--border-soft);
+
+    dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+    }
+
+    dd {
+      margin: 0;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5) var(--space-5);
+  }
+
+  &__confirm {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__confirm-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+}

@@ -1,0 +1,34 @@
+<div class="story container">
+  <app-page-intro
+    emoji="📜"
+    title="Minha história"
+    subtitle="Do dia em que eu cheguei até hoje, ano por ano."
+    color="purple"
+  />
+
+  <ol class="timeline">
+    @for (chapter of chapters; track chapter.id) {
+      <li class="timeline__item" [attr.data-color]="chapter.color" appReveal>
+        <div class="timeline__marker" aria-hidden="true">
+          <span class="timeline__emoji">{{ chapter.emoji }}</span>
+        </div>
+
+        <article class="timeline__card">
+          <header class="timeline__header">
+            <p class="timeline__year">{{ chapter.year }}</p>
+            <p class="timeline__age">{{ chapter.ageLabel }}</p>
+          </header>
+
+          <h2 class="timeline__title">{{ chapter.title }}</h2>
+          <p class="timeline__story">{{ chapter.story }}</p>
+
+          <ul class="timeline__highlights">
+            @for (highlight of chapter.highlights; track highlight) {
+              <li>{{ highlight }}</li>
+            }
+          </ul>
+        </article>
+      </li>
+    }
+  </ol>
+</div>

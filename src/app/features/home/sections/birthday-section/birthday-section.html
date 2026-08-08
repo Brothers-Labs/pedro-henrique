@@ -1,0 +1,30 @@
+<section class="birthday container" aria-labelledby="aniversario-titulo">
+  <div class="birthday__card" appReveal>
+    <p class="birthday__emoji" aria-hidden="true">🎂</p>
+
+    @if (countdown.isToday) {
+      <h2 id="aniversario-titulo" class="birthday__title">Hoje é o meu aniversário!</h2>
+      <p class="birthday__text">
+        Estou fazendo {{ countdown.ageOnNextBirthday }} anos. Pode cantar parabéns aí de onde você
+        está!
+      </p>
+    } @else {
+      <h2 id="aniversario-titulo" class="birthday__title">
+        Faltam
+        <span class="birthday__count">{{ countdown.daysRemaining }}</span>
+        {{ countdown.daysRemaining === 1 ? 'dia' : 'dias' }}
+      </h2>
+      <p class="birthday__text">
+        No dia
+        <strong>{{ countdown.nextBirthday | date: "d 'de' MMMM 'de' y" : 'UTC' }}</strong>
+        eu faço {{ countdown.ageOnNextBirthday }} anos. Já pode ir separando o chapéu de festa.
+      </p>
+    }
+
+    <ul class="birthday__wishlist">
+      <li><span aria-hidden="true">🎁</span> Um kit de montar robôs</li>
+      <li><span aria-hidden="true">🖍️</span> Canetinhas de todas as cores</li>
+      <li><span aria-hidden="true">🦖</span> Mais um dinossauro (sempre cabe mais um)</li>
+    </ul>
+  </div>
+</section>

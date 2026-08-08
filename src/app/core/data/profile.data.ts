@@ -7,17 +7,16 @@ import type { Profile } from '../models/profile.model';
 export const PROFILE: Profile = {
   firstName: 'Pedro Henrique',
   fullName: 'Pedro Henrique',
-  age: 7,
   birthDate: '2019-04-12',
   tagline: 'Explorador de ideias, colecionador de gargalhadas e inventor de brincadeiras.',
   introduction: [
-    'Oi! Eu sou o Pedro Henrique, tenho 7 anos e este é o meu cantinho na internet.',
+    'Oi! Eu sou o Pedro Henrique e este é o meu cantinho na internet.',
     'Aqui eu guardo meus desenhos, conto a minha história, mostro as invenções que ficam na minha cabeça e ainda deixo uns joguinhos para você brincar comigo.',
     'Pode explorar tudo com calma — e não esquece de deixar um recado no mural!',
   ],
   avatarEmoji: '🦖',
   quickFacts: [
-    { emoji: '🎂', label: 'Idade', value: '7 anos' },
+    { emoji: '🎂', label: 'Aniversário', value: '12 de abril' },
     { emoji: '🏫', label: 'Escola', value: '2º ano' },
     { emoji: '🎨', label: 'Cor favorita', value: 'Azul' },
     { emoji: '🦕', label: 'Bicho favorito', value: 'Dinossauro' },

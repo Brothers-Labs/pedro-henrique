@@ -1,0 +1,54 @@
+@use 'mixins' as *;
+
+:host {
+  display: block;
+  margin-bottom: var(--space-7);
+}
+
+.intro {
+  @include card-surface(var(--tone-soft, var(--color-pink-soft)));
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-pop);
+
+  @include until($breakpoint-md) {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  &__emoji {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 5.5rem;
+    height: 5.5rem;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-size: 2.75rem;
+    line-height: 1;
+    animation: wobble 4s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  &__title {
+    font-size: var(--text-2xl);
+  }
+
+  &__subtitle {
+    font-size: var(--text-lg);
+    color: var(--text-body);
+  }
+}

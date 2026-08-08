@@ -1,0 +1,92 @@
+<section class="guestbook container" aria-labelledby="mural-titulo">
+  <app-section-heading
+    emoji="📝"
+    eyebrow="Mural de recados"
+    title="Deixe um recado para mim"
+    subtitle="Seu recado fica guardado só neste dispositivo — é o nosso mural particular."
+  />
+
+  <div class="guestbook__layout">
+    <form class="guestbook__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="recado-autor">Seu nome</label>
+        <input
+          id="recado-autor"
+          class="field__control"
+          [class.field__control--invalid]="hasError('author')"
+          type="text"
+          formControlName="author"
+          autocomplete="name"
+          placeholder="Como você se chama?"
+        />
+        @if (hasError('author')) {
+          <p class="field__error">Escreva seu nome para eu saber quem mandou.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="recado-mensagem">Seu recado</label>
+        <textarea
+          id="recado-mensagem"
+          class="field__control"
+          [class.field__control--invalid]="hasError('message')"
+          formControlName="message"
+          [attr.maxlength]="maxMessageLength"
+          placeholder="Escreva algo legal…"
+        ></textarea>
+        <p class="field__hint">Faltam {{ remainingCharacters() }} caracteres.</p>
+        @if (hasError('message')) {
+          <p class="field__error">Não dá para mandar um recado vazio!</p>
+        }
+      </div>
+
+      <fieldset class="guestbook__emojis">
+        <legend class="field__label">Escolha uma figurinha</legend>
+        @for (emoji of emojis; track emoji) {
+          <button
+            type="button"
+            class="guestbook__emoji"
+            [class.guestbook__emoji--selected]="selectedEmoji() === emoji"
+            [attr.aria-pressed]="selectedEmoji() === emoji"
+            (click)="selectEmoji(emoji)"
+          >
+            <span aria-hidden="true">{{ emoji }}</span>
+            <span class="visually-hidden">Figurinha {{ emoji }}</span>
+          </button>
+        }
+      </fieldset>
+
+      <button type="submit" class="button button--primary">
+        <span aria-hidden="true">💌</span>
+        Enviar recado
+      </button>
+
+      <p class="guestbook__confirmation" role="status" aria-live="polite">{{ confirmation() }}</p>
+    </form>
+
+    <ul class="guestbook__list">
+      @for (message of messages(); track message.id) {
+        <li class="guestbook__note">
+          <p class="guestbook__note-emoji" aria-hidden="true">{{ message.emoji }}</p>
+          <blockquote class="guestbook__note-text">{{ message.message }}</blockquote>
+          <footer class="guestbook__note-footer">
+            <span class="guestbook__note-author">{{ message.author }}</span>
+            <time class="guestbook__note-date" [attr.datetime]="message.createdAt">
+              {{ message.createdAt | date: 'dd/MM/yyyy' }}
+            </time>
+          </footer>
+          <button
+            type="button"
+            class="guestbook__remove"
+            (click)="remove(message.id)"
+            [attr.aria-label]="'Apagar o recado de ' + message.author"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </li>
+      } @empty {
+        <li class="guestbook__empty">Ainda não tem nenhum recado. Seja o primeiro!</li>
+      }
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,58 @@
+<section class="quiz" aria-labelledby="quiz-titulo">
+  <header class="quiz__header">
+    <h3 id="quiz-titulo" class="quiz__title">Quiz: você me conhece?</h3>
+    <p class="quiz__subtitle">São {{ totalQuestions }} perguntas sobre mim. Vale chutar!</p>
+  </header>
+
+  @if (isFinished()) {
+    <div class="quiz__result" role="status">
+      <p class="quiz__result-emoji" aria-hidden="true">🏆</p>
+      <p class="quiz__result-score">{{ score() }} de {{ totalQuestions }}</p>
+      <p class="quiz__result-message">{{ finalMessage() }}</p>
+      <button type="button" class="button button--primary" (click)="restart()">
+        <span aria-hidden="true">🔄</span>
+        Jogar de novo
+      </button>
+    </div>
+  } @else {
+    <div class="quiz__progress">
+      <div class="quiz__progress-bar">
+        <span class="quiz__progress-fill" [style.width.%]="progressPercentage()"></span>
+      </div>
+      <p class="quiz__progress-label">
+        Pergunta {{ currentIndex() + 1 }} de {{ totalQuestions }} · {{ score() }} acertos
+      </p>
+    </div>
+
+    <p class="quiz__question">{{ currentQuestion().question }}</p>
+
+    <ul class="quiz__options">
+      @for (option of currentQuestion().options; track option; let index = $index) {
+        <li>
+          <button
+            type="button"
+            class="quiz__option"
+            [attr.data-state]="optionState(index)"
+            [disabled]="hasAnswered()"
+            (click)="answer(index)"
+          >
+            {{ option }}
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (hasAnswered()) {
+      <div class="quiz__feedback" role="status">
+        <p class="quiz__feedback-title">
+          {{ isCorrect() ? '🎉 Acertou!' : '🙃 Quase!' }}
+        </p>
+        <p class="quiz__feedback-fact">{{ currentQuestion().funFact }}</p>
+        <button type="button" class="button button--accent" (click)="next()">
+          {{ isLastQuestion() ? 'Ver resultado' : 'Próxima pergunta' }}
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    }
+  }
+</section>

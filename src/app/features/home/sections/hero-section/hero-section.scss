@@ -1,0 +1,178 @@
+@use 'sass:list';
+@use 'mixins' as *;
+
+/** Posições (top, left) e defasagem de animação dos adesivos do fundo. */
+$sticker-spots: (
+  (6%, 4%, 0s),
+  (12%, 88%, -0.9s),
+  (48%, 10%, -1.8s),
+  (58%, 92%, -2.7s),
+  (82%, 22%, -3.6s),
+  (86%, 76%, -4.5s)
+);
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding-block: var(--space-8) var(--space-7);
+
+  &__decor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Adesivos flutuantes espalhados pelo fundo do hero. */
+  &__sticker {
+    position: absolute;
+    font-size: clamp(1.75rem, 1rem + 2vw, 3rem);
+    opacity: 0.5;
+    animation: float-soft 6s ease-in-out infinite;
+
+    // Posições e defasagens fixas: seis adesivos espalhados pelo cenário.
+    @for $index from 1 through length($sticker-spots) {
+      $spot: list.nth($sticker-spots, $index);
+
+      &:nth-child(#{$index}) {
+        top: list.nth($spot, 1);
+        left: list.nth($spot, 2);
+        animation-delay: list.nth($spot, 3);
+      }
+    }
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__inner {
+    position: relative;
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+
+    @include from($breakpoint-md) {
+      grid-template-columns: 1.5fr 1fr;
+    }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+
+  &__welcome {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__title {
+    font-size: var(--text-3xl);
+  }
+
+  &__name {
+    display: block;
+    color: var(--color-pink);
+    text-shadow: 3px 3px 0 var(--color-yellow);
+  }
+
+  &__tagline {
+    max-width: 34rem;
+    font-size: var(--text-lg);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  &__avatar {
+    position: relative;
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    width: min(18rem, 60vw);
+    aspect-ratio: 1;
+    border: 4px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background:
+      radial-gradient(circle at 30% 25%, var(--color-yellow-soft) 0, transparent 55%),
+      var(--color-blue-soft);
+    box-shadow: var(--shadow-lg);
+    animation: pulse-ring 3.2s ease-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__avatar-emoji {
+    font-size: clamp(4.5rem, 3rem + 8vw, 8rem);
+    line-height: 1;
+    animation: wobble 5s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    bottom: -0.75rem;
+    padding: var(--space-1) var(--space-5);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-pink);
+    color: var(--text-on-color);
+    font-family: var(--font-display);
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  &__facts {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-7);
+    padding: 0;
+  }
+
+  &__fact {
+    @include card-surface;
+
+    padding: var(--space-4);
+    text-align: center;
+  }
+
+  &__fact-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+
+  &__fact-value {
+    margin: var(--space-1) 0 0;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+}

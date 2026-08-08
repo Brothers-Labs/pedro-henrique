@@ -1,0 +1,50 @@
+@use 'mixins' as *;
+
+.games {
+  padding-block: var(--space-7) var(--space-8);
+
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &--active {
+      background: var(--color-mint);
+      color: var(--text-on-color);
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  &__panel {
+    @include card-surface;
+
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+  }
+}

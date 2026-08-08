@@ -1,0 +1,96 @@
+<form class="upload" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2 class="upload__title">
+    <span aria-hidden="true">⬆️</span>
+    Adicionar um vídeo
+  </h2>
+  <p class="upload__hint">
+    O vídeo fica guardado só neste navegador, sem enviar nada para a internet. Tamanho máximo:
+    {{ maxSizeLabel }}.
+  </p>
+
+  <div
+    class="upload__dropzone"
+    [class.upload__dropzone--active]="isDraggingOver()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <label class="upload__dropzone-label" for="video-arquivo">
+      <span class="upload__dropzone-emoji" aria-hidden="true">🎞️</span>
+      <span class="upload__dropzone-text">
+        Arraste o vídeo até aqui ou <strong>clique para escolher</strong>
+      </span>
+    </label>
+    <input
+      id="video-arquivo"
+      class="upload__input"
+      type="file"
+      accept="video/*"
+      (change)="onFileSelected($event)"
+    />
+  </div>
+
+  @if (selectedFile(); as file) {
+    <div class="upload__file">
+      <span class="upload__file-name">{{ file.name }}</span>
+      <span class="upload__file-size">{{ file.size | fileSize }}</span>
+      <button type="button" class="button button--small button--ghost" (click)="clearFile()">
+        Trocar
+      </button>
+    </div>
+  }
+
+  <div class="field">
+    <label class="field__label" for="video-titulo">Título</label>
+    <input
+      id="video-titulo"
+      class="field__control"
+      [class.field__control--invalid]="hasError('title')"
+      type="text"
+      formControlName="title"
+      placeholder="Ex.: Meu primeiro gol"
+    />
+    @if (hasError('title')) {
+      <p class="field__error">Dê um título para o vídeo.</p>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="video-descricao">Descrição</label>
+    <textarea
+      id="video-descricao"
+      class="field__control"
+      [class.field__control--invalid]="hasError('description')"
+      formControlName="description"
+      [attr.maxlength]="maxDescriptionLength"
+      placeholder="Conte o que acontece nesse vídeo."
+    ></textarea>
+    @if (hasError('description')) {
+      <p class="field__error">Escreva uma descrição, mesmo que curtinha.</p>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="video-data">Data da gravação</label>
+    <input
+      id="video-data"
+      class="field__control"
+      [class.field__control--invalid]="hasError('recordedAt')"
+      type="date"
+      formControlName="recordedAt"
+      [max]="today"
+    />
+    @if (hasError('recordedAt')) {
+      <p class="field__error">Informe quando o vídeo foi gravado.</p>
+    }
+  </div>
+
+  @if (errorMessage(); as message) {
+    <p class="upload__error" role="alert">{{ message }}</p>
+  }
+
+  <button type="submit" class="button button--primary" [disabled]="!canSubmit()">
+    <span aria-hidden="true">{{ isSubmitting() ? '⏳' : '💾' }}</span>
+    {{ isSubmitting() ? 'Salvando…' : 'Salvar vídeo' }}
+  </button>
+</form>

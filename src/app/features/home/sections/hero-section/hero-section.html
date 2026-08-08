@@ -1,0 +1,51 @@
+<section class="hero" aria-labelledby="hero-titulo">
+  <div class="hero__decor" aria-hidden="true">
+    @for (emoji of floatingEmojis; track emoji) {
+      <span class="hero__sticker">{{ emoji }}</span>
+    }
+  </div>
+
+  <div class="hero__inner container">
+    <div class="hero__content">
+      <p class="hero__welcome">
+        <span aria-hidden="true">👋</span>
+        Bem-vindo ao meu site!
+      </p>
+
+      <h1 id="hero-titulo" class="hero__title">
+        Oi, eu sou o
+        <span class="hero__name">{{ profile.firstName }}</span>
+      </h1>
+
+      <p class="hero__tagline">{{ profile.tagline }}</p>
+
+      <div class="hero__actions">
+        <a class="button button--primary" routerLink="/galeria">
+          <span aria-hidden="true">🖼️</span>
+          Ver minha galeria
+        </a>
+        <a class="button button--accent" routerLink="/jogos">
+          <span aria-hidden="true">🎮</span>
+          Brincar comigo
+        </a>
+      </div>
+    </div>
+
+    <div class="hero__avatar">
+      <span class="hero__avatar-emoji" aria-hidden="true">{{ profile.avatarEmoji }}</span>
+      <span class="hero__badge">{{ age }} anos</span>
+    </div>
+  </div>
+
+  <dl class="hero__facts container">
+    @for (fact of profile.quickFacts; track fact.label) {
+      <div class="hero__fact">
+        <dt class="hero__fact-label">
+          <span aria-hidden="true">{{ fact.emoji }}</span>
+          {{ fact.label }}
+        </dt>
+        <dd class="hero__fact-value">{{ fact.value }}</dd>
+      </div>
+    }
+  </dl>
+</section>

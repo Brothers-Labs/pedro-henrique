@@ -1,0 +1,21 @@
+<section class="explore container" aria-labelledby="explorar-titulo">
+  <app-section-heading
+    emoji="🧭"
+    eyebrow="Explore o site"
+    title="Escolha por onde começar"
+    subtitle="São cinco lugares para visitar. Pode entrar em qualquer ordem."
+  />
+
+  <ul class="explore__grid">
+    @for (section of sections; track section.id; let index = $index) {
+      <li [appReveal]="revealDelay(index)">
+        <a class="explore__card" [attr.data-color]="section.color" [routerLink]="section.route">
+          <span class="explore__emoji" aria-hidden="true">{{ section.emoji }}</span>
+          <span class="explore__title">{{ section.label }}</span>
+          <span class="explore__description">{{ section.description }}</span>
+          <span class="explore__cta" aria-hidden="true">Entrar →</span>
+        </a>
+      </li>
+    }
+  </ul>
+</section>

@@ -1,0 +1,85 @@
+<div class="videos container">
+  <app-page-intro
+    emoji="🎬"
+    title="Meus vídeos"
+    subtitle="Cada vídeo vira um card com título, descrição e a data em que foi gravado."
+    color="orange"
+  />
+
+  <div class="videos__layout">
+    <app-video-upload-form (uploaded)="onUploaded($event)" />
+
+    <section class="videos__collection" aria-labelledby="colecao-titulo">
+      <header class="videos__toolbar">
+        <h2 id="colecao-titulo" class="videos__toolbar-title">
+          Coleção
+          <span class="videos__badge">{{ totalCount() }}</span>
+        </h2>
+
+        <div class="videos__controls">
+          <label class="videos__control">
+            <span class="visually-hidden">Buscar vídeo</span>
+            <input
+              class="field__control"
+              type="search"
+              placeholder="Buscar por título ou descrição"
+              [value]="searchTerm()"
+              (input)="changeSearchTerm($any($event.target).value)"
+            />
+          </label>
+
+          <label class="videos__control">
+            <span class="visually-hidden">Ordenar vídeos</span>
+            <select
+              class="field__control"
+              [value]="sortOrder()"
+              (change)="changeSortOrder($any($event.target).value)"
+            >
+              @for (option of sortOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <p class="videos__feedback" role="status" aria-live="polite">{{ feedback() }}</p>
+
+      @switch (status()) {
+        @case ('loading') {
+          <p class="videos__loading">Abrindo a caixa de vídeos…</p>
+        }
+        @case ('error') {
+          <app-empty-state
+            emoji="😕"
+            title="Deu ruim ao abrir os vídeos"
+            [message]="errorMessage() ?? 'Tente recarregar a página.'"
+          />
+        }
+        @default {
+          @if (visibleVideos().length) {
+            <ul class="videos__grid">
+              @for (video of visibleVideos(); track video.id) {
+                <li>
+                  <app-video-card [video]="video" (remove)="onRemove($event)" />
+                </li>
+              }
+            </ul>
+          } @else if (totalCount() > 0) {
+            <app-empty-state
+              emoji="🔍"
+              title="Nenhum vídeo com esse nome"
+              message="Tente buscar por outra palavra do título ou da descrição."
+            />
+          } @else {
+            <app-empty-state
+              emoji="🎥"
+              title="Nenhum vídeo por aqui ainda"
+              message="Use o formulário ao lado para adicionar o primeiro vídeo da coleção."
+            />
+          }
+        }
+      }
+    </section>
+  </div>
+</div>
