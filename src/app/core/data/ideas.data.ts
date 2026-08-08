@@ -1,0 +1,71 @@
+import type { Idea, IdeaStatusOption } from '../models/idea.model';
+
+export const IDEA_STATUS_OPTIONS: readonly IdeaStatusOption[] = [
+  { value: 'sonhando', label: 'Sonhando', emoji: '💭' },
+  { value: 'desenhando', label: 'Desenhando', emoji: '✏️' },
+  { value: 'construindo', label: 'Construindo', emoji: '🔧' },
+  { value: 'pronta', label: 'Pronta', emoji: '🎉' },
+];
+
+export const IDEAS: readonly Idea[] = [
+  {
+    id: 'ideia-mochila',
+    title: 'Mochila que anda sozinha',
+    pitch: 'Uma mochila com rodinhas inteligentes que segue a gente pelo corredor da escola.',
+    whyItMatters: 'Assim ninguém fica com as costas doendo no caminho para a sala.',
+    emoji: '🎒',
+    color: 'blue',
+    status: 'desenhando',
+    materials: ['Rodinhas', 'Sensor de distância', 'Bateria', 'Muita fita adesiva'],
+  },
+  {
+    id: 'ideia-guarda-chuva',
+    title: 'Guarda-chuva com luz',
+    pitch: 'Um guarda-chuva que acende quando escurece, para ninguém tropeçar na poça.',
+    whyItMatters: 'Chuva à noite é bonita, mas fica difícil enxergar o chão.',
+    emoji: '☂️',
+    color: 'purple',
+    status: 'sonhando',
+    materials: ['Guarda-chuva', 'Fita de LED', 'Sensor de luz'],
+  },
+  {
+    id: 'ideia-comedouro',
+    title: 'Comedouro automático do cachorro',
+    pitch: 'Uma caixa que solta ração na hora certa, mesmo se a gente esquecer.',
+    whyItMatters: 'O meu cachorro fica muito bravo quando o almoço atrasa.',
+    emoji: '🐕',
+    color: 'mint',
+    status: 'construindo',
+    materials: ['Caixa de papelão', 'Copo medidor', 'Relógio', 'Ajuda do papai'],
+  },
+  {
+    id: 'ideia-cabana',
+    title: 'Cabana secreta do quintal',
+    pitch: 'Uma cabana com porta escondida, campainha e placa de "entre com senha".',
+    whyItMatters: 'Todo inventor precisa de um laboratório secreto.',
+    emoji: '🛖',
+    color: 'orange',
+    status: 'pronta',
+    materials: ['Lençol antigo', 'Cabo de vassoura', 'Prendedores', 'Almofadas'],
+  },
+  {
+    id: 'ideia-lapis',
+    title: 'Lápis que nunca some',
+    pitch: 'Um lápis com apito: se você assobiar, ele apita de volta e você acha na hora.',
+    whyItMatters: 'Eu perco pelo menos dois lápis por semana.',
+    emoji: '✏️',
+    color: 'yellow',
+    status: 'sonhando',
+    materials: ['Lápis', 'Apito bem pequeno', 'Imaginação'],
+  },
+  {
+    id: 'ideia-robo',
+    title: 'Robô arrumador de quarto',
+    pitch: 'Um robô que guarda os brinquedos enquanto eu escovo os dentes.',
+    whyItMatters: 'Sobraria muito mais tempo para brincar de novo.',
+    emoji: '🤖',
+    color: 'pink',
+    status: 'desenhando',
+    materials: ['Caixas', 'Rodinhas', 'Braço de garra', 'Papel-alumínio'],
+  },
+];

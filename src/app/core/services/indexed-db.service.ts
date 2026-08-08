@@ -1,0 +1,72 @@
+import { Injectable } from '@angular/core';
+
+export const VIDEO_STORE = 'videos';
+
+const DATABASE_NAME = 'pedro-henrique-site';
+const DATABASE_VERSION = 1;
+
+/**
+ * Wrapper mínimo e tipado sobre a IndexedDB nativa.
+ *
+ * Existe para que os serviços de domínio trabalhem com Promises em vez de
+ * eventos, sem trazer nenhuma dependência externa para o projeto.
+ */
+@Injectable({ providedIn: 'root' })
+export class IndexedDbService {
+  private databasePromise: Promise<IDBDatabase> | null = null;
+
+  get isSupported(): boolean {
+    return typeof indexedDB !== 'undefined';
+  }
+
+  async getAll<TValue>(storeName: string): Promise<TValue[]> {
+    const database = await this.openDatabase();
+    return this.runRequest(() =>
+      database.transaction(storeName, 'readonly').objectStore(storeName).getAll(),
+    ) as Promise<TValue[]>;
+  }
+
+  async put<TValue>(storeName: string, value: TValue): Promise<void> {
+    const database = await this.openDatabase();
+    await this.runRequest(() =>
+      database.transaction(storeName, 'readwrite').objectStore(storeName).put(value),
+    );
+  }
+
+  async delete(storeName: string, key: IDBValidKey): Promise<void> {
+    const database = await this.openDatabase();
+    await this.runRequest(() =>
+      database.transaction(storeName, 'readwrite').objectStore(storeName).delete(key),
+    );
+  }
+
+  private openDatabase(): Promise<IDBDatabase> {
+    if (!this.isSupported) {
+      return Promise.reject(new Error('Este navegador não oferece suporte ao IndexedDB.'));
+    }
+
+    this.databasePromise ??= new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
+
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(VIDEO_STORE)) {
+          database.createObjectStore(VIDEO_STORE, { keyPath: 'id' });
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? new Error('Falha ao abrir o banco local.'));
+    });
+
+    return this.databasePromise;
+  }
+
+  private runRequest<TResult>(createRequest: () => IDBRequest<TResult>): Promise<TResult> {
+    return new Promise<TResult>((resolve, reject) => {
+      const request = createRequest();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? new Error('Falha ao acessar o banco local.'));
+    });
+  }
+}
