@@ -1,0 +1,80 @@
+/**
+ * Design tokens do site.
+ *
+ * Os tokens vivem como custom properties para que qualquer componente possa
+ * consumi-los sem precisar importar SCSS, mantendo um único ponto de verdade
+ * para a identidade visual.
+ */
+:root {
+  // Paleta ---------------------------------------------------------------
+  --color-pink: #ff4f9a;
+  --color-pink-soft: #ffd9e9;
+  --color-blue: #2ba8e0;
+  --color-blue-soft: #d5f0ff;
+  --color-yellow: #ffb703;
+  --color-yellow-soft: #fff0c9;
+  --color-mint: #12b886;
+  --color-mint-soft: #d3f7ea;
+  --color-purple: #7b52d3;
+  --color-purple-soft: #e8ddff;
+  --color-orange: #f4772e;
+  --color-orange-soft: #ffe3d1;
+
+  --color-primary: var(--color-pink);
+  --color-secondary: var(--color-blue);
+  --color-accent: var(--color-yellow);
+
+  // Superfícies e texto ---------------------------------------------------
+  --surface-page: #fffaf3;
+  --surface-card: #ffffff;
+  --surface-muted: #f4eee6;
+  --surface-inverse: #2a2350;
+
+  --text-strong: #2a2350;
+  --text-body: #4b4470;
+  --text-soft: #726c92;
+  --text-on-color: #ffffff;
+
+  --border-soft: #ece3d8;
+  --border-strong: #2a2350;
+
+  // Tipografia ------------------------------------------------------------
+  --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --text-2xl: clamp(1.9rem, 1.4rem + 2.2vw, 2.8rem);
+  --text-3xl: clamp(2.4rem, 1.6rem + 3.6vw, 4.2rem);
+
+  // Espaçamento -----------------------------------------------------------
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  // Formas e profundidade --------------------------------------------------
+  --radius-sm: 0.75rem;
+  --radius-md: 1.25rem;
+  --radius-lg: 2rem;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 4px 0 rgb(42 35 80 / 12%);
+  --shadow-md: 0 10px 24px rgb(42 35 80 / 12%);
+  --shadow-lg: 0 22px 48px rgb(42 35 80 / 18%);
+  --shadow-pop: 0 6px 0 var(--border-strong);
+
+  --layout-max: 1180px;
+  --header-height: 4.5rem;
+
+  --transition-fast: 150ms ease;
+  --transition-base: 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
