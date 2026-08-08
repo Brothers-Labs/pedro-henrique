@@ -30,7 +30,7 @@ $sticker-spots: (
     animation: float-soft 6s ease-in-out infinite;
 
     // Posições e defasagens fixas: seis adesivos espalhados pelo cenário.
-    @for $index from 1 through length($sticker-spots) {
+    @for $index from 1 through list.length($sticker-spots) {
       $spot: list.nth($sticker-spots, $index);
 
       &:nth-child(#{$index}) {

@@ -10,7 +10,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         <span aria-hidden="true">{{ emoji() }}</span>
         {{ eyebrow() }}
       </p>
-      <h2 class="heading__title">{{ title() }}</h2>
+      <h2 class="heading__title" [attr.id]="titleId() || null">{{ title() }}</h2>
       @if (subtitle()) {
         <p class="heading__subtitle">{{ subtitle() }}</p>
       }
@@ -24,4 +24,6 @@ export class SectionHeading {
   readonly title = input.required<string>();
   readonly subtitle = input<string>('');
   readonly isCentered = input<boolean>(true);
+  /** Id aplicado ao `<h2>` para que a seção possa referenciá-lo em `aria-labelledby`. */
+  readonly titleId = input<string>('');
 }

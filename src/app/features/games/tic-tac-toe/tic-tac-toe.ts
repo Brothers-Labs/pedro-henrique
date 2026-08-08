@@ -1,25 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 
-import { pickRandom } from '../../../core/utils/shuffle';
+import {
+  applyMove,
+  Cell,
+  chooseComputerMove,
+  COMPUTER,
+  EMPTY_BOARD,
+  findWinningLine,
+  HUMAN,
+  Player,
+} from './tic-tac-toe.logic';
 
-type Player = '❌' | '⭕';
-type Cell = Player | null;
-
-const HUMAN: Player = '❌';
-const COMPUTER: Player = '⭕';
-const EMPTY_BOARD: readonly Cell[] = Array.from({ length: 9 }, () => null);
 const COMPUTER_DELAY_IN_MS = 450;
-
-const WINNING_LINES: readonly (readonly [number, number, number])[] = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-];
 
 @Component({
   selector: 'app-tic-tac-toe',
@@ -45,6 +37,7 @@ export class TicTacToe {
 
   protected readonly statusMessage = computed(() => {
     const winner = this.winner();
+
     if (winner === HUMAN) {
       return 'Você ganhou! Muito bem!';
     }
@@ -54,6 +47,7 @@ export class TicTacToe {
     if (this.isDraw()) {
       return 'Deu velha! Ninguém ganhou.';
     }
+
     return this.isComputerThinking() ? 'Estou pensando…' : 'Sua vez: clique em um quadrado.';
   });
 
@@ -72,14 +66,7 @@ export class TicTacToe {
       return;
     }
 
-    this.isComputerThinking.set(true);
-    this.computerTimeout = setTimeout(() => {
-      const move = chooseComputerMove(this.board());
-      if (move !== null) {
-        this.mark(move, COMPUTER);
-      }
-      this.isComputerThinking.set(false);
-    }, COMPUTER_DELAY_IN_MS);
+    this.scheduleComputerMove();
   }
 
   protected restart(): void {
@@ -98,8 +85,21 @@ export class TicTacToe {
     return `Quadrado ${position + 1}: ${description}`;
   }
 
+  /** A pausa deixa claro que foi o computador que jogou, e não o próprio clique. */
+  private scheduleComputerMove(): void {
+    this.isComputerThinking.set(true);
+
+    this.computerTimeout = setTimeout(() => {
+      const move = chooseComputerMove(this.board());
+      if (move !== null) {
+        this.mark(move, COMPUTER);
+      }
+      this.isComputerThinking.set(false);
+    }, COMPUTER_DELAY_IN_MS);
+  }
+
   private mark(position: number, player: Player): void {
-    this.board.update((board) => board.map((cell, index) => (index === position ? player : cell)));
+    this.board.update((board) => applyMove(board, position, player));
   }
 
   private clearComputerTimeout(): void {
@@ -108,61 +108,4 @@ export class TicTacToe {
       this.computerTimeout = null;
     }
   }
-}
-
-function findWinningLine(board: readonly Cell[]): readonly [number, number, number] | null {
-  return (
-    WINNING_LINES.find(
-      ([a, b, c]) => board[a] !== null && board[a] === board[b] && board[b] === board[c],
-    ) ?? null
-  );
-}
-
-/**
- * Estratégia do computador: fecha o jogo se puder, bloqueia a vitória do
- * jogador, e só então escolhe centro, canto ou lateral. Deixa a partida
- * disputada sem ser impossível de vencer.
- */
-function chooseComputerMove(board: readonly Cell[]): number | null {
-  const available = board.reduce<number[]>(
-    (positions, cell, index) => (cell === null ? [...positions, index] : positions),
-    [],
-  );
-
-  if (available.length === 0) {
-    return null;
-  }
-
-  const winningMove = findDecisiveMove(board, available, COMPUTER);
-  if (winningMove !== null) {
-    return winningMove;
-  }
-
-  const blockingMove = findDecisiveMove(board, available, HUMAN);
-  if (blockingMove !== null) {
-    return blockingMove;
-  }
-
-  const center = 4;
-  if (available.includes(center)) {
-    return center;
-  }
-
-  const corners = available.filter((position) => [0, 2, 6, 8].includes(position));
-  return pickRandom(corners.length > 0 ? corners : available) ?? null;
-}
-
-function findDecisiveMove(
-  board: readonly Cell[],
-  available: readonly number[],
-  player: Player,
-): number | null {
-  for (const position of available) {
-    const candidate = board.map((cell, index) => (index === position ? player : cell));
-    if (findWinningLine(candidate)) {
-      return position;
-    }
-  }
-
-  return null;
 }

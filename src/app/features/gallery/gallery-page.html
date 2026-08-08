@@ -46,7 +46,9 @@
             />
             <span class="gallery__info">
               <span class="gallery__title">{{ item.title }}</span>
-              <span class="gallery__date">{{ item.takenAt | date: 'MMMM \'de\' y' }}</span>
+              <span class="gallery__date">
+                {{ item.takenAt | date: "MMMM 'de' y" : 'UTC' }}
+              </span>
             </span>
           </button>
         </li>
@@ -68,7 +70,7 @@
       <div class="lightbox__text">
         <h2 class="lightbox__title">{{ item.title }}</h2>
         <p class="lightbox__description">{{ item.description }}</p>
-        <p class="lightbox__date">{{ item.takenAt | date: "d 'de' MMMM 'de' y" }}</p>
+        <p class="lightbox__date">{{ item.takenAt | date: "d 'de' MMMM 'de' y" : 'UTC' }}</p>
       </div>
       <button type="button" class="button button--small lightbox__close" (click)="closeItem()">
         Fechar

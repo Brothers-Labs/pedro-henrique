@@ -28,8 +28,15 @@ const OBSERVER_OPTIONS: IntersectionObserverInit = {
   },
 })
 export class RevealDirective implements OnInit {
-  /** Atraso em milissegundos, útil para escalonar itens de uma lista. */
-  readonly delayInMs = input(0, { alias: 'appReveal', transform: numberAttribute });
+  /**
+   * Atraso em milissegundos, útil para escalonar itens de uma lista.
+   * Usar a diretiva sem valor (`appReveal`) entrega string vazia, por isso o
+   * `numberAttribute` recebe 0 como padrão em vez de `NaN`.
+   */
+  readonly delayInMs = input(0, {
+    alias: 'appReveal',
+    transform: (value: unknown) => numberAttribute(value, 0),
+  });
 
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
