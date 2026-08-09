@@ -1,13 +1,30 @@
 <section class="quiz" aria-labelledby="quiz-titulo">
   <header class="quiz__header">
-    <h3 id="quiz-titulo" class="quiz__title">Quiz: você me conhece?</h3>
-    <p class="quiz__subtitle">São {{ totalQuestions }} perguntas sobre mim. Vale chutar!</p>
+    <h3 id="quiz-titulo" class="quiz__title">Quiz</h3>
+    <p class="quiz__subtitle">
+      Cada rodada sorteia {{ totalQuestions() }} perguntas. Vale chutar!
+    </p>
   </header>
+
+  <div class="quiz__categories" role="group" aria-label="Escolha o tipo de pergunta">
+    @for (category of categories; track category.value) {
+      <button
+        type="button"
+        class="quiz__category"
+        [class.quiz__category--active]="selectedCategory() === category.value"
+        [attr.aria-pressed]="selectedCategory() === category.value"
+        (click)="selectCategory(category.value)"
+      >
+        <span aria-hidden="true">{{ category.emoji }}</span>
+        {{ category.label }}
+      </button>
+    }
+  </div>
 
   @if (isFinished()) {
     <div class="quiz__result" role="status">
       <p class="quiz__result-emoji" aria-hidden="true">🏆</p>
-      <p class="quiz__result-score">{{ score() }} de {{ totalQuestions }}</p>
+      <p class="quiz__result-score">{{ score() }} de {{ totalQuestions() }}</p>
       <p class="quiz__result-message">{{ finalMessage() }}</p>
       <button type="button" class="button button--primary" (click)="restart()">
         <span aria-hidden="true">🔄</span>
@@ -20,7 +37,7 @@
         <span class="quiz__progress-fill" [style.width.%]="progressPercentage()"></span>
       </div>
       <p class="quiz__progress-label">
-        Pergunta {{ currentIndex() + 1 }} de {{ totalQuestions }} · {{ score() }} acertos
+        Pergunta {{ currentIndex() + 1 }} de {{ totalQuestions() }} · {{ score() }} acertos
       </p>
     </div>
 

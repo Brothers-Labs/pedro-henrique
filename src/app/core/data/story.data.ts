@@ -75,10 +75,10 @@ export const STORY_CHAPTERS: readonly StoryChapter[] = [
     id: 'capitulo-2026',
     year: 2026,
     ageLabel: '7 anos',
-    title: 'O ano das invenções',
-    story: 'Agora eu desenho, construo, invento e ainda ganhei um site só meu para mostrar tudo isso.',
+    title: 'Primeira série na Escola SESI',
+    story: 'Entrei na primeira série, sigo com as minhas terapias e ainda ganhei um site só meu para mostrar tudo o que eu invento.',
     emoji: '💡',
     color: 'pink',
-    highlights: ['Medalha na corrida', 'Robô de papelão', 'Este site aqui!'],
+    highlights: ['Escola SESI', 'Robô de papelão', 'Este site aqui!'],
   },
 ];

@@ -1,9 +1,19 @@
-import type { QuizQuestion } from '../models/quiz.model';
+import type { QuizCategoryOption, QuizQuestion } from '../models/quiz.model';
 
-/** Perguntas do quiz "Você me conhece?". As respostas seguem o `PROFILE`. */
-export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
+/** Quantas perguntas entram em cada rodada, sorteadas do total disponível. */
+export const QUESTIONS_PER_ROUND = 8;
+
+export const QUIZ_CATEGORIES: readonly QuizCategoryOption[] = [
+  { value: 'tudo', label: 'Tudo misturado', emoji: '🎲' },
+  { value: 'sobre-mim', label: 'Sobre mim', emoji: '🙋' },
+  { value: 'geral', label: 'Perguntas gerais', emoji: '🌎' },
+];
+
+/** Perguntas sobre o Pedro Henrique. As respostas seguem o `PROFILE`. */
+const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-cor',
+    category: 'sobre-mim',
     question: 'Qual é a minha cor favorita?',
     options: ['Azul', 'Vermelho', 'Verde', 'Roxo'],
     correctIndex: 0,
@@ -11,6 +21,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   },
   {
     id: 'quiz-animal',
+    category: 'sobre-mim',
     question: 'Qual é o meu bicho favorito?',
     options: ['Gato', 'Dinossauro', 'Papagaio', 'Tubarão'],
     correctIndex: 1,
@@ -18,6 +29,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   },
   {
     id: 'quiz-comida',
+    category: 'sobre-mim',
     question: 'O que eu peço quando posso escolher a janta?',
     options: ['Sopa', 'Salada', 'Pizza de calabresa', 'Peixe'],
     correctIndex: 2,
@@ -25,6 +37,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   },
   {
     id: 'quiz-esporte',
+    category: 'sobre-mim',
     question: 'Qual esporte eu jogo todo dia no recreio?',
     options: ['Vôlei', 'Natação', 'Basquete', 'Futebol'],
     correctIndex: 3,
@@ -32,6 +45,7 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   },
   {
     id: 'quiz-invencao',
+    category: 'sobre-mim',
     question: 'Qual invenção minha já ficou pronta?',
     options: ['Cabana secreta do quintal', 'Mochila que anda sozinha', 'Robô arrumador', 'Lápis que apita'],
     correctIndex: 0,
@@ -39,9 +53,163 @@ export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   },
   {
     id: 'quiz-sonho',
+    category: 'sobre-mim',
     question: 'Qual é o meu sonho?',
     options: ['Ter um jacaré', 'Conhecer um foguete de verdade', 'Morar na praia', 'Ganhar um trem'],
     correctIndex: 1,
     funFact: 'Já desenhei o meu foguete: ele tem três andares.',
   },
+  {
+    id: 'quiz-irma',
+    category: 'sobre-mim',
+    question: 'Como se chama a minha irmã?',
+    options: ['Helena', 'Verônica', 'Rosimeri', 'Carolina'],
+    correctIndex: 0,
+    funFact: 'Ela é mais velha do que eu e é a melhor parceira de bagunça.',
+  },
+  {
+    id: 'quiz-mes',
+    category: 'sobre-mim',
+    question: 'Em que mês eu faço aniversário?',
+    options: ['Janeiro', 'Abril', 'Julho', 'Dezembro'],
+    correctIndex: 1,
+    funFact: 'Dia 19 de abril, para ninguém esquecer!',
+  },
+];
+
+/** Perguntas de conhecimentos gerais, no nível de quem tem 7 anos. */
+const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
+  {
+    id: 'geral-aranha',
+    category: 'geral',
+    question: 'Quantas patas tem uma aranha?',
+    options: ['6', '8', '10', '4'],
+    correctIndex: 1,
+    funFact: 'Inseto tem 6 patas; aranha tem 8 e nem é inseto!',
+  },
+  {
+    id: 'geral-baleia',
+    category: 'geral',
+    question: 'Qual é o maior animal do mundo?',
+    options: ['Elefante', 'Girafa', 'Baleia-azul', 'Tubarão-branco'],
+    correctIndex: 2,
+    funFact: 'A baleia-azul é maior que um ônibus. Vários ônibus, na verdade!',
+  },
+  {
+    id: 'geral-arco-iris',
+    category: 'geral',
+    question: 'Quantas cores tem o arco-íris?',
+    options: ['5', '6', '7', '10'],
+    correctIndex: 2,
+    funFact: 'Vermelho, laranja, amarelo, verde, azul, anil e violeta.',
+  },
+  {
+    id: 'geral-semana',
+    category: 'geral',
+    question: 'Quantos dias tem uma semana?',
+    options: ['5', '7', '10', '12'],
+    correctIndex: 1,
+    funFact: 'Cinco de escola e dois de descanso. Justo, né?',
+  },
+  {
+    id: 'geral-hora',
+    category: 'geral',
+    question: 'Quantos minutos tem uma hora?',
+    options: ['30', '60', '90', '100'],
+    correctIndex: 1,
+    funFact: 'E cada minuto tem 60 segundos.',
+  },
+  {
+    id: 'geral-capital',
+    category: 'geral',
+    question: 'Qual é a capital do Brasil?',
+    options: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador'],
+    correctIndex: 2,
+    funFact: 'Brasília foi construída bem no meio do país.',
+  },
+  {
+    id: 'geral-planeta',
+    category: 'geral',
+    question: 'Em qual planeta a gente mora?',
+    options: ['Marte', 'Terra', 'Júpiter', 'Saturno'],
+    correctIndex: 1,
+    funFact: 'A Terra é o único planeta com sorvete até hoje.',
+  },
+  {
+    id: 'geral-camaleao',
+    category: 'geral',
+    question: 'Qual animal consegue mudar de cor?',
+    options: ['Camaleão', 'Cavalo', 'Coelho', 'Corvo'],
+    correctIndex: 0,
+    funFact: 'Ele muda de cor conforme a temperatura e o humor.',
+  },
+  {
+    id: 'geral-guepardo',
+    category: 'geral',
+    question: 'Qual é o animal mais rápido da terra?',
+    options: ['Cavalo', 'Avestruz', 'Guepardo', 'Lebre'],
+    correctIndex: 2,
+    funFact: 'Ele corre mais rápido que um carro na avenida.',
+  },
+  {
+    id: 'geral-plantas',
+    category: 'geral',
+    question: 'Do que as plantas mais precisam para crescer?',
+    options: ['Barulho', 'Água e luz do sol', 'Escuro total', 'Refrigerante'],
+    correctIndex: 1,
+    funFact: 'Com a luz do sol elas fabricam o próprio alimento.',
+  },
+  {
+    id: 'geral-triangulo',
+    category: 'geral',
+    question: 'Quantos lados tem um triângulo?',
+    options: ['3', '4', '5', '6'],
+    correctIndex: 0,
+    funFact: 'Tri quer dizer três — igual em triciclo!',
+  },
+  {
+    id: 'geral-gelo',
+    category: 'geral',
+    question: 'O gelo é a água em qual estado?',
+    options: ['Líquido', 'Sólido', 'Gasoso', 'Invisível'],
+    correctIndex: 1,
+    funFact: 'Esquentou vira líquido, esquentou muito vira vapor.',
+  },
+  {
+    id: 'geral-estacoes',
+    category: 'geral',
+    question: 'Quantas estações tem o ano?',
+    options: ['2', '3', '4', '6'],
+    correctIndex: 2,
+    funFact: 'Verão, outono, inverno e primavera.',
+  },
+  {
+    id: 'geral-oceano',
+    category: 'geral',
+    question: 'Qual é o maior oceano do planeta?',
+    options: ['Atlântico', 'Índico', 'Ártico', 'Pacífico'],
+    correctIndex: 3,
+    funFact: 'O Pacífico é tão grande que cabe toda a terra firme dentro dele.',
+  },
+  {
+    id: 'geral-abelha',
+    category: 'geral',
+    question: 'O que a abelha produz?',
+    options: ['Leite', 'Mel', 'Suco', 'Farinha'],
+    correctIndex: 1,
+    funFact: 'E de quebra ela poliniza as flores e as frutas.',
+  },
+  {
+    id: 'geral-dedos',
+    category: 'geral',
+    question: 'Quantos dedos temos nas duas mãos juntas?',
+    options: ['8', '10', '12', '20'],
+    correctIndex: 1,
+    funFact: 'Com os pés vão 20 no total. Pode conferir!',
+  },
+];
+
+export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
+  ...ABOUT_ME_QUESTIONS,
+  ...GENERAL_QUESTIONS,
 ];

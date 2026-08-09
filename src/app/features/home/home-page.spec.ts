@@ -20,7 +20,9 @@ describe('HomePage', () => {
 
     expect(element.querySelector('app-hero-section')).not.toBeNull();
     expect(element.querySelector('app-about-section')).not.toBeNull();
+    expect(element.querySelector('app-my-way-section')).not.toBeNull();
     expect(element.querySelector('app-powers-section')).not.toBeNull();
+    expect(element.querySelector('app-family-section')).not.toBeNull();
     expect(element.querySelector('app-explore-section')).not.toBeNull();
     expect(element.querySelector('app-favorites-section')).not.toBeNull();
     expect(element.querySelector('app-achievements-section')).not.toBeNull();

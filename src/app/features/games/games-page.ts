@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 import { PageIntro } from '../../shared/components/page-intro/page-intro';
+import { BeansGame } from './beans-game/beans-game';
 import { MemoryGame } from './memory-game/memory-game';
 import { QuizGame } from './quiz-game/quiz-game';
 import { TicTacToe } from './tic-tac-toe/tic-tac-toe';
 
-type GameId = 'memoria' | 'velha' | 'quiz';
+type GameId = 'memoria' | 'velha' | 'feijoes' | 'quiz';
 
 interface GameTab {
   readonly id: GameId;
@@ -16,13 +17,14 @@ interface GameTab {
 const GAME_TABS: readonly GameTab[] = [
   { id: 'memoria', label: 'Memória', emoji: '🧠' },
   { id: 'velha', label: 'Jogo da velha', emoji: '❌' },
+  { id: 'feijoes', label: 'Trilha dos feijões', emoji: '🫘' },
   { id: 'quiz', label: 'Quiz', emoji: '❓' },
 ];
 
 @Component({
   selector: 'app-games-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageIntro, MemoryGame, TicTacToe, QuizGame],
+  imports: [PageIntro, MemoryGame, TicTacToe, BeansGame, QuizGame],
   templateUrl: './games-page.html',
   styleUrl: './games-page.scss',
 })

@@ -7,17 +7,18 @@ import type { Profile } from '../models/profile.model';
 export const PROFILE: Profile = {
   firstName: 'Pedro Henrique',
   fullName: 'Pedro Henrique',
-  birthDate: '2019-04-12',
+  birthDate: '2019-04-19',
   tagline: 'Explorador de ideias, colecionador de gargalhadas e inventor de brincadeiras.',
   introduction: [
     'Oi! Eu sou o Pedro Henrique e este é o meu cantinho na internet.',
+    'Eu estudo na Escola SESI, moro com o meu pai, a minha mãe e a minha irmã Helena, e sou autista — do meu jeitinho, que você vai conhecer aqui embaixo.',
     'Aqui eu guardo meus desenhos, conto a minha história, mostro as invenções que ficam na minha cabeça e ainda deixo uns joguinhos para você brincar comigo.',
     'Pode explorar tudo com calma — e não esquece de deixar um recado no mural!',
   ],
   avatarEmoji: '🦖',
   quickFacts: [
-    { emoji: '🎂', label: 'Aniversário', value: '12 de abril' },
-    { emoji: '🏫', label: 'Escola', value: '2º ano' },
+    { emoji: '🎂', label: 'Aniversário', value: '19 de abril' },
+    { emoji: '🏫', label: 'Escola', value: 'SESI, 1ª série' },
     { emoji: '🎨', label: 'Cor favorita', value: 'Azul' },
     { emoji: '🦕', label: 'Bicho favorito', value: 'Dinossauro' },
   ],

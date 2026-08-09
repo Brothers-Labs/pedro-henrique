@@ -1,0 +1,25 @@
+<section class="family container" aria-labelledby="familia-titulo">
+  <app-section-heading
+    emoji="💞"
+    eyebrow="Minha família"
+    titleId="familia-titulo"
+    title="As pessoas do meu time"
+    subtitle="São elas que estão comigo todos os dias."
+  />
+
+  <ul class="family__grid">
+    @for (member of members; track member.id; let index = $index) {
+      <li
+        class="family__card"
+        [attr.data-color]="member.color"
+        [appReveal]="revealDelay(index)"
+      >
+        <span class="family__emoji" aria-hidden="true">{{ member.emoji }}</span>
+        <p class="family__relation">{{ member.relation }}</p>
+        <h3 class="family__name">{{ member.name }}</h3>
+        <p class="family__detail">{{ member.detail }}</p>
+        <p class="family__description">{{ member.description }}</p>
+      </li>
+    }
+  </ul>
+</section>

@@ -30,12 +30,13 @@ que roda inteiramente no navegador.
 
 ## Destaques
 
-- **Landing page completa**: hero, apresentação, superpoderes, cartões de exploração, favoritos,
-  medalhas, contagem regressiva do aniversário e mural de recados.
+- **Landing page completa**: hero, apresentação, "do meu jeito" (autismo e terapias), superpoderes,
+  família, cartões de exploração, favoritos, medalhas, contagem regressiva do aniversário e mural
+  de recados.
 - **Zero backend**: dados editoriais em TypeScript, vídeos no IndexedDB e recados no
   `localStorage`. Publica em qualquer host estático.
-- **Três jogos reais**: jogo da memória, jogo da velha com adversário que bloqueia e ataca, e um
-  quiz com pontuação.
+- **Quatro jogos reais**: jogo da memória, jogo da velha, a Trilha dos feijões (com adversário ou
+  em dupla) e um quiz com sorteio de perguntas.
 - **Upload de vídeos**: arrastar e soltar, miniatura gerada por `<canvas>`, duração detectada
   automaticamente, busca, ordenação e exclusão com confirmação.
 - **Sem dependências extras**: apenas Angular e RxJS. Nenhuma biblioteca de UI, animação, ícones
@@ -145,11 +146,11 @@ src/
 
 | Rota | Página | O que tem |
 | --- | --- | --- |
-| `/` | Início | Hero animado, "quem sou eu", superpoderes com barras, cartões de exploração, favoritos, medalhas, contagem regressiva do aniversário e mural de recados |
+| `/` | Início | Hero animado, "quem sou eu", "do meu jeito", superpoderes com barras, família, cartões de exploração, favoritos, medalhas, contagem regressiva do aniversário e mural de recados |
 | `/galeria` | Galeria | 12 lembranças com filtro por categoria e lightbox (`<dialog>` nativo) |
 | `/historia` | História | Linha do tempo de 2019 a 2026, com destaques por ano |
 | `/ideias` | Ideias | Invenções com status (sonhando, desenhando, construindo, pronta), materiais e filtro |
-| `/jogos` | Jogos | Abas com jogo da memória, jogo da velha e quiz |
+| `/jogos` | Jogos | Abas com jogo da memória, jogo da velha, Trilha dos feijões e quiz |
 | `/videos` | Vídeos | Upload com título, descrição e data; cards com busca, ordenação e exclusão |
 
 As imagens da galeria são **SVGs gerados em runtime** (`core/utils/illustration.ts`): o
@@ -179,6 +180,35 @@ tipo MIME, tamanho, duração e miniatura.
 enviados; limpar os dados do site apaga a coleção. Para compartilhar entre dispositivos seria
 preciso um backend (Firebase Storage, S3 ou API própria) — o `VideoLibraryService` já isola essa
 troca em um único arquivo.
+
+---
+
+## Os jogos
+
+### Trilha dos feijões (Nine Men's Morris)
+
+O jogo de tabuleiro tradicional que se joga com nove feijões para cada lado, implementado com as
+regras completas:
+
+1. **Colocar** — cada jogador põe seus nove feijões, um por vez, nas 24 casas.
+2. **Andar** — depois, cada feijão anda para uma casa vizinha ligada por uma linha.
+3. **Trilha** — três feijões seus em linha permitem comer um feijão do adversário. Feijões
+   protegidos dentro de uma trilha só podem ser comidos quando não houver nenhum outro disponível.
+4. **Voar** — ao restarem exatamente três feijões, eles passam a pular para qualquer casa vazia.
+5. **Fim** — perde quem ficar com menos de três feijões ou sem nenhuma jogada possível.
+
+Dois modos: **contra o computador** (que fecha a própria trilha, bloqueia a do adversário e prioriza
+casas com mais saídas) ou **dois jogadores** no mesmo dispositivo.
+
+O tabuleiro é desenhado com um SVG de linhas ao fundo e 24 `<button>` reais posicionados em
+porcentagem — assim as casas continuam navegáveis por teclado e anunciadas por leitores de tela.
+Todas as regras vivem em `beans-game.logic.ts`, separadas do componente.
+
+### Quiz
+
+As perguntas ficam em duas categorias — **sobre mim** (8) e **gerais** (16) — e o jogador escolhe
+entre elas ou pede tudo misturado. Cada rodada **sorteia 8 perguntas** do conjunto escolhido, então
+duas partidas seguidas nunca são iguais.
 
 ---
 
@@ -221,7 +251,10 @@ Nenhuma alteração de texto exige mexer em componente:
 
 | Quero mudar… | Edite |
 | --- | --- |
-| Nome, data de nascimento, superpoderes, favoritos, medalhas | `core/data/profile.data.ts` |
+| Nome, data de nascimento, escola, superpoderes, favoritos, medalhas | `core/data/profile.data.ts` |
+| Pai, mãe, irmã e avós | `core/data/family.data.ts` |
+| Terapias e a lista "o que me ajuda" | `core/data/therapies.data.ts` |
+| Texto sobre o autismo | `features/home/sections/my-way-section/my-way-section.html` |
 | Itens da galeria | `core/data/gallery.data.ts` |
 | Capítulos da linha do tempo | `core/data/story.data.ts` |
 | Invenções | `core/data/ideas.data.ts` |
@@ -231,12 +264,27 @@ Nenhuma alteração de texto exige mexer em componente:
 
 > A idade exibida no cabeçalho e no hero é **calculada** a partir de `birthDate`. Não existe número
 > de idade escrito no conteúdo para ficar desatualizado.
+>
+> A exceção é a idade da Helena (`detail: '15 anos'` em `family.data.ts`): como não guardamos a data
+> de nascimento dela, esse texto precisa ser atualizado à mão.
+
+### Dados pessoais publicados
+
+O site exibe, por decisão da família: data de nascimento, nome completo do pai e da mãe, primeiro
+nome da irmã e das avós, nome da escola, e o fato de o Pedro Henrique ser autista de nível 1 com as
+terapias que faz.
+
+São dados sensíveis de uma criança e ficam **visíveis para qualquer pessoa** assim que o site for
+publicado. Antes de subir para um domínio público, vale decidir conscientemente o que fica no ar —
+todo esse conteúdo está isolado em `core/data/` e pode ser reduzido sem tocar em nenhum componente.
+Para manter o site no ar sem expor os dados, uma alternativa é publicar em um host com acesso
+restrito ou remover os campos mais identificáveis (nome completo dos pais e nome da escola).
 
 ---
 
 ## Testes
 
-23 testes cobrindo as regras que podem quebrar em silêncio:
+47 testes cobrindo as regras que podem quebrar em silêncio:
 
 - `core/utils/birthday.spec.ts` — idade em anos completos, virada de aniversário e contagem
   regressiva (inclusive no próprio dia).
@@ -244,6 +292,11 @@ Nenhuma alteração de texto exige mexer em componente:
   decimal e normalização de texto.
 - `features/games/tic-tac-toe/tic-tac-toe.logic.spec.ts` — detecção de linha vencedora e
   estratégia do computador (vencer > bloquear > centro).
+- `features/games/beans-game/beans-game.logic.spec.ts` — integridade do tabuleiro (ligações sempre
+  recíprocas, 16 trilhas), formação de trilha, feijões protegidos, voo com três feijões e
+  travamento sem jogadas.
+- `features/games/beans-game/beans-game.spec.ts` — partida completa jogada pelo DOM: colocação
+  alternada, fechamento de trilha, captura pelos dois lados e reinício.
 - `features/home/home-page.spec.ts` — smoke test da landing: todas as seções renderizam, existe um
   único `<h1>` e cada `aria-labelledby` aponta para um título que existe de fato.
 

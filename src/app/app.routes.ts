@@ -10,7 +10,7 @@ export const routes: Routes = [
     title: 'Início',
     data: {
       description:
-        'O site do Pedro Henrique, 7 anos: superpoderes, favoritos, medalhas e um mural de recados.',
+        'O site do Pedro Henrique: do meu jeito, minha família, superpoderes, favoritos, medalhas e um mural de recados.',
     },
     loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
   },

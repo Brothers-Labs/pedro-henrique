@@ -1,0 +1,62 @@
+<section class="my-way container" aria-labelledby="jeito-titulo">
+  <app-section-heading
+    emoji="🧩"
+    eyebrow="Do meu jeito"
+    titleId="jeito-titulo"
+    title="Eu sou autista"
+    subtitle="Nível 1 de suporte. Isso quer dizer que eu faço quase tudo sozinho e às vezes preciso de uma ajudinha."
+  />
+
+  <div class="my-way__intro" appReveal>
+    <p class="my-way__emoji" aria-hidden="true">🧠</p>
+    <div class="my-way__text">
+      <p>
+        Meu cérebro funciona de um jeitinho diferente — e isso não é problema nenhum. Eu reparo em
+        detalhes que quase ninguém vê, aprendo os assuntos que eu amo de cor e sou muito, muito
+        curioso.
+      </p>
+      <p>
+        Tem dias em que barulho demais me cansa, ou em que mudar o combinado de última hora me deixa
+        aflito. Aí eu respiro, dou um tempinho e volto inteiro.
+      </p>
+    </div>
+  </div>
+
+  <div class="my-way__grid">
+    <div class="my-way__block" [appReveal]="120">
+      <h3 class="my-way__block-title">
+        <span aria-hidden="true">💪</span>
+        Meu time de terapias
+      </h3>
+      <ul class="my-way__therapies">
+        @for (therapy of therapies; track therapy.id; let index = $index) {
+          <li class="my-way__therapy" [attr.data-color]="therapy.color">
+            <span class="my-way__therapy-emoji" aria-hidden="true">{{ therapy.emoji }}</span>
+            <div>
+              <p class="my-way__therapy-name">
+                {{ therapy.name }}
+                <span class="my-way__therapy-tag">{{ therapy.shortName }}</span>
+              </p>
+              <p class="my-way__therapy-description">{{ therapy.description }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="my-way__block my-way__block--tips" [appReveal]="200">
+      <h3 class="my-way__block-title">
+        <span aria-hidden="true">🤝</span>
+        O que me ajuda
+      </h3>
+      <ul class="my-way__tips">
+        @for (tip of supportTips; track tip) {
+          <li>{{ tip }}</li>
+        }
+      </ul>
+      <p class="my-way__tips-note">
+        Se você seguir essas dicas, a gente vai se dar muito bem — prometo!
+      </p>
+    </div>
+  </div>
+</section>

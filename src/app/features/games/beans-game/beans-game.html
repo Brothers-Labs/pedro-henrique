@@ -1,0 +1,107 @@
+<section class="beans" aria-labelledby="feijoes-titulo">
+  <header class="beans__header">
+    <div>
+      <h3 id="feijoes-titulo" class="beans__title">Trilha dos feijões</h3>
+      <p class="beans__subtitle">
+        Nove feijões para cada um. Faça três em linha para comer um feijão do outro.
+      </p>
+    </div>
+
+    <div class="beans__modes" role="group" aria-label="Escolha como jogar">
+      <button
+        type="button"
+        class="beans__mode"
+        [class.beans__mode--active]="mode() === 'computador'"
+        [attr.aria-pressed]="mode() === 'computador'"
+        (click)="selectMode('computador')"
+      >
+        <span aria-hidden="true">🤖</span>
+        Contra mim
+      </button>
+      <button
+        type="button"
+        class="beans__mode"
+        [class.beans__mode--active]="mode() === 'dupla'"
+        [attr.aria-pressed]="mode() === 'dupla'"
+        (click)="selectMode('dupla')"
+      >
+        <span aria-hidden="true">👥</span>
+        Dois jogadores
+      </button>
+    </div>
+  </header>
+
+  <p class="beans__status" role="status" aria-live="polite">{{ statusMessage() }}</p>
+
+  <div class="beans__layout">
+    <div class="beans__board">
+      <div class="beans__board-inner">
+        <svg class="beans__lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="0" width="100" height="100" />
+          <rect x="16.667" y="16.667" width="66.666" height="66.666" />
+          <rect x="33.333" y="33.333" width="33.334" height="33.334" />
+          <line x1="50" y1="0" x2="50" y2="33.333" />
+          <line x1="50" y1="66.667" x2="50" y2="100" />
+          <line x1="0" y1="50" x2="33.333" y2="50" />
+          <line x1="66.667" y1="50" x2="100" y2="50" />
+        </svg>
+
+        @for (point of points; track $index) {
+          <button
+            type="button"
+            class="beans__spot"
+            [class.beans__spot--highlighted]="isHighlighted($index)"
+            [class.beans__spot--selected]="selectedPosition() === $index"
+            [style.left.%]="point.x"
+            [style.top.%]="point.y"
+            [disabled]="isFinished()"
+            [attr.aria-label]="spotLabel($index)"
+            (click)="onSpotClick($index)"
+          >
+            @if (board()[$index]; as owner) {
+              <span class="beans__bean" aria-hidden="true">{{ playerEmoji[owner] }}</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <aside class="beans__panel">
+      <h4 class="beans__panel-title">Placar dos feijões</h4>
+
+      <ul class="beans__players">
+        @for (side of sides; track side) {
+          <li
+            class="beans__player"
+            [class.beans__player--active]="currentPlayer() === side && !isFinished()"
+          >
+            <span class="beans__player-emoji" aria-hidden="true">{{ playerEmoji[side] }}</span>
+            <div>
+              <p class="beans__player-name">{{ playerName[side] }}</p>
+              <p class="beans__player-count">
+                {{ beansInHand()[side] }} na mão · {{ beansOnBoard()[side] }} no tabuleiro
+              </p>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <details class="beans__rules">
+        <summary>Como se joga</summary>
+        <ol>
+          <li>Cada um coloca os seus nove feijões, um de cada vez.</li>
+          <li>Depois é só andar para uma casa vizinha, seguindo as linhas.</li>
+          <li>Três feijões seus em linha é uma trilha: você come um feijão do outro.</li>
+          <li>Feijão que está dentro de uma trilha só pode ser comido se não sobrar outro.</li>
+          <li>Quando restam três feijões, eles voam para qualquer casa vazia.</li>
+          <li>Perde quem ficar com menos de três feijões ou sem ter para onde andar.</li>
+        </ol>
+      </details>
+
+      <button type="button" class="button button--secondary" (click)="restart()">
+        <span aria-hidden="true">🔄</span>
+        Começar de novo
+      </button>
+    </aside>
+  </div>
+</section>
