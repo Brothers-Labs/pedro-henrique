@@ -37,7 +37,10 @@ export const routes: Routes = [
   {
     path: 'jogos',
     title: 'Jogos',
-    data: { description: 'Jogo da memória, jogo da velha e quiz para brincar com o Pedro Henrique.' },
+    data: {
+      description:
+        'Jogo da memória, jogo da velha, trilha dos feijões, quiz e um jogo de inglês para brincar com o Pedro Henrique.',
+    },
     loadComponent: () => import('./features/games/games-page').then((m) => m.GamesPage),
   },
   {

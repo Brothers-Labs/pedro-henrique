@@ -39,7 +39,7 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     label: 'Jogos',
     route: '/jogos',
     emoji: '🎮',
-    description: 'Três joguinhos para você brincar comigo agora mesmo.',
+    description: 'Cinco joguinhos para brincar comigo e até aprender inglês.',
     color: 'mint',
   },
   {
