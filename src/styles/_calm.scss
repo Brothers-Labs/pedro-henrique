@@ -1,0 +1,67 @@
+/**
+ * Modo calmo: variação sensorial do tema, ligada pelo `CalmModeService`.
+ *
+ * O site normal é proposital e intensamente colorido e animado. Em dias de
+ * sobrecarga sensorial isso atrapalha, então o modo calmo redefine os mesmos
+ * tokens com cores dessaturadas, desliga movimento e apaga os degradês de
+ * fundo — sem tocar em nenhum componente, porque tudo consome os tokens.
+ *
+ * As cores fortes ficam mais escuras que as originais de propósito: elas são
+ * usadas como fundo de texto branco, e dessaturar sem escurecer derrubaria o
+ * contraste.
+ */
+html[data-calm='on'] {
+  --color-pink: #b05179;
+  --color-pink-soft: #f3e6ec;
+  --color-blue: #3a7897;
+  --color-blue-soft: #e3edf3;
+  --color-yellow: #d9a441;
+  --color-yellow-soft: #f4ecdf;
+  --color-mint: #38806b;
+  --color-mint-soft: #e3eeea;
+  --color-purple: #6b5d99;
+  --color-purple-soft: #e9e6f2;
+  --color-orange: #a4643f;
+  --color-orange-soft: #f3e9e3;
+
+  --surface-page: #fbf9f6;
+  --surface-muted: #f2efea;
+  --border-soft: #e6e1da;
+  --border-strong: #565073;
+
+  --shadow-sm: 0 2px 0 rgb(42 35 80 / 8%);
+  --shadow-md: 0 6px 16px rgb(42 35 80 / 8%);
+  --shadow-lg: 0 10px 28px rgb(42 35 80 / 10%);
+  --shadow-pop: 0 4px 0 var(--border-strong);
+
+  scroll-behavior: auto;
+
+  body {
+    background-image: none;
+    line-height: 1.85;
+  }
+
+  /**
+   * O `!important` é intencional: o modo calmo precisa vencer as animações
+   * declaradas dentro de cada componente, do mesmo jeito que o navegador faz
+   * com `prefers-reduced-motion`.
+   */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  // A transição entre rotas do router também é movimento.
+  &::view-transition-old(root),
+  &::view-transition-new(root) {
+    animation: none !important;
+  }
+}

@@ -2,7 +2,9 @@ import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import {
   ApplicationConfig,
+  inject,
   LOCALE_ID,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
@@ -14,6 +16,7 @@ import {
 } from '@angular/router';
 
 import { routes } from './app.routes';
+import { CalmModeService } from './core/services/calm-mode.service';
 import { SiteTitleStrategy } from './core/services/site-title.strategy';
 
 registerLocaleData(localePt, 'pt-BR');
@@ -28,6 +31,11 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions(),
     ),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
+    // O modo calmo precisa valer desde a primeira pintura, e não só quando
+    // algum componente que o consome for renderizado.
+    provideAppInitializer(() => {
+      inject(CalmModeService);
+    }),
     { provide: TitleStrategy, useExisting: SiteTitleStrategy },
   ],
 };

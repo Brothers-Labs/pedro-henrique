@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SITE_SECTIONS } from '../../core/data/site-sections.data';
+import { CalmModeToggle } from '../calm-mode-toggle/calm-mode-toggle';
 import { PROFILE } from '../../core/data/profile.data';
 import { calculateAgeInYears } from '../../core/utils/birthday';
 
 @Component({
   selector: 'app-site-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CalmModeToggle],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
 })
