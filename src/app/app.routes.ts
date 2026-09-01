@@ -15,6 +15,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
   },
   {
+    path: 'falar',
+    title: 'Prancha de falar',
+    data: {
+      description:
+        'A prancha de comunicação do Pedro Henrique: toque nos cartões, monte a frase e o computador fala.',
+    },
+    loadComponent: () =>
+      import('./features/communication/communication-page').then((m) => m.CommunicationPage),
+  },
+  {
     path: 'galeria',
     title: 'Galeria',
     data: {

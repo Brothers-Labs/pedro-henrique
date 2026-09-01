@@ -17,6 +17,17 @@
     padding-block: var(--space-2);
   }
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    // No desktop as ações vão para a ponta direita, depois do menu.
+    @include from($breakpoint-lg) {
+      order: 3;
+    }
+  }
+
   &__toggle {
     display: grid;
     place-items: center;
@@ -75,6 +86,10 @@
 }
 
 .nav {
+  @include from($breakpoint-lg) {
+    order: 2;
+  }
+
   @include until($breakpoint-lg) {
     position: absolute;
     inset-inline: 0;

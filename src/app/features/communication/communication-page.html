@@ -1,0 +1,97 @@
+<div class="board container">
+  <app-page-intro
+    emoji="🗣️"
+    title="Prancha de falar"
+    subtitle="Toque nos cartões, monte a sua frase e deixe o computador falar por você."
+    color="purple"
+  />
+
+  @if (!isSpeechSupported) {
+    <p class="board__notice" role="status">
+      <span aria-hidden="true">🔇</span>
+      Este navegador não sabe falar em voz alta. Você ainda pode montar e mostrar a sua frase.
+    </p>
+  }
+
+  <app-phrase-bar
+    [cards]="phraseCards()"
+    [text]="phraseText()"
+    [canSave]="canSavePhrase()"
+    [isSpeaking]="isSpeaking()"
+    (speakRequested)="speakPhrase()"
+    (saveRequested)="savePhrase()"
+    (clearRequested)="clearPhrase()"
+    (lastRemoved)="removeLastCard()"
+    (cardRemoved)="removeCardAt($event)"
+  />
+
+  <div class="board__categories" role="group" aria-label="Grupos de palavras">
+    @for (category of categories; track category.id) {
+      <button
+        type="button"
+        class="board__category"
+        [attr.data-color]="category.color"
+        [class.board__category--active]="activeCategoryId() === category.id"
+        [attr.aria-pressed]="activeCategoryId() === category.id"
+        (click)="selectCategory(category.id)"
+      >
+        <span aria-hidden="true">{{ category.emoji }}</span>
+        {{ category.label }}
+      </button>
+    }
+  </div>
+
+  <ul
+    class="board__grid"
+    [attr.data-color]="activeCategory().color"
+    [attr.aria-label]="activeCategory().label"
+  >
+    @for (card of visibleCards(); track card.id) {
+      <li>
+        <button type="button" class="board__card" (click)="addCard(card)">
+          <span class="board__card-emoji" aria-hidden="true">{{ card.emoji }}</span>
+          <span class="board__card-label">{{ card.label }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <section class="board__saved" aria-labelledby="titulo-frases-guardadas">
+    <h2 id="titulo-frases-guardadas" class="board__saved-title">
+      <span aria-hidden="true">⭐</span>
+      Frases que eu guardei
+    </h2>
+
+    @if (phraseBook.phrases().length) {
+      <ul class="board__saved-list">
+        @for (phrase of phraseBook.phrases(); track phrase.id) {
+          <li class="board__saved-item">
+            <button type="button" class="board__saved-speak" (click)="speakSavedPhrase(phrase)">
+              <span aria-hidden="true">🔊</span>
+              {{ phrase.text }}
+            </button>
+
+            <button
+              type="button"
+              class="board__saved-remove"
+              [attr.aria-label]="'Apagar a frase ' + phrase.text"
+              (click)="removeSavedPhrase(phrase)"
+            >
+              <span aria-hidden="true">🗑️</span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="board__saved-empty">
+        Monte uma frase e toque em <strong>Guardar</strong> para ela aparecer aqui.
+      </p>
+    }
+
+    @if (phraseBook.isFull()) {
+      <p class="board__saved-full" role="status">
+        O caderninho está cheio. Apague uma frase para guardar outra.
+      </p>
+    }
+  </section>
+</div>

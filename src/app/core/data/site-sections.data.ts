@@ -11,6 +11,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'pink',
   },
   {
+    id: 'falar',
+    label: 'Falar',
+    route: '/falar',
+    emoji: '🗣️',
+    description: 'A minha prancha de cartões: eu monto a frase e o computador fala.',
+    color: 'purple',
+  },
+  {
     id: 'galeria',
     label: 'Galeria',
     route: '/galeria',

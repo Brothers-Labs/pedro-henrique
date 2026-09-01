@@ -1,0 +1,139 @@
+import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { SpeechService } from '../../core/services/speech.service';
+import { CommunicationPage } from './communication-page';
+
+const SAVED_PHRASES_KEY = 'pedro-henrique:frases-favoritas';
+
+describe('CommunicationPage', () => {
+  let fixture: ComponentFixture<CommunicationPage>;
+  let element: HTMLElement;
+  let speech: jasmine.SpyObj<Pick<SpeechService, 'speak' | 'stop'>>;
+
+  /** Toca no cartão da posição informada dentro da categoria visível. */
+  function clickCard(position: number): void {
+    element.querySelectorAll<HTMLButtonElement>('.board__card')[position].click();
+    fixture.detectChanges();
+  }
+
+  function clickAction(label: string): void {
+    const buttons = Array.from(
+      element.querySelectorAll<HTMLButtonElement>('.phrase__actions .button'),
+    );
+    const button = buttons.find((candidate) => candidate.textContent?.includes(label));
+
+    if (!button) {
+      throw new Error(`Botão "${label}" não encontrado na faixa da frase.`);
+    }
+
+    button.click();
+    fixture.detectChanges();
+  }
+
+  function preview(): string {
+    return element.querySelector('.phrase__preview')?.textContent?.trim() ?? '';
+  }
+
+  function chips(): readonly string[] {
+    return Array.from(element.querySelectorAll('.phrase__chip')).map(
+      (chip) => chip.textContent?.trim() ?? '',
+    );
+  }
+
+  function hasSavedPhrase(text: string): boolean {
+    return Array.from(element.querySelectorAll('.board__saved-speak')).some((item) =>
+      item.textContent?.includes(text),
+    );
+  }
+
+  beforeEach(async () => {
+    localStorage.removeItem(SAVED_PHRASES_KEY);
+
+    speech = jasmine.createSpyObj<Pick<SpeechService, 'speak' | 'stop'>>('SpeechService', [
+      'speak',
+      'stop',
+    ]);
+
+    await TestBed.configureTestingModule({
+      imports: [CommunicationPage],
+      providers: [
+        {
+          provide: SpeechService,
+          useValue: { ...speech, isSupported: true, isSpeaking: signal(false).asReadonly() },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CommunicationPage);
+    element = fixture.nativeElement;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    localStorage.removeItem(SAVED_PHRASES_KEY);
+  });
+
+  it('começa com a frase vazia e o convite para montá-la', () => {
+    expect(chips().length).toBe(0);
+    expect(preview()).toBe('');
+    expect(element.querySelector('.phrase__placeholder')).not.toBeNull();
+  });
+
+  it('fala a palavra e monta a frase a cada cartão tocado', () => {
+    clickCard(0);
+
+    expect(speech.speak).toHaveBeenCalledWith('sim', jasmine.any(Object));
+    expect(chips().length).toBe(1);
+    expect(preview()).toBe('Sim.');
+  });
+
+  it('troca os cartões ao escolher outra categoria', () => {
+    const categories = element.querySelectorAll<HTMLButtonElement>('.board__category');
+    categories[1].click();
+    fixture.detectChanges();
+
+    const firstCard = element.querySelector('.board__card')?.textContent ?? '';
+    expect(firstCard).toContain('Eu quero');
+  });
+
+  it('tira da frase o cartão em que a criança toca', () => {
+    clickCard(0);
+    clickCard(1);
+    expect(chips().length).toBe(2);
+
+    element.querySelector<HTMLButtonElement>('.phrase__chip')?.click();
+    fixture.detectChanges();
+
+    expect(chips().length).toBe(1);
+    expect(preview()).toBe('Não.');
+  });
+
+  it('apaga o último cartão e limpa a frase inteira', () => {
+    clickCard(0);
+    clickCard(1);
+
+    clickAction('Apagar o último');
+    expect(preview()).toBe('Sim.');
+
+    clickAction('Limpar');
+    expect(chips().length).toBe(0);
+    expect(preview()).toBe('');
+  });
+
+  it('fala a frase inteira quando o botão Falar é usado', () => {
+    clickCard(0);
+    speech.speak.calls.reset();
+
+    clickAction('Falar');
+
+    expect(speech.speak).toHaveBeenCalledWith('Sim.', jasmine.any(Object));
+  });
+
+  it('guarda a frase montada no caderninho', () => {
+    clickCard(0);
+    clickAction('Guardar');
+
+    expect(hasSavedPhrase('Sim.')).toBeTrue();
+  });
+});

@@ -4,11 +4,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SITE_SECTIONS } from '../../core/data/site-sections.data';
 import { PROFILE } from '../../core/data/profile.data';
 import { calculateAgeInYears } from '../../core/utils/birthday';
+import { CalmModeToggle } from '../calm-mode-toggle/calm-mode-toggle';
 
 @Component({
   selector: 'app-site-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CalmModeToggle],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
 })
