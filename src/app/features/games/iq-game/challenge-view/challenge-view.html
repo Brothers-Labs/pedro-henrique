@@ -1,0 +1,146 @@
+<div class="challenge">
+  @if (isMemorizing()) {
+    <!-- Memória: a sequência aparece antes da pergunta ------------------- -->
+    @if (memoryChallenge(); as memory) {
+      <p class="challenge__prompt" role="status">
+        <span aria-hidden="true">👀</span>
+        Memorize a ordem das figurinhas!
+      </p>
+
+      <ol class="strip strip--memorizing">
+        @for (token of memory.sequence; track $index) {
+          <li class="strip__item">
+            <span class="strip__position" aria-hidden="true">{{ $index + 1 }}</span>
+            <span class="strip__symbol">
+              <span aria-hidden="true">{{ token.symbol }}</span>
+              <span class="visually-hidden">{{ token.label }}</span>
+            </span>
+          </li>
+        }
+      </ol>
+    }
+  } @else {
+    <p class="challenge__prompt">{{ challenge().prompt }}</p>
+
+    <!-- Padrões, sequências e linguagem ---------------------------------- -->
+    @if (tokenChallenge(); as tokens) {
+      @if (tokens.sequence.length > 0) {
+        <ol class="strip">
+          @for (token of tokens.sequence; track $index) {
+            <li class="strip__item">
+              <span class="strip__symbol">
+                <span aria-hidden="true">{{ token.symbol }}</span>
+                <span class="visually-hidden">{{ token.label }}</span>
+              </span>
+            </li>
+          }
+          <li class="strip__item strip__item--unknown">
+            <span class="strip__symbol" aria-label="peça escondida">?</span>
+          </li>
+        </ol>
+      }
+
+      <ul class="options">
+        @for (option of tokens.options; track $index) {
+          <li>
+            <button
+              type="button"
+              class="options__button"
+              [attr.data-state]="optionState($index)"
+              [attr.aria-label]="option.label"
+              [disabled]="isLocked()"
+              (click)="choose($index)"
+            >
+              <span aria-hidden="true">{{ option.symbol }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Raciocínio visual e rotação -------------------------------------- -->
+    @if (figureChallenge(); as figures) {
+      @if (figures.reference; as reference) {
+        <div class="reference">
+          <p class="reference__label">Figura original</p>
+          <div class="figure figure--reference" [attr.data-color]="reference.tone">
+            @for (cell of reference.cells; track $index) {
+              <span class="figure__cell" [class.figure__cell--filled]="cell"></span>
+            }
+          </div>
+        </div>
+      }
+
+      <ul class="options options--figures">
+        @for (option of figures.options; track $index) {
+          <li>
+            <button
+              type="button"
+              class="options__button options__button--figure"
+              [attr.data-state]="optionState($index)"
+              [attr.aria-label]="'Opção ' + ($index + 1)"
+              [disabled]="isLocked()"
+              (click)="choose($index)"
+            >
+              <span class="figure" [attr.data-color]="option.tone" aria-hidden="true">
+                @for (cell of option.cells; track $index) {
+                  <span class="figure__cell" [class.figure__cell--filled]="cell"></span>
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Memória: a pergunta ---------------------------------------------- -->
+    @if (memoryChallenge(); as memory) {
+      <ul class="options">
+        @for (option of memory.options; track $index) {
+          <li>
+            <button
+              type="button"
+              class="options__button"
+              [attr.data-state]="optionState($index)"
+              [attr.aria-label]="option.label"
+              [disabled]="isLocked()"
+              (click)="choose($index)"
+            >
+              <span aria-hidden="true">{{ option.symbol }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Atenção ----------------------------------------------------------- -->
+    @if (attentionChallenge(); as attention) {
+      <p class="target">
+        <span class="target__label">Procure por</span>
+        <span class="target__symbol" aria-hidden="true">{{ attention.target.symbol }}</span>
+        <strong class="target__name">{{ attention.target.label }}</strong>
+      </p>
+
+      <ul
+        class="grid"
+        [style.grid-template-columns]="gridTemplateColumns()"
+        [attr.aria-label]="'Grade com ' + attention.grid.length + ' figuras'"
+      >
+        @for (item of attention.grid; track $index) {
+          <li>
+            <button
+              type="button"
+              class="grid__cell"
+              [attr.data-state]="optionState($index)"
+              [attr.aria-label]="item.label + ', posição ' + ($index + 1)"
+              [disabled]="isLocked()"
+              (click)="choose($index)"
+            >
+              <span aria-hidden="true">{{ item.symbol }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

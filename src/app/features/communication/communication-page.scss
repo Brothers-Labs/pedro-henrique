@@ -16,6 +16,60 @@
     font-size: var(--text-sm);
   }
 
+  &__quick {
+    @include card-surface(var(--color-pink-soft));
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+
+  &__quick-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+  }
+
+  &__quick-hint {
+    font-size: var(--text-sm);
+    color: var(--text-soft);
+  }
+
+  &__quick-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin-block-start: var(--space-1);
+  }
+
+  &__quick-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-strong);
+    text-align: start;
+
+    &:hover {
+      background: var(--color-yellow-soft);
+    }
+  }
+
+  &__quick-emoji {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
   &__categories {
     display: flex;
     flex-wrap: wrap;

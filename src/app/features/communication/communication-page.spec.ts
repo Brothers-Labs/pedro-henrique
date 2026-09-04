@@ -5,11 +5,14 @@ import { SpeechService } from '../../core/services/speech.service';
 import { CommunicationPage } from './communication-page';
 
 const SAVED_PHRASES_KEY = 'pedro-henrique:frases-favoritas';
+const LANGUAGE_KEY = 'pedro-henrique:idioma';
+
+type SpeechMock = jasmine.SpyObj<Pick<SpeechService, 'speak' | 'stop' | 'isVoiceMissingFor'>>;
 
 describe('CommunicationPage', () => {
   let fixture: ComponentFixture<CommunicationPage>;
   let element: HTMLElement;
-  let speech: jasmine.SpyObj<Pick<SpeechService, 'speak' | 'stop'>>;
+  let speech: SpeechMock;
 
   /** Toca no cartão da posição informada dentro da categoria visível. */
   function clickCard(position: number): void {
@@ -31,6 +34,20 @@ describe('CommunicationPage', () => {
     fixture.detectChanges();
   }
 
+  function switchLanguage(label: string): void {
+    const options = Array.from(
+      element.querySelectorAll<HTMLButtonElement>('.language-switch__option'),
+    );
+    const option = options.find((candidate) => candidate.textContent?.includes(label));
+
+    if (!option) {
+      throw new Error(`Idioma "${label}" não encontrado no seletor.`);
+    }
+
+    option.click();
+    fixture.detectChanges();
+  }
+
   function preview(): string {
     return element.querySelector('.phrase__preview')?.textContent?.trim() ?? '';
   }
@@ -49,11 +66,15 @@ describe('CommunicationPage', () => {
 
   beforeEach(async () => {
     localStorage.removeItem(SAVED_PHRASES_KEY);
+    // A prancha abre no idioma do navegador; os testes fixam o português.
+    localStorage.setItem(LANGUAGE_KEY, 'pt-BR');
 
-    speech = jasmine.createSpyObj<Pick<SpeechService, 'speak' | 'stop'>>('SpeechService', [
+    speech = jasmine.createSpyObj<SpeechMock>('SpeechService', [
       'speak',
       'stop',
+      'isVoiceMissingFor',
     ]);
+    speech.isVoiceMissingFor.and.returnValue(false);
 
     await TestBed.configureTestingModule({
       imports: [CommunicationPage],
@@ -72,6 +93,7 @@ describe('CommunicationPage', () => {
 
   afterEach(() => {
     localStorage.removeItem(SAVED_PHRASES_KEY);
+    localStorage.removeItem(LANGUAGE_KEY);
   });
 
   it('começa com a frase vazia e o convite para montá-la', () => {
@@ -83,7 +105,7 @@ describe('CommunicationPage', () => {
   it('fala a palavra e monta a frase a cada cartão tocado', () => {
     clickCard(0);
 
-    expect(speech.speak).toHaveBeenCalledWith('sim', jasmine.any(Object));
+    expect(speech.speak).toHaveBeenCalledWith('sim', jasmine.objectContaining({ language: 'pt-BR' }));
     expect(chips().length).toBe(1);
     expect(preview()).toBe('Sim.');
   });
@@ -127,7 +149,17 @@ describe('CommunicationPage', () => {
 
     clickAction('Falar');
 
-    expect(speech.speak).toHaveBeenCalledWith('Sim.', jasmine.any(Object));
+    expect(speech.speak).toHaveBeenCalledWith('Sim.', jasmine.objectContaining({ language: 'pt-BR' }));
+  });
+
+  it('fala a frase pronta com um toque só', () => {
+    element.querySelector<HTMLButtonElement>('.board__quick-item')?.click();
+    fixture.detectChanges();
+
+    expect(speech.speak).toHaveBeenCalledWith(
+      'Eu preciso de ajuda.',
+      jasmine.objectContaining({ language: 'pt-BR' }),
+    );
   });
 
   it('guarda a frase montada no caderninho', () => {
@@ -135,5 +167,50 @@ describe('CommunicationPage', () => {
     clickAction('Guardar');
 
     expect(hasSavedPhrase('Sim.')).toBeTrue();
+  });
+
+  it('mostra a prancha inteira em inglês ao trocar o idioma', () => {
+    switchLanguage('English');
+
+    expect(element.querySelector('.intro__title')?.textContent).toContain('Talking board');
+    expect(element.querySelector('.board__card')?.textContent).toContain('yes');
+    expect(element.querySelector('.board__quick-item')?.textContent).toContain('I need help.');
+  });
+
+  it('fala em inglês depois da troca de idioma', () => {
+    switchLanguage('English');
+    speech.speak.calls.reset();
+
+    clickCard(0);
+
+    expect(speech.speak).toHaveBeenCalledWith('yes', jasmine.objectContaining({ language: 'en-US' }));
+  });
+
+  it('traduz a frase que já estava montada ao trocar de idioma', () => {
+    clickCard(0);
+    expect(preview()).toBe('Sim.');
+
+    switchLanguage('English');
+
+    expect(preview()).toBe('Yes.');
+    expect(chips().length).toBe(1);
+  });
+
+  it('separa o caderninho por idioma', () => {
+    clickCard(0);
+    clickAction('Guardar');
+
+    expect(hasSavedPhrase('Sim.')).toBeTrue();
+
+    switchLanguage('English');
+
+    expect(hasSavedPhrase('Sim.')).toBeFalse();
+    expect(hasSavedPhrase('I want water.')).toBeTrue();
+  });
+
+  it('lembra o idioma escolhido no dispositivo', () => {
+    switchLanguage('English');
+
+    expect(localStorage.getItem(LANGUAGE_KEY)).toBe('en-US');
   });
 });

@@ -5,7 +5,8 @@ TypeScript strict**, 100% front-end e sem backend.
 
 O projeto é uma landing page completa com navegação para seis seções internas — prancha de falar,
 galeria, história, ideias, jogos e vídeos — incluindo quatro jogos jogáveis, uma prancha de
-comunicação que fala em voz alta e uma área de upload de vídeos que roda inteiramente no navegador.
+comunicação bilíngue que fala em voz alta e uma área de upload de vídeos que roda inteiramente no
+navegador.
 
 ---
 
@@ -20,6 +21,7 @@ comunicação que fala em voz alta e uma área de upload de vídeos que roda int
 - [Seções do site](#seções-do-site)
 - [Prancha de falar](#prancha-de-falar)
 - [Modo calmo](#modo-calmo)
+- [Movimento (GSAP)](#movimento-gsap)
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
 - [Design system](#design-system)
 - [Acessibilidade](#acessibilidade)
@@ -35,8 +37,9 @@ comunicação que fala em voz alta e uma área de upload de vídeos que roda int
 - **Landing page completa**: hero, apresentação, "do meu jeito" (autismo e terapias), superpoderes,
   família, cartões de exploração, favoritos, medalhas, contagem regressiva do aniversário e mural
   de recados.
-- **Prancha de comunicação que fala**: 80 cartões em 8 grupos, frase montada por toques e voz do
-  próprio navegador (Web Speech API), com caderninho de frases favoritas.
+- **Prancha de comunicação bilíngue que fala**: 242 cartões em 15 grupos e 16 frases prontas, em
+  **português e inglês**, frase montada por toques e voz do próprio navegador (Web Speech API),
+  com caderninho de frases favoritas separado por idioma.
 - **Modo calmo**: um botão no cabeçalho troca o site inteiro por cores dessaturadas e sem
   movimento, para dias de sobrecarga sensorial. Já vem ligado para quem pede menos animação no
   sistema operacional.
@@ -46,8 +49,10 @@ comunicação que fala em voz alta e uma área de upload de vídeos que roda int
   em dupla) e um quiz com sorteio de perguntas.
 - **Upload de vídeos**: arrastar e soltar, miniatura gerada por `<canvas>`, duração detectada
   automaticamente, busca, ordenação e exclusão com confirmação.
-- **Sem dependências extras**: apenas Angular e RxJS. Nenhuma biblioteca de UI, animação, ícones
-  ou datas foi adicionada.
+- **Movimento com propósito**: três cenas coreografadas em GSAP (abertura do hero, barras de
+  superpoder enchendo e cartões de exploração em cascata), todas desligadas pelo modo calmo.
+- **Dependências contadas a dedo**: Angular, RxJS e GSAP. Nenhuma biblioteca de UI, ícones ou
+  datas foi adicionada.
 - **Idade sempre correta**: derivada da data de nascimento, nunca digitada à mão.
 
 ---
@@ -60,8 +65,9 @@ comunicação que fala em voz alta e uma área de upload de vídeos que roda int
 | Linguagem | TypeScript 5.8 em modo strict |
 | Reatividade | Signals (`signal`, `computed`, `input`, `output`, `toSignal`) |
 | Estilos | SCSS + CSS custom properties |
-| Persistência | IndexedDB (vídeos) e `localStorage` (recados, frases favoritas, modo calmo) |
+| Persistência | IndexedDB (vídeos) e `localStorage` (recados, frases favoritas, idioma, modo calmo) |
 | Voz | Web Speech API (`speechSynthesis`), nativa do navegador |
+| Movimento | GSAP 3.15.0 (core, sem plugins), carregado só no chunk da home |
 | Testes | Karma + Jasmine |
 
 Requisitos: **Node.js 20.19+, 22.12+ ou 24+** e npm.
@@ -103,19 +109,20 @@ src/
    ├─ app.config.ts           Providers: router, locale pt-BR, TitleStrategy
    ├─ app.routes.ts           Rotas, títulos e meta descriptions (lazy loading)
    ├─ core/
+   │  ├─ animations/          Cenas do GSAP como funções puras (motion-scene.ts)
    │  ├─ data/                Conteúdo editorial (perfil, galeria, história, ideias, quiz, prancha)
    │  ├─ models/              Interfaces e tipos do domínio
-   │  ├─ services/            IndexedDB, vídeos, mural, fala, frases, modo calmo, TitleStrategy
+   │  ├─ services/            IndexedDB, vídeos, mural, fala, frases, idioma, modo calmo, TitleStrategy
    │  ├─ theme/               Mapa de cores do tema em TypeScript
    │  └─ utils/               Funções puras (datas, formatação, frase, embaralhar, SVG, metadados)
    ├─ shared/
    │  ├─ components/          section-heading, page-intro, empty-state
-   │  ├─ directives/          reveal.directive (animação ao entrar na viewport)
+   │  ├─ directives/          reveal.directive (entrada em CSS) e motion-scene.directive (GSAP)
    │  └─ pipes/               duration, fileSize
    ├─ layout/                 site-header (menu responsivo), calm-mode-toggle e site-footer
    └─ features/
       ├─ home/                Página + 8 componentes de seção
-      ├─ communication/       Prancha de falar + phrase-bar
+      ├─ communication/       Prancha de falar + phrase-bar + language-switch
       ├─ gallery/             Grade com filtros e lightbox
       ├─ story/               Linha do tempo
       ├─ ideas/               Cartões de invenções com filtro por status
@@ -156,7 +163,7 @@ src/
 | Rota | Página | O que tem |
 | --- | --- | --- |
 | `/` | Início | Hero animado, "quem sou eu", "do meu jeito", superpoderes com barras, família, cartões de exploração, favoritos, medalhas, contagem regressiva do aniversário e mural de recados |
-| `/falar` | Prancha de falar | 80 cartões em 8 grupos, frase montada por toques, leitura em voz alta e frases favoritas |
+| `/falar` | Prancha de falar | 242 cartões em 15 grupos e 16 frases prontas, em português ou inglês, frase montada por toques, leitura em voz alta e frases favoritas |
 | `/galeria` | Galeria | 12 lembranças com filtro por categoria e lightbox (`<dialog>` nativo) |
 | `/historia` | História | Linha do tempo de 2019 a 2026, com destaques por ano |
 | `/ideias` | Ideias | Invenções com status (sonhando, desenhando, construindo, pronta), materiais e filtro |
@@ -175,22 +182,42 @@ Comunicação aumentativa e alternativa (CAA) rodando no navegador, sem app e se
 
 **Como funciona:**
 
-1. Os cartões vêm de `core/data/communication.data.ts` — 80 palavras em 8 grupos (respostas,
-   começos de frase, como eu estou, eu preciso, comidas, lugares, pessoas e brincar).
+1. Os cartões vêm de `core/data/communication.data.ts` — 242 palavras em 15 grupos (respostas,
+   começos de frase, como eu estou, eu preciso, está demais para mim, o meu corpo, comidas e
+   bebidas, lugares, pessoas, brincar, a minha rotina, na escola, como é, cores e quando).
 2. Cada toque **fala a palavra na hora** e a acrescenta à faixa da frase, no topo da página.
 3. `buildPhraseText` (`core/utils/phrase.ts`) junta as palavras, coloca a maiúscula inicial e
    fecha com ponto — sem a pontuação, o sintetizador lê a frase como uma lista.
 4. **Falar** lê a frase inteira; **Guardar** manda a frase para o caderninho de favoritas, que
-   vive no `localStorage` e guarda no máximo 12 frases.
+   vive no `localStorage` e guarda no máximo 12 frases por idioma.
 5. Tocar em um cartão já colocado o tira da frase.
+6. As **16 frases prontas** (pedir ajuda, avisar que dói, pedir uma pausa…) são faladas inteiras
+   com um toque só, sem precisar montar cartão por cartão.
 
-**Quem fala** é o `SpeechService`, sobre o `speechSynthesis` do próprio navegador: ele escolhe a
-melhor voz em `pt-BR` disponível no aparelho, cancela a fala anterior a cada novo toque e reduz a
-velocidade quando o modo calmo está ligado. Em navegadores sem suporte, a página avisa e continua
-servindo como prancha visual — a frase ainda é montada e mostrada.
+### Português e inglês
 
-Para trocar as palavras, basta editar `communication.data.ts`: nenhum componente conhece o
-conteúdo dos cartões.
+O seletor no topo troca a prancha inteira de idioma: cartões, grupos, frases prontas, botões e a
+voz. Como a página guarda os **cartões escolhidos** — e não o texto pronto —, trocar o idioma no
+meio da conversa **traduz a frase que já estava montada** em vez de apagá-la: monta-se em
+português e ouve-se em inglês.
+
+Cada rótulo em inglês foi escolhido para encaixar nos mesmos começos de frase do português
+(`Eu quero` + `suco`, `I want` + `juice`), e o tipo `Localized<T>` obriga o compilador a cobrar a
+tradução no momento em que um cartão novo é criado — nenhum cartão pode existir só em um idioma.
+
+A escolha fica guardada no dispositivo (`LanguageService`); quem nunca escolheu abre no idioma do
+navegador, com o português como padrão. O caderninho de frases favoritas é separado por idioma:
+uma frase em português lida por uma voz inglesa não sairia compreensível.
+
+**Quem fala** é o `SpeechService`, sobre o `speechSynthesis` do próprio navegador: ele recebe o
+idioma de quem chama, escolhe a melhor voz disponível no aparelho (a variante exata primeiro,
+depois qualquer voz da mesma língua), cancela a fala anterior a cada novo toque e reduz a
+velocidade quando o modo calmo está ligado. Se o aparelho não tiver nenhuma voz no idioma
+escolhido, a página avisa; em navegadores sem suporte a fala, ela continua servindo como prancha
+visual — a frase ainda é montada e mostrada.
+
+Para trocar as palavras, basta editar `communication.data.ts`, e os textos da tela em
+`communication-texts.data.ts`: nenhum componente conhece o conteúdo dos cartões.
 
 ---
 
@@ -214,6 +241,47 @@ no `<html>` e o CSS assume dali.
 
 Quem nunca escolheu herda `prefers-reduced-motion` do sistema operacional. A partir do primeiro
 toque no botão, a escolha da pessoa vale e fica guardada no `localStorage`.
+
+---
+
+## Movimento (GSAP)
+
+Três cenas na home, e só três. Cada uma responde a uma pergunta de quem chega: *de quem é este
+site*, *quanto ele já treinou cada poder* e *por onde eu entro*.
+
+| Cena | Onde | Gatilho | O que comunica |
+| --- | --- | --- | --- |
+| `hero` | `hero-section` | ao renderizar | Hierarquia da abertura: o avatar entra, o texto vem atrás |
+| `powers` | `powers-section` | ao aparecer na tela | Quantidade: a barra enche até o nível do poder |
+| `explore` | `explore-section` | ao aparecer na tela | Cascata que apresenta as portas do site |
+
+**Como está montado:**
+
+- As cenas vivem em `core/animations/motion-scene.ts` como funções puras que devolvem uma
+  timeline **pausada**. Nenhum componente de tela importa GSAP.
+- Os elementos participantes são marcados com `data-motion="..."`, nunca por classe de estilo:
+  renomear uma classe no SCSS não pode quebrar uma cena em silêncio.
+- `motion-scene.directive.ts` monta a cena dentro de um `gsap.context()` preso ao host, roda
+  tudo em `NgZone.runOutsideAngular()` e chama `revert()` ao destruir.
+- O gatilho de viewport é `IntersectionObserver`, não `ScrollTrigger`: o plugin custaria ~15 kB
+  transferidos para fazer o que o navegador já faz.
+- Toda cena usa `from()`, então **o estado final é a página como ela já era**. Se o JavaScript
+  não rodar, nada fica escondido.
+
+**Desligamento.** `MotionPreferenceService` combina `prefers-reduced-motion` com o
+[modo calmo](#modo-calmo): qualquer um dos dois desliga o movimento. Como a permissão é um
+signal, ligar o modo calmo no meio da página **reverte a cena na hora**, sem recarregar.
+
+**Custo medido.** O bundle inicial não mudou (91,20 kB transferidos): o GSAP entra apenas no
+chunk da home, que foi de 9,85 kB para 35,73 kB transferidos. Esse é o preço honesto do GSAP
+core na landing — as demais rotas não pagam nada.
+
+**Regras seguidas:** só `transform` e `opacity`; entradas de 0,45 s a 0,8 s; stagger de 0,06 s a
+0,08 s; `power2.out` nas entradas e `back.out(1.5)` uma única vez, no avatar. A barra de poder
+anima `scaleX` — a largura continua sendo a do dado, então nada dispara layout a cada frame.
+
+> O `hero__avatar-emoji` tem `wobble` em CSS e **não é tocado pelo GSAP**: dois donos do mesmo
+> `transform` produzem tremor.
 
 ---
 
@@ -284,8 +352,9 @@ Todos os tokens ficam em `src/styles/_tokens.scss`, como custom properties em `:
 `--tone-soft`, definidos uma única vez em `styles.scss`. É assim que cartões, cabeçalhos e trilhos
 mudam de cor sem duplicar CSS.
 
-**Animações** (`_animations.scss`): flutuação, balanço, entrada e pulso. Todas desligadas sob
-`prefers-reduced-motion: reduce` e no [modo calmo](#modo-calmo).
+**Animações** (`_animations.scss`): flutuação, balanço, entrada e pulso — decoração contínua em
+CSS. As três cenas coreografadas ficam no GSAP, em [Movimento](#movimento-gsap). Todas são
+desligadas sob `prefers-reduced-motion: reduce` e no [modo calmo](#modo-calmo).
 
 **Variação calma** (`_calm.scss`): a segunda paleta do site, aplicada quando o `<html>` recebe
 `data-calm="on"`. Como redefine os mesmos tokens, vale para todo componente já existente e para
@@ -308,6 +377,8 @@ qualquer um que venha depois.
   pede `prefers-reduced-motion` no sistema.
 - **Prancha de falar** para comunicação não verbal, com a frase em construção anunciada por
   `aria-live="polite"` e cada cartão da frase removível com rótulo próprio.
+- A prancha declara `lang` no idioma escolhido, para que o leitor de tela pronuncie os cartões em
+  inglês com a voz certa; o seletor de idioma expõe `aria-pressed` e vive fora de qualquer menu.
 
 ---
 
@@ -325,7 +396,8 @@ Nenhuma alteração de texto exige mexer em componente:
 | Capítulos da linha do tempo | `core/data/story.data.ts` |
 | Invenções | `core/data/ideas.data.ts` |
 | Perguntas do quiz | `core/data/quiz.data.ts` |
-| Cartões e grupos da prancha de falar | `core/data/communication.data.ts` |
+| Cartões, grupos e frases prontas da prancha de falar (pt-BR e en-US) | `core/data/communication.data.ts` |
+| Textos da tela da prancha nos dois idiomas | `core/data/communication-texts.data.ts` |
 | Itens do menu e cartões de exploração | `core/data/site-sections.data.ts` |
 | Cores do site | `styles/_tokens.scss` + `core/theme/theme-colors.ts` |
 
@@ -351,17 +423,28 @@ restrito ou remover os campos mais identificáveis (nome completo dos pais e nom
 
 ## Testes
 
-86 testes cobrindo as regras que podem quebrar em silêncio:
+115 testes cobrindo as regras que podem quebrar em silêncio:
+
+- `core/services/motion-preference.service.spec.ts` — os dois interruptores de movimento, e a
+  volta do movimento quando o modo calmo é desligado.
+- `shared/directives/motion-scene.directive.spec.ts` — contrato da cena: não toca em nada com o
+  movimento desligado, monta quando liberado, reverte na hora em que o modo calmo entra e
+  devolve o elemento ao estado original ao destruir o componente.
 
 - `core/utils/birthday.spec.ts` — idade em anos completos, virada de aniversário e contagem
   regressiva (inclusive no próprio dia).
 - `core/utils/phrase.spec.ts` — montagem da frase da prancha: junção das palavras, maiúscula
-  inicial e pontuação final sem duplicar a de quem já termina com `?`.
+  inicial e pontuação final sem duplicar a de quem já termina com `?`, nos dois idiomas.
+- `core/services/language.service.spec.ts` — escolha salva vencendo o idioma do navegador,
+  herança do inglês do navegador e valor estragado no storage caindo no português.
+- `core/services/phrase-book.service.spec.ts` — caderninho separado por idioma, limite por
+  idioma, frase repetida ignorada e frases antigas (sem idioma) migradas para português.
 - `core/services/calm-mode.service.spec.ts` — herança de `prefers-reduced-motion`, preferência
   salva vencendo o sistema e o atributo `data-calm` entrando e saindo do `<html>`.
 - `features/communication/communication-page.spec.ts` — prancha jogada pelo DOM: cartão falado ao
-  toque, troca de grupo, remoção de cartão, apagar/limpar, falar a frase inteira e guardar no
-  caderninho.
+  toque, troca de grupo, remoção de cartão, apagar/limpar, falar a frase inteira, frase pronta,
+  guardar no caderninho e a troca de idioma (tela em inglês, voz em inglês, frase já montada
+  traduzida e caderninho separado).
 - `core/utils/format.spec.ts` — duração (`m:ss` e `h:mm:ss`), tamanho de arquivo com vírgula
   decimal e normalização de texto.
 - `features/games/tic-tac-toe/tic-tac-toe.logic.spec.ts` — detecção de linha vencedora e

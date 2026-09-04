@@ -1,4 +1,4 @@
-<section class="explore container" aria-labelledby="explorar-titulo">
+<section class="explore container" aria-labelledby="explorar-titulo" appMotionScene="explore">
   <app-section-heading
     emoji="🧭"
     eyebrow="Explore o site"
@@ -8,8 +8,8 @@
   />
 
   <ul class="explore__grid">
-    @for (section of sections; track section.id; let index = $index) {
-      <li [appReveal]="revealDelay(index)">
+    @for (section of sections; track section.id) {
+      <li data-motion="explore-card">
         <a class="explore__card" [attr.data-color]="section.color" [routerLink]="section.route">
           <span class="explore__emoji" aria-hidden="true">{{ section.emoji }}</span>
           <span class="explore__title">{{ section.label }}</span>

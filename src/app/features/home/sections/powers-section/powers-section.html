@@ -1,4 +1,4 @@
-<section class="powers container" aria-labelledby="poderes-titulo">
+<section class="powers container" aria-labelledby="poderes-titulo" appMotionScene="powers">
   <app-section-heading
     emoji="⚡"
     eyebrow="Meus superpoderes"
@@ -22,7 +22,11 @@
           aria-valuemax="100"
           [attr.aria-label]="'Nível do poder ' + power.name"
         >
-          <span class="powers__meter-fill" [style.width.%]="power.level"></span>
+          <span
+            class="powers__meter-fill"
+            data-motion="power-meter"
+            [style.width.%]="power.level"
+          ></span>
         </div>
         <p class="powers__level">{{ power.level }}/100</p>
       </li>

@@ -1,0 +1,105 @@
+<section class="report" aria-labelledby="relatorio-titulo">
+  <header class="report__header">
+    <p class="report__eyebrow">Área dos responsáveis</p>
+    <h2 id="relatorio-titulo" class="report__title">Acompanhamento do Desafio da Mente</h2>
+    <p class="report__child">
+      <strong>{{ report().childName }}</strong>, {{ report().age }} anos ·
+      {{ report().evaluatedAt | date: "d 'de' MMMM 'de' y, HH:mm" }}
+    </p>
+  </header>
+
+  <!-- Índice Cognitivo ---------------------------------------------------- -->
+  <div class="index">
+    <p class="index__value">
+      <span class="index__number">{{ report().summary.cognitiveIndex }}</span>
+      <span class="index__scale">de 100</span>
+    </p>
+    <div class="index__text">
+      <h3 class="index__label">Índice Cognitivo (educativo)</h3>
+      <p class="index__description">
+        Combina acertos, dificuldade alcançada e ritmo nos
+        {{ report().summary.answered }} desafios respondidos.
+      </p>
+      <div class="bar" aria-hidden="true">
+        <span class="bar__fill" [style.width.%]="report().summary.cognitiveIndex"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicadores por habilidade ------------------------------------------ -->
+  <h3 class="report__section">Indicadores por habilidade</h3>
+  <ul class="indicators">
+    @for (indicator of indicators(); track indicator.score.skill) {
+      <li class="indicators__item">
+        <p class="indicators__head">
+          <span class="indicators__label">{{ indicator.label }}</span>
+          @if (indicator.score.answered > 0) {
+            <span class="indicators__value">
+              {{ indicator.percentage }}% · {{ indicator.score.correct }} de
+              {{ indicator.score.answered }}
+            </span>
+          } @else {
+            <span class="indicators__value">Ainda não praticado</span>
+          }
+        </p>
+        <div class="bar" aria-hidden="true">
+          <span class="bar__fill" [style.width.%]="indicator.percentage"></span>
+        </div>
+      </li>
+    }
+  </ul>
+
+  <!-- Destaques e prática -------------------------------------------------- -->
+  <div class="notes">
+    <div class="notes__block">
+      <h3 class="report__section">Pontos de destaque</h3>
+      @if (report().highlights.length > 0) {
+        <ul class="notes__list">
+          @for (skill of report().highlights; track skill) {
+            <li>{{ skillLabels[skill] }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="notes__empty">
+          Ainda não há um destaque isolado: o desempenho ficou equilibrado entre as habilidades.
+        </p>
+      }
+    </div>
+
+    <div class="notes__block">
+      <h3 class="report__section">Habilidades para praticar</h3>
+      @if (report().toPractice.length > 0) {
+        <ul class="notes__list">
+          @for (skill of report().toPractice; track skill) {
+            <li>{{ skillLabels[skill] }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="notes__empty">Nenhuma habilidade ficou para trás nesta jornada.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Histórico -------------------------------------------------------------- -->
+  @if (previousJourneys().length > 0) {
+    <h3 class="report__section">Jornadas anteriores</h3>
+    <ul class="history">
+      @for (record of previousJourneys(); track record.completedAt) {
+        <li class="history__item">
+          <span>{{ record.completedAt | date: "d 'de' MMM 'de' y" }}</span>
+          <span class="history__index">Índice {{ record.summary.cognitiveIndex }}</span>
+          <span class="history__age">{{ record.summary.age }} anos</span>
+        </li>
+      }
+    </ul>
+  }
+
+  <p class="report__disclaimer">
+    <span aria-hidden="true">ℹ️</span>
+    {{ disclaimer }}
+  </p>
+
+  <div class="report__actions">
+    <button type="button" class="button button--small" (click)="close()">Fechar</button>
+  </div>
+</section>

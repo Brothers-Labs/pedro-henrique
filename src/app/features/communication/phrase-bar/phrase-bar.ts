@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import type { CommunicationCard } from '../../../core/models/communication.model';
+import type { LocalizedCard, PhraseBarTexts } from '../../../core/models/communication.model';
 
 /**
  * Faixa da frase em construção: mostra os cartões escolhidos e as ações
- * sobre eles. É puramente apresentacional — quem guarda a frase é a página.
+ * sobre eles. É puramente apresentacional — quem guarda a frase e quem escolhe
+ * o idioma é a página.
  */
 @Component({
   selector: 'app-phrase-bar',
@@ -13,8 +14,9 @@ import type { CommunicationCard } from '../../../core/models/communication.model
   styleUrl: './phrase-bar.scss',
 })
 export class PhraseBar {
-  readonly cards = input.required<readonly CommunicationCard[]>();
+  readonly cards = input.required<readonly LocalizedCard[]>();
   readonly text = input.required<string>();
+  readonly texts = input.required<PhraseBarTexts>();
   readonly canSave = input.required<boolean>();
   readonly isSpeaking = input(false);
 

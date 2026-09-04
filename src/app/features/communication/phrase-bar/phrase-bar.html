@@ -1,7 +1,7 @@
 <section class="phrase" aria-labelledby="titulo-da-frase">
   <h2 id="titulo-da-frase" class="phrase__title">
     <span aria-hidden="true">💬</span>
-    A minha frase
+    {{ texts().title }}
   </h2>
 
   <div class="phrase__strip">
@@ -9,7 +9,7 @@
       <button
         type="button"
         class="phrase__chip"
-        [attr.aria-label]="'Tirar ' + card.label + ' da frase'"
+        [attr.aria-label]="texts().removeCard(card.label)"
         (click)="cardRemoved.emit($index)"
       >
         <span aria-hidden="true">{{ card.emoji }}</span>
@@ -17,7 +17,7 @@
         <span class="phrase__chip-remove" aria-hidden="true">✕</span>
       </button>
     } @empty {
-      <p class="phrase__placeholder">Toque nos cartões lá embaixo para montar a sua frase.</p>
+      <p class="phrase__placeholder">{{ texts().placeholder }}</p>
     }
   </div>
 
@@ -31,7 +31,7 @@
       (click)="speakRequested.emit()"
     >
       <span aria-hidden="true">{{ isSpeaking() ? '🔈' : '🔊' }}</span>
-      Falar
+      {{ texts().speak }}
     </button>
 
     <button
@@ -41,7 +41,7 @@
       (click)="lastRemoved.emit()"
     >
       <span aria-hidden="true">⬅️</span>
-      Apagar o último
+      {{ texts().undo }}
     </button>
 
     <button
@@ -51,7 +51,7 @@
       (click)="clearRequested.emit()"
     >
       <span aria-hidden="true">🧹</span>
-      Limpar
+      {{ texts().clear }}
     </button>
 
     <button
@@ -61,7 +61,7 @@
       (click)="saveRequested.emit()"
     >
       <span aria-hidden="true">⭐</span>
-      Guardar
+      {{ texts().save }}
     </button>
   </div>
 </section>

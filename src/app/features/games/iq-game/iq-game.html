@@ -1,0 +1,249 @@
+<section class="mind" aria-labelledby="mente-titulo">
+  <header class="mind__header">
+    <h3 id="mente-titulo" class="mind__title">
+      <span aria-hidden="true">🧠</span>
+      Desafio da Mente
+    </h3>
+    <p class="mind__tagline">Uma aventura para descobrir suas habilidades!</p>
+    <p class="mind__subtitle">
+      Complete desafios de lógica, memória, atenção e raciocínio para descobrir seus superpoderes.
+    </p>
+  </header>
+
+  @switch (phase()) {
+    <!-- Etapa inicial: idade ------------------------------------------------ -->
+    @case ('inicio') {
+      <div class="start" [attr.data-color]="band().color">
+        <p class="start__emoji" aria-hidden="true">{{ band().emoji }}</p>
+
+        <div class="start__text">
+          <h4 class="start__title">
+            {{ childName }}, você tem {{ age() }} anos. Preparado para começar?
+          </h4>
+          <p class="start__band">
+            <strong>{{ band().title }}</strong> · {{ band().description }}
+          </p>
+        </div>
+
+        <div class="stepper" role="group" aria-labelledby="idade-legenda">
+          <span id="idade-legenda" class="stepper__legend">Escolha a idade</span>
+
+          <div class="stepper__controls">
+            <button
+              type="button"
+              class="stepper__button"
+              aria-label="Diminuir a idade"
+              [disabled]="!canDecreaseAge()"
+              (click)="decreaseAge()"
+            >
+              <span aria-hidden="true">−</span>
+            </button>
+
+            <output class="stepper__value" aria-live="polite">
+              {{ age() }} <span class="stepper__unit">anos</span>
+            </output>
+
+            <button
+              type="button"
+              class="stepper__button"
+              aria-label="Aumentar a idade"
+              [disabled]="!canIncreaseAge()"
+              (click)="increaseAge()"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+
+          <p class="stepper__hint">De {{ minAge }} a {{ maxAge }} anos.</p>
+        </div>
+
+        <button type="button" class="button button--primary start__cta" (click)="startJourney()">
+          <span aria-hidden="true">🚀</span>
+          Começar minha aventura
+        </button>
+      </div>
+    }
+
+    <!-- Mapa da jornada ------------------------------------------------------ -->
+    @case ('mapa') {
+      <div class="hud" [attr.data-color]="band().color">
+        <p class="hud__band">
+          <span class="hud__emoji" aria-hidden="true">{{ band().emoji }}</span>
+          <span>
+            <strong>{{ band().title }}</strong>
+            <small>{{ age() }} anos</small>
+          </span>
+        </p>
+
+        <div class="hud__progress">
+          <div class="meter">
+            <span class="meter__fill" [style.width.%]="journeyPercentage()"></span>
+          </div>
+          <p class="hud__count">
+            {{ answers().length }} de {{ totalChallenges() }} desafios · {{ totalXp() }} XP
+          </p>
+        </div>
+
+        <p class="hud__streak">
+          <span aria-hidden="true">🔥</span>
+          <span>Sequência: {{ streak() }}</span>
+        </p>
+      </div>
+
+      <app-island-map
+        [islands]="islands()"
+        [currentDone]="challengeNumber()"
+        [currentTotal]="challengesPerIsland()"
+        (entered)="enterIsland()"
+      />
+
+      <div class="next">
+        <p class="next__label">Próxima parada</p>
+        <p class="next__island">
+          <span aria-hidden="true">{{ currentIsland().emoji }}</span>
+          <strong>{{ currentIsland().name }}</strong>
+        </p>
+        <p class="next__description">{{ currentIsland().description }}</p>
+        <button type="button" class="button button--primary" (click)="enterIsland()">
+          <span aria-hidden="true">▶️</span>
+          Entrar na ilha
+        </button>
+      </div>
+
+      <app-achievement-list [items]="achievementItems()" />
+    }
+
+    <!-- Desafio em andamento ------------------------------------------------- -->
+    @case ('desafio') {
+      @if (currentChallenge(); as challenge) {
+        <div class="stage" [attr.data-color]="currentIsland().color">
+          <p class="stage__badges">
+            <span class="stage__badge">
+              <span aria-hidden="true">{{ currentIsland().emoji }}</span>
+              {{ currentIsland().name }}
+            </span>
+            <span class="stage__badge">
+              Desafio {{ challengeNumber() + 1 }} de {{ challengesPerIsland() }}
+            </span>
+            <span class="stage__badge">{{ skillLabels[challenge.skill] }}</span>
+          </p>
+
+          <app-challenge-view
+            [challenge]="challenge"
+            [phase]="challengePhase()"
+            [status]="status()"
+            [chosenIndex]="chosenIndex()"
+            (answered)="answer($event)"
+          />
+
+          @if (isSettled()) {
+            <div class="feedback" [attr.data-status]="status()" role="status">
+              <p class="feedback__title">
+                <span aria-hidden="true">{{ status() === 'certo' ? '🎉' : '💪' }}</span>
+                {{ feedbackMessage() }}
+              </p>
+
+              <p class="feedback__xp">+{{ lastEarnedXp() }} XP</p>
+
+              @if (hasLevelledUp()) {
+                <p class="feedback__levelup">
+                  <span aria-hidden="true">⭐</span>
+                  {{ levelUpMessage }}
+                </p>
+              }
+
+              <button
+                #continueButton
+                type="button"
+                class="button button--accent"
+                (click)="continueJourney()"
+              >
+                {{ isLastChallengeOfIsland() ? 'Concluir a ilha' : 'Próximo desafio' }}
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Comemoração final ----------------------------------------------------- -->
+    @case ('resultado') {
+      <div class="finish" role="status">
+        <p class="finish__emoji" aria-hidden="true">🎁</p>
+        <p class="finish__title">Parabéns, {{ childName }}!</p>
+        <p class="finish__message">Você completou o Desafio da Mente!</p>
+
+        <p class="finish__power">
+          <span class="finish__power-label">Seu superpoder</span>
+          <strong>{{ superPowerLabels[summary().superPowerSkill] }}</strong>
+          <span class="finish__power-skill">{{ skillLabels[summary().superPowerSkill] }}</span>
+        </p>
+
+        <ul class="scores">
+          @for (score of summary().skills; track score.skill) {
+            <li class="scores__item">
+              <span class="scores__label">{{ skillLabels[score.skill] }}</span>
+              <span class="scores__stars" [attr.aria-label]="score.stars + ' de 5 estrelas'">
+                <span aria-hidden="true">
+                  @for (slot of starSlots; track slot) {
+                    <span class="scores__star" [class.scores__star--on]="score.stars >= slot">
+                      ★
+                    </span>
+                  }
+                </span>
+              </span>
+            </li>
+          }
+        </ul>
+
+        <p class="finish__growing">
+          <span aria-hidden="true">🌱</span>
+          Continue treinando <strong>{{ skillLabels[summary().growingSkill] }}</strong> — a cada
+          jornada fica mais fácil!
+        </p>
+
+        <p class="finish__xp">
+          Você juntou {{ totalXp() }} XP e chegou a uma sequência de {{ bestStreak() }} acertos.
+        </p>
+
+        <div class="finish__actions">
+          <button type="button" class="button button--primary" (click)="playAgain()">
+            <span aria-hidden="true">🔄</span>
+            Jogar de novo
+          </button>
+          <button type="button" class="button button--secondary" (click)="backToStart()">
+            <span aria-hidden="true">🎮</span>
+            Voltar aos jogos
+          </button>
+        </div>
+      </div>
+
+      <app-achievement-list [items]="achievementItems()" />
+    }
+  }
+
+  <!-- Acesso dos responsáveis ------------------------------------------------- -->
+  @if (phase() !== 'inicio') {
+    <div class="guardian-access">
+      <button
+        type="button"
+        class="button button--ghost button--small"
+        (click)="openGuardianReport()"
+      >
+        <span aria-hidden="true">👨‍👩‍👧</span>
+        Área dos responsáveis
+      </button>
+    </div>
+  }
+</section>
+
+<dialog #guardianDialog class="guardian" (close)="closeGuardianReport()">
+  @if (isGuardianOpen()) {
+    <app-guardian-report
+      [report]="guardianReport()"
+      [history]="history()"
+      (closed)="closeGuardianReport()"
+    />
+  }
+</dialog>

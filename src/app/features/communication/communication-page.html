@@ -1,21 +1,33 @@
-<div class="board container">
+<div class="board container" [attr.lang]="language()">
   <app-page-intro
     emoji="🗣️"
-    title="Prancha de falar"
-    subtitle="Toque nos cartões, monte a sua frase e deixe o computador falar por você."
+    [title]="texts().title"
+    [subtitle]="texts().subtitle"
     color="purple"
+  />
+
+  <app-language-switch
+    [current]="language()"
+    [label]="texts().languageLabel"
+    (languageSelected)="selectLanguage($event)"
   />
 
   @if (!isSpeechSupported) {
     <p class="board__notice" role="status">
       <span aria-hidden="true">🔇</span>
-      Este navegador não sabe falar em voz alta. Você ainda pode montar e mostrar a sua frase.
+      {{ texts().speechUnsupported }}
+    </p>
+  } @else if (isVoiceMissing()) {
+    <p class="board__notice" role="status">
+      <span aria-hidden="true">🗣️</span>
+      {{ texts().voiceMissing }}
     </p>
   }
 
   <app-phrase-bar
-    [cards]="phraseCards()"
+    [cards]="chosenCards()"
     [text]="phraseText()"
+    [texts]="texts().phraseBar"
     [canSave]="canSavePhrase()"
     [isSpeaking]="isSpeaking()"
     (speakRequested)="speakPhrase()"
@@ -25,7 +37,27 @@
     (cardRemoved)="removeCardAt($event)"
   />
 
-  <div class="board__categories" role="group" aria-label="Grupos de palavras">
+  <section class="board__quick" aria-labelledby="titulo-frases-rapidas">
+    <h2 id="titulo-frases-rapidas" class="board__quick-title">
+      <span aria-hidden="true">⚡</span>
+      {{ texts().quickPhrasesTitle }}
+    </h2>
+
+    <p class="board__quick-hint">{{ texts().quickPhrasesHint }}</p>
+
+    <ul class="board__quick-list">
+      @for (phrase of quickPhrases; track phrase.id) {
+        <li>
+          <button type="button" class="board__quick-item" (click)="speakQuickPhrase(phrase)">
+            <span class="board__quick-emoji" aria-hidden="true">{{ phrase.emoji }}</span>
+            {{ phrase.text[language()] }}
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <div class="board__categories" role="group" [attr.aria-label]="texts().categoriesLabel">
     @for (category of categories; track category.id) {
       <button
         type="button"
@@ -36,7 +68,7 @@
         (click)="selectCategory(category.id)"
       >
         <span aria-hidden="true">{{ category.emoji }}</span>
-        {{ category.label }}
+        {{ category.label[language()] }}
       </button>
     }
   </div>
@@ -44,13 +76,13 @@
   <ul
     class="board__grid"
     [attr.data-color]="activeCategory().color"
-    [attr.aria-label]="activeCategory().label"
+    [attr.aria-label]="activeCategory().label[language()]"
   >
     @for (card of visibleCards(); track card.id) {
       <li>
         <button type="button" class="board__card" (click)="addCard(card)">
           <span class="board__card-emoji" aria-hidden="true">{{ card.emoji }}</span>
-          <span class="board__card-label">{{ card.label }}</span>
+          <span class="board__card-label">{{ card.label[language()] }}</span>
         </button>
       </li>
     }
@@ -59,12 +91,12 @@
   <section class="board__saved" aria-labelledby="titulo-frases-guardadas">
     <h2 id="titulo-frases-guardadas" class="board__saved-title">
       <span aria-hidden="true">⭐</span>
-      Frases que eu guardei
+      {{ texts().savedTitle }}
     </h2>
 
-    @if (phraseBook.phrases().length) {
+    @if (savedPhrases().length) {
       <ul class="board__saved-list">
-        @for (phrase of phraseBook.phrases(); track phrase.id) {
+        @for (phrase of savedPhrases(); track phrase.id) {
           <li class="board__saved-item">
             <button type="button" class="board__saved-speak" (click)="speakSavedPhrase(phrase)">
               <span aria-hidden="true">🔊</span>
@@ -74,7 +106,7 @@
             <button
               type="button"
               class="board__saved-remove"
-              [attr.aria-label]="'Apagar a frase ' + phrase.text"
+              [attr.aria-label]="texts().removeSavedPhrase(phrase.text)"
               (click)="removeSavedPhrase(phrase)"
             >
               <span aria-hidden="true">🗑️</span>
@@ -83,15 +115,11 @@
         }
       </ul>
     } @else {
-      <p class="board__saved-empty">
-        Monte uma frase e toque em <strong>Guardar</strong> para ela aparecer aqui.
-      </p>
+      <p class="board__saved-empty">{{ texts().savedEmpty }}</p>
     }
 
-    @if (phraseBook.isFull()) {
-      <p class="board__saved-full" role="status">
-        O caderninho está cheio. Apague uma frase para guardar outra.
-      </p>
+    @if (isPhraseBookFull()) {
+      <p class="board__saved-full" role="status">{{ texts().savedFull }}</p>
     }
   </section>
 </div>
