@@ -1,0 +1,113 @@
+@use 'mixins' as *;
+
+/**
+ * O mapa é uma faixa rolável: mesmo no celular o caminho continua sendo uma
+ * linha só, em vez de quebrar em fileiras que não se leem como jornada.
+ */
+.map {
+  @include card-surface(var(--surface-inverse));
+
+  padding: var(--space-4);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  &__path {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+    min-width: max-content;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__stop {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    &--linked::after {
+      content: '';
+      width: 1.75rem;
+      border-top: 3px dashed rgb(255 255 255 / 35%);
+    }
+  }
+}
+
+.island {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-1);
+  width: 8.5rem;
+  height: 100%;
+  padding: var(--space-3) var(--space-2);
+  border: 3px solid transparent;
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 8%);
+  color: var(--text-on-color);
+  font-family: var(--font-display);
+  text-align: center;
+  transition: transform var(--transition-fast), background-color var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-3px);
+    background: rgb(255 255 255 / 18%);
+  }
+
+  &[data-state='concluida'] {
+    background: rgb(255 255 255 / 14%);
+  }
+
+  &[data-state='atual'] {
+    border-color: var(--tone);
+    background: rgb(255 255 255 / 22%);
+  }
+
+  &[data-state='recompensa'] {
+    border-color: var(--color-yellow);
+    background: rgb(255 255 255 / 22%);
+  }
+
+  &[data-state='bloqueada'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &__scene {
+    font-size: 2.25rem;
+    line-height: 1;
+  }
+
+  &__name {
+    font-size: var(--text-xs);
+    font-weight: 800;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  &__state {
+    padding: 0.1rem var(--space-2);
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 16%);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: rgb(255 255 255 / 85%);
+  }
+
+  &__progress {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    color: rgb(255 255 255 / 78%);
+  }
+
+  @include reduced-motion {
+    transition: none;
+
+    &:hover:not(:disabled) {
+      transform: none;
+    }
+  }
+}

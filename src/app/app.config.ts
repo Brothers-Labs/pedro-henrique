@@ -31,8 +31,8 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions(),
     ),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
-    // O modo calmo precisa valer desde a primeira pintura, e não só quando
-    // algum componente que o consome for renderizado.
+    // O modo calmo precisa valer desde a primeira pintura, e não só a partir do
+    // momento em que algum componente que o consome for renderizado.
     provideAppInitializer(() => {
       inject(CalmModeService);
     }),

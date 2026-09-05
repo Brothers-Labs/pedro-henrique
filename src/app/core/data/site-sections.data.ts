@@ -11,6 +11,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'pink',
   },
   {
+    id: 'falar',
+    label: 'Falar',
+    route: '/falar',
+    emoji: '🗣️',
+    description: 'A minha prancha de cartões: eu monto a frase e o computador fala.',
+    color: 'purple',
+  },
+  {
     id: 'galeria',
     label: 'Galeria',
     route: '/galeria',
@@ -39,7 +47,7 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     label: 'Jogos',
     route: '/jogos',
     emoji: '🎮',
-    description: 'Três joguinhos para você brincar comigo agora mesmo.',
+    description: 'Cinco joguinhos para brincar comigo e até aprender inglês.',
     color: 'mint',
   },
   {

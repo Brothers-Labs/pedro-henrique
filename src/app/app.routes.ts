@@ -15,6 +15,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
   },
   {
+    path: 'falar',
+    title: 'Prancha de falar',
+    data: {
+      description:
+        'A prancha de comunicação do Pedro Henrique: toque nos cartões, monte a frase e o computador fala.',
+    },
+    loadComponent: () =>
+      import('./features/communication/communication-page').then((m) => m.CommunicationPage),
+  },
+  {
     path: 'galeria',
     title: 'Galeria',
     data: {
@@ -37,7 +47,10 @@ export const routes: Routes = [
   {
     path: 'jogos',
     title: 'Jogos',
-    data: { description: 'Jogo da memória, jogo da velha e quiz para brincar com o Pedro Henrique.' },
+    data: {
+      description:
+        'Jogo da memória, jogo da velha, trilha dos feijões, quiz e um jogo de inglês para brincar com o Pedro Henrique.',
+    },
     loadComponent: () => import('./features/games/games-page').then((m) => m.GamesPage),
   },
   {

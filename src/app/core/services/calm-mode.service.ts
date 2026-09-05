@@ -10,8 +10,8 @@ const DISABLED_VALUE = 'off';
 /**
  * Traduz o valor cru do storage na preferência salva.
  *
- * Devolve `null` quando ninguém escolheu ainda, para que a decisão volte a ser
- * do sistema operacional em vez de assumir um padrão silencioso.
+ * Devolve `null` quando ninguém escolheu ainda, para que a decisão continue
+ * sendo do sistema operacional em vez de assumir um padrão silencioso.
  */
 export function parseCalmPreference(raw: string | null): boolean | null {
   if (raw === ENABLED_VALUE) {
@@ -75,8 +75,7 @@ export class CalmModeService {
 }
 
 function resolveInitialPreference(): boolean {
-  const stored = parseCalmPreference(readStoredPreference());
-  return stored ?? prefersReducedMotion();
+  return parseCalmPreference(readStoredPreference()) ?? prefersReducedMotion();
 }
 
 function readStoredPreference(): string | null {

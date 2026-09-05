@@ -2,11 +2,14 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 import { PageIntro } from '../../shared/components/page-intro/page-intro';
 import { BeansGame } from './beans-game/beans-game';
+import { EnglishGame } from './english-game/english-game';
+import { IqGame } from './iq-game/iq-game';
+import { MathGame } from './math-game/math-game';
 import { MemoryGame } from './memory-game/memory-game';
 import { QuizGame } from './quiz-game/quiz-game';
 import { TicTacToe } from './tic-tac-toe/tic-tac-toe';
 
-type GameId = 'memoria' | 'velha' | 'feijoes' | 'quiz';
+type GameId = 'memoria' | 'velha' | 'feijoes' | 'quiz' | 'ingles' | 'matematica' | 'qi';
 
 interface GameTab {
   readonly id: GameId;
@@ -19,12 +22,24 @@ const GAME_TABS: readonly GameTab[] = [
   { id: 'velha', label: 'Jogo da velha', emoji: '❌' },
   { id: 'feijoes', label: 'Trilha dos feijões', emoji: '🫘' },
   { id: 'quiz', label: 'Quiz', emoji: '❓' },
+  { id: 'ingles', label: 'Inglês', emoji: '🔤' },
+  { id: 'matematica', label: 'Matemática', emoji: '➕' },
+  { id: 'qi', label: 'Teste QI', emoji: '🧠' },
 ];
 
 @Component({
   selector: 'app-games-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageIntro, MemoryGame, TicTacToe, BeansGame, QuizGame],
+  imports: [
+    PageIntro,
+    MemoryGame,
+    TicTacToe,
+    BeansGame,
+    QuizGame,
+    EnglishGame,
+    MathGame,
+    IqGame,
+  ],
   templateUrl: './games-page.html',
   styleUrl: './games-page.scss',
 })

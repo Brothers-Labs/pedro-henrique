@@ -1,0 +1,18 @@
+<div class="levels" role="group" aria-label="Escolha o nível de dificuldade">
+  @for (option of levels(); track option.id) {
+    <button
+      type="button"
+      class="levels__card"
+      [attr.data-color]="option.color"
+      [class.levels__card--active]="selectedId() === option.id"
+      [attr.aria-pressed]="selectedId() === option.id"
+      (click)="selected.emit(option.id)"
+    >
+      <span class="levels__emoji" aria-hidden="true">{{ option.emoji }}</span>
+      <strong class="levels__label">{{ option.label }}</strong>
+      <small class="levels__age">{{ option.ageRange }}</small>
+      <span class="levels__description">{{ option.description }}</span>
+      <span class="levels__xp">{{ option.xpPerChallenge }} XP por fase</span>
+    </button>
+  }
+</div>

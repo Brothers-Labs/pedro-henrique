@@ -1,0 +1,41 @@
+<div class="map">
+  <ol class="map__path" aria-label="Mapa da jornada">
+    @for (step of islands(); track step.island.id) {
+      <li class="map__stop" [class.map__stop--linked]="!$last">
+        <button
+          type="button"
+          class="island"
+          [attr.data-color]="step.island.color"
+          [attr.data-state]="step.state"
+          [attr.aria-current]="step.state === 'atual' ? 'step' : null"
+          [attr.aria-label]="ariaLabelFor(step)"
+          [disabled]="step.state !== 'atual' && step.state !== 'disponivel'"
+          (click)="enter(step)"
+        >
+          <span class="island__scene" aria-hidden="true">
+            @switch (step.state) {
+              @case ('bloqueada') {
+                🔒
+              }
+              @case ('concluida') {
+                ✅
+              }
+              @default {
+                {{ step.island.emoji }}
+              }
+            }
+          </span>
+
+          <span class="island__name">{{ step.island.name }}</span>
+          <span class="island__state">{{ stateLabels[step.state] }}</span>
+
+          @if (step.state === 'atual' && currentTotal() > 0) {
+            <span class="island__progress">
+              Desafio {{ currentDone() + 1 }} de {{ currentTotal() }}
+            </span>
+          }
+        </button>
+      </li>
+    }
+  </ol>
+</div>

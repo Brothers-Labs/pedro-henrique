@@ -1,4 +1,4 @@
-<section class="hero" aria-labelledby="hero-titulo">
+<section class="hero" aria-labelledby="hero-titulo" appMotionScene="hero">
   <div class="hero__decor" aria-hidden="true">
     @for (emoji of floatingEmojis; track emoji) {
       <span class="hero__sticker">{{ emoji }}</span>
@@ -7,19 +7,19 @@
 
   <div class="hero__inner container">
     <div class="hero__content">
-      <p class="hero__welcome">
+      <p class="hero__welcome" data-motion="hero-line">
         <span aria-hidden="true">👋</span>
         Bem-vindo ao meu site!
       </p>
 
-      <h1 id="hero-titulo" class="hero__title">
+      <h1 id="hero-titulo" class="hero__title" data-motion="hero-line">
         Oi, eu sou o
         <span class="hero__name">{{ profile.firstName }}</span>
       </h1>
 
-      <p class="hero__tagline">{{ profile.tagline }}</p>
+      <p class="hero__tagline" data-motion="hero-line">{{ profile.tagline }}</p>
 
-      <div class="hero__actions">
+      <div class="hero__actions" data-motion="hero-line">
         <a class="button button--primary" routerLink="/galeria">
           <span aria-hidden="true">🖼️</span>
           Ver minha galeria
@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <div class="hero__avatar">
+    <div class="hero__avatar" data-motion="hero-avatar">
       <span class="hero__avatar-emoji" aria-hidden="true">{{ profile.avatarEmoji }}</span>
       <span class="hero__badge">{{ age }} anos</span>
     </div>
@@ -39,7 +39,7 @@
 
   <dl class="hero__facts container">
     @for (fact of profile.quickFacts; track fact.label) {
-      <div class="hero__fact">
+      <div class="hero__fact" data-motion="hero-fact">
         <dt class="hero__fact-label">
           <span aria-hidden="true">{{ fact.emoji }}</span>
           {{ fact.label }}
