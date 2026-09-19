@@ -22,7 +22,7 @@
     font-weight: 700;
     color: var(--text-strong);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-yellow);
     }
 

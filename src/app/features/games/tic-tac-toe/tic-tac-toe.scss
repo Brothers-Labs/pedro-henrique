@@ -45,7 +45,7 @@
     line-height: 1;
     transition: background-color var(--transition-fast), transform var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       background: var(--color-yellow-soft);
       transform: scale(1.04);
     }
@@ -62,7 +62,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover:not(:disabled) {
+      @include hover-enabled {
         transform: none;
       }
     }

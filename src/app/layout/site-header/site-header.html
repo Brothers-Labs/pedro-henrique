@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header__inner container">
-    <a class="brand" routerLink="/" (click)="closeMenu()">
+    <a class="brand" routerLink="/">
       <span class="brand__badge">
         <!-- Decorativa: o nome do Pedro Henrique já é o texto deste link. -->
         <img
@@ -19,27 +19,7 @@
       </span>
     </a>
 
-    <div class="header__actions">
-      <app-calm-mode-toggle />
-
-      <button
-        type="button"
-        class="header__toggle"
-        [attr.aria-expanded]="isMenuOpen()"
-        aria-controls="menu-principal"
-        (click)="toggleMenu()"
-      >
-        <span aria-hidden="true">{{ isMenuOpen() ? '✕' : '☰' }}</span>
-        <span class="visually-hidden">{{ isMenuOpen() ? 'Fechar menu' : 'Abrir menu' }}</span>
-      </button>
-    </div>
-
-    <nav
-      id="menu-principal"
-      class="nav"
-      [class.nav--open]="isMenuOpen()"
-      aria-label="Menu principal"
-    >
+    <nav id="menu-principal" class="nav" aria-label="Menu principal">
       <ul class="nav__list">
         @for (section of sections; track section.id) {
           <li>
@@ -49,7 +29,7 @@
               [routerLink]="section.route"
               routerLinkActive="nav__link--active"
               [routerLinkActiveOptions]="{ exact: section.route === '/' }"
-              (click)="closeMenu()"
+              ariaCurrentWhenActive="page"
             >
               <span aria-hidden="true">{{ section.emoji }}</span>
               {{ section.label }}
@@ -58,5 +38,7 @@
         }
       </ul>
     </nav>
+
+    <app-calm-mode-toggle />
   </div>
 </header>

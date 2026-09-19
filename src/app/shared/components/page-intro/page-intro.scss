@@ -2,35 +2,50 @@
 
 :host {
   display: block;
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
+
+  @include from($breakpoint-md) {
+    margin-bottom: var(--space-7);
+  }
 }
 
+/**
+ * No celular a abertura é uma faixa baixa: emoji à esquerda, texto à direita.
+ * Empilhar e centralizar, como no desktop, custava quase um terço da tela antes
+ * de a pessoa ver o conteúdo da página.
+ */
 .intro {
   @include card-surface(var(--tone-soft, var(--color-pink-soft)));
 
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-6);
+  gap: var(--space-4);
+  padding: var(--space-4);
   box-shadow: var(--shadow-pop);
 
-  @include until($breakpoint-md) {
-    flex-direction: column;
-    text-align: center;
+  @include from($breakpoint-md) {
+    gap: var(--space-5);
+    padding: var(--space-6);
   }
 
   &__emoji {
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    width: 5.5rem;
-    height: 5.5rem;
+    width: 3.25rem;
+    height: 3.25rem;
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-card);
-    font-size: 2.75rem;
+    font-size: 1.75rem;
     line-height: 1;
     animation: wobble 4s ease-in-out infinite;
+
+    @include from($breakpoint-md) {
+      width: 5.5rem;
+      height: 5.5rem;
+      font-size: 2.75rem;
+    }
 
     @include reduced-motion {
       animation: none;
@@ -40,15 +55,28 @@
   &__text {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-1);
+    min-width: 0;
+
+    @include from($breakpoint-md) {
+      gap: var(--space-2);
+    }
   }
 
   &__title {
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
+
+    @include from($breakpoint-md) {
+      font-size: var(--text-2xl);
+    }
   }
 
   &__subtitle {
-    font-size: var(--text-lg);
+    font-size: var(--text-md);
     color: var(--text-body);
+
+    @include from($breakpoint-md) {
+      font-size: var(--text-lg);
+    }
   }
 }

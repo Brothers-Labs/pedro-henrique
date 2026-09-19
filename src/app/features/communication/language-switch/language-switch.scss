@@ -23,7 +23,7 @@
     font-weight: 700;
     transition: background-color var(--transition-fast), color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       color: var(--text-strong);
     }
 

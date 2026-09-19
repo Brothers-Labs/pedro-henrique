@@ -1,30 +1,60 @@
 @use 'mixins' as *;
 
 .games {
-  padding-block: var(--space-7) var(--space-8);
+  padding-block: var(--space-6) var(--space-8);
 
+  @include from($breakpoint-md) {
+    padding-block: var(--space-7) var(--space-8);
+  }
+
+  /**
+   * Trilha de abas que rola na horizontal.
+   *
+   * Sete jogos quebrados em quatro linhas empurravam o tabuleiro para fora da
+   * primeira tela do celular. Numa faixa só, a aba seguinte aparece cortada na
+   * borda e mostra sozinha que há mais jogo para o lado.
+   */
   &__tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-4);
+
+    @include snap-row(var(--space-2));
+
+    @include from($breakpoint-lg) {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      margin-bottom: var(--space-5);
+    }
   }
 
   &__tab {
+    @include touch-target;
+
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-3) var(--space-5);
+    padding: var(--space-2) var(--space-4);
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-card);
     font-family: var(--font-display);
+    font-size: var(--text-sm);
     font-weight: 700;
+    white-space: nowrap;
     color: var(--text-strong);
     transition: transform var(--transition-fast), background-color var(--transition-fast);
 
-    &:hover {
+    @include from($breakpoint-md) {
+      padding: var(--space-3) var(--space-5);
+      font-size: var(--text-md);
+    }
+
+    @include hover {
       transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: scale(0.96);
     }
 
     &--active {
@@ -35,7 +65,8 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover {
+      &:hover,
+      &:active {
         transform: none;
       }
     }
@@ -44,7 +75,12 @@
   &__panel {
     @include card-surface;
 
-    padding: var(--space-6);
+    /* No celular cada pixel de largura conta para o tabuleiro. */
+    padding: var(--space-4);
     box-shadow: var(--shadow-md);
+
+    @include from($breakpoint-md) {
+      padding: var(--space-6);
+    }
   }
 }

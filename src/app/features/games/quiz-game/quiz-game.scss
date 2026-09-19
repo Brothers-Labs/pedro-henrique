@@ -34,7 +34,7 @@
     color: var(--text-strong);
     transition: border-color var(--transition-fast), background-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-orange);
     }
 
@@ -98,7 +98,7 @@
     color: var(--text-strong);
     transition: border-color var(--transition-fast), background-color var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       border-color: var(--color-orange);
     }
 

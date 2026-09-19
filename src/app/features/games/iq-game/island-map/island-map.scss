@@ -51,7 +51,7 @@
   transition: transform var(--transition-fast), background-color var(--transition-fast),
     border-color var(--transition-fast);
 
-  &:hover:not(:disabled) {
+  @include hover-enabled {
     transform: translateY(-3px);
     background: rgb(255 255 255 / 18%);
   }
@@ -106,7 +106,7 @@
   @include reduced-motion {
     transition: none;
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: none;
     }
   }

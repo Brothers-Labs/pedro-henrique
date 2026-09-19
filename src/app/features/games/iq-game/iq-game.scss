@@ -112,7 +112,7 @@
     box-shadow: var(--shadow-pop);
     transition: transform var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: translateY(-2px);
     }
 
@@ -124,7 +124,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover:not(:disabled) {
+      @include hover-enabled {
         transform: none;
       }
     }

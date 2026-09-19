@@ -64,3 +64,22 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
 export const EXPLORABLE_SECTIONS: readonly SiteSection[] = SITE_SECTIONS.filter(
   (section) => section.id !== 'inicio',
 );
+
+/**
+ * Destinos fixos da barra inferior do celular.
+ *
+ * São os quatro lugares que o Pedro Henrique usa no dia a dia — a prancha de
+ * falar em primeiro lugar entre eles. O resto do site continua a um toque de
+ * distância, no menu "Mais".
+ */
+export const PRIMARY_SECTIONS: readonly SiteSection[] = ['inicio', 'falar', 'galeria', 'jogos'].map(
+  (id) => {
+    const section = SITE_SECTIONS.find((candidate) => candidate.id === id);
+
+    if (!section) {
+      throw new Error(`Seção "${id}" não existe em SITE_SECTIONS.`);
+    }
+
+    return section;
+  },
+);

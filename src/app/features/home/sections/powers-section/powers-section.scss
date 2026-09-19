@@ -21,14 +21,14 @@
     border-top: 10px solid var(--tone);
     transition: transform var(--transition-base);
 
-    &:hover {
+    @include hover {
       transform: translateY(-6px) rotate(-1deg);
     }
 
     @include reduced-motion {
       transition: none;
 
-      &:hover {
+      @include hover {
         transform: none;
       }
     }

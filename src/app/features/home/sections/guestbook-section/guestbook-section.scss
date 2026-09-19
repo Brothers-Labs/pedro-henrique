@@ -46,7 +46,7 @@
     line-height: 1;
     transition: transform var(--transition-fast), border-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       transform: scale(1.1);
     }
 
@@ -58,7 +58,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover {
+      @include hover {
         transform: none;
       }
     }

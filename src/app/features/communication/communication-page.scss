@@ -60,7 +60,7 @@
     color: var(--text-strong);
     text-align: start;
 
-    &:hover {
+    @include hover {
       background: var(--color-yellow-soft);
     }
   }
@@ -88,7 +88,7 @@
     font-weight: 700;
     color: var(--text-strong);
 
-    &:hover {
+    @include hover {
       border-color: var(--tone);
     }
 
@@ -126,7 +126,7 @@
     text-align: center;
     transition: transform var(--transition-base), background-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       transform: translateY(-4px);
       background: var(--tone-soft);
     }
@@ -200,7 +200,7 @@
     color: var(--text-strong);
     text-align: start;
 
-    &:hover {
+    @include hover {
       background: var(--color-mint-soft);
     }
   }
@@ -213,7 +213,7 @@
     border-radius: var(--radius-md);
     background: var(--surface-card);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-pink);
     }
   }

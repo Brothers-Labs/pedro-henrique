@@ -68,7 +68,7 @@
     --island-tone: var(--color-pink);
   }
 
-  &:hover:not(:disabled) {
+  @include hover-enabled {
     transform: translateY(-3px);
     background: rgb(255 255 255 / 16%);
   }
@@ -124,7 +124,7 @@
   @include reduced-motion {
     transition: none;
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: none;
     }
   }

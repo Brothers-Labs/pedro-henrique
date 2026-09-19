@@ -127,7 +127,7 @@
     line-height: 1;
     transition: background-color var(--transition-fast), transform var(--transition-fast);
 
-    &:hover {
+    @include hover {
       background: rgb(255 255 255 / 30%);
     }
 
