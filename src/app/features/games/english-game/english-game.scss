@@ -1,449 +1,92 @@
 @use 'mixins' as *;
+@use 'games' as *;
 
 .english {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
 
   &__title {
     font-size: var(--text-xl);
   }
 
   &__subtitle {
-    color: var(--text-soft);
-    font-size: var(--text-sm);
-  }
-
-  &__section-title {
-    font-size: var(--text-md);
-    color: var(--text-soft);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-}
-
-/* Barra de progresso reutilizada pelo painel de XP e pela trilha ---------- */
-.meter {
-  height: 0.8rem;
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  overflow: hidden;
-
-  &__fill {
-    display: block;
-    height: 100%;
-    background: var(--meter-color, var(--color-purple));
-    transition: width var(--transition-base);
-
-    @include reduced-motion {
-      transition: none;
-    }
-  }
-}
-
-/* Painel de XP ------------------------------------------------------------ */
-.xp {
-  @include card-surface(var(--color-purple-soft));
-
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-
-  @include from($breakpoint-md) {
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: var(--space-5);
-  }
-
-  &__rank {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  &__rank-emoji {
-    font-size: 2.25rem;
-    line-height: 1;
-  }
-
-  &__rank-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__rank-title {
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    color: var(--text-strong);
-  }
-
-  &__rank-total {
-    font-weight: 700;
-    color: var(--color-purple);
-  }
-
-  &__hint {
-    margin-top: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--text-soft);
-  }
-
-  &__streak {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--text-strong);
-    white-space: nowrap;
-
-    small {
-      font-family: var(--font-body);
-      font-weight: 400;
-      color: var(--text-soft);
-    }
-  }
-}
-
-/* Trilha de fases ---------------------------------------------------------- */
-.trail {
-  --meter-color: var(--color-mint);
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-
-  &__info {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--space-2);
-  }
-
-  &__label {
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--text-strong);
-  }
-
-  &__mastered {
     font-size: var(--text-sm);
     color: var(--text-soft);
-  }
+    text-transform: lowercase;
 
-  &__steps {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-
-  &__step {
-    width: var(--touch-target);
-    height: var(--touch-target);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-pill);
-    background: var(--surface-card);
-    font-family: var(--font-display);
-    font-weight: 800;
-    color: var(--text-soft);
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
-
-    @include hover {
-      border-color: var(--color-blue);
-    }
-
-    &--mastered {
-      background: var(--color-yellow-soft);
-      border-color: var(--color-yellow);
-      color: var(--color-yellow);
-    }
-
-    &--current {
-      border-color: var(--border-strong);
-      background: var(--color-blue);
-      color: var(--text-on-color);
+    &::first-letter {
+      text-transform: uppercase;
     }
   }
 }
 
-/* Fase atual --------------------------------------------------------------- */
 .challenge {
-  @include card-surface(var(--tone-soft));
-
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
+  @include challenge-card;
 
   &__emoji {
-    font-size: 3.5rem;
+    align-self: center;
+    font-size: clamp(2.5rem, 2rem + 4vw, 3.5rem);
     line-height: 1;
-    animation: pop-in 300ms ease both;
-
-    @include reduced-motion {
-      animation: none;
-    }
   }
 
   &__prompt {
     font-family: var(--font-display);
     font-size: var(--text-lg);
-    font-weight: 800;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
     color: var(--text-strong);
+    text-wrap: pretty;
+  }
+
+  &__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   &__hint {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-yellow-soft);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--text-strong);
-  }
-}
-
-/* Alternativas ------------------------------------------------------------- */
-.options {
-  display: grid;
-  gap: var(--space-3);
-  width: 100%;
-  padding: 0;
-  list-style: none;
-
-  @include from($breakpoint-sm) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  &__button {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    height: 100%;
-    padding: var(--space-4);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--surface-card);
-    font-family: var(--font-display);
-    font-size: var(--text-md);
-    font-weight: 700;
-    text-align: left;
-    color: var(--text-strong);
-    transition: transform var(--transition-fast), border-color var(--transition-fast),
-      background-color var(--transition-fast);
-
-    @include hover-enabled {
-      transform: translateY(-2px);
-      border-color: var(--color-blue);
-    }
-
-    &[data-state='certa'] {
-      border-color: var(--border-strong);
-      background: var(--color-mint-soft);
-    }
-
-    &[data-state='errada'] {
-      border-color: var(--color-pink);
-      background: var(--color-pink-soft);
-      opacity: 0.7;
-      text-decoration: line-through;
-    }
-
-    &:disabled {
-      cursor: default;
-    }
-
-    @include reduced-motion {
-      transition: none;
-
-      @include hover-enabled {
-        transform: none;
-      }
-    }
-  }
-
-  &__letter {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 1.9rem;
-    height: 1.9rem;
-    border-radius: var(--radius-pill);
-    background: var(--surface-muted);
-    font-size: var(--text-sm);
-  }
-}
-
-/* Resposta escrita --------------------------------------------------------- */
-.writing {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  width: 100%;
-
-  &__input {
-    flex: 1 1 14rem;
-    padding: var(--space-3) var(--space-4);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--surface-card);
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    color: var(--text-strong);
-    transition: border-color var(--transition-fast);
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-purple);
-    }
-
-    &[data-state='acertou'] {
-      border-color: var(--color-mint);
-      background: var(--color-mint-soft);
-    }
-
-    &[data-state='quase'] {
-      border-color: var(--color-yellow);
-      background: var(--color-yellow-soft);
-    }
-
-    &[data-state='errou'] {
-      border-color: var(--color-pink);
-    }
-  }
-}
-
-/* Feedback ----------------------------------------------------------------- */
-.feedback {
-  @include card-surface(var(--surface-card));
-
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-4);
-  animation: rise-in 260ms ease both;
-
-  &[data-status='acertou'] {
-    background: var(--color-mint-soft);
-  }
-
-  &[data-status='quase'] {
-    background: var(--color-yellow-soft);
-  }
-
-  &[data-status='errou'] {
-    background: var(--color-pink-soft);
-  }
-
-  &__title {
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    font-weight: 800;
-    color: var(--text-strong);
-  }
-
-  &__answer {
-    display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-family: var(--font-display);
-    font-size: var(--text-xl);
-    color: var(--text-strong);
-  }
-
-  &__speak {
-    display: grid;
-    place-items: center;
-    width: var(--touch-target);
-    height: var(--touch-target);
-    border: 3px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-card);
-    font-size: var(--text-md);
+    padding: var(--space-3);
+    border: 3px dashed var(--border-soft);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--text-body);
   }
 
   &__explanation {
     font-size: var(--text-sm);
-  }
-
-  &__xp {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    font-weight: 800;
-    color: var(--color-purple);
-  }
-
-  &__bonus {
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
-    background: var(--color-yellow);
-    font-size: var(--text-xs);
-    color: var(--text-strong);
-  }
-
-  @include reduced-motion {
-    animation: none;
+    color: var(--text-body);
   }
 }
 
-/* Fim de nível ------------------------------------------------------------- */
-.finish {
-  @include card-surface(var(--color-mint-soft));
+.options {
+  @include answer-grid(10rem);
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-7) var(--space-5);
-  text-align: center;
+  &__button {
+    font-size: var(--text-md);
 
-  &__emoji {
-    font-size: 3.5rem;
-    line-height: 1;
-  }
-
-  &__title {
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 800;
-    color: var(--text-strong);
-  }
-
-  &__xp {
-    font-weight: 700;
-    color: var(--color-purple);
-  }
-
-  &__actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-3);
+    @include answer-button;
   }
 }
 
-/* Atalhos ------------------------------------------------------------------ */
-.shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+.typing {
+  @include typing-row;
 
-  .button {
-    flex: 1 1 12rem;
+  &__input {
+    text-align: start;
   }
+}
+
+.feedback {
+  @include feedback-box;
 }

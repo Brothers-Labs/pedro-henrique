@@ -1,59 +1,64 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { QUESTIONS_PER_ROUND, QUIZ_CATEGORIES, QUIZ_QUESTIONS } from '../../../core/data/quiz.data';
-import type { QuizCategoryFilter, QuizQuestion } from '../../../core/models/quiz.model';
-import { shuffle } from '../../../core/utils/shuffle';
+import {
+  CORRECT_MESSAGES,
+  ENCOURAGEMENT_MESSAGES,
+  gameDefinition,
+} from '../../../core/data/game-progress.data';
+import { quizTierFor } from '../../../core/games/difficulty';
+import type { GameId } from '../../../core/models/game-progress.model';
+import type { QuizQuestion } from '../../../core/models/quiz.model';
+import { GameProgressService } from '../../../core/services/game-progress.service';
+import { pickRandom } from '../../../core/utils/shuffle';
+import { GameHud } from '../shared/game-hud/game-hud';
+import { celebrationFrom } from '../shared/level-up-celebration/celebration';
+import type { CelebrationData } from '../shared/level-up-celebration/level-up-celebration';
+import { LevelUpCelebration } from '../shared/level-up-celebration/level-up-celebration';
+import { drawQuestion } from './quiz-game.logic';
 
+const GAME_ID: GameId = 'quiz';
+
+const TIER_LABELS: Readonly<Record<1 | 2 | 3, string>> = {
+  1: 'Para começar',
+  2: 'Pensando um pouco mais',
+  3: 'Desafio de raciocínio',
+};
+
+/**
+ * Quiz por níveis.
+ *
+ * O nível escolhe a faixa de dificuldade das perguntas; dentro do nível o
+ * sorteio evita repetir o que já foi perguntado. O filtro por categoria saiu:
+ * quem organiza a rodada agora é a dificuldade, não o assunto.
+ */
 @Component({
   selector: 'app-quiz-game',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [GameHud, LevelUpCelebration],
   templateUrl: './quiz-game.html',
   styleUrl: './quiz-game.scss',
 })
 export class QuizGame {
-  protected readonly categories = QUIZ_CATEGORIES;
-  protected readonly selectedCategory = signal<QuizCategoryFilter>('tudo');
-  protected readonly questions = signal<readonly QuizQuestion[]>(buildRound('tudo'));
+  private readonly progressService = inject(GameProgressService);
+  private askedIds = new Set<string>();
 
-  protected readonly currentIndex = signal(0);
+  protected readonly gameId = GAME_ID;
+  protected readonly definition = gameDefinition(GAME_ID);
+
+  protected readonly question = signal<QuizQuestion>(this.draw());
   protected readonly selectedIndex = signal<number | null>(null);
-  protected readonly score = signal(0);
-  protected readonly isFinished = signal(false);
+  protected readonly earnedPoints = signal(0);
+  protected readonly feedbackMessage = signal('');
+  protected readonly celebration = signal<CelebrationData | null>(null);
 
-  protected readonly totalQuestions = computed(() => this.questions().length);
-  protected readonly currentQuestion = computed(() => this.questions()[this.currentIndex()]);
   protected readonly hasAnswered = computed(() => this.selectedIndex() !== null);
   protected readonly isCorrect = computed(
-    () => this.selectedIndex() === this.currentQuestion().correctIndex,
-  );
-  protected readonly progressPercentage = computed(() =>
-    Math.round((this.currentIndex() / this.totalQuestions()) * 100),
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.totalQuestions() - 1,
+    () => this.selectedIndex() === this.question().correctIndex,
   );
 
-  protected readonly finalMessage = computed(() => {
-    const ratio = this.score() / this.totalQuestions();
-
-    if (ratio === 1) {
-      return 'Uau! Você acertou tudo!';
-    }
-    if (ratio >= 0.6) {
-      return 'Muito bem! Você acertou quase tudo.';
-    }
-
-    return 'Vale a pena dar uma volta pelo site e tentar de novo!';
-  });
-
-  protected selectCategory(category: QuizCategoryFilter): void {
-    if (category === this.selectedCategory()) {
-      return;
-    }
-
-    this.selectedCategory.set(category);
-    this.restart();
-  }
+  protected readonly tierLabel = computed(
+    () => TIER_LABELS[quizTierFor(this.progressService.progressOf(GAME_ID).level)],
+  );
 
   protected answer(optionIndex: number): void {
     if (this.hasAnswered()) {
@@ -62,52 +67,55 @@ export class QuizGame {
 
     this.selectedIndex.set(optionIndex);
 
-    if (optionIndex === this.currentQuestion().correctIndex) {
-      this.score.update((score) => score + 1);
+    const wasCorrect = optionIndex === this.question().correctIndex;
+    const outcome = this.progressService.registerChallenge(GAME_ID, wasCorrect);
+
+    this.earnedPoints.set(outcome.earnedPoints);
+    this.feedbackMessage.set(
+      pickRandom(wasCorrect ? CORRECT_MESSAGES : ENCOURAGEMENT_MESSAGES) ?? '',
+    );
+
+    if (outcome.didLevelUp) {
+      // O nível novo tem outra faixa de perguntas: o histórico recomeça junto.
+      this.askedIds = new Set();
+      this.celebration.set(celebrationFrom(outcome, this.definition.label));
     }
   }
 
   protected next(): void {
+    this.startNextQuestion();
+  }
+
+  protected continueAfterCelebration(): void {
+    this.celebration.set(null);
+    this.startNextQuestion();
+  }
+
+  protected optionState(optionIndex: number): 'certa' | 'errada' | 'neutra' {
     if (!this.hasAnswered()) {
-      return;
+      return 'neutra';
     }
 
-    if (this.isLastQuestion()) {
-      this.isFinished.set(true);
-      return;
+    if (optionIndex === this.question().correctIndex) {
+      return 'certa';
     }
 
-    this.currentIndex.update((index) => index + 1);
+    return optionIndex === this.selectedIndex() ? 'errada' : 'neutra';
+  }
+
+  private startNextQuestion(): void {
+    this.question.set(this.draw());
     this.selectedIndex.set(null);
+    this.earnedPoints.set(0);
+    this.feedbackMessage.set('');
   }
 
-  /** Recomeça com um novo sorteio, para as rodadas nunca ficarem iguais. */
-  protected restart(): void {
-    this.questions.set(buildRound(this.selectedCategory()));
-    this.currentIndex.set(0);
-    this.selectedIndex.set(null);
-    this.score.set(0);
-    this.isFinished.set(false);
+  private draw(): QuizQuestion {
+    const level = this.progressService.progressOf(GAME_ID).level;
+    const question = drawQuestion(level, this.askedIds);
+
+    this.askedIds.add(question.id);
+
+    return question;
   }
-
-  protected optionState(optionIndex: number): 'correct' | 'wrong' | 'idle' {
-    if (!this.hasAnswered()) {
-      return 'idle';
-    }
-
-    if (optionIndex === this.currentQuestion().correctIndex) {
-      return 'correct';
-    }
-
-    return optionIndex === this.selectedIndex() ? 'wrong' : 'idle';
-  }
-}
-
-function buildRound(category: QuizCategoryFilter): readonly QuizQuestion[] {
-  const available =
-    category === 'tudo'
-      ? QUIZ_QUESTIONS
-      : QUIZ_QUESTIONS.filter((question) => question.category === category);
-
-  return shuffle(available).slice(0, QUESTIONS_PER_ROUND);
 }

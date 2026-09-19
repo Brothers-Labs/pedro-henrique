@@ -25,6 +25,13 @@
     color: var(--text-strong);
   }
 
+  &__points {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-mint);
+  }
+
   &__board {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

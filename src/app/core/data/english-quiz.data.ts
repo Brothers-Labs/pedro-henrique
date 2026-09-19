@@ -1,9 +1,4 @@
-import type {
-  EnglishChallenge,
-  EnglishLevel,
-  EnglishLevelId,
-  EnglishRank,
-} from '../models/english-quiz.model';
+import type { EnglishChallenge } from '../models/english-quiz.model';
 
 /**
  * Conteúdo do jogo de inglês, pensado para crianças de 4 a 12 anos.
@@ -12,46 +7,6 @@ import type {
  * só a resposta é em inglês. Todos os níveis têm a mesma quantidade de fases,
  * então a trilha desenhada na tela nunca muda de tamanho.
  */
-
-/** Ordem oficial dos níveis: define quem é "mais fácil" e "mais difícil". */
-export const ENGLISH_LEVELS: readonly EnglishLevel[] = [
-  {
-    id: 'facil',
-    label: 'Fácil',
-    emoji: '🐣',
-    ageRange: '4 a 7 anos',
-    description: 'Cores, números, bichos e as primeiras palavrinhas.',
-    xpPerChallenge: 10,
-    color: 'mint',
-  },
-  {
-    id: 'medio',
-    label: 'Médio',
-    emoji: '🚀',
-    ageRange: '8 a 10 anos',
-    description: 'Frases do dia a dia, família e perguntas simples.',
-    xpPerChallenge: 20,
-    color: 'blue',
-  },
-  {
-    id: 'dificil',
-    label: 'Difícil',
-    emoji: '🐉',
-    ageRange: '11 a 12 anos',
-    description: 'Passado, comparativos e frases completas para escrever.',
-    xpPerChallenge: 30,
-    color: 'purple',
-  },
-];
-
-/** Patentes em ordem crescente de XP; a primeira vale desde o começo. */
-export const ENGLISH_RANKS: readonly EnglishRank[] = [
-  { title: 'Iniciante', emoji: '🐣', requiredXp: 0 },
-  { title: 'Explorador', emoji: '🔎', requiredXp: 80 },
-  { title: 'Aventureiro', emoji: '🧭', requiredXp: 200 },
-  { title: 'Craque', emoji: '⭐', requiredXp: 380 },
-  { title: 'Mestre do inglês', emoji: '🏆', requiredXp: 600 },
-];
 
 export const ENGLISH_CHALLENGES: readonly EnglishChallenge[] = [
   // Nível fácil ------------------------------------------------------------
@@ -399,7 +354,3 @@ export const ENGLISH_CHALLENGES: readonly EnglishChallenge[] = [
   },
 ];
 
-/** Fases de um nível, na ordem em que aparecem na trilha. */
-export function challengesOfLevel(level: EnglishLevelId): readonly EnglishChallenge[] {
-  return ENGLISH_CHALLENGES.filter((challenge) => challenge.level === level);
-}

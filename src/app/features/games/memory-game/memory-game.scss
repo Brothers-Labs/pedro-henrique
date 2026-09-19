@@ -60,6 +60,14 @@
     }
   }
 
+  &__points {
+    align-self: flex-start;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-mint);
+  }
+
   &__win {
     display: flex;
     align-items: center;
@@ -75,6 +83,11 @@
     animation: pop-in 320ms ease both;
   }
 
+  /**
+   * Quatro colunas em qualquer nível: com dez pares a grade cresce para baixo,
+   * o que o celular resolve rolando. Mais colunas encolheriam a carta abaixo
+   * do tamanho de um dedo.
+   */
   &__board {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

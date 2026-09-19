@@ -1,255 +1,114 @@
+@let current = challenge();
+
 <section class="english" aria-labelledby="ingles-titulo">
   <header class="english__header">
-    <h3 id="ingles-titulo" class="english__title">Aprender inglês</h3>
-    <p class="english__subtitle">
-      Escolha o nível, responda as fases e ganhe XP. Pode pular, pedir dica e tentar de novo!
-    </p>
+    <h3 id="ingles-titulo" class="english__title">Inglês</h3>
+    <p class="english__subtitle">{{ levelTopic() }}</p>
   </header>
 
-  <!-- Painel de XP ------------------------------------------------------ -->
-  <div class="xp" role="group" aria-label="Seu progresso">
-    <div class="xp__rank">
-      <span class="xp__rank-emoji" aria-hidden="true">{{ progress.currentRank().emoji }}</span>
-      <span class="xp__rank-text">
-        <strong class="xp__rank-title">{{ progress.currentRank().title }}</strong>
-        <small class="xp__rank-total">{{ progress.totalXp() }} XP</small>
-      </span>
-    </div>
+  <app-game-hud [gameId]="gameId" />
 
-    <div class="xp__meter">
-      <div class="meter">
-        <span class="meter__fill" [style.width.%]="progress.rankProgressPercentage()"></span>
-      </div>
-      <p class="xp__hint">
-        @if (progress.nextRank(); as next) {
-          Faltam {{ next.requiredXp - progress.totalXp() }} XP para ser {{ next.title }}
-          {{ next.emoji }}
-        } @else {
-          Patente máxima alcançada! 🏆
+  <div class="challenge">
+    <p class="challenge__emoji" aria-hidden="true">{{ current.emoji }}</p>
+    <p class="challenge__prompt">{{ current.prompt }}</p>
+
+    @if (choiceChallenge(); as choice) {
+      <ul class="options">
+        @for (option of choice.options; track option; let index = $index) {
+          <li>
+            <button
+              type="button"
+              class="options__button"
+              [attr.data-state]="optionState(index)"
+              [disabled]="hasAnswered()"
+              (click)="answerWithOption(index)"
+            >
+              {{ option }}
+            </button>
+          </li>
         }
-      </p>
-    </div>
+      </ul>
+    }
 
-    <p class="xp__streak">
-      <span aria-hidden="true">🔥</span>
-      <span>Sequência: {{ streak() }}</span>
-      <small>Recorde: {{ progress.bestStreak() }}</small>
-    </p>
-  </div>
-
-  <!-- Escolha de nível --------------------------------------------------- -->
-  <h4 class="english__section-title">Escolha o nível</h4>
-
-  <app-level-picker
-    [levels]="levels"
-    [selectedId]="levelId()"
-    (selected)="selectLevel($event)"
-  />
-
-  <!-- Trilha de fases ---------------------------------------------------- -->
-  <div class="trail">
-    <div class="trail__info">
-      <p class="trail__label">
-        Fase {{ challengeIndex() + 1 }} de {{ totalChallenges() }} · nível
-        {{ level().label }}
-      </p>
-      <p class="trail__mastered">
-        {{ masteredInLevel() }} de {{ totalChallenges() }} fases dominadas
-      </p>
-    </div>
-
-    <div class="meter">
-      <span class="meter__fill" [style.width.%]="levelCompletionPercentage()"></span>
-    </div>
-
-    <ol class="trail__steps">
-      @for (item of challenges(); track item.id; let index = $index) {
-        <li>
-          <button
-            type="button"
-            class="trail__step"
-            [class.trail__step--current]="index === challengeIndex() && !isLevelFinished()"
-            [class.trail__step--mastered]="progress.masteredIds().has(item.id)"
-            [attr.aria-current]="index === challengeIndex() ? 'step' : null"
-            [attr.aria-label]="
-              'Ir para a fase ' +
-              (index + 1) +
-              (progress.masteredIds().has(item.id) ? ', já dominada' : '')
-            "
-            (click)="goToChallenge(index)"
-          >
-            {{ progress.masteredIds().has(item.id) ? '★' : index + 1 }}
-          </button>
-        </li>
-      }
-    </ol>
-  </div>
-
-  @if (isLevelFinished()) {
-    <!-- Fim do nível ----------------------------------------------------- -->
-    <div class="finish" role="status">
-      <p class="finish__emoji" aria-hidden="true">🏅</p>
-      <p class="finish__title">Nível {{ level().label }} concluído!</p>
-      <p class="finish__message">{{ finalMessage() }}</p>
-      <p class="finish__xp">Você já tem {{ progress.totalXp() }} XP no total.</p>
-
-      <div class="finish__actions">
-        <button type="button" class="button button--primary" (click)="restartLevel()">
-          <span aria-hidden="true">🔄</span>
-          Jogar este nível de novo
+    @if (writingChallenge(); as writing) {
+      <div class="typing">
+        <label class="visually-hidden" for="resposta-ingles">Escreva a resposta em inglês</label>
+        <input
+          #answerField
+          id="resposta-ingles"
+          class="typing__input"
+          type="text"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          [placeholder]="writing.placeholder"
+          [value]="typedAnswer()"
+          [disabled]="hasAnswered()"
+          (input)="typedAnswer.set(answerField.value)"
+          (keyup.enter)="submitTypedAnswer()"
+        />
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="!canSubmitTyped()"
+          (click)="submitTypedAnswer()"
+        >
+          <span aria-hidden="true">✅</span>
+          Conferir
         </button>
-
-        @if (harderLevel(); as harder) {
-          <button type="button" class="button button--secondary" (click)="selectLevel(harder.id)">
-            <span aria-hidden="true">{{ harder.emoji }}</span>
-            Ir para o nível {{ harder.label }}
-          </button>
-        }
       </div>
-    </div>
-  } @else {
-    <!-- Fase atual ------------------------------------------------------- -->
-    <div class="challenge" [attr.data-color]="level().color">
-      <p class="challenge__emoji" aria-hidden="true">{{ challenge().emoji }}</p>
-      <p class="challenge__prompt">{{ challenge().prompt }}</p>
+    }
 
-      @if (choiceChallenge(); as choice) {
-        <ul class="options">
-          @for (option of choice.options; track option; let index = $index) {
-            <li>
-              <button
-                type="button"
-                class="options__button"
-                [attr.data-state]="optionState(index)"
-                [disabled]="isSettled() || wrongOptionIndexes().includes(index)"
-                (click)="chooseOption(index)"
-              >
-                <span class="options__letter" aria-hidden="true">{{ index + 1 }}</span>
-                {{ option }}
-              </button>
-            </li>
-          }
-        </ul>
-      }
-
-      @if (writingChallenge(); as writing) {
-        <div class="writing">
-          <label class="visually-hidden" for="resposta-ingles">Escreva a resposta em inglês</label>
-          <input
-            #answerField
-            id="resposta-ingles"
-            type="text"
-            class="writing__input"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            [attr.data-state]="status()"
-            [value]="typedAnswer()"
-            [placeholder]="writing.placeholder"
-            [disabled]="isSettled()"
-            (input)="typedAnswer.set(answerField.value)"
-            (keyup.enter)="submitWriting()"
-          />
-          <button
-            type="button"
-            class="button button--primary"
-            [disabled]="!canSubmitWriting()"
-            (click)="submitWriting()"
-          >
-            <span aria-hidden="true">✅</span>
-            Conferir
-          </button>
-        </div>
-      }
-
-      <!-- Ajudas ---------------------------------------------------------- -->
+    <div class="challenge__tools">
       @if (isHintVisible()) {
         <p class="challenge__hint">
           <span aria-hidden="true">💡</span>
-          {{ challenge().hint }}
+          {{ current.hint }}
         </p>
-      } @else if (!isSettled()) {
+      } @else if (!hasAnswered()) {
         <button type="button" class="button button--ghost button--small" (click)="showHint()">
           <span aria-hidden="true">💡</span>
-          Pedir uma dica (vale metade do XP)
+          Quero uma dica
         </button>
       }
 
-      <!-- Resultado da tentativa ------------------------------------------ -->
-      @if (status() !== 'aguardando') {
-        <div class="feedback" [attr.data-status]="status()" role="status">
-          <p class="feedback__title">{{ feedbackTitle() }}</p>
-
-          @if (isSettled()) {
-            <p class="feedback__answer">
-              <strong>{{ correctAnswer() }}</strong>
-              @if (isAudioSupported) {
-                <button
-                  type="button"
-                  class="feedback__speak"
-                  aria-label="Ouvir a resposta em inglês"
-                  (click)="speakAnswer()"
-                >
-                  <span aria-hidden="true">🔊</span>
-                </button>
-              }
-            </p>
-            <p class="feedback__explanation">{{ challenge().explanation }}</p>
-
-            @if (lastEarnedXp() > 0) {
-              <p class="feedback__xp">
-                +{{ lastEarnedXp() }} XP
-                @if (streak() >= streakBonusThreshold) {
-                  <span class="feedback__bonus">🔥 sequência de {{ streak() }}!</span>
-                }
-              </p>
-            }
-
-            <button
-              #nextButton
-              type="button"
-              class="button button--accent"
-              (click)="nextChallenge()"
-            >
-              {{ isLastChallenge() ? 'Ver o resultado do nível' : 'Próxima fase' }}
-              <span aria-hidden="true">→</span>
-            </button>
-          } @else if (canRevealAnswer()) {
-            <button type="button" class="button button--ghost button--small" (click)="revealAnswer()">
-              <span aria-hidden="true">👀</span>
-              Ver a resposta
-            </button>
-          }
-        </div>
+      @if (isAudioSupported && hasAnswered()) {
+        <button
+          type="button"
+          class="button button--ghost button--small"
+          aria-label="Ouvir a resposta em inglês"
+          (click)="speakAnswer()"
+        >
+          <span aria-hidden="true">🔊</span>
+          Ouvir
+        </button>
       }
     </div>
 
-    <!-- Atalhos de navegação --------------------------------------------- -->
-    <div class="shortcuts" role="group" aria-label="Atalhos do jogo">
-      <button
-        type="button"
-        class="button button--small"
-        [disabled]="easierLevel() === null"
-        (click)="goToEasierLevel()"
-      >
-        <span aria-hidden="true">😌</span>
-        {{ easierLevel() ? 'Fase mais fácil' : 'Já é o mais fácil' }}
-      </button>
+    @if (hasAnswered()) {
+      <div class="feedback" [attr.data-status]="status()" role="status">
+        <p class="feedback__message">
+          <span aria-hidden="true">{{ status() === 'certo' ? '🎉' : '💪' }}</span>
+          {{ feedbackMessage() }}
+        </p>
 
-      <button type="button" class="button button--small" (click)="skipChallenge()">
-        <span aria-hidden="true">⏭️</span>
-        Pular esta fase
-      </button>
+        @if (status() === 'certo') {
+          <p class="feedback__points">+{{ earnedPoints() }} <span aria-hidden="true">⭐</span></p>
+        } @else {
+          <p class="feedback__answer">
+            A resposta era <strong>{{ correctAnswer() }}</strong>.
+          </p>
+        }
 
-      <button
-        type="button"
-        class="button button--small"
-        [disabled]="harderLevel() === null"
-        (click)="goToHarderLevel()"
-      >
-        <span aria-hidden="true">🔥</span>
-        {{ harderLevel() ? 'Fase mais difícil' : 'Já é o mais difícil' }}
-      </button>
-    </div>
-  }
+        <p class="challenge__explanation">{{ current.explanation }}</p>
+
+        <button type="button" class="button button--accent button--block" (click)="next()">
+          Próximo desafio
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    }
+  </div>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

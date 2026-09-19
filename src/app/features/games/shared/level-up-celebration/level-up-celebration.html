@@ -1,0 +1,54 @@
+<dialog
+  #dialog
+  class="levelup"
+  aria-labelledby="levelup-titulo"
+  (close)="close()"
+>
+  @if (visible(); as celebration) {
+    <div class="levelup__panel">
+      <p class="levelup__emoji" aria-hidden="true">{{ headlineEmoji() }}</p>
+
+      <h2 id="levelup-titulo" class="levelup__title">Parabéns, {{ childName }}!</h2>
+
+      <p class="levelup__subtitle">
+        @if (celebration.isPerfect) {
+          Nível perfeito em {{ celebration.gameLabel }}!
+        } @else {
+          Você chegou ao
+        }
+      </p>
+
+      <p class="levelup__level">Nível {{ celebration.level }}</p>
+
+      <p class="levelup__stars" [attr.aria-label]="celebration.stars + ' de 3 estrelas'">
+        @for (isEarned of starSlots(); track $index) {
+          <span class="levelup__star" [class.levelup__star--on]="isEarned" aria-hidden="true">
+            ⭐
+          </span>
+        }
+      </p>
+
+      <p class="levelup__message">{{ celebration.message }}</p>
+
+      <dl class="levelup__stats">
+        <div class="levelup__stat">
+          <dt>Pontos</dt>
+          <dd>+{{ celebration.earnedPoints }}</dd>
+        </div>
+
+        @if (celebration.streak > 1) {
+          <div class="levelup__stat">
+            <dt>Sequência</dt>
+            <dd><span aria-hidden="true">🔥</span> {{ celebration.streak }}</dd>
+          </div>
+        }
+      </dl>
+
+      <button type="button" class="button button--primary button--block" (click)="close()" autofocus>
+        Continuar aventura
+      </button>
+    </div>
+
+    <app-celebration-effects [isActive]="true" />
+  }
+</dialog>

@@ -1,4 +1,3 @@
-import { IQ_AGE_BANDS, IQ_ISLANDS } from '../../../core/data/iq-game.data';
 import type { IqChallenge, IqChallengeType, IqDifficulty } from '../../../core/models/iq-game.model';
 import {
   createChallenge,
@@ -341,26 +340,3 @@ describe('palavras e significados', () => {
   });
 });
 
-describe('cobertura do mapa', () => {
-  it('todo tipo usado pelas ilhas sabe se montar', () => {
-    const types = new Set(IQ_ISLANDS.flatMap((island) => island.types));
-
-    for (const type of types) {
-      for (const band of IQ_AGE_BANDS) {
-        const challenge = createChallenge(type, band.startingDifficulty, 0, fakeRandom([0.3, 0.8]));
-
-        expect(challenge.type).toBe(type);
-      }
-    }
-  });
-
-  it('gera identificadores diferentes para desafios diferentes da jornada', () => {
-    const ids = new Set(
-      Array.from({ length: 10 }, (_, order) =>
-        createChallenge('padrao', 2, order, fakeRandom([0.5])).id,
-      ),
-    );
-
-    expect(ids.size).toBe(10);
-  });
-});

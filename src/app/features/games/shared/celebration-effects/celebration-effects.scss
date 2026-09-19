@@ -1,0 +1,88 @@
+@use 'sass:list';
+@use 'mixins' as *;
+
+/** Posição horizontal, tamanho e atraso de cada balão. */
+$balloon-spots: (
+  (8%, 2.5rem, 0s),
+  (24%, 1.8rem, 0.35s),
+  (44%, 3rem, 0.15s),
+  (62%, 2rem, 0.5s),
+  (78%, 2.6rem, 0.25s),
+  (92%, 1.7rem, 0.6s)
+);
+
+@keyframes celebration-float-up {
+  from {
+    transform: translate3d(0, 20vh, 0) rotate(-6deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  to {
+    transform: translate3d(0, -110vh, 0) rotate(6deg);
+    opacity: 0;
+  }
+}
+
+/**
+ * Camada puramente decorativa: fica por cima de tudo e não recebe nenhum
+ * toque, para que o botão de continuar embaixo continue clicável durante a
+ * comemoração inteira.
+ */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.effects {
+  &__canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__balloons {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__balloon {
+    position: absolute;
+    bottom: 0;
+    line-height: 1;
+
+    /* Só `transform` e `opacity` animam: nada de layout a cada quadro. */
+    animation: celebration-float-up 3.4s ease-in forwards;
+    will-change: transform, opacity;
+
+    @for $index from 1 through list.length($balloon-spots) {
+      $spot: list.nth($balloon-spots, $index);
+
+      &:nth-child(#{$index}) {
+        left: list.nth($spot, 1);
+        font-size: list.nth($spot, 2);
+        animation-delay: list.nth($spot, 3);
+      }
+    }
+  }
+}
+
+/**
+ * Sem movimento, sem festa: o componente nem chega a renderizar nestes casos,
+ * mas a regra fica como rede de segurança caso a preferência mude no meio.
+ */
+@include reduced-motion {
+  .effects__balloon {
+    animation: none;
+    opacity: 0;
+  }
+}

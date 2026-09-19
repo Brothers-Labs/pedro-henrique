@@ -1,168 +1,62 @@
 @use 'mixins' as *;
+@use 'games' as *;
 
 .quiz {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
   &__title {
     font-size: var(--text-xl);
   }
 
   &__subtitle {
-    color: var(--text-soft);
     font-size: var(--text-sm);
-  }
-
-  &__categories {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  &__category {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-pill);
-    background: var(--surface-card);
-    font-family: var(--font-display);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--text-strong);
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
-
-    @include hover {
-      border-color: var(--color-orange);
-    }
-
-    &--active {
-      border-color: var(--border-strong);
-      background: var(--color-orange-soft);
-    }
-  }
-
-  &__progress-bar {
-    height: 0.9rem;
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-muted);
-    overflow: hidden;
-  }
-
-  &__progress-fill {
-    display: block;
-    height: 100%;
-    background: var(--color-orange);
-    transition: width var(--transition-base);
-
-    @include reduced-motion {
-      transition: none;
-    }
-  }
-
-  &__progress-label {
-    margin-top: var(--space-2);
-    font-size: var(--text-xs);
     color: var(--text-soft);
+  }
+}
+
+.challenge {
+  @include challenge-card;
+
+  &__prompt {
+    @include challenge-prompt;
   }
 
   &__question {
-    font-family: var(--font-display);
     font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--text-strong);
-  }
+    line-height: 1.35;
+    text-wrap: pretty;
 
-  &__options {
-    display: grid;
-    gap: var(--space-3);
-    padding: 0;
-    list-style: none;
-
-    @include from($breakpoint-sm) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    @include from($breakpoint-md) {
+      font-size: var(--text-xl);
     }
   }
 
-  &__option {
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--surface-card);
-    font-weight: 700;
-    text-align: left;
-    color: var(--text-strong);
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
-
-    @include hover-enabled {
-      border-color: var(--color-orange);
-    }
-
-    &[data-state='correct'] {
-      border-color: var(--border-strong);
-      background: var(--color-mint-soft);
-    }
-
-    &[data-state='wrong'] {
-      border-color: var(--border-strong);
-      background: var(--color-pink-soft);
-    }
-
-    &:disabled {
-      cursor: default;
-    }
-  }
-
-  &__feedback {
-    @include card-surface(var(--color-yellow-soft));
-
+  &__fact {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
     gap: var(--space-2);
-    padding: var(--space-4);
-    animation: rise-in 260ms ease both;
-
-    @include reduced-motion {
-      animation: none;
-    }
-  }
-
-  &__feedback-title {
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    font-weight: 800;
-    color: var(--text-strong);
-  }
-
-  &__feedback-fact {
     font-size: var(--text-sm);
+    color: var(--text-body);
   }
+}
 
-  &__result {
-    @include card-surface(var(--color-mint-soft));
+.options {
+  @include answer-grid(11rem);
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-7) var(--space-5);
-    text-align: center;
+  &__button {
+    font-size: var(--text-md);
+
+    @include answer-button;
   }
+}
 
-  &__result-emoji {
-    font-size: 3.5rem;
-    line-height: 1;
-  }
-
-  &__result-score {
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 800;
-    color: var(--text-strong);
-  }
+.feedback {
+  @include feedback-box;
 }

@@ -1,3 +1,4 @@
+import type { TicTacToeSkill } from '../../../core/games/difficulty';
 import { pickRandom } from '../../../core/utils/shuffle';
 
 /**
@@ -209,21 +210,34 @@ export interface BeanMove {
   readonly to: number;
 }
 
+/** Chance de o rival iniciante jogar em qualquer casa válida, sem pensar. */
+const BEGINNER_MISTAKE_CHANCE = 0.4;
+
 /**
  * Escolha do computador para colocar ou mover um feijão.
  *
  * A ordem de prioridade é a mesma que uma criança aprende jogando: primeiro
  * fecha a própria trilha, depois estraga a trilha do outro e, por fim, ocupa a
  * casa com mais saídas.
+ *
+ * A força vem do nível alcançado. O `iniciante` se distrai de propósito em
+ * quatro de cada dez jogadas; o `esperto` segue a prioridade inteira; e o
+ * `mestre` ainda evita entregar uma trilha pronta ao adversário.
  */
 export function chooseBeanMove(
   board: readonly BeanCell[],
   player: BeanPlayer,
   beansInHand: number,
+  skill: TicTacToeSkill = 'esperto',
+  random: () => number = Math.random,
 ): BeanMove | null {
   const moves = listMoves(board, player, beansInHand);
   if (moves.length === 0) {
     return null;
+  }
+
+  if (skill === 'iniciante' && random() < BEGINNER_MISTAKE_CHANCE) {
+    return pickRandom(moves) ?? null;
   }
 
   const winning = moves.filter(({ from, to }) => formsMill(applyMove(board, { from, to }, player), to, player));
@@ -240,7 +254,23 @@ export function chooseBeanMove(
   const bestConnectivity = Math.max(...moves.map(({ to }) => NEIGHBOURS[to].length));
   const connected = moves.filter(({ to }) => NEIGHBOURS[to].length === bestConnectivity);
 
-  return pickRandom(connected) ?? null;
+  if (skill !== 'mestre') {
+    return pickRandom(connected) ?? null;
+  }
+
+  // O mestre descarta as jogadas que deixariam o adversário fechar na vez seguinte.
+  const safe = connected.filter(
+    ({ from, to }) => !givesAwayMill(applyMove(board, { from, to }, player), opponent),
+  );
+
+  return pickRandom(safe.length > 0 ? safe : connected) ?? null;
+}
+
+/** Verdadeiro quando o adversário consegue fechar uma trilha na jogada seguinte. */
+function givesAwayMill(board: readonly BeanCell[], opponent: BeanPlayer): boolean {
+  return emptyPositions(board).some((position) =>
+    formsMill(withBean(board, position, opponent), position, opponent),
+  );
 }
 
 /** Feijão do adversário que o computador escolhe comer. */

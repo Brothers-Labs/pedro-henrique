@@ -3,385 +3,289 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
-  ElementRef,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
 
 import {
-  IQ_ACHIEVEMENTS,
   IQ_CORRECT_MESSAGES,
-  IQ_DEFAULT_AGE,
-  IQ_LEVEL_UP_MESSAGE,
-  IQ_MAX_AGE,
-  IQ_MIN_AGE,
   IQ_SKILL_LABELS,
-  IQ_SUPER_POWER_LABELS,
   IQ_WRONG_MESSAGES,
 } from '../../../core/data/iq-game.data';
+import { gameDefinition } from '../../../core/data/game-progress.data';
 import { PROFILE } from '../../../core/data/profile.data';
+import { reasoningDifficultyFor } from '../../../core/games/difficulty';
+import { levelFeedbackFor } from '../../../core/games/progression';
+import type { GameId } from '../../../core/models/game-progress.model';
 import type {
-  IqAchievementId,
-  IqAchievementProgress,
+  IqAdaptiveState,
   IqAnswerRecord,
   IqChallenge,
-  IqIslandId,
-  IqLifetimeStats,
+  IqChallengeType,
 } from '../../../core/models/iq-game.model';
-import { IqJourneyService } from '../../../core/services/iq-journey.service';
-import { MotionPreferenceService } from '../../../core/services/motion-preference.service';
-import { calculateAgeInYears } from '../../../core/utils/birthday';
-import { AchievementList } from './achievement-list/achievement-list';
-import {
-  ChallengeView,
-  type IqAnswerStatus,
-  type IqChallengePhase,
-} from './challenge-view/challenge-view';
-import { GuardianReport } from './guardian-report/guardian-report';
-import { createChallenge } from './iq-game.challenges';
-import {
-  buildGuardianReport,
-  buildIslandProgress,
-  CHALLENGE_ISLANDS,
-  clampAge,
-  countCorrectBySkill,
-  initialAdaptiveState,
-  isPlayableAge,
-  MAX_SKILL_STARS,
-  mergeLifetimeStats,
-  nextAdaptiveState,
-  resolveAgeBand,
-  summarizeJourney,
-  unlockedAchievementIds,
-  xpForAnswer,
-} from './iq-game.logic';
-import { IslandMap } from './island-map/island-map';
+import { GameProgressService } from '../../../core/services/game-progress.service';
+import { pickRandom } from '../../../core/utils/shuffle';
+import { CelebrationEffects } from '../shared/celebration-effects/celebration-effects';
+import { GameHud } from '../shared/game-hud/game-hud';
+import { celebrationFrom } from '../shared/level-up-celebration/celebration';
+import type { CelebrationData } from '../shared/level-up-celebration/level-up-celebration';
+import { LevelUpCelebration } from '../shared/level-up-celebration/level-up-celebration';
+import type { IqAnswerStatus, IqChallengePhase } from './challenge-view/challenge-view';
+import { ChallengeView } from './challenge-view/challenge-view';
+import { createChallenge, SKILL_BY_TYPE } from './iq-game.challenges';
+import { buildSkillScores, nextAdaptiveState, starsForAccuracy } from './iq-game.logic';
 
-/** Etapa da tela: escolha da idade, mapa, desafio em andamento e comemoração. */
-type IqPhase = 'inicio' | 'mapa' | 'desafio' | 'resultado';
+const GAME_ID: GameId = 'qi';
+
+/** Tipos sorteados na rodada, percorridos em ciclo para variar as categorias. */
+const CHALLENGE_TYPES: readonly IqChallengeType[] = [
+  'padrao',
+  'sequencia',
+  'atencao',
+  'diferente',
+  'memoria',
+  'linguagem',
+  'rotacao',
+];
+
+/** As categorias que a criança lê na abertura, antes de começar. */
+export const REASONING_TOPICS: readonly { readonly emoji: string; readonly label: string }[] = [
+  { emoji: '🔢', label: 'números' },
+  { emoji: '🧩', label: 'padrões' },
+  { emoji: '👀', label: 'atenção' },
+  { emoji: '💭', label: 'lógica' },
+  { emoji: '🔷', label: 'formas' },
+];
+
+type RunPhase = 'inicio' | 'desafio' | 'resultado';
+
+/** Uma resposta guardada para a revisão do fim da rodada. */
+interface ReviewEntry {
+  readonly position: number;
+  readonly prompt: string;
+  readonly chosen: string;
+  readonly correct: string;
+  readonly wasCorrect: boolean;
+}
 
 /**
- * Quem pede menos movimento também costuma precisar de mais tempo de leitura,
- * então a sequência da memória fica mais tempo na tela.
- */
-const CALM_EXPOSURE_FACTOR = 1.5;
-
-/**
- * Desafio da Mente: uma jornada de desafios cognitivos para crianças.
+ * Desafio de raciocínio.
  *
- * A tela orquestra a aventura e delega o resto: a fábrica monta os desafios, o
- * motor cuida de progressão e pontuação, e os componentes filhos desenham o
- * mapa, o desafio e o relatório dos responsáveis.
+ * É um jogo do site, e não uma avaliação: a tela mostra acertos, porcentagem e
+ * pontos, e em nenhum momento traduz isso em um número de QI. Uma pontuação de
+ * jogo não mede a inteligência de ninguém, e fingir que mede seria enganoso.
  *
- * O resultado é educativo e gamificado. Não existe QI, diagnóstico nem
- * comparação com outras crianças em nenhum ponto da experiência.
+ * A dificuldade começa no nível alcançado e continua se adaptando dentro da
+ * rodada: dois acertos seguidos sobem um degrau, dois erros descem.
  */
 @Component({
   selector: 'app-iq-game',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IslandMap, ChallengeView, AchievementList, GuardianReport],
+  imports: [ChallengeView, GameHud, LevelUpCelebration, CelebrationEffects],
   templateUrl: './iq-game.html',
   styleUrl: './iq-game.scss',
 })
 export class IqGame {
-  private readonly journeys = inject(IqJourneyService);
-  private readonly motion = inject(MotionPreferenceService);
-
-  private readonly continueButton = viewChild<ElementRef<HTMLButtonElement>>('continueButton');
-  private readonly guardianDialog = viewChild<ElementRef<HTMLDialogElement>>('guardianDialog');
-
-  protected readonly childName = PROFILE.firstName;
-  protected readonly minAge = IQ_MIN_AGE;
-  protected readonly maxAge = IQ_MAX_AGE;
-  protected readonly skillLabels = IQ_SKILL_LABELS;
-  protected readonly superPowerLabels = IQ_SUPER_POWER_LABELS;
-  protected readonly levelUpMessage = IQ_LEVEL_UP_MESSAGE;
-  /** Uma posição por estrela, para desenhar as vazias junto das conquistadas. */
-  protected readonly starSlots = Array.from({ length: MAX_SKILL_STARS }, (_, i) => i + 1);
-
-  protected readonly age = signal(clampAge(calculateAgeInYears(PROFILE.birthDate)));
-  protected readonly phase = signal<IqPhase>('inicio');
-
-  private readonly clearedCount = signal(0);
-  private readonly clearedIslandIds = signal<readonly IqIslandId[]>([]);
-  private readonly perfectMemoryRuns = signal(0);
-  private readonly attentionRuns = signal(0);
-  private readonly islandMisses = signal(0);
-  private readonly achievementsAtStart = signal<ReadonlySet<IqAchievementId>>(new Set());
-  private readonly isSaved = signal(false);
-  private readonly finishedAt = signal<string | null>(null);
-  private readonly reportOpenedAt = signal(new Date().toISOString());
-  /** O relatório só é montado enquanto está aberto: fechado, não custa nada. */
-  protected readonly isGuardianOpen = signal(false);
-
-  /** Identificador crescente dos desafios sorteados, para não repetir chaves. */
-  private challengeOrder = 0;
-  private questionStartedAt = 0;
+  private readonly progressService = inject(GameProgressService);
   private exposureTimer: ReturnType<typeof setTimeout> | null = null;
+  private order = 0;
 
-  protected readonly challengeNumber = signal(0);
-  protected readonly currentChallenge = signal<IqChallenge | null>(null);
-  protected readonly status = signal<IqAnswerStatus>('aguardando');
+  protected readonly gameId = GAME_ID;
+  protected readonly definition = gameDefinition(GAME_ID);
+  protected readonly childName = PROFILE.firstName;
+  protected readonly topics = REASONING_TOPICS;
+  protected readonly skillLabels = IQ_SKILL_LABELS;
+  protected readonly totalChallenges = this.definition.challengesPerLevel;
+
+  protected readonly phase = signal<RunPhase>('inicio');
+  protected readonly challenge = signal<IqChallenge | null>(null);
   protected readonly challengePhase = signal<IqChallengePhase>('respondendo');
+  protected readonly status = signal<IqAnswerStatus>('aguardando');
   protected readonly chosenIndex = signal<number | null>(null);
+  protected readonly feedbackMessage = signal('');
+  protected readonly celebration = signal<CelebrationData | null>(null);
+
+  /** Posição da rodada, de 1 a 10. */
+  protected readonly position = signal(0);
+  protected readonly correctCount = signal(0);
   protected readonly streak = signal(0);
   protected readonly bestStreak = signal(0);
-  protected readonly totalXp = signal(0);
-  protected readonly lastEarnedXp = signal(0);
+  protected readonly earnedPoints = signal(0);
   protected readonly answers = signal<readonly IqAnswerRecord[]>([]);
+  protected readonly review = signal<readonly ReviewEntry[]>([]);
+  protected readonly isReviewOpen = signal(false);
 
-  protected readonly band = computed(() => resolveAgeBand(this.age()));
-  protected readonly adaptive = signal(initialAdaptiveState(resolveAgeBand(IQ_DEFAULT_AGE)));
+  private adaptive: IqAdaptiveState = this.initialAdaptive();
 
-  protected readonly canDecreaseAge = computed(() => isPlayableAge(this.age() - 1));
-  protected readonly canIncreaseAge = computed(() => isPlayableAge(this.age() + 1));
-
-  protected readonly currentIsland = computed(
-    () => CHALLENGE_ISLANDS[Math.min(this.clearedCount(), CHALLENGE_ISLANDS.length - 1)],
-  );
-  protected readonly challengesPerIsland = computed(() => this.band().challengesPerIsland);
-  protected readonly islands = computed(() =>
-    buildIslandProgress(this.clearedCount(), this.phase() === 'desafio'),
-  );
-
-  protected readonly totalChallenges = computed(
-    () => CHALLENGE_ISLANDS.length * this.challengesPerIsland(),
-  );
-  protected readonly journeyPercentage = computed(() =>
-    Math.round((this.answers().length / this.totalChallenges()) * 100),
-  );
-
+  protected readonly progress = computed(() => this.progressService.progressOf(GAME_ID));
   protected readonly isSettled = computed(() => this.status() !== 'aguardando');
-  protected readonly isLastChallengeOfIsland = computed(
-    () => this.challengeNumber() + 1 >= this.challengesPerIsland(),
+  protected readonly isLastChallenge = computed(() => this.position() >= this.totalChallenges);
+
+  protected readonly runPercentage = computed(() =>
+    Math.round((this.position() / this.totalChallenges) * 100),
   );
 
-  protected readonly feedbackMessage = computed(() => {
-    const order = this.challengeNumber();
-
-    switch (this.status()) {
-      case 'certo':
-        return IQ_CORRECT_MESSAGES[order % IQ_CORRECT_MESSAGES.length];
-      case 'errado':
-        return IQ_WRONG_MESSAGES[order % IQ_WRONG_MESSAGES.length];
-      default:
-        return '';
-    }
-  });
-
-  /** A subida de nível é comemorada; a descida acontece em silêncio. */
-  protected readonly hasLevelledUp = computed(
-    () => this.isSettled() && this.adaptive().hasLevelledUp,
+  protected readonly accuracy = computed(() =>
+    Math.round((this.correctCount() / this.totalChallenges) * 100),
   );
 
-  protected readonly summary = computed(() =>
-    summarizeJourney({
-      band: this.band(),
-      age: this.age(),
-      answers: this.answers(),
-      totalXp: this.totalXp(),
-      bestStreak: this.bestStreak(),
-    }),
+  protected readonly resultMessage = computed(() =>
+    levelFeedbackFor(this.correctCount(), this.totalChallenges),
   );
 
-  /** Números desta jornada, no mesmo formato do que já está guardado. */
-  private readonly journeyStats = computed<IqLifetimeStats>(() => ({
-    totalXp: this.totalXp(),
-    bestStreak: this.bestStreak(),
-    correctBySkill: countCorrectBySkill(this.answers()),
-    clearedIslandIds: this.clearedIslandIds(),
-    perfectMemoryRuns: this.perfectMemoryRuns(),
-    attentionRuns: this.attentionRuns(),
-    journeysCompleted: this.phase() === 'resultado' ? 1 : 0,
-  }));
-
-  /** Acumulado já contando a jornada em andamento, sem dobrar depois de salvar. */
-  private readonly lifetimeWithJourney = computed(() =>
-    this.isSaved()
-      ? this.journeys.lifetime()
-      : mergeLifetimeStats(this.journeys.lifetime(), this.journeyStats()),
+  /** Recorde pessoal: melhor rodada já feita, guardada junto do progresso. */
+  protected readonly personalBest = computed(() => this.progress().bestLevelScore);
+  protected readonly isNewRecord = computed(
+    () => this.phase() === 'resultado' && this.correctCount() >= this.personalBest(),
   );
 
-  protected readonly unlockedAchievements = computed(() =>
-    unlockedAchievementIds(this.lifetimeWithJourney()),
-  );
-
-  /** Conquistas prontas para a tela, com o "Nova!" desta jornada. */
-  protected readonly achievementItems = computed<readonly IqAchievementProgress[]>(() => {
-    const unlocked = this.unlockedAchievements();
-    const atStart = this.achievementsAtStart();
-
-    return IQ_ACHIEVEMENTS.map((achievement) => ({
-      achievement,
-      isUnlocked: unlocked.has(achievement.id),
-      isNew: unlocked.has(achievement.id) && !atStart.has(achievement.id),
-    }));
-  });
-
-  protected readonly guardianReport = computed(() =>
-    buildGuardianReport({
-      childName: this.childName,
-      age: this.age(),
-      evaluatedAt: this.finishedAt() ?? this.reportOpenedAt(),
-      summary: this.summary(),
-    }),
-  );
-
-  protected readonly history = this.journeys.history;
+  protected readonly skillScores = computed(() => buildSkillScores(this.answers()));
+  protected readonly starSlots = [1, 2, 3, 4, 5];
 
   constructor() {
-    // Depois de responder, as alternativas ficam desabilitadas e o foco se
-    // perderia. Levá-lo ao botão de continuar mantém a jornada jogável só com
-    // o teclado, sem precisar navegar de volta desde o topo da página.
-    effect(() => {
-      if (this.isSettled()) {
-        this.continueButton()?.nativeElement.focus();
-      }
-    });
-
     inject(DestroyRef).onDestroy(() => this.clearExposureTimer());
   }
 
-  /* Idade ------------------------------------------------------------------ */
-
-  protected decreaseAge(): void {
-    this.changeAge(this.age() - 1);
-  }
-
-  protected increaseAge(): void {
-    this.changeAge(this.age() + 1);
-  }
-
-  /** Idade sempre válida: valores fora da faixa são trazidos para dentro dela. */
-  private changeAge(candidate: number): void {
-    const nextAge = clampAge(candidate);
-    if (nextAge === this.age()) {
-      return;
-    }
-
-    this.age.set(nextAge);
-    this.adaptive.set(initialAdaptiveState(resolveAgeBand(nextAge)));
-  }
-
-  /* Jornada ----------------------------------------------------------------- */
-
-  protected startJourney(): void {
-    this.resetJourney();
-    this.achievementsAtStart.set(this.unlockedAchievements());
-    this.phase.set('mapa');
-  }
-
-  protected enterIsland(): void {
-    this.islandMisses.set(0);
-    this.challengeNumber.set(0);
+  protected start(): void {
+    this.order = 0;
+    this.adaptive = this.initialAdaptive();
+    this.position.set(0);
+    this.correctCount.set(0);
+    this.streak.set(0);
+    this.bestStreak.set(0);
+    this.earnedPoints.set(0);
+    this.answers.set([]);
+    this.review.set([]);
+    this.isReviewOpen.set(false);
     this.phase.set('desafio');
-    this.loadChallenge();
+    this.drawChallenge();
   }
 
-  protected answer(index: number): void {
-    const challenge = this.currentChallenge();
-    // Enquanto a sequência da memória está na tela ninguém responde: sem essa
-    // trava o tempo de resposta sairia negativo e a fase perderia o sentido.
-    if (!challenge || this.isSettled() || this.challengePhase() === 'memorizando') {
+  protected answer(optionIndex: number): void {
+    const current = this.challenge();
+
+    if (!current || this.isSettled()) {
       return;
     }
 
-    const wasCorrect = index === challenge.correctIndex;
-    const streak = wasCorrect ? this.streak() + 1 : 0;
-    const earnedXp = xpForAnswer(challenge.difficulty, wasCorrect, streak);
+    const wasCorrect = optionIndex === current.correctIndex;
 
-    this.chosenIndex.set(index);
+    this.chosenIndex.set(optionIndex);
     this.status.set(wasCorrect ? 'certo' : 'errado');
-    this.streak.set(streak);
-    this.bestStreak.update((best) => Math.max(best, streak));
-    this.totalXp.update((xp) => xp + earnedXp);
-    this.lastEarnedXp.set(earnedXp);
-    this.answers.update((list) => [
-      ...list,
-      buildAnswer(challenge, wasCorrect, Date.now() - this.questionStartedAt),
-    ]);
+    this.feedbackMessage.set(
+      pickRandom(wasCorrect ? IQ_CORRECT_MESSAGES : IQ_WRONG_MESSAGES) ?? '',
+    );
 
-    if (!wasCorrect) {
-      this.islandMisses.update((misses) => misses + 1);
+    this.recordAnswer(current, optionIndex, wasCorrect);
+
+    const outcome = this.progressService.registerChallenge(GAME_ID, wasCorrect);
+    this.earnedPoints.update((total) => total + outcome.earnedPoints);
+
+    if (outcome.didLevelUp) {
+      this.celebration.set(celebrationFrom(outcome, this.definition.label));
     }
 
-    this.adaptive.set(nextAdaptiveState(this.adaptive(), wasCorrect));
+    this.adaptive = nextAdaptiveState(this.adaptive, wasCorrect);
   }
 
-  protected continueJourney(): void {
-    if (this.isLastChallengeOfIsland()) {
-      this.finishIsland();
+  protected next(): void {
+    if (this.isLastChallenge()) {
+      this.phase.set('resultado');
       return;
     }
 
-    this.challengeNumber.update((number) => number + 1);
-    this.loadChallenge();
+    this.drawChallenge();
   }
 
-  protected playAgain(): void {
-    this.resetJourney();
-    this.achievementsAtStart.set(this.unlockedAchievements());
-    this.phase.set('mapa');
+  protected continueAfterCelebration(): void {
+    this.celebration.set(null);
+
+    if (this.isLastChallenge()) {
+      this.phase.set('resultado');
+    }
+  }
+
+  protected toggleReview(): void {
+    this.isReviewOpen.update((isOpen) => !isOpen);
   }
 
   protected backToStart(): void {
-    this.resetJourney();
+    this.clearExposureTimer();
     this.phase.set('inicio');
   }
 
-  /* Área dos responsáveis ---------------------------------------------------- */
+  private recordAnswer(current: IqChallenge, optionIndex: number, wasCorrect: boolean): void {
+    if (wasCorrect) {
+      this.correctCount.update((total) => total + 1);
+      this.streak.update((streak) => streak + 1);
+      this.bestStreak.update((best) => Math.max(best, this.streak()));
+    } else {
+      this.streak.set(0);
+    }
 
-  protected openGuardianReport(): void {
-    this.reportOpenedAt.set(new Date().toISOString());
-    this.isGuardianOpen.set(true);
-    this.guardianDialog()?.nativeElement.showModal();
+    this.answers.update((records) => [
+      ...records,
+      {
+        challengeId: current.id,
+        skill: SKILL_BY_TYPE[current.type],
+        difficulty: current.difficulty,
+        wasCorrect,
+        responseMs: 0,
+      },
+    ]);
+
+    this.review.update((entries) => [
+      ...entries,
+      {
+        position: this.position(),
+        prompt: current.prompt,
+        chosen: optionLabel(current, optionIndex),
+        correct: optionLabel(current, current.correctIndex),
+        wasCorrect,
+      },
+    ]);
   }
 
-  protected closeGuardianReport(): void {
-    this.isGuardianOpen.set(false);
-    this.guardianDialog()?.nativeElement.close();
-  }
+  /**
+   * Sorteia o próximo desafio.
+   *
+   * Os tipos são percorridos em ciclo para que a rodada sempre passe por
+   * categorias diferentes, em vez de sortear cinco vezes o mesmo formato.
+   */
+  private drawChallenge(): void {
+    this.clearExposureTimer();
 
-  /* Bastidores ---------------------------------------------------------------- */
+    const next = this.position() + 1;
+    const type = CHALLENGE_TYPES[this.order % CHALLENGE_TYPES.length];
+    const created = createChallenge(type, this.adaptive.difficulty, this.order);
 
-  private loadChallenge(): void {
-    const island = this.currentIsland();
-    const type = island.types[this.challengeNumber() % island.types.length];
-
-    this.challengeOrder += 1;
-    const challenge = createChallenge(type, this.adaptive().difficulty, this.challengeOrder);
-
-    this.currentChallenge.set(challenge);
+    this.order += 1;
+    this.position.set(next);
+    this.challenge.set(created);
     this.status.set('aguardando');
     this.chosenIndex.set(null);
-    this.lastEarnedXp.set(0);
+    this.feedbackMessage.set('');
 
-    if (challenge.format === 'memoria') {
-      this.startExposure(challenge.exposureMs);
+    if (created.format !== 'memoria') {
+      this.challengePhase.set('respondendo');
       return;
     }
 
-    this.challengePhase.set('respondendo');
-    this.startResponseTimer();
-  }
-
-  /** Mostra a sequência da memória e só então abre a pergunta. */
-  private startExposure(exposureMs: number): void {
-    this.clearExposureTimer();
+    // A sequência da memória some sozinha antes de a pergunta aparecer.
     this.challengePhase.set('memorizando');
-
-    const duration = this.motion.isAllowed() ? exposureMs : exposureMs * CALM_EXPOSURE_FACTOR;
-
-    this.exposureTimer = setTimeout(() => {
-      this.challengePhase.set('respondendo');
-      this.startResponseTimer();
-    }, duration);
+    this.exposureTimer = setTimeout(
+      () => this.challengePhase.set('respondendo'),
+      created.exposureMs,
+    );
   }
 
-  private startResponseTimer(): void {
-    this.questionStartedAt = Date.now();
+  private initialAdaptive(): IqAdaptiveState {
+    return {
+      difficulty: reasoningDifficultyFor(this.progressService.progressOf(GAME_ID).level),
+      correctStreak: 0,
+      wrongStreak: 0,
+      hasLevelledUp: false,
+    };
   }
 
   private clearExposureTimer(): void {
@@ -390,77 +294,19 @@ export class IqGame {
       this.exposureTimer = null;
     }
   }
+}
 
-  private finishIsland(): void {
-    const island = this.currentIsland();
-
-    this.clearedIslandIds.update((ids) => [...ids, island.id]);
-    if (island.id === 'memoria' && this.islandMisses() === 0) {
-      this.perfectMemoryRuns.set(1);
-    }
-    if (island.id === 'atencao') {
-      this.attentionRuns.set(1);
-    }
-
-    this.clearedCount.update((cleared) => cleared + 1);
-
-    if (this.clearedCount() >= CHALLENGE_ISLANDS.length) {
-      this.finishJourney();
-      return;
-    }
-
-    this.phase.set('mapa');
-  }
-
-  private finishJourney(): void {
-    this.clearExposureTimer();
-    this.phase.set('resultado');
-
-    const completedAt = new Date().toISOString();
-    this.finishedAt.set(completedAt);
-
-    this.journeys.saveJourney(
-      { completedAt, summary: this.summary() },
-      mergeLifetimeStats(this.journeys.lifetime(), this.journeyStats()),
-    );
-    this.isSaved.set(true);
-  }
-
-  private resetJourney(): void {
-    this.clearExposureTimer();
-
-    this.clearedCount.set(0);
-    this.clearedIslandIds.set([]);
-    this.perfectMemoryRuns.set(0);
-    this.attentionRuns.set(0);
-    this.islandMisses.set(0);
-    this.challengeNumber.set(0);
-    this.currentChallenge.set(null);
-    this.status.set('aguardando');
-    this.challengePhase.set('respondendo');
-    this.chosenIndex.set(null);
-    this.streak.set(0);
-    this.bestStreak.set(0);
-    this.totalXp.set(0);
-    this.lastEarnedXp.set(0);
-    this.answers.set([]);
-    this.adaptive.set(initialAdaptiveState(this.band()));
-    this.finishedAt.set(null);
-    this.isSaved.set(false);
+/** Texto da alternativa, qualquer que seja o formato do desafio. */
+function optionLabel(challenge: IqChallenge, index: number): string {
+  switch (challenge.format) {
+    case 'tokens':
+    case 'memoria':
+      return challenge.options[index]?.label ?? '—';
+    case 'figuras':
+      return challenge.options[index]?.label ?? '—';
+    case 'atencao':
+      return challenge.grid[index]?.label ?? '—';
   }
 }
 
-/** Registro de uma resposta, no formato que o motor consome. */
-function buildAnswer(
-  challenge: IqChallenge,
-  wasCorrect: boolean,
-  responseMs: number,
-): IqAnswerRecord {
-  return {
-    challengeId: challenge.id,
-    skill: challenge.skill,
-    difficulty: challenge.difficulty,
-    wasCorrect,
-    responseMs,
-  };
-}
+export { starsForAccuracy };

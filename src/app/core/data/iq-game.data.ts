@@ -1,170 +1,10 @@
 import type {
-  IqAchievement,
-  IqAgeBand,
   IqAttentionSet,
-  IqIsland,
   IqLanguageItem,
-  IqLifetimeStats,
   IqSkill,
   IqToken,
   IqTokenSet,
 } from '../models/iq-game.model';
-
-/**
- * Conteúdo do Desafio da Mente.
- *
- * Os desafios não vêm prontos: guardamos aqui as faixas etárias, o mapa e os
- * bancos de peças, e o motor monta cada desafio na hora, no nível certo. Só a
- * ilha das palavras precisa de conteúdo escrito à mão.
- */
-
-/** Idades aceitas no controle da tela inicial. */
-export const IQ_MIN_AGE = 4;
-export const IQ_MAX_AGE = 16;
-export const IQ_DEFAULT_AGE = 7;
-
-/** Faixas em ordem crescente de idade; a busca por idade depende dessa ordem. */
-export const IQ_AGE_BANDS: readonly [IqAgeBand, ...IqAgeBand[]] = [
-  {
-    id: 'pequeno-explorador',
-    title: 'Pequeno Explorador',
-    emoji: '🐣',
-    color: 'mint',
-    minAge: 4,
-    maxAge: 5,
-    description: 'Desafios bem leves, com figuras e cores para ver e contar.',
-    startingDifficulty: 1,
-    challengesPerIsland: 5,
-  },
-  {
-    id: 'explorador',
-    title: 'Explorador',
-    emoji: '🧭',
-    color: 'blue',
-    minAge: 6,
-    maxAge: 7,
-    description: 'Lógica e números simples, do jeitinho de quem já lê.',
-    startingDifficulty: 2,
-    challengesPerIsland: 5,
-  },
-  {
-    id: 'aventureiro',
-    title: 'Aventureiro',
-    emoji: '🚀',
-    color: 'purple',
-    minAge: 8,
-    maxAge: 9,
-    description: 'Desafios intermediários de raciocínio e memória.',
-    startingDifficulty: 3,
-    challengesPerIsland: 6,
-  },
-  {
-    id: 'mestre-desafios',
-    title: 'Mestre dos Desafios',
-    emoji: '🏅',
-    color: 'orange',
-    minAge: 10,
-    maxAge: 12,
-    description: 'Desafios avançados, com padrões e rotações mais difíceis.',
-    startingDifficulty: 4,
-    challengesPerIsland: 7,
-  },
-  {
-    id: 'super-estrategista',
-    title: 'Super Estrategista',
-    emoji: '🐉',
-    color: 'pink',
-    minAge: 13,
-    maxAge: IQ_MAX_AGE,
-    description: 'Os desafios mais complexos da jornada inteira.',
-    startingDifficulty: 5,
-    challengesPerIsland: 8,
-  },
-];
-
-/** Mapa da jornada, na ordem em que as etapas são liberadas. */
-export const IQ_ISLANDS: readonly [IqIsland, ...IqIsland[]] = [
-  {
-    id: 'padroes',
-    name: 'Ilha dos Padrões e Lógica',
-    emoji: '🧩',
-    color: 'purple',
-    description: 'Descubra o que vem depois.',
-    kind: 'desafios',
-    types: ['padrao'],
-    skill: 'logica',
-  },
-  {
-    id: 'numeros',
-    name: 'Ilha do Raciocínio Numérico',
-    emoji: '🔢',
-    color: 'blue',
-    description: 'Sequências e contagens.',
-    kind: 'desafios',
-    types: ['sequencia'],
-    skill: 'numeros',
-  },
-  {
-    id: 'visual',
-    name: 'Ilha do Raciocínio Visual',
-    emoji: '🔷',
-    color: 'mint',
-    description: 'Formas, diferenças e giros.',
-    kind: 'desafios',
-    types: ['diferente', 'rotacao'],
-    skill: 'visual',
-  },
-  {
-    id: 'memoria',
-    name: 'Ilha da Memória',
-    emoji: '🎴',
-    color: 'pink',
-    description: 'Guarde na cabeça e responda.',
-    kind: 'desafios',
-    types: ['memoria'],
-    skill: 'memoria',
-  },
-  {
-    id: 'atencao',
-    name: 'Ilha da Atenção',
-    emoji: '🔎',
-    color: 'yellow',
-    description: 'Ache o que está escondido.',
-    kind: 'desafios',
-    types: ['atencao'],
-    skill: 'atencao',
-  },
-  {
-    id: 'palavras',
-    name: 'Ilha das Palavras e Significados',
-    emoji: '💬',
-    color: 'orange',
-    description: 'Grupos, ideias e comparações.',
-    kind: 'desafios',
-    types: ['linguagem'],
-    skill: 'linguagem',
-  },
-  {
-    id: 'castelo',
-    name: 'Castelo do Desafio Final',
-    emoji: '🏰',
-    color: 'purple',
-    description: 'Um pouquinho de cada habilidade.',
-    kind: 'desafios',
-    types: ['padrao', 'sequencia', 'rotacao', 'memoria', 'atencao', 'linguagem'],
-    skill: null,
-  },
-  {
-    id: 'bau',
-    name: 'Baú de recompensa',
-    emoji: '🎁',
-    color: 'yellow',
-    description: 'O prêmio de quem chegou até o fim.',
-    kind: 'recompensa',
-    types: [],
-    skill: null,
-  },
-];
 
 export const IQ_SKILL_LABELS: Readonly<Record<IqSkill, string>> = {
   logica: 'Lógica',
@@ -173,26 +13,6 @@ export const IQ_SKILL_LABELS: Readonly<Record<IqSkill, string>> = {
   memoria: 'Memória',
   atencao: 'Atenção',
   linguagem: 'Linguagem',
-};
-
-/** Nome completo da habilidade no relatório dos responsáveis. */
-export const IQ_SKILL_FULL_LABELS: Readonly<Record<IqSkill, string>> = {
-  logica: 'Raciocínio lógico',
-  numeros: 'Raciocínio numérico',
-  visual: 'Raciocínio visual',
-  memoria: 'Memória',
-  atencao: 'Atenção',
-  linguagem: 'Linguagem',
-};
-
-/** Como cada habilidade é comemorada na tela da criança. */
-export const IQ_SUPER_POWER_LABELS: Readonly<Record<IqSkill, string>> = {
-  logica: 'Detetive de padrões',
-  numeros: 'Mago dos números',
-  visual: 'Olhar de artista',
-  memoria: 'Memória de elefante',
-  atencao: 'Olhos de águia',
-  linguagem: 'Mestre das palavras',
 };
 
 /** Conjuntos de peças dos padrões: forma e cor mudam juntas, nunca só a cor. */
@@ -453,46 +273,6 @@ export const IQ_LANGUAGE_ITEMS: readonly IqLanguageItem[] = [
   },
 ];
 
-/** Conquistas de longo prazo; somam entre uma jornada e outra. */
-export const IQ_ACHIEVEMENTS: readonly IqAchievement[] = [
-  {
-    id: 'mestre-padroes',
-    title: 'Mestre dos Padrões',
-    description: 'Acertar 10 desafios de lógica.',
-    emoji: '🧩',
-  },
-  {
-    id: 'super-memoria',
-    title: 'Super Memória',
-    description: 'Concluir a Ilha da Memória sem errar nenhuma.',
-    emoji: '🧠',
-  },
-  {
-    id: 'olhos-aguia',
-    title: 'Olhos de Águia',
-    description: 'Concluir a Ilha da Atenção.',
-    emoji: '🦅',
-  },
-  {
-    id: 'mente-em-chamas',
-    title: 'Mente em Chamas',
-    description: 'Acertar 5 desafios seguidos.',
-    emoji: '🔥',
-  },
-  {
-    id: 'grande-explorador',
-    title: 'Grande Explorador',
-    description: 'Visitar e concluir todas as ilhas.',
-    emoji: '🗺️',
-  },
-  {
-    id: 'mestre-da-mente',
-    title: 'Mestre da Mente',
-    description: 'Terminar a jornada inteira.',
-    emoji: '👑',
-  },
-];
-
 /** Comemorações do acerto; a fase escolhe uma para não piscar na tela. */
 export const IQ_CORRECT_MESSAGES: readonly string[] = [
   'Muito bem!',
@@ -507,28 +287,3 @@ export const IQ_WRONG_MESSAGES: readonly string[] = [
   'Boa tentativa! O próximo desafio te espera.',
   'Tudo bem, faz parte da aventura. Seguimos!',
 ];
-
-export const IQ_LEVEL_UP_MESSAGE = 'Você está indo muito bem. Novo desafio desbloqueado!';
-
-/** Ponto de partida de quem ainda não jogou nenhuma jornada. */
-export const IQ_EMPTY_LIFETIME_STATS: IqLifetimeStats = {
-  totalXp: 0,
-  bestStreak: 0,
-  correctBySkill: {
-    logica: 0,
-    numeros: 0,
-    visual: 0,
-    memoria: 0,
-    atencao: 0,
-    linguagem: 0,
-  },
-  clearedIslandIds: [],
-  perfectMemoryRuns: 0,
-  attentionRuns: 0,
-  journeysCompleted: 0,
-};
-
-/** Aviso obrigatório na área de responsáveis. */
-export const IQ_GUARDIAN_DISCLAIMER =
-  'Esta atividade possui finalidade educativa e de acompanhamento de desempenho. ' +
-  'Não substitui avaliação psicológica ou neuropsicológica realizada por profissional habilitado.';

@@ -86,6 +86,8 @@ export interface ChallengeOutcome {
   readonly streak: number;
   readonly completedInLevel: number;
   readonly challengesPerLevel: number;
+  /** Acertos do nível que acabou de fechar; zero enquanto ele não fecha. */
+  readonly correctInLevel: number;
   readonly didLevelUp: boolean;
   /** Nível alcançado; igual ao anterior quando o nível não fechou. */
   readonly level: number;

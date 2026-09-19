@@ -1,12 +1,9 @@
-import { ENGLISH_CHALLENGES, ENGLISH_LEVELS } from '../../../core/data/english-quiz.data';
+import { ENGLISH_CHALLENGES } from '../../../core/data/english-quiz.data';
 import {
-  calculateEarnedXp,
   checkWritingAnswer,
   correctAnswerOf,
   normalizeAnswer,
   speakableTextOf,
-  STREAK_BONUS_THRESHOLD,
-  STREAK_BONUS_XP,
 } from './english-game.logic';
 
 describe('normalizeAnswer', () => {
@@ -50,38 +47,12 @@ describe('checkWritingAnswer', () => {
   });
 });
 
-describe('calculateEarnedXp', () => {
-  const baseInput = { baseXp: 20, usedHint: false, missCount: 0, streak: 1 };
-
-  it('dá o XP cheio quando acerta de primeira e sem dica', () => {
-    expect(calculateEarnedXp(baseInput)).toBe(20);
-  });
-
-  it('corta o XP pela metade quando a criança pede dica', () => {
-    expect(calculateEarnedXp({ ...baseInput, usedHint: true })).toBe(10);
-  });
-
-  it('corta o XP pela metade quando houve erro antes do acerto', () => {
-    expect(calculateEarnedXp({ ...baseInput, missCount: 1 })).toBe(10);
-  });
-
-  it('arredonda o XP reduzido para cima, para nunca sobrar meio ponto', () => {
-    expect(calculateEarnedXp({ ...baseInput, baseXp: 5, usedHint: true })).toBe(3);
-  });
-
-  it('soma o bônus ao atingir a sequência mínima de acertos', () => {
-    expect(calculateEarnedXp({ ...baseInput, streak: STREAK_BONUS_THRESHOLD })).toBe(
-      20 + STREAK_BONUS_XP,
-    );
-  });
-});
-
 describe('conteúdo do jogo de inglês', () => {
   it('tem 30 fases distribuídas igualmente entre os três níveis', () => {
     expect(ENGLISH_CHALLENGES.length).toBe(30);
 
-    for (const level of ENGLISH_LEVELS) {
-      const challenges = ENGLISH_CHALLENGES.filter((challenge) => challenge.level === level.id);
+    for (const level of ['facil', 'medio', 'dificil'] as const) {
+      const challenges = ENGLISH_CHALLENGES.filter((challenge) => challenge.level === level);
       expect(challenges.length).toBe(10);
     }
   });

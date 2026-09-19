@@ -1,249 +1,197 @@
-<section class="mind" aria-labelledby="mente-titulo">
-  <header class="mind__header">
-    <h3 id="mente-titulo" class="mind__title">
-      <span aria-hidden="true">🧠</span>
-      Desafio da Mente
-    </h3>
-    <p class="mind__tagline">Uma aventura para descobrir suas habilidades!</p>
-    <p class="mind__subtitle">
-      Complete desafios de lógica, memória, atenção e raciocínio para descobrir seus superpoderes.
+<section class="reasoning" aria-labelledby="raciocinio-titulo">
+  <header class="reasoning__header">
+    <h3 id="raciocinio-titulo" class="reasoning__title">Desafio de raciocínio</h3>
+    <p class="reasoning__subtitle">
+      Um jogo de lógica do site — divertido, e não uma prova.
     </p>
   </header>
 
+  <app-game-hud [gameId]="gameId" />
+
   @switch (phase()) {
-    <!-- Etapa inicial: idade ------------------------------------------------ -->
     @case ('inicio') {
-      <div class="start" [attr.data-color]="band().color">
-        <p class="start__emoji" aria-hidden="true">{{ band().emoji }}</p>
+      <div class="intro">
+        <p class="intro__emoji" aria-hidden="true">🧠</p>
+        <h4 class="intro__title">Prepare-se para treinar</h4>
 
-        <div class="start__text">
-          <h4 class="start__title">
-            {{ childName }}, você tem {{ age() }} anos. Preparado para começar?
-          </h4>
-          <p class="start__band">
-            <strong>{{ band().title }}</strong> · {{ band().description }}
+        <ul class="intro__topics">
+          @for (topic of topics; track topic.label) {
+            <li class="intro__topic">
+              <span aria-hidden="true">{{ topic.emoji }}</span>
+              {{ topic.label }}
+            </li>
+          }
+        </ul>
+
+        <p class="intro__count">{{ totalChallenges }} desafios</p>
+
+        @if (personalBest() > 0) {
+          <p class="intro__record">
+            <span aria-hidden="true">🏆</span>
+            Seu recorde: {{ personalBest() }} de {{ totalChallenges }}
           </p>
-        </div>
+        }
 
-        <div class="stepper" role="group" aria-labelledby="idade-legenda">
-          <span id="idade-legenda" class="stepper__legend">Escolha a idade</span>
-
-          <div class="stepper__controls">
-            <button
-              type="button"
-              class="stepper__button"
-              aria-label="Diminuir a idade"
-              [disabled]="!canDecreaseAge()"
-              (click)="decreaseAge()"
-            >
-              <span aria-hidden="true">−</span>
-            </button>
-
-            <output class="stepper__value" aria-live="polite">
-              {{ age() }} <span class="stepper__unit">anos</span>
-            </output>
-
-            <button
-              type="button"
-              class="stepper__button"
-              aria-label="Aumentar a idade"
-              [disabled]="!canIncreaseAge()"
-              (click)="increaseAge()"
-            >
-              <span aria-hidden="true">+</span>
-            </button>
-          </div>
-
-          <p class="stepper__hint">De {{ minAge }} a {{ maxAge }} anos.</p>
-        </div>
-
-        <button type="button" class="button button--primary start__cta" (click)="startJourney()">
-          <span aria-hidden="true">🚀</span>
-          Começar minha aventura
+        <button type="button" class="button button--primary button--block" (click)="start()">
+          Começar
+          <span aria-hidden="true">→</span>
         </button>
       </div>
     }
 
-    <!-- Mapa da jornada ------------------------------------------------------ -->
-    @case ('mapa') {
-      <div class="hud" [attr.data-color]="band().color">
-        <p class="hud__band">
-          <span class="hud__emoji" aria-hidden="true">{{ band().emoji }}</span>
-          <span>
-            <strong>{{ band().title }}</strong>
-            <small>{{ age() }} anos</small>
-          </span>
-        </p>
-
-        <div class="hud__progress">
-          <div class="meter">
-            <span class="meter__fill" [style.width.%]="journeyPercentage()"></span>
-          </div>
-          <p class="hud__count">
-            {{ answers().length }} de {{ totalChallenges() }} desafios · {{ totalXp() }} XP
-          </p>
-        </div>
-
-        <p class="hud__streak">
-          <span aria-hidden="true">🔥</span>
-          <span>Sequência: {{ streak() }}</span>
-        </p>
-      </div>
-
-      <app-island-map
-        [islands]="islands()"
-        [currentDone]="challengeNumber()"
-        [currentTotal]="challengesPerIsland()"
-        (entered)="enterIsland()"
-      />
-
-      <div class="next">
-        <p class="next__label">Próxima parada</p>
-        <p class="next__island">
-          <span aria-hidden="true">{{ currentIsland().emoji }}</span>
-          <strong>{{ currentIsland().name }}</strong>
-        </p>
-        <p class="next__description">{{ currentIsland().description }}</p>
-        <button type="button" class="button button--primary" (click)="enterIsland()">
-          <span aria-hidden="true">▶️</span>
-          Entrar na ilha
-        </button>
-      </div>
-
-      <app-achievement-list [items]="achievementItems()" />
-    }
-
-    <!-- Desafio em andamento ------------------------------------------------- -->
     @case ('desafio') {
-      @if (currentChallenge(); as challenge) {
-        <div class="stage" [attr.data-color]="currentIsland().color">
-          <p class="stage__badges">
-            <span class="stage__badge">
-              <span aria-hidden="true">{{ currentIsland().emoji }}</span>
-              {{ currentIsland().name }}
-            </span>
-            <span class="stage__badge">
-              Desafio {{ challengeNumber() + 1 }} de {{ challengesPerIsland() }}
-            </span>
-            <span class="stage__badge">{{ skillLabels[challenge.skill] }}</span>
+      <div class="run">
+        <div class="run__progress">
+          <p class="run__counter">
+            Desafio <strong>{{ position() }}</strong> de {{ totalChallenges }}
           </p>
 
+          <div
+            class="run__bar"
+            role="progressbar"
+            [attr.aria-valuenow]="position()"
+            [attr.aria-valuemin]="1"
+            [attr.aria-valuemax]="totalChallenges"
+            [attr.aria-label]="'Desafio ' + position() + ' de ' + totalChallenges"
+          >
+            <span class="run__fill" [style.width.%]="runPercentage()"></span>
+          </div>
+
+          <p class="run__remaining">
+            {{ totalChallenges - position() }} restantes
+            @if (streak() > 1) {
+              · <span aria-hidden="true">🔥</span> {{ streak() }} seguidos
+            }
+          </p>
+        </div>
+
+        @if (challenge(); as current) {
           <app-challenge-view
-            [challenge]="challenge"
+            [challenge]="current"
             [phase]="challengePhase()"
             [status]="status()"
             [chosenIndex]="chosenIndex()"
             (answered)="answer($event)"
           />
+        }
 
-          @if (isSettled()) {
-            <div class="feedback" [attr.data-status]="status()" role="status">
-              <p class="feedback__title">
-                <span aria-hidden="true">{{ status() === 'certo' ? '🎉' : '💪' }}</span>
-                {{ feedbackMessage() }}
-              </p>
+        @if (isSettled()) {
+          <div class="feedback" [attr.data-status]="status()" role="status">
+            <p class="feedback__message">
+              <span aria-hidden="true">{{ status() === 'certo' ? '🎉' : '💪' }}</span>
+              {{ feedbackMessage() }}
+            </p>
 
-              <p class="feedback__xp">+{{ lastEarnedXp() }} XP</p>
-
-              @if (hasLevelledUp()) {
-                <p class="feedback__levelup">
-                  <span aria-hidden="true">⭐</span>
-                  {{ levelUpMessage }}
-                </p>
-              }
-
-              <button
-                #continueButton
-                type="button"
-                class="button button--accent"
-                (click)="continueJourney()"
-              >
-                {{ isLastChallengeOfIsland() ? 'Concluir a ilha' : 'Próximo desafio' }}
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          }
-        </div>
-      }
+            <button type="button" class="button button--accent button--block" (click)="next()">
+              {{ isLastChallenge() ? 'Ver o resultado' : 'Próximo desafio' }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        }
+      </div>
     }
 
-    <!-- Comemoração final ----------------------------------------------------- -->
     @case ('resultado') {
-      <div class="finish" role="status">
-        <p class="finish__emoji" aria-hidden="true">🎁</p>
-        <p class="finish__title">Parabéns, {{ childName }}!</p>
-        <p class="finish__message">Você completou o Desafio da Mente!</p>
+      <div class="result">
+        <p class="result__emoji" aria-hidden="true">🎉</p>
+        <h4 class="result__title">Parabéns, {{ childName }}!</h4>
+        <p class="result__subtitle">Você completou o desafio de raciocínio.</p>
 
-        <p class="finish__power">
-          <span class="finish__power-label">Seu superpoder</span>
-          <strong>{{ superPowerLabels[summary().superPowerSkill] }}</strong>
-          <span class="finish__power-skill">{{ skillLabels[summary().superPowerSkill] }}</span>
-        </p>
+        <p class="result__score">{{ correctCount() }} / {{ totalChallenges }}</p>
 
-        <ul class="scores">
-          @for (score of summary().skills; track score.skill) {
-            <li class="scores__item">
-              <span class="scores__label">{{ skillLabels[score.skill] }}</span>
-              <span class="scores__stars" [attr.aria-label]="score.stars + ' de 5 estrelas'">
-                <span aria-hidden="true">
+        <div
+          class="result__bar"
+          role="progressbar"
+          [attr.aria-valuenow]="accuracy()"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="accuracy() + ' por cento de acertos'"
+        >
+          <span class="result__fill" [style.width.%]="accuracy()"></span>
+        </div>
+
+        <p class="result__percentage">{{ accuracy() }}% de acertos</p>
+        <p class="result__message">{{ resultMessage() }}</p>
+
+        <dl class="result__stats">
+          <div class="result__stat">
+            <dt>Pontos</dt>
+            <dd>+{{ earnedPoints() }}</dd>
+          </div>
+          <div class="result__stat">
+            <dt>Melhor sequência</dt>
+            <dd><span aria-hidden="true">🔥</span> {{ bestStreak() }}</dd>
+          </div>
+        </dl>
+
+        @if (isNewRecord()) {
+          <p class="result__record" role="status">
+            <span aria-hidden="true">🏆</span>
+            Novo recorde pessoal!
+          </p>
+        }
+
+        @if (skillScores().length > 0) {
+          <ul class="skills">
+            @for (score of skillScores(); track score.skill) {
+              <li class="skills__row">
+                <span class="skills__name">{{ skillLabels[score.skill] }}</span>
+                <span
+                  class="skills__stars"
+                  [attr.aria-label]="score.stars + ' de 5 estrelas em ' + skillLabels[score.skill]"
+                >
                   @for (slot of starSlots; track slot) {
-                    <span class="scores__star" [class.scores__star--on]="score.stars >= slot">
-                      ★
-                    </span>
+                    <span class="skills__star" [class.skills__star--on]="slot <= score.stars"
+                      >★</span
+                    >
                   }
                 </span>
-              </span>
-            </li>
-          }
-        </ul>
+              </li>
+            }
+          </ul>
+        }
 
-        <p class="finish__growing">
-          <span aria-hidden="true">🌱</span>
-          Continue treinando <strong>{{ skillLabels[summary().growingSkill] }}</strong> — a cada
-          jornada fica mais fácil!
-        </p>
-
-        <p class="finish__xp">
-          Você juntou {{ totalXp() }} XP e chegou a uma sequência de {{ bestStreak() }} acertos.
-        </p>
-
-        <div class="finish__actions">
-          <button type="button" class="button button--primary" (click)="playAgain()">
-            <span aria-hidden="true">🔄</span>
-            Jogar de novo
+        <div class="result__actions">
+          <button
+            type="button"
+            class="button button--secondary button--block"
+            [attr.aria-expanded]="isReviewOpen()"
+            (click)="toggleReview()"
+          >
+            <span aria-hidden="true">📋</span>
+            {{ isReviewOpen() ? 'Esconder respostas' : 'Ver respostas' }}
           </button>
-          <button type="button" class="button button--secondary" (click)="backToStart()">
-            <span aria-hidden="true">🎮</span>
-            Voltar aos jogos
+
+          <button type="button" class="button button--primary button--block" (click)="start()">
+            <span aria-hidden="true">🔄</span>
+            Desafiar novamente
           </button>
         </div>
+
+        @if (isReviewOpen()) {
+          <ol class="review">
+            @for (entry of review(); track entry.position) {
+              <li class="review__item" [attr.data-status]="entry.wasCorrect ? 'certo' : 'errado'">
+                <p class="review__prompt">
+                  <strong>{{ entry.position }}.</strong>
+                  {{ entry.prompt }}
+                </p>
+                <p class="review__answer">
+                  <span aria-hidden="true">{{ entry.wasCorrect ? '✅' : '↪️' }}</span>
+                  Você escolheu: {{ entry.chosen }}
+                </p>
+                @if (!entry.wasCorrect) {
+                  <p class="review__correct">Resposta certa: {{ entry.correct }}</p>
+                }
+              </li>
+            }
+          </ol>
+        }
       </div>
 
-      <app-achievement-list [items]="achievementItems()" />
+      <app-celebration-effects [isActive]="true" />
     }
-  }
-
-  <!-- Acesso dos responsáveis ------------------------------------------------- -->
-  @if (phase() !== 'inicio') {
-    <div class="guardian-access">
-      <button
-        type="button"
-        class="button button--ghost button--small"
-        (click)="openGuardianReport()"
-      >
-        <span aria-hidden="true">👨‍👩‍👧</span>
-        Área dos responsáveis
-      </button>
-    </div>
   }
 </section>
 
-<dialog #guardianDialog class="guardian" (close)="closeGuardianReport()">
-  @if (isGuardianOpen()) {
-    <app-guardian-report
-      [report]="guardianReport()"
-      [history]="history()"
-      (closed)="closeGuardianReport()"
-    />
-  }
-</dialog>
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

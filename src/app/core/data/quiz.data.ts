@@ -1,19 +1,11 @@
-import type { QuizCategoryOption, QuizQuestion } from '../models/quiz.model';
-
-/** Quantas perguntas entram em cada rodada, sorteadas do total disponível. */
-export const QUESTIONS_PER_ROUND = 8;
-
-export const QUIZ_CATEGORIES: readonly QuizCategoryOption[] = [
-  { value: 'tudo', label: 'Tudo misturado', emoji: '🎲' },
-  { value: 'sobre-mim', label: 'Sobre mim', emoji: '🙋' },
-  { value: 'geral', label: 'Perguntas gerais', emoji: '🌎' },
-];
+import type { QuizQuestion } from '../models/quiz.model';
 
 /** Perguntas sobre o Pedro Henrique. As respostas seguem o `PROFILE`. */
 const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-cor',
     category: 'sobre-mim',
+    difficulty: 1,
     question: 'Qual é a minha cor favorita?',
     options: ['Azul', 'Vermelho', 'Verde', 'Roxo'],
     correctIndex: 0,
@@ -22,6 +14,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-animal',
     category: 'sobre-mim',
+    difficulty: 1,
     question: 'Qual é o meu bicho favorito?',
     options: ['Gato', 'Dinossauro', 'Papagaio', 'Tubarão'],
     correctIndex: 1,
@@ -30,6 +23,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-comida',
     category: 'sobre-mim',
+    difficulty: 1,
     question: 'O que eu peço quando posso escolher a janta?',
     options: ['Sopa', 'Salada', 'Pizza de calabresa', 'Peixe'],
     correctIndex: 2,
@@ -38,6 +32,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-esporte',
     category: 'sobre-mim',
+    difficulty: 1,
     question: 'Qual esporte eu jogo todo dia no recreio?',
     options: ['Vôlei', 'Natação', 'Basquete', 'Futebol'],
     correctIndex: 3,
@@ -46,6 +41,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-invencao',
     category: 'sobre-mim',
+    difficulty: 2,
     question: 'Qual invenção minha já ficou pronta?',
     options: ['Cabana secreta do quintal', 'Mochila que anda sozinha', 'Robô arrumador', 'Lápis que apita'],
     correctIndex: 0,
@@ -54,6 +50,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-sonho',
     category: 'sobre-mim',
+    difficulty: 2,
     question: 'Qual é o meu sonho?',
     options: ['Ter um jacaré', 'Conhecer um foguete de verdade', 'Morar na praia', 'Ganhar um trem'],
     correctIndex: 1,
@@ -62,6 +59,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-irma',
     category: 'sobre-mim',
+    difficulty: 1,
     question: 'Como se chama a minha irmã?',
     options: ['Helena', 'Verônica', 'Rosimeri', 'Carolina'],
     correctIndex: 0,
@@ -70,6 +68,7 @@ const ABOUT_ME_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'quiz-mes',
     category: 'sobre-mim',
+    difficulty: 2,
     question: 'Em que mês eu faço aniversário?',
     options: ['Janeiro', 'Abril', 'Julho', 'Dezembro'],
     correctIndex: 1,
@@ -82,6 +81,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-aranha',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantas patas tem uma aranha?',
     options: ['6', '8', '10', '4'],
     correctIndex: 1,
@@ -90,6 +90,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-baleia',
     category: 'geral',
+    difficulty: 2,
     question: 'Qual é o maior animal do mundo?',
     options: ['Elefante', 'Girafa', 'Baleia-azul', 'Tubarão-branco'],
     correctIndex: 2,
@@ -98,6 +99,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-arco-iris',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantas cores tem o arco-íris?',
     options: ['5', '6', '7', '10'],
     correctIndex: 2,
@@ -106,6 +108,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-semana',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantos dias tem uma semana?',
     options: ['5', '7', '10', '12'],
     correctIndex: 1,
@@ -114,6 +117,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-hora',
     category: 'geral',
+    difficulty: 2,
     question: 'Quantos minutos tem uma hora?',
     options: ['30', '60', '90', '100'],
     correctIndex: 1,
@@ -122,6 +126,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-capital',
     category: 'geral',
+    difficulty: 2,
     question: 'Qual é a capital do Brasil?',
     options: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador'],
     correctIndex: 2,
@@ -130,6 +135,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-planeta',
     category: 'geral',
+    difficulty: 1,
     question: 'Em qual planeta a gente mora?',
     options: ['Marte', 'Terra', 'Júpiter', 'Saturno'],
     correctIndex: 1,
@@ -138,6 +144,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-camaleao',
     category: 'geral',
+    difficulty: 2,
     question: 'Qual animal consegue mudar de cor?',
     options: ['Camaleão', 'Cavalo', 'Coelho', 'Corvo'],
     correctIndex: 0,
@@ -146,6 +153,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-guepardo',
     category: 'geral',
+    difficulty: 2,
     question: 'Qual é o animal mais rápido da terra?',
     options: ['Cavalo', 'Avestruz', 'Guepardo', 'Lebre'],
     correctIndex: 2,
@@ -154,6 +162,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-plantas',
     category: 'geral',
+    difficulty: 2,
     question: 'Do que as plantas mais precisam para crescer?',
     options: ['Barulho', 'Água e luz do sol', 'Escuro total', 'Refrigerante'],
     correctIndex: 1,
@@ -162,6 +171,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-triangulo',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantos lados tem um triângulo?',
     options: ['3', '4', '5', '6'],
     correctIndex: 0,
@@ -170,6 +180,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-gelo',
     category: 'geral',
+    difficulty: 2,
     question: 'O gelo é a água em qual estado?',
     options: ['Líquido', 'Sólido', 'Gasoso', 'Invisível'],
     correctIndex: 1,
@@ -178,6 +189,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-estacoes',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantas estações tem o ano?',
     options: ['2', '3', '4', '6'],
     correctIndex: 2,
@@ -186,6 +198,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-oceano',
     category: 'geral',
+    difficulty: 2,
     question: 'Qual é o maior oceano do planeta?',
     options: ['Atlântico', 'Índico', 'Ártico', 'Pacífico'],
     correctIndex: 3,
@@ -194,6 +207,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-abelha',
     category: 'geral',
+    difficulty: 1,
     question: 'O que a abelha produz?',
     options: ['Leite', 'Mel', 'Suco', 'Farinha'],
     correctIndex: 1,
@@ -202,6 +216,7 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   {
     id: 'geral-dedos',
     category: 'geral',
+    difficulty: 1,
     question: 'Quantos dedos temos nas duas mãos juntas?',
     options: ['8', '10', '12', '20'],
     correctIndex: 1,
@@ -209,7 +224,144 @@ const GENERAL_QUESTIONS: readonly QuizQuestion[] = [
   },
 ];
 
+
+/**
+ * Perguntas que pedem um passo a mais de raciocínio.
+ *
+ * Alimentam os níveis altos do quiz: em vez de lembrar um fato, a criança
+ * precisa combinar duas informações ou fazer uma conta antes de responder.
+ */
+const CHALLENGING_QUESTIONS: readonly QuizQuestion[] = [
+  {
+    id: 'geral-duzia',
+    category: 'geral',
+    difficulty: 2,
+    question: 'Uma dúzia tem quantas unidades?',
+    options: ['10', '11', '12', '20'],
+    correctIndex: 2,
+    funFact: 'Meia dúzia, então, são seis.',
+  },
+  {
+    id: 'geral-hexagono',
+    category: 'geral',
+    difficulty: 2,
+    question: 'Quantos lados tem um hexágono?',
+    options: ['5', '6', '7', '8'],
+    correctIndex: 1,
+    funFact: 'As colmeias das abelhas são feitas de hexágonos.',
+  },
+  {
+    id: 'geral-dia-horas',
+    category: 'geral',
+    difficulty: 2,
+    question: 'Quantas horas tem um dia inteiro?',
+    options: ['12', '18', '24', '30'],
+    correctIndex: 2,
+    funFact: 'São 12 horas no relógio, mas o ponteiro dá duas voltas por dia.',
+  },
+  {
+    id: 'geral-mercurio',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Qual é o planeta mais perto do Sol?',
+    options: ['Vênus', 'Terra', 'Mercúrio', 'Marte'],
+    correctIndex: 2,
+    funFact: 'Mesmo assim, Vênus é o planeta mais quente do sistema solar.',
+  },
+  {
+    id: 'geral-nao-mamifero',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Qual destes NÃO é um mamífero?',
+    options: ['Baleia', 'Morcego', 'Tubarão', 'Golfinho'],
+    correctIndex: 2,
+    funFact: 'O tubarão é peixe. A baleia e o golfinho respiram ar, como nós.',
+  },
+  {
+    id: 'geral-hora-e-meia',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Uma hora e meia tem quantos minutos?',
+    options: ['60', '75', '90', '120'],
+    correctIndex: 2,
+    funFact: 'Sessenta da hora cheia mais trinta da metade.',
+  },
+  {
+    id: 'geral-metade-24',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Quanto é a metade de 24?',
+    options: ['8', '12', '14', '16'],
+    correctIndex: 1,
+    funFact: 'Metade é dividir em duas partes iguais.',
+  },
+  {
+    id: 'geral-conta-mista',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Quanto é 5 × 5 − 5?',
+    options: ['15', '20', '25', '30'],
+    correctIndex: 1,
+    funFact: 'Primeiro a multiplicação, depois a subtração.',
+  },
+  {
+    id: 'geral-dia-depois',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Se hoje é terça-feira, que dia será depois de amanhã?',
+    options: ['Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'],
+    correctIndex: 1,
+    funFact: 'Amanhã é quarta, e o dia seguinte é quinta.',
+  },
+  {
+    id: 'geral-paginas',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Um livro tem 40 páginas e você já leu a metade. Quantas faltam?',
+    options: ['10', '20', '25', '30'],
+    correctIndex: 1,
+    funFact: 'Metade lida, metade por ler: 20 de cada lado.',
+  },
+  {
+    id: 'geral-triangulos',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Quantos lados têm 4 triângulos juntos?',
+    options: ['7', '9', '12', '16'],
+    correctIndex: 2,
+    funFact: 'Cada triângulo tem 3 lados: 3 + 3 + 3 + 3.',
+  },
+  {
+    id: 'geral-fracao',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Qual pedaço de bolo é maior: metade ou um quarto?',
+    options: ['Metade', 'Um quarto', 'São iguais', 'Depende do bolo'],
+    correctIndex: 0,
+    funFact: 'Quanto mais pedaços, menor fica cada um.',
+  },
+  {
+    id: 'geral-maior-pais',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Qual é o maior país da América do Sul?',
+    options: ['Argentina', 'Brasil', 'Peru', 'Chile'],
+    correctIndex: 1,
+    funFact: 'O Brasil faz fronteira com quase todos os vizinhos do continente.',
+  },
+  {
+    id: 'geral-ovos',
+    category: 'geral',
+    difficulty: 3,
+    question: 'Qual destes animais põe ovos?',
+    options: ['Cachorro', 'Tartaruga', 'Gato', 'Cavalo'],
+    correctIndex: 1,
+    funFact: 'A tartaruga enterra os ovos na areia e deixa o sol esquentar.',
+  },
+];
+
 export const QUIZ_QUESTIONS: readonly QuizQuestion[] = [
   ...ABOUT_ME_QUESTIONS,
   ...GENERAL_QUESTIONS,
+  ...CHALLENGING_QUESTIONS,
 ];

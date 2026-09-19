@@ -1,0 +1,170 @@
+@use 'mixins' as *;
+
+/**
+ * Peças visuais compartilhadas pelos jogos de pergunta e resposta.
+ *
+ * Matemática, inglês, quiz e o desafio de raciocínio mostram a mesma coisa:
+ * um enunciado, alternativas grandes e um retorno colorido. Manter isso aqui
+ * evita quatro cópias quase iguais — e garante que a criança encontre sempre
+ * o mesmo botão no mesmo lugar, em qualquer jogo.
+ */
+
+/** Cartão que embrulha o desafio da vez. */
+@mixin challenge-card {
+  @include card-surface;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+
+  @include from($breakpoint-md) {
+    padding: var(--space-5);
+  }
+}
+
+/** Enunciado curto acima da pergunta. */
+@mixin challenge-prompt {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/**
+ * Grade das alternativas.
+ *
+ * Duas colunas no celular mantêm cada alternativa com largura de botão de
+ * verdade; uma coluna só faria o dedo percorrer a tela inteira.
+ */
+@mixin answer-grid($min: 8rem) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(#{$min}, 100%), 1fr));
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/**
+ * Alternativa.
+ *
+ * O estado nunca é só cor: certa e errada trazem borda grossa, e o texto ao
+ * lado do cartão repete o resultado por escrito.
+ */
+@mixin answer-button {
+  @include touch-target;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--space-3) var(--space-4);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-strong);
+  text-align: center;
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+
+  @include hover-enabled {
+    transform: translateY(-2px);
+    background: var(--color-yellow-soft);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &[data-state='certa'] {
+    background: var(--color-mint-soft);
+    box-shadow: inset 0 -6px 0 var(--color-mint);
+  }
+
+  &[data-state='errada'] {
+    background: var(--color-pink-soft);
+    box-shadow: inset 0 -6px 0 var(--color-pink);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  @include reduced-motion {
+    transition: none;
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+/** Retorno depois da resposta, com cor de fundo conforme o resultado. */
+@mixin feedback-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+
+  &[data-status='certo'] {
+    background: var(--color-mint-soft);
+  }
+
+  &[data-status='errado'] {
+    background: var(--color-yellow-soft);
+  }
+
+  &__message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__points {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 800;
+    color: var(--color-mint);
+  }
+
+  &__answer {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+  }
+}
+
+/** Campo de resposta digitada, com o botão de conferir ao lado. */
+@mixin typing-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+
+  &__input {
+    flex: 1 1 8rem;
+    min-width: 0;
+    min-height: var(--touch-target);
+    padding: var(--space-3) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+
+    /* Nunca abaixo de 16px: é o limite do zoom automático do Safari no iPhone. */
+    font-size: var(--text-lg);
+    font-weight: 800;
+    text-align: center;
+    color: var(--text-strong);
+  }
+}

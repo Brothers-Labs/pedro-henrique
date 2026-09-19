@@ -1,0 +1,47 @@
+@let current = progress();
+@let game = definition();
+
+<div class="hud">
+  <div class="hud__top">
+    <p class="hud__level">
+      <span class="hud__level-label">Nível</span>
+      <span class="hud__level-number">{{ current.level }}</span>
+    </p>
+
+    <div class="hud__badges">
+      @if (hasStreak()) {
+        <p class="hud__streak" [attr.aria-label]="streak() + ' acertos seguidos'">
+          <span aria-hidden="true">🔥</span>
+          {{ streak() }}
+        </p>
+      }
+
+      <p class="hud__score" [attr.aria-label]="formattedScore() + ' pontos'">
+        <span aria-hidden="true">⭐</span>
+        {{ formattedScore() }}
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="hud__bar"
+    role="progressbar"
+    [attr.aria-valuenow]="current.completedInLevel"
+    [attr.aria-valuemin]="0"
+    [attr.aria-valuemax]="game.challengesPerLevel"
+    [attr.aria-label]="
+      current.completedInLevel + ' de ' + game.challengesPerLevel + ' desafios do nível'
+    "
+  >
+    <span class="hud__fill" [style.width.%]="percentage()"></span>
+  </div>
+
+  <p class="hud__caption">
+    <strong>{{ current.completedInLevel }} de {{ game.challengesPerLevel }}</strong>
+    @if (remaining() > 0) {
+      · faltam {{ remaining() }} {{ unitLabel() }} para o nível {{ current.level + 1 }}
+    } @else {
+      · nível completo!
+    }
+  </p>
+</div>

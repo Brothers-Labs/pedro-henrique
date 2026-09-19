@@ -28,8 +28,14 @@ export const GAME_CONFIG = {
   /** Teto do bônus de sequência, para a pontuação não disparar. */
   maxStreakBonus: 20,
 
-  /** Acertos mínimos no nível para ganhar cada estrela, de 1 a 3. */
-  starThresholds: [7, 9, 10],
+  /**
+   * Proporção de acertos do nível para ganhar cada estrela.
+   *
+   * São proporções, e não quantidades, porque nem todo jogo fecha o nível com
+   * dez desafios: `0.7` vale 7 de 10 tanto quanto vale 7 de 10 em qualquer
+   * outro tamanho de nível.
+   */
+  starThresholds: [0.7, 0.9, 1],
 
   /** Pontos que separam um nível geral do seguinte. */
   pointsPerOverallLevel: 500,

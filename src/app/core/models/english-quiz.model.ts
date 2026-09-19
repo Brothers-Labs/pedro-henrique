@@ -1,5 +1,3 @@
-import type { ThemeColor } from './profile.model';
-
 /** Trilhas de dificuldade do jogo de inglês, da mais simples à mais avançada. */
 export type EnglishLevelId = 'facil' | 'medio' | 'dificil';
 
@@ -39,29 +37,3 @@ export interface EnglishWritingChallenge extends EnglishChallengeBase {
 
 export type EnglishChallenge = EnglishChoiceChallenge | EnglishWritingChallenge;
 
-/** Descrição de um nível, usada nos cartões de escolha de dificuldade. */
-export interface EnglishLevel {
-  readonly id: EnglishLevelId;
-  readonly label: string;
-  readonly emoji: string;
-  readonly ageRange: string;
-  readonly description: string;
-  /** XP concedido ao concluir uma fase deste nível sem erro e sem dica. */
-  readonly xpPerChallenge: number;
-  readonly color: ThemeColor;
-}
-
-/** Patente exibida no painel de XP; sobe sozinha conforme o total acumulado. */
-export interface EnglishRank {
-  readonly title: string;
-  readonly emoji: string;
-  readonly requiredXp: number;
-}
-
-/** Progresso persistido no dispositivo de quem joga. */
-export interface EnglishProgress {
-  readonly totalXp: number;
-  readonly bestStreak: number;
-  /** Fases já concluídas com acerto, em qualquer nível. */
-  readonly masteredIds: readonly string[];
-}
