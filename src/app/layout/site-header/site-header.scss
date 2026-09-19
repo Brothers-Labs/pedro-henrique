@@ -1,5 +1,10 @@
 @use 'mixins' as *;
 
+/**
+ * No celular o cabeçalho é só identidade: retrato, nome e o interruptor
+ * sensorial. Quem navega é a barra inferior, que fica ao alcance do polegar.
+ * A partir do notebook o menu horizontal volta para o meio da barra.
+ */
 .header {
   position: sticky;
   top: 0;
@@ -8,39 +13,16 @@
   backdrop-filter: blur(10px);
   border-bottom: 3px solid var(--border-strong);
 
+  /* Ilha dinâmica e notch: o conteúdo começa abaixo deles. */
+  padding-top: var(--safe-top);
+
   &__inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-4);
+    gap: var(--space-3);
     min-height: var(--header-height);
     padding-block: var(--space-2);
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-
-    // No desktop as ações vão para a ponta direita, depois do menu.
-    @include from($breakpoint-lg) {
-      order: 3;
-    }
-  }
-
-  &__toggle {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    border: 3px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    background: var(--color-yellow);
-    font-size: 1.25rem;
-
-    @include from($breakpoint-lg) {
-      display: none;
-    }
   }
 }
 
@@ -48,28 +30,51 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+
+  /* No celular o nome cede espaço ao que estiver ao lado; no desktop, nunca. */
+  min-width: 0;
   text-decoration: none;
   color: inherit;
 
+  @include from($breakpoint-xl) {
+    flex: 0 0 auto;
+  }
+
   &__badge {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
+    flex: 0 0 auto;
+    display: block;
+    width: 2.75rem;
+    height: 2.75rem;
+    overflow: hidden;
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--color-pink-soft);
-    font-size: 1.5rem;
+    box-shadow: var(--shadow-sm);
     animation: float-soft 4s ease-in-out infinite;
+
+    @include from($breakpoint-sm) {
+      width: 3rem;
+      height: 3rem;
+    }
 
     @include reduced-motion {
       animation: none;
     }
   }
 
+  &__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    /* Retrato quadrado: subir o enquadramento mantém o rosto no centro do círculo. */
+    object-position: 50% 22%;
+  }
+
   &__text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     line-height: 1.15;
   }
 
@@ -77,52 +82,44 @@
     font-family: var(--font-display);
     font-size: var(--text-lg);
     color: var(--text-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__role {
     font-size: var(--text-xs);
     color: var(--text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 .nav {
-  @include from($breakpoint-lg) {
-    order: 2;
-  }
+  display: none;
 
-  @include until($breakpoint-lg) {
-    position: absolute;
-    inset-inline: 0;
-    top: 100%;
-    display: none;
-    padding: var(--space-4);
-    background: var(--surface-page);
-    border-bottom: 3px solid var(--border-strong);
-    box-shadow: var(--shadow-md);
-
-    &--open {
-      display: block;
-      animation: rise-in 220ms ease both;
-    }
+  @include from($breakpoint-xl) {
+    display: block;
   }
 
   &__list {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+
+    /* Sete destinos em uma linha só: o respiro é o que sobra depois deles. */
+    gap: var(--space-1);
     list-style: none;
     padding: 0;
-
-    @include until($breakpoint-lg) {
-      flex-direction: column;
-    }
+    margin: 0;
   }
 
   &__link {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
+
+    padding: var(--space-2) var(--space-3);
     border: 2px solid transparent;
     border-radius: var(--radius-pill);
     color: var(--text-strong);
@@ -131,7 +128,7 @@
     text-decoration: none;
     transition: background-color var(--transition-fast), border-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       background: var(--tone-soft);
       border-color: var(--border-strong);
     }

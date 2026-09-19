@@ -13,23 +13,6 @@ export type IqSkill = 'logica' | 'numeros' | 'visual' | 'memoria' | 'atencao' | 
 /** Níveis de dificuldade, do mais concreto ao mais abstrato. */
 export type IqDifficulty = 1 | 2 | 3 | 4 | 5;
 
-export type IqBandId =
-  | 'pequeno-explorador'
-  | 'explorador'
-  | 'aventureiro'
-  | 'mestre-desafios'
-  | 'super-estrategista';
-
-export type IqIslandId =
-  | 'padroes'
-  | 'numeros'
-  | 'visual'
-  | 'memoria'
-  | 'atencao'
-  | 'palavras'
-  | 'castelo'
-  | 'bau';
-
 /** Tipos de desafio disponíveis; novos tipos entram sem quebrar os existentes. */
 export type IqChallengeType =
   | 'padrao'
@@ -134,43 +117,6 @@ export interface IqLanguageItem {
   readonly correctIndex: number;
 }
 
-/** Faixa etária: define título, dificuldade inicial e tamanho das ilhas. */
-export interface IqAgeBand {
-  readonly id: IqBandId;
-  readonly title: string;
-  readonly emoji: string;
-  readonly color: ThemeColor;
-  readonly minAge: number;
-  readonly maxAge: number;
-  readonly description: string;
-  readonly startingDifficulty: IqDifficulty;
-  /** Desafios curtos por ilha, entre 5 e 8 conforme a faixa. */
-  readonly challengesPerIsland: number;
-}
-
-/** Etapa do mapa da jornada. */
-export interface IqIsland {
-  readonly id: IqIslandId;
-  readonly name: string;
-  readonly emoji: string;
-  readonly color: ThemeColor;
-  readonly description: string;
-  readonly kind: 'desafios' | 'recompensa';
-  /** Tipos sorteados nesta ilha; vazio na etapa de recompensa. */
-  readonly types: readonly IqChallengeType[];
-  /** Habilidade principal da ilha; `null` no castelo e no baú. */
-  readonly skill: IqSkill | null;
-}
-
-/** Situação de uma etapa no mapa; nunca depende só de cor para ser lida. */
-export type IqIslandState = 'concluida' | 'atual' | 'disponivel' | 'bloqueada' | 'recompensa';
-
-export interface IqIslandProgress {
-  readonly island: IqIsland;
-  readonly index: number;
-  readonly state: IqIslandState;
-}
-
 /** Estado da adaptação de dificuldade entre um desafio e o próximo. */
 export interface IqAdaptiveState {
   readonly difficulty: IqDifficulty;
@@ -198,72 +144,4 @@ export interface IqSkillScore {
   readonly accuracy: number;
   /** Estrelas de 1 a 5; nunca zero, para não soar como fracasso. */
   readonly stars: number;
-}
-
-/** Retrato completo de uma jornada, usado na comemoração e no relatório. */
-export interface IqJourneySummary {
-  readonly bandId: IqBandId;
-  readonly age: number;
-  readonly answered: number;
-  readonly correct: number;
-  readonly totalXp: number;
-  readonly bestStreak: number;
-  readonly highestDifficulty: IqDifficulty;
-  readonly averageResponseMs: number;
-  readonly skills: readonly IqSkillScore[];
-  /** Índice educativo de 0 a 100; não é medida clínica de QI. */
-  readonly cognitiveIndex: number;
-  readonly superPowerSkill: IqSkill;
-  readonly growingSkill: IqSkill;
-}
-
-/** Jornada concluída, guardada para o histórico dos responsáveis. */
-export interface IqJourneyRecord {
-  /** Data em ISO (`yyyy-MM-ddTHH:mm:ss.sssZ`). */
-  readonly completedAt: string;
-  readonly summary: IqJourneySummary;
-}
-
-/** Números acumulados entre jornadas, base das conquistas de longo prazo. */
-export interface IqLifetimeStats {
-  readonly totalXp: number;
-  readonly bestStreak: number;
-  readonly correctBySkill: Readonly<Record<IqSkill, number>>;
-  readonly clearedIslandIds: readonly IqIslandId[];
-  readonly perfectMemoryRuns: number;
-  readonly attentionRuns: number;
-  readonly journeysCompleted: number;
-}
-
-export type IqAchievementId =
-  | 'mestre-padroes'
-  | 'super-memoria'
-  | 'olhos-aguia'
-  | 'mente-em-chamas'
-  | 'grande-explorador'
-  | 'mestre-da-mente';
-
-export interface IqAchievement {
-  readonly id: IqAchievementId;
-  readonly title: string;
-  readonly description: string;
-  readonly emoji: string;
-}
-
-/** Conquista já resolvida para a tela, com o estado desta jornada. */
-export interface IqAchievementProgress {
-  readonly achievement: IqAchievement;
-  readonly isUnlocked: boolean;
-  /** Desbloqueada agora, nesta jornada, e ainda não comemorada. */
-  readonly isNew: boolean;
-}
-
-/** Tudo o que os responsáveis veem, já pronto para a tela. */
-export interface IqGuardianReport {
-  readonly childName: string;
-  readonly age: number;
-  readonly evaluatedAt: string;
-  readonly summary: IqJourneySummary;
-  readonly highlights: readonly IqSkill[];
-  readonly toPractice: readonly IqSkill[];
 }

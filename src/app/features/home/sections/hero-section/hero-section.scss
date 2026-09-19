@@ -2,13 +2,17 @@
 @use 'mixins' as *;
 
 /** Posições (top, left) e defasagem de animação dos adesivos do fundo. */
+/**
+ * Os adesivos da direita param em 84%: além disso o emoji encosta na borda e
+ * a cena o corta ao meio nas telas estreitas.
+ */
 $sticker-spots: (
   (6%, 4%, 0s),
-  (12%, 88%, -0.9s),
-  (48%, 10%, -1.8s),
-  (58%, 92%, -2.7s),
-  (82%, 22%, -3.6s),
-  (86%, 76%, -4.5s)
+  (12%, 82%, -0.9s),
+  (48%, 8%, -1.8s),
+  (58%, 84%, -2.7s),
+  (82%, 20%, -3.6s),
+  (86%, 72%, -4.5s)
 );
 
 .hero {
@@ -98,6 +102,11 @@ $sticker-spots: (
     margin-top: var(--space-2);
   }
 
+  /**
+   * Moldura da fotografia: o degradê aparece como um anel colorido em volta do
+   * retrato, e o recorte redondo fica na própria imagem para que a etiqueta de
+   * idade continue podendo escapar da borda.
+   */
   &__avatar {
     position: relative;
     display: grid;
@@ -105,6 +114,7 @@ $sticker-spots: (
     justify-self: center;
     width: min(18rem, 60vw);
     aspect-ratio: 1;
+    padding: var(--space-2);
     border: 4px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background:
@@ -118,14 +128,12 @@ $sticker-spots: (
     }
   }
 
-  &__avatar-emoji {
-    font-size: clamp(4.5rem, 3rem + 8vw, 8rem);
-    line-height: 1;
-    animation: wobble 5s ease-in-out infinite;
-
-    @include reduced-motion {
-      animation: none;
-    }
+  &__photo {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    object-fit: cover;
+    object-position: 50% 22%;
   }
 
   &__badge {
@@ -144,7 +152,7 @@ $sticker-spots: (
   &__facts {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
     gap: var(--space-4);
     margin-top: var(--space-7);
     padding: 0;

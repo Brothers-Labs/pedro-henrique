@@ -1,0 +1,9 @@
+@if (isActive() && isMotionAllowed()) {
+  <canvas #canvas class="effects__canvas"></canvas>
+
+  <div class="effects__balloons">
+    @for (balloon of balloons; track balloon) {
+      <span class="effects__balloon">🎈</span>
+    }
+  </div>
+}

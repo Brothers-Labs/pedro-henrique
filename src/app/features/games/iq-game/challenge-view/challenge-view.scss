@@ -115,7 +115,7 @@
     transition: transform var(--transition-fast), border-color var(--transition-fast),
       background-color var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: translateY(-3px);
       border-color: var(--color-blue);
     }
@@ -141,7 +141,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover:not(:disabled) {
+      @include hover-enabled {
         transform: none;
       }
     }
@@ -231,7 +231,7 @@
     font-size: 1.25rem;
     transition: transform var(--transition-fast), border-color var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: scale(1.08);
       border-color: var(--color-blue);
     }
@@ -253,7 +253,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover:not(:disabled) {
+      @include hover-enabled {
         transform: none;
       }
     }

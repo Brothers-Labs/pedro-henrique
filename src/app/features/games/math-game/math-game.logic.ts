@@ -1,114 +1,60 @@
 import {
-  MATH_AGE_BANDS,
-  MATH_COUNTABLE_SYMBOLS,
-  MATH_FALLBACK_BAND_ID,
-  MATH_STAGE_EMOJIS,
+  MATH_STORY_ITEMS,
+  MATH_STORY_TEMPLATES,
 } from '../../../core/data/math-game.data';
-import type {
-  MathAgeBand,
-  MathOperation,
-  MathStage,
-  MathStageTier,
-  MathTrail,
-  MathTrailStep,
-} from '../../../core/models/math-game.model';
+import { mathPlanFor } from '../../../core/games/difficulty';
+import type { MathChallenge, MathOperation } from '../../../core/models/math-game.model';
 
 /**
- * Regras do jogo de matemática que não dependem de tela nem do Angular.
+ * Geração das contas do jogo de matemática.
  *
- * As contas são sorteadas, então o gerador aleatório é um parâmetro: em produção
- * usamos `Math.random`, nos testes um gerador previsível.
+ * Quem decide o que é difícil é o nível, e só ele — a idade não entra em
+ * nenhuma conta deste arquivo. O gerador aleatório é um parâmetro para que os
+ * testes possam sortear de forma previsível.
  */
-
-/** Fases de uma trilha. Oito paradas cabem na tela sem virar maratona. */
-export const STAGES_PER_TRAIL = 8;
-
-/** Estrelas máximas por fase: acertar de primeira vale a nota cheia. */
-export const MAX_STARS = 3;
-
-const OPTIONS_PER_STAGE = 4;
-const OPTION_SPREAD = 5;
-const MAX_OPTION_ATTEMPTS = 24;
-
-const MIN_CEILING = 2;
-const MAX_COUNTABLE = 10;
-const MIN_FACTOR = 2;
-const MAX_FACTOR = 10;
-const SEQUENCE_TERMS = 4;
-const BIG_SEQUENCE_CEILING = 20;
 
 export type RandomGenerator = () => number;
 
-/** Faixa escolhida para a idade informada. */
-export interface MathBandResolution {
-  readonly band: MathAgeBand;
-  /** Verdadeiro quando a idade não existia e caímos na faixa mais próxima. */
-  readonly wasAdjusted: boolean;
-}
+const OPTIONS_PER_CHALLENGE = 4;
+const OPTION_SPREAD = 5;
+const MAX_OPTION_ATTEMPTS = 24;
 
-const YOUNGEST_BAND = MATH_AGE_BANDS[0];
-const OLDEST_BAND = MATH_AGE_BANDS[MATH_AGE_BANDS.length - 1];
-const FALLBACK_BAND =
-  MATH_AGE_BANDS.find((band) => band.id === MATH_FALLBACK_BAND_ID) ?? YOUNGEST_BAND;
+const MIN_TERM = 1;
+const MIN_FACTOR = 2;
+const MAX_FACTOR = 12;
 
-/**
- * Traduz a idade em uma faixa jogável.
- *
- * Nunca falha: idade inválida cai na faixa padrão e idade fora do intervalo é
- * aproximada para a ponta mais próxima, para a criança nunca ficar sem trilha.
- */
-export function resolveAgeBand(age: number): MathBandResolution {
-  if (!Number.isFinite(age)) {
-    return { band: FALLBACK_BAND, wasAdjusted: true };
-  }
+/** Monta a conta de um desafio do nível informado. */
+export function buildChallenge(
+  level: number,
+  index: number,
+  random: RandomGenerator = Math.random,
+  childName = 'Pedro',
+): MathChallenge {
+  const plan = mathPlanFor(level);
+  const operation = plan.operations[index % plan.operations.length];
+  const terms = buildTerms(operation, plan.ceiling, random);
 
-  const wholeAge = Math.trunc(age);
+  const statement = plan.useWordProblems
+    ? buildStory(operation, terms, random, childName)
+    : `${terms.first} ${symbolFor(operation)} ${terms.second}`;
 
-  if (wholeAge < YOUNGEST_BAND.minAge) {
-    return { band: YOUNGEST_BAND, wasAdjusted: true };
-  }
-  if (wholeAge > OLDEST_BAND.maxAge) {
-    return { band: OLDEST_BAND, wasAdjusted: true };
-  }
-
-  const band = MATH_AGE_BANDS.find(
-    (candidate) => wholeAge >= candidate.minAge && wholeAge <= candidate.maxAge,
-  );
-
-  return band ? { band, wasAdjusted: wholeAge !== age } : { band: FALLBACK_BAND, wasAdjusted: true };
-}
-
-/** Monta a trilha inteira da faixa, da fase mais leve à mais desafiadora. */
-export function buildTrail(band: MathAgeBand, random: RandomGenerator = Math.random): MathTrail {
-  const stages = Array.from({ length: STAGES_PER_TRAIL }, (_, index): MathStage => {
-    const operation = band.operations[index % band.operations.length];
-    const content = buildStageContent(operation, ceilingFor(band, index), random);
-    const hasOptions = index < band.stagesWithOptions;
-
-    const base = {
-      id: `${band.id}-${index + 1}`,
-      operation,
-      tier: tierFor(index),
-      emoji: MATH_STAGE_EMOJIS[index % MATH_STAGE_EMOJIS.length],
-      prompt: content.prompt,
-      hint: content.hint,
-      answer: content.answer,
-      options: hasOptions ? buildOptions(content.answer, random) : [],
-    };
-
-    return content.kind === 'contagem'
-      ? { ...base, kind: 'contagem', symbols: content.symbols }
-      : { ...base, kind: 'expressao', expression: content.expression };
-  });
-
-  return { bandId: band.id, stages };
+  return {
+    id: `math-${level}-${index + 1}`,
+    operation,
+    kind: plan.useWordProblems ? 'problema' : 'conta',
+    statement,
+    prompt: promptFor(operation, plan.useWordProblems),
+    hint: hintFor(operation, terms),
+    answer: terms.answer,
+    options: plan.useOptions ? buildOptions(terms.answer, random) : [],
+  };
 }
 
 /**
  * Lê o número digitado pela criança.
  *
- * Devolve `null` para qualquer coisa que não seja um número inteiro, então o
- * botão de conferir só liga quando existe mesmo uma resposta.
+ * Devolve `null` para qualquer coisa que não seja inteiro, e é isso que mantém
+ * o botão de conferir desligado enquanto não existe uma resposta de verdade.
  */
 export function parseTypedAnswer(value: string): number | null {
   const trimmed = value.trim();
@@ -121,167 +67,102 @@ export function parseTypedAnswer(value: string): number | null {
   return Number.isInteger(parsed) ? parsed : null;
 }
 
-/** Estrelas da fase: cheias no acerto de primeira, nunca menos de uma. */
-export function starsForMisses(missCount: number): number {
-  const penalty = Math.max(0, Math.trunc(missCount));
-
-  return Math.max(1, MAX_STARS - penalty);
-}
-
-/** Percentual concluído da trilha, já arredondado para a barra de progresso. */
-export function completionPercentage(completedStages: number, totalStages: number): number {
-  if (totalStages <= 0) {
-    return 0;
-  }
-
-  return Math.round((completedStages / totalStages) * 100);
-}
-
-/**
- * Prepara o mapa de fases.
- *
- * A trilha é sequencial: uma parada só abre quando a anterior foi concluída,
- * assim a criança sempre sabe qual é o próximo passo.
- */
-export function buildTrailSteps(
-  stages: readonly MathStage[],
-  stars: readonly number[],
-  currentIndex: number,
-): readonly MathTrailStep[] {
-  let isUnlocked = true;
-
-  return stages.map((stage, index) => {
-    const earnedStars = stars[index] ?? 0;
-    const isCompleted = earnedStars > 0;
-    const step: MathTrailStep = {
-      index,
-      stage,
-      stars: earnedStars,
-      isCompleted,
-      isUnlocked,
-      isCurrent: index === currentIndex,
-    };
-
-    isUnlocked = isUnlocked && isCompleted;
-
-    return step;
-  });
-}
-
-interface StageContentBase {
+interface Terms {
+  readonly first: number;
+  readonly second: number;
   readonly answer: number;
-  readonly prompt: string;
-  readonly hint: string;
 }
 
-type StageContent =
-  | (StageContentBase & { readonly kind: 'contagem'; readonly symbols: readonly string[] })
-  | (StageContentBase & { readonly kind: 'expressao'; readonly expression: string });
-
-function buildStageContent(
-  operation: MathOperation,
-  ceiling: number,
-  random: RandomGenerator,
-): StageContent {
+function buildTerms(operation: MathOperation, ceiling: number, random: RandomGenerator): Terms {
   switch (operation) {
-    case 'contagem':
-      return buildCounting(ceiling, random);
-    case 'sequencia':
-      return buildSequence(ceiling, random);
-    case 'soma':
-      return buildAddition(ceiling, random);
-    case 'subtracao':
-      return buildSubtraction(ceiling, random);
-    case 'multiplicacao':
-      return buildMultiplication(ceiling, random);
-    case 'divisao':
-      return buildDivision(ceiling, random);
+    case 'soma': {
+      const first = randomInt(random, MIN_TERM, Math.max(MIN_TERM + 1, ceiling - 1));
+      const second = randomInt(random, MIN_TERM, Math.max(MIN_TERM, ceiling - first));
+
+      return { first, second, answer: first + second };
+    }
+    case 'subtracao': {
+      const first = randomInt(random, 2, Math.max(3, ceiling));
+      const second = randomInt(random, MIN_TERM, first - 1);
+
+      return { first, second, answer: first - second };
+    }
+    case 'multiplicacao': {
+      const limit = factorCeilingFor(ceiling);
+      const first = randomInt(random, MIN_FACTOR, limit);
+      const second = randomInt(random, MIN_FACTOR, limit);
+
+      return { first, second, answer: first * second };
+    }
+    case 'divisao': {
+      // Monta pelo resultado para que a divisão seja sempre exata.
+      const limit = factorCeilingFor(ceiling);
+      const divisor = randomInt(random, MIN_FACTOR, limit);
+      const quotient = randomInt(random, MIN_FACTOR, limit);
+
+      return { first: divisor * quotient, second: divisor, answer: quotient };
+    }
   }
 }
 
-function buildCounting(ceiling: number, random: RandomGenerator): StageContent {
-  const total = randomInt(random, MIN_CEILING, Math.min(safeCeiling(ceiling), MAX_COUNTABLE));
-  const symbol = MATH_COUNTABLE_SYMBOLS[randomInt(random, 0, MATH_COUNTABLE_SYMBOLS.length - 1)];
-
-  return {
-    kind: 'contagem',
-    symbols: Array.from({ length: total }, () => symbol),
-    answer: total,
-    prompt: 'Conte as figurinhas e escolha o número certo.',
-    hint: 'Aponte para uma de cada vez e conte em voz alta.',
-  };
+function symbolFor(operation: MathOperation): string {
+  switch (operation) {
+    case 'soma':
+      return '+';
+    case 'subtracao':
+      return '−';
+    case 'multiplicacao':
+      return '×';
+    case 'divisao':
+      return '÷';
+  }
 }
 
-function buildSequence(ceiling: number, random: RandomGenerator): StageContent {
-  const highestStep = ceiling >= BIG_SEQUENCE_CEILING ? 5 : 2;
-  const step = randomInt(random, 1, highestStep);
-  const highestStart = Math.max(1, safeCeiling(ceiling) - step * (SEQUENCE_TERMS - 1));
-  const start = randomInt(random, 1, highestStart);
-  const terms = Array.from({ length: SEQUENCE_TERMS }, (_, index) => start + step * index);
+function promptFor(operation: MathOperation, isStory: boolean): string {
+  if (isStory) {
+    return 'Leia com calma e descubra o resultado.';
+  }
 
-  return {
-    kind: 'expressao',
-    expression: `${terms.slice(0, -1).join('  ·  ')}  ·  ?`,
-    answer: terms[SEQUENCE_TERMS - 1],
-    prompt: 'Descubra qual número vem depois.',
-    hint: `Os números estão pulando de ${step} em ${step}.`,
-  };
+  switch (operation) {
+    case 'soma':
+      return 'Some os dois números.';
+    case 'subtracao':
+      return 'Descubra quanto sobra.';
+    case 'multiplicacao':
+      return 'Multiplique os dois números.';
+    case 'divisao':
+      return 'Divida em partes iguais.';
+  }
 }
 
-function buildAddition(ceiling: number, random: RandomGenerator): StageContent {
-  const total = safeCeiling(ceiling);
-  const first = randomInt(random, 1, total - 1);
-  const second = randomInt(random, 1, total - first);
-
-  return {
-    kind: 'expressao',
-    expression: `${first} + ${second}`,
-    answer: first + second,
-    prompt: 'Some os dois números.',
-    hint: `Comece no ${first} e conte mais ${second}.`,
-  };
+function hintFor(operation: MathOperation, { first, second }: Terms): string {
+  switch (operation) {
+    case 'soma':
+      return `Comece no ${first} e conte mais ${second}.`;
+    case 'subtracao':
+      return `Comece no ${first} e volte ${second} casinhas.`;
+    case 'multiplicacao':
+      return `É somar ${first} um total de ${second} vezes.`;
+    case 'divisao':
+      return `Quantas vezes o ${second} cabe dentro do ${first}?`;
+  }
 }
 
-function buildSubtraction(ceiling: number, random: RandomGenerator): StageContent {
-  const first = randomInt(random, MIN_CEILING, safeCeiling(ceiling));
-  const second = randomInt(random, 1, first);
+function buildStory(
+  operation: MathOperation,
+  terms: Terms,
+  random: RandomGenerator,
+  childName: string,
+): string {
+  const templates = MATH_STORY_TEMPLATES[operation];
+  const template = templates[randomInt(random, 0, templates.length - 1)];
+  const item = MATH_STORY_ITEMS[randomInt(random, 0, MATH_STORY_ITEMS.length - 1)];
 
-  return {
-    kind: 'expressao',
-    expression: `${first} − ${second}`,
-    answer: first - second,
-    prompt: 'Descubra quanto sobra.',
-    hint: `Comece no ${first} e volte ${second} casinhas.`,
-  };
-}
-
-function buildMultiplication(ceiling: number, random: RandomGenerator): StageContent {
-  const highestFactor = factorCeilingFor(ceiling);
-  const first = randomInt(random, MIN_FACTOR, highestFactor);
-  const second = randomInt(random, MIN_FACTOR, highestFactor);
-
-  return {
-    kind: 'expressao',
-    expression: `${first} × ${second}`,
-    answer: first * second,
-    prompt: 'Multiplique os dois números.',
-    hint: `É somar ${first} um total de ${second} vezes.`,
-  };
-}
-
-function buildDivision(ceiling: number, random: RandomGenerator): StageContent {
-  const highestFactor = factorCeilingFor(ceiling);
-  const divisor = randomInt(random, MIN_FACTOR, highestFactor);
-  const quotient = randomInt(random, MIN_FACTOR, highestFactor);
-  const dividend = divisor * quotient;
-
-  return {
-    kind: 'expressao',
-    expression: `${dividend} ÷ ${divisor}`,
-    answer: quotient,
-    prompt: 'Divida em partes iguais.',
-    hint: `Quantas vezes o ${divisor} cabe dentro do ${dividend}?`,
-  };
+  return template
+    .replace('{nome}', childName)
+    .replace('{a}', String(terms.first))
+    .replace('{b}', String(terms.second))
+    .replace('{item}', item);
 }
 
 /** Alternativas plausíveis: a resposta certa cercada de vizinhos próximos. */
@@ -290,7 +171,7 @@ function buildOptions(answer: number, random: RandomGenerator): readonly number[
 
   for (
     let attempt = 0;
-    attempt < MAX_OPTION_ATTEMPTS && values.size < OPTIONS_PER_STAGE;
+    attempt < MAX_OPTION_ATTEMPTS && values.size < OPTIONS_PER_CHALLENGE;
     attempt += 1
   ) {
     const offset = randomInt(random, 1, OPTION_SPREAD);
@@ -301,9 +182,9 @@ function buildOptions(answer: number, random: RandomGenerator): readonly number[
     }
   }
 
-  // Respostas muito pequenas têm poucos vizinhos válidos: completamos para cima.
+  // Respostas pequenas têm poucos vizinhos válidos: completamos para cima.
   let filler = answer + OPTION_SPREAD;
-  while (values.size < OPTIONS_PER_STAGE) {
+  while (values.size < OPTIONS_PER_CHALLENGE) {
     filler += 1;
     values.add(filler);
   }
@@ -311,31 +192,11 @@ function buildOptions(answer: number, random: RandomGenerator): readonly number[
   return shuffle([...values], random);
 }
 
-/** Teto da fase: cresce linearmente da primeira até a última parada. */
-function ceilingFor(band: MathAgeBand, stageIndex: number): number {
-  const span = band.lastStageCeiling - band.firstStageCeiling;
-  const progress = STAGES_PER_TRAIL > 1 ? stageIndex / (STAGES_PER_TRAIL - 1) : 0;
-
-  return Math.round(band.firstStageCeiling + span * progress);
-}
-
-function tierFor(stageIndex: number): MathStageTier {
-  if (stageIndex < STAGES_PER_TRAIL / 3) {
-    return 'facil';
-  }
-
-  return stageIndex < (STAGES_PER_TRAIL * 2) / 3 ? 'medio' : 'dificil';
-}
-
-/** Maior fator de multiplicação e divisão para que o produto respeite o teto. */
+/** Maior fator para que o produto não estoure o teto do nível. */
 function factorCeilingFor(ceiling: number): number {
-  const derived = Math.round(Math.sqrt(safeCeiling(ceiling)));
+  const derived = Math.round(Math.sqrt(Math.max(4, ceiling)));
 
   return Math.min(MAX_FACTOR, Math.max(MIN_FACTOR + 1, derived));
-}
-
-function safeCeiling(ceiling: number): number {
-  return Math.max(MIN_CEILING, Math.trunc(ceiling));
 }
 
 function randomInt(random: RandomGenerator, min: number, max: number): number {

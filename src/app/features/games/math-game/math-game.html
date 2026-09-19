@@ -1,208 +1,96 @@
+@let current = challenge();
+
 <section class="math" aria-labelledby="matematica-titulo">
   <header class="math__header">
-    <h3 id="matematica-titulo" class="math__title">Trilha da matemática</h3>
-    <p class="math__subtitle">
-      Diga sua idade, resolva as contas e siga de ilha em ilha até o prêmio final.
-    </p>
+    <h3 id="matematica-titulo" class="math__title">Matemática</h3>
+    <p class="math__subtitle">{{ levelTopic() }} — uma conta de cada vez.</p>
   </header>
 
-  @if (band(); as currentBand) {
-    <!-- Painel da trilha ------------------------------------------------- -->
-    <div class="journey" [attr.data-color]="currentBand.color">
-      <p class="journey__band">
-        <span class="journey__emoji" aria-hidden="true">{{ currentBand.emoji }}</span>
-        <span>
-          <strong>{{ currentBand.label }}</strong>
-          <small>{{ selectedAge() }} anos</small>
-        </span>
-      </p>
+  <app-game-hud [gameId]="gameId" />
 
-      <div class="journey__progress">
-        <div class="meter">
-          <span class="meter__fill" [style.width.%]="progressPercentage()"></span>
-        </div>
-        <p class="journey__count">
-          {{ completedStages() }} de {{ totalStages() }} fases concluídas
-        </p>
-      </div>
+  <div class="challenge" [attr.data-status]="status()">
+    <p class="challenge__prompt">{{ current.prompt }}</p>
 
-      <p class="journey__stars">
-        <span aria-hidden="true">⭐</span>
-        <span>{{ totalStars() }} de {{ maxTrailStars() }} estrelas</span>
-      </p>
-    </div>
+    <p class="challenge__statement" [class.challenge__statement--story]="current.kind === 'problema'">
+      {{ current.statement }}
+    </p>
 
-    <app-trail-map [steps]="steps()" [isFinished]="isTrailFinished()" (selected)="goToStage($event)" />
-
-    @if (isTrailFinished()) {
-      <!-- Fim da trilha -------------------------------------------------- -->
-      <div class="finish" role="status">
-        <p class="finish__emoji" aria-hidden="true">🏆</p>
-        <p class="finish__title">Trilha concluída!</p>
-        <p class="finish__message">{{ finalMessage() }}</p>
-        <p class="finish__stars">Você juntou {{ totalStars() }} estrelas nesta jornada.</p>
-
-        <div class="finish__actions">
-          <button type="button" class="button button--primary" (click)="playAgain()">
-            <span aria-hidden="true">🔄</span>
-            Jogar com contas novas
-          </button>
-          <button type="button" class="button button--secondary" (click)="changeAgeAgain()">
-            <span aria-hidden="true">🎂</span>
-            Mudar a idade
-          </button>
-        </div>
-      </div>
-    } @else if (stage(); as currentStage) {
-      <!-- Fase atual ----------------------------------------------------- -->
-      <div class="stage" [attr.data-color]="currentBand.color">
-        <p class="stage__badges">
-          <span class="stage__badge">Fase {{ stageIndex() + 1 }} de {{ totalStages() }}</span>
-          <span class="stage__badge stage__badge--tier" [attr.data-tier]="currentStage.tier">
-            {{ tierLabels[currentStage.tier] }}
-          </span>
-          <span class="stage__badge">{{ operationLabels[currentStage.operation] }}</span>
-        </p>
-
-        <p class="stage__prompt">{{ currentStage.prompt }}</p>
-
-        @if (countingStage(); as counting) {
-          <ul class="symbols" aria-label="Figurinhas para contar">
-            @for (symbol of counting.symbols; track $index) {
-              <li class="symbols__item" aria-hidden="true">{{ symbol }}</li>
-            }
-          </ul>
-        }
-
-        @if (expressionStage(); as expression) {
-          <p class="stage__expression">{{ expression.expression }}</p>
-        }
-
-        @if (hasOptions()) {
-          <ul class="answers">
-            @for (option of currentStage.options; track option) {
-              <li>
-                <button
-                  type="button"
-                  class="answers__button"
-                  [attr.data-state]="optionState(option)"
-                  [disabled]="isSettled() || wrongOptions().includes(option)"
-                  (click)="answerWithOption(option)"
-                >
-                  {{ option }}
-                </button>
-              </li>
-            }
-          </ul>
-        } @else {
-          <div class="typing">
-            <label class="visually-hidden" for="resposta-matematica">
-              Escreva o resultado da conta
-            </label>
-            <input
-              #answerField
-              id="resposta-matematica"
-              type="number"
-              class="typing__input"
-              inputmode="numeric"
-              autocomplete="off"
-              [attr.data-state]="status()"
-              [value]="typedAnswer()"
-              [disabled]="isSettled()"
-              placeholder="?"
-              (input)="typedAnswer.set(answerField.value)"
-              (keyup.enter)="submitTypedAnswer()"
-            />
+    @if (hasOptions()) {
+      <ul class="options">
+        @for (option of current.options; track option) {
+          <li>
             <button
               type="button"
-              class="button button--primary"
-              [disabled]="!canSubmitTyped()"
-              (click)="submitTypedAnswer()"
+              class="options__button"
+              [attr.data-state]="optionState(option)"
+              [disabled]="hasAnswered()"
+              (click)="answerWithOption(option)"
             >
-              <span aria-hidden="true">✅</span>
-              Conferir
+              {{ option }}
             </button>
-          </div>
+          </li>
         }
-
-        <!-- Ajuda ------------------------------------------------------- -->
-        @if (isHintVisible()) {
-          <p class="stage__hint">
-            <span aria-hidden="true">💡</span>
-            {{ currentStage.hint }}
-          </p>
-        } @else if (!isSettled()) {
-          <button type="button" class="button button--ghost button--small" (click)="showHint()">
-            <span aria-hidden="true">💡</span>
-            Quero uma dica
-          </button>
-        }
-
-        <!-- Resultado da tentativa -------------------------------------- -->
-        @if (status() !== 'aguardando') {
-          <div class="feedback" [attr.data-status]="status()" role="status">
-            <p class="feedback__title">
-              <span aria-hidden="true">{{ isSettled() ? '🎉' : '💪' }}</span>
-              {{ feedbackMessage() }}
-            </p>
-
-            @if (isSettled()) {
-              <p class="feedback__stars">
-                <span class="feedback__stars-row" aria-hidden="true">
-                  @for (slot of starSlots; track slot) {
-                    <span class="feedback__star" [class.feedback__star--on]="starsAtStake() >= slot">
-                      ★
-                    </span>
-                  }
-                </span>
-                <span>+{{ starsAtStake() }} de {{ maxStars }} estrelas</span>
-              </p>
-
-              <button #nextButton type="button" class="button button--accent" (click)="nextStage()">
-                {{ isLastStage() ? 'Ver o prêmio final' : 'Próxima fase' }}
-                <span aria-hidden="true">→</span>
-              </button>
-            }
-          </div>
-        }
-      </div>
-    }
-  } @else {
-    <!-- Escolha da idade ------------------------------------------------- -->
-    <div class="start" [attr.data-color]="previewBand().color">
-      <p class="start__emoji" aria-hidden="true">🧮</p>
-
-      <div class="start__text">
-        <h4 class="start__title">Qual é a sua idade?</h4>
-        <p class="start__description">
-          A trilha é montada com contas do seu tamanho. Dá para jogar quantas vezes quiser.
-        </p>
-      </div>
-
-      <div class="start__form">
-        <label class="start__label" for="idade-matematica">Sua idade</label>
-        <select
-          #ageField
-          id="idade-matematica"
-          class="start__select"
-          (change)="changeAge(ageField.value)"
+      </ul>
+    } @else {
+      <div class="typing">
+        <label class="visually-hidden" for="resposta-matematica">Escreva o resultado</label>
+        <input
+          #answerField
+          id="resposta-matematica"
+          class="typing__input"
+          type="number"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="?"
+          [value]="typedAnswer()"
+          [disabled]="hasAnswered()"
+          (input)="typedAnswer.set(answerField.value)"
+          (keyup.enter)="submitTypedAnswer()"
+        />
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="!canSubmitTyped()"
+          (click)="submitTypedAnswer()"
         >
-          @for (age of ages; track age) {
-            <option [value]="age" [selected]="age === selectedAge()">{{ age }} anos</option>
-          }
-        </select>
-
-        <button type="button" class="button button--primary" (click)="startTrail()">
-          Iniciar trilha
-          <span aria-hidden="true">⭐</span>
+          <span aria-hidden="true">✅</span>
+          Conferir
         </button>
       </div>
+    }
 
-      <p class="start__preview" role="status">
-        <span aria-hidden="true">{{ previewBand().emoji }}</span>
-        <strong>{{ previewBand().label }}:</strong>
-        {{ previewBand().description }}
+    @if (isHintVisible()) {
+      <p class="challenge__hint">
+        <span aria-hidden="true">💡</span>
+        {{ current.hint }}
       </p>
-    </div>
-  }
+    } @else if (!hasAnswered()) {
+      <button type="button" class="button button--ghost button--small" (click)="showHint()">
+        <span aria-hidden="true">💡</span>
+        Quero uma dica
+      </button>
+    }
+
+    @if (hasAnswered()) {
+      <div class="feedback" [attr.data-status]="status()" role="status">
+        <p class="feedback__message">
+          <span aria-hidden="true">{{ status() === 'certo' ? '🎉' : '💪' }}</span>
+          {{ feedbackMessage() }}
+        </p>
+
+        @if (status() === 'certo') {
+          <p class="feedback__points">+{{ earnedPoints() }} <span aria-hidden="true">⭐</span></p>
+        } @else {
+          <p class="feedback__answer">A resposta era <strong>{{ current.answer }}</strong>.</p>
+        }
+
+        <button type="button" class="button button--accent button--block" (click)="next()">
+          Próxima conta
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    }
+  </div>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

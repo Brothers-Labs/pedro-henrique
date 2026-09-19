@@ -41,7 +41,7 @@
     font-weight: 700;
     color: var(--text-strong);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-mint);
     }
 
@@ -113,6 +113,20 @@
     transform: translate(-50%, -50%);
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 
+    /**
+     * As casas são pequenas de propósito — é o desenho do tabuleiro. A área
+     * que responde ao dedo, porém, é maior do que elas e invisível.
+     */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--touch-target);
+      height: var(--touch-target);
+      transform: translate(-50%, -50%);
+    }
+
     &--highlighted {
       box-shadow: 0 0 0 5px var(--color-mint);
     }
@@ -122,7 +136,7 @@
       transform: translate(-50%, -50%) scale(1.12);
     }
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       transform: translate(-50%, -50%) scale(1.12);
     }
 

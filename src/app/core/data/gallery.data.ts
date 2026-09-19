@@ -1,121 +1,73 @@
-import type { GalleryCategoryOption, GalleryItem } from '../models/gallery-item.model';
-import { createIllustration } from '../utils/illustration';
+import type {
+  FeaturedPhoto,
+  FeaturedSlot,
+  GalleryPhoto,
+  GalleryPhotoSource,
+  PhotoOrientation,
+} from '../models/gallery-item.model';
+import { themeColorByIndex } from '../theme/theme-colors';
+import { GALLERY_PHOTO_SOURCES } from './gallery-manifest.generated';
 
-export const GALLERY_CATEGORIES: readonly GalleryCategoryOption[] = [
-  { value: 'todas', label: 'Tudo', emoji: '✨' },
-  { value: 'desenhos', label: 'Desenhos', emoji: '🎨' },
-  { value: 'passeios', label: 'Passeios', emoji: '🏕️' },
-  { value: 'escola', label: 'Escola', emoji: '🏫' },
-  { value: 'familia', label: 'Família', emoji: '💛' },
-];
+/**
+ * Camada que transforma o manifesto de arquivos em fotos prontas para a tela.
+ *
+ * O manifesto é gerado e só sabe o que está no disco; é aqui que entram as
+ * decisões de apresentação — recorte, ordem de destaque e texto alternativo.
+ * Nenhuma delas inventa informação sobre a foto: o site não tem data, local
+ * nem legenda de verdade para exibir.
+ */
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = [
-  {
-    id: 'galeria-dino',
-    title: 'O dinossauro dançarino',
-    description: 'Desenhei um T-Rex dançando porque ele estava feliz com o almoço.',
-    category: 'desenhos',
-    imageUrl: createIllustration('🦖', 'mint', 1),
-    color: 'mint',
-    takenAt: '2026-03-14',
-  },
-  {
-    id: 'galeria-foguete',
-    title: 'Foguete para Marte',
-    description: 'Esse foguete tem três andares: um para dormir, um para brincar e um para pilotar.',
-    category: 'desenhos',
-    imageUrl: createIllustration('🚀', 'purple', 2),
-    color: 'purple',
-    takenAt: '2026-02-28',
-  },
-  {
-    id: 'galeria-praia',
-    title: 'Castelo gigante na praia',
-    description: 'Levou a manhã inteira e uma onda levou embora em três segundos.',
-    category: 'passeios',
-    imageUrl: createIllustration('🏖️', 'yellow', 3),
-    color: 'yellow',
-    takenAt: '2026-01-18',
-  },
-  {
-    id: 'galeria-parque',
-    title: 'Dia no parque de diversões',
-    description: 'Andei na roda-gigante e vi a cidade inteira lá de cima.',
-    category: 'passeios',
-    imageUrl: createIllustration('🎡', 'pink', 4),
-    color: 'pink',
-    takenAt: '2025-12-07',
-  },
-  {
-    id: 'galeria-feira',
-    title: 'Feira de ciências',
-    description: 'Meu vulcão de vinagre entrou em erupção na hora certa.',
-    category: 'escola',
-    imageUrl: createIllustration('🌋', 'orange', 5),
-    color: 'orange',
-    takenAt: '2025-11-22',
-  },
-  {
-    id: 'galeria-amigos',
-    title: 'Time do recreio',
-    description: 'A gente joga bola todo dia e o placar nunca é o mesmo.',
-    category: 'escola',
-    imageUrl: createIllustration('⚽', 'blue', 6),
-    color: 'blue',
-    takenAt: '2025-10-05',
-  },
-  {
-    id: 'galeria-aniversario',
-    title: 'Aniversário de 7 anos',
-    description: 'Bolo de chocolate, sete velinhas e um pedido em segredo.',
-    category: 'familia',
-    imageUrl: createIllustration('🎂', 'pink', 7),
-    color: 'pink',
-    takenAt: '2026-04-12',
-  },
-  {
-    id: 'galeria-cachorro',
-    title: 'Passeio com o cachorro',
-    description: 'Ele corre mais do que eu, mas eu tenho mais fôlego na volta.',
-    category: 'familia',
-    imageUrl: createIllustration('🐶', 'mint', 8),
-    color: 'mint',
-    takenAt: '2026-03-02',
-  },
-  {
-    id: 'galeria-robo',
-    title: 'Robô de caixas de papelão',
-    description: 'Fiz com caixas, papel-alumínio e muita fita adesiva.',
-    category: 'desenhos',
-    imageUrl: createIllustration('🤖', 'blue', 9),
-    color: 'blue',
-    takenAt: '2026-02-09',
-  },
-  {
-    id: 'galeria-acampamento',
-    title: 'Acampamento no quintal',
-    description: 'Dormimos na barraca e contamos histórias com lanterna.',
-    category: 'passeios',
-    imageUrl: createIllustration('🏕️', 'purple', 10),
-    color: 'purple',
-    takenAt: '2025-09-14',
-  },
-  {
-    id: 'galeria-leitura',
-    title: 'Cantinho da leitura',
-    description: 'Meu lugar preferido da sala quando chove lá fora.',
-    category: 'escola',
-    imageUrl: createIllustration('📚', 'yellow', 11),
-    color: 'yellow',
-    takenAt: '2025-08-30',
-  },
-  {
-    id: 'galeria-piquenique',
-    title: 'Piquenique da família',
-    description: 'Tinha suco, sanduíche e uma formiga muito insistente.',
-    category: 'familia',
-    imageUrl: createIllustration('🧺', 'orange', 12),
-    color: 'orange',
-    takenAt: '2025-07-19',
-  },
-];
+/**
+ * Proporções de recorte aplicadas em rodízio dentro do mosaico.
+ *
+ * Todas as fotos do álbum têm praticamente a mesma proporção, então uma grade
+ * fiel ao original ficaria monótona. Variar o recorte dentro de uma faixa
+ * próxima à original cria o desencontro editorial sem cortar nada importante:
+ * o retrato nunca vira paisagem, e vice-versa.
+ */
+const DISPLAY_RHYTHM: Readonly<Record<PhotoOrientation, readonly string[]>> = {
+  portrait: ['3 / 4', '1 / 1', '3 / 4', '4 / 5', '9 / 16', '3 / 4'],
+  landscape: ['4 / 3', '3 / 2', '4 / 3', '16 / 9'],
+  square: ['1 / 1', '4 / 5'],
+};
+
+/** Papéis da composição de destaques, na ordem em que recebem as fotos. */
+const FEATURED_SLOTS: readonly FeaturedSlot[] = ['hero', 'tall', 'top', 'bottom'];
+
+/**
+ * Abaixo disso a composição de destaques não se sustenta: sobrariam poucas
+ * fotos para o mosaico e a página pareceria repetitiva.
+ */
+const MINIMUM_PHOTOS_FOR_HIGHLIGHTS = FEATURED_SLOTS.length * 2;
+
+export const GALLERY_PHOTOS: readonly GalleryPhoto[] =
+  GALLERY_PHOTO_SOURCES.map(toGalleryPhoto);
+
+export const GALLERY_PHOTO_COUNT = GALLERY_PHOTOS.length;
+
+/**
+ * As primeiras fotos do álbum ocupam os destaques. A escolha é a ordem do
+ * arquivo, e não um julgamento de qualidade que o código não tem como fazer.
+ */
+export const FEATURED_PHOTOS: readonly FeaturedPhoto[] =
+  GALLERY_PHOTO_COUNT >= MINIMUM_PHOTOS_FOR_HIGHLIGHTS
+    ? FEATURED_SLOTS.map((slot, index) => ({ ...GALLERY_PHOTOS[index], slot }))
+    : [];
+
+/** O mosaico mostra o resto do álbum, sem repetir o que já está em destaque. */
+export const MOSAIC_PHOTOS: readonly GalleryPhoto[] =
+  GALLERY_PHOTOS.slice(FEATURED_PHOTOS.length);
+
+function toGalleryPhoto(source: GalleryPhotoSource, index: number): GalleryPhoto {
+  const rhythm = DISPLAY_RHYTHM[source.orientation];
+  const position = index + 1;
+
+  return {
+    ...source,
+    position,
+    alt: `Pedro Henrique na foto ${position} do álbum`,
+    displayAspectRatio: rhythm[index % rhythm.length],
+    naturalAspectRatio: `${source.width} / ${source.height}`,
+    tone: themeColorByIndex(index),
+  };
+}

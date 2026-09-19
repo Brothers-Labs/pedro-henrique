@@ -1,0 +1,69 @@
+<dialog
+  #dialog
+  class="lightbox"
+  data-dismiss
+  aria-label="Foto em tela cheia"
+  (close)="handleNativeClose()"
+  (click)="handleDismissClick($event)"
+  (keydown)="handleKeydown($event)"
+>
+  @if (currentPhoto(); as photo) {
+    <div class="lightbox__bar">
+      <p class="lightbox__counter" role="status" aria-live="polite">
+        <span aria-hidden="true">📸</span>
+        {{ photo.position }} de {{ total() }}
+      </p>
+
+      <button
+        type="button"
+        class="lightbox__button"
+        aria-label="Fechar a foto"
+        (click)="close()"
+      >
+        <span aria-hidden="true">✕</span>
+      </button>
+    </div>
+
+    <div
+      class="lightbox__stage"
+      data-dismiss
+      (touchstart)="startTouch($event)"
+      (touchend)="finishTouch($event)"
+      (touchcancel)="cancelTouch()"
+    >
+      <button
+        type="button"
+        class="lightbox__button lightbox__button--step lightbox__button--previous"
+        aria-label="Foto anterior"
+        (click)="goToPrevious()"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+
+      @for (visible of stage(); track visible.id) {
+        <img
+          class="lightbox__image"
+          [attr.data-direction]="direction()"
+          [src]="visible.src"
+          [alt]="visible.alt"
+          [width]="visible.width"
+          [height]="visible.height"
+          decoding="async"
+        />
+      }
+
+      <button
+        type="button"
+        class="lightbox__button lightbox__button--step lightbox__button--next"
+        aria-label="Próxima foto"
+        (click)="goToNext()"
+      >
+        <span aria-hidden="true">›</span>
+      </button>
+    </div>
+
+    <p class="lightbox__hint">
+      Use as setas do teclado ou deslize o dedo para ver as outras fotos.
+    </p>
+  }
+</dialog>

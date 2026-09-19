@@ -4,6 +4,11 @@
  * Os tokens vivem como custom properties para que qualquer componente possa
  * consumi-los sem precisar importar SCSS, mantendo um único ponto de verdade
  * para a identidade visual.
+ *
+ * A escala é mobile first: tipografia e espaçamento são declarados em `clamp()`
+ * com o piso calibrado para uma tela de ~375px e o teto para o desktop. Assim a
+ * maior parte da adaptação acontece sem nenhum breakpoint — a página respira
+ * menos no celular e continua generosa no monitor grande.
  */
 :root {
   // Paleta ---------------------------------------------------------------
@@ -42,24 +47,31 @@
   --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
   --font-body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
 
-  --text-xs: 0.8125rem;
-  --text-sm: 0.9375rem;
-  --text-md: 1.0625rem;
-  --text-lg: 1.25rem;
-  --text-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
-  --text-2xl: clamp(1.9rem, 1.4rem + 2.2vw, 2.8rem);
-  --text-3xl: clamp(2.4rem, 1.6rem + 3.6vw, 4.2rem);
+  /**
+   * `--text-md` nunca fica abaixo de 16px: é o tamanho a partir do qual o
+   * Safari do iPhone para de dar zoom sozinho ao focar um campo de formulário.
+   */
+  --text-xs: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.85rem + 0.12vw, 0.9375rem);
+  --text-md: clamp(1rem, 0.98rem + 0.1vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1.06rem + 0.28vw, 1.25rem);
+  --text-xl: clamp(1.375rem, 1.15rem + 1vw, 2rem);
+  --text-2xl: clamp(1.625rem, 1.25rem + 1.7vw, 2.8rem);
+  --text-3xl: clamp(2rem, 1.4rem + 2.8vw, 4.2rem);
 
   // Espaçamento -----------------------------------------------------------
+  /** Os quatro primeiros são detalhes internos de componente e não escalam. */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
-  --space-9: 6rem;
+
+  /** Do quinto em diante o espaço é estrutural, e encolhe no celular. */
+  --space-5: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --space-6: clamp(1.5rem, 1.35rem + 0.6vw, 2rem);
+  --space-7: clamp(2rem, 1.7rem + 1.3vw, 3rem);
+  --space-8: clamp(2.5rem, 2rem + 2.2vw, 4rem);
+  --space-9: clamp(3.5rem, 2.5rem + 4vw, 6rem);
 
   // Formas e profundidade --------------------------------------------------
   --radius-sm: 0.75rem;
@@ -72,9 +84,42 @@
   --shadow-lg: 0 22px 48px rgb(42 35 80 / 18%);
   --shadow-pop: 0 6px 0 var(--border-strong);
 
+  // Layout ------------------------------------------------------------------
   --layout-max: 1180px;
-  --header-height: 4.5rem;
+
+  /** Respiro lateral da página, do celular ao monitor grande. */
+  --page-gutter: clamp(1rem, 0.6rem + 1.7vw, 2rem);
+
+  --header-height: 4rem;
+
+  /** Altura da barra de navegação inferior, presente só no toque. */
+  --bottom-nav-height: 4rem;
+
+  /** Alvo de toque mínimo recomendado (44px). */
+  --touch-target: 2.75rem;
+
+  /**
+   * Recortes do aparelho (notch, ilha dinâmica, barra de gestos). Sem suporte,
+   * `env()` devolve o segundo argumento e tudo continua valendo zero.
+   */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 
   --transition-fast: 150ms ease;
   --transition-base: 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/**
+ * A troca acontece em 1280px, e não antes, porque é a partir daí que os sete
+ * destinos cabem em uma linha só do cabeçalho. Abaixo disso o aparelho quase
+ * sempre é um tablet, onde a barra inferior é a melhor navegação de qualquer
+ * forma.
+ */
+@media (min-width: 80rem) {
+  :root {
+    --header-height: 4.5rem;
+    --bottom-nav-height: 0px;
+  }
 }

@@ -1,0 +1,15 @@
+@if (achievement(); as unlocked) {
+  <div class="toast" role="status" aria-live="polite">
+    <span class="toast__emoji" aria-hidden="true">{{ unlocked.emoji }}</span>
+
+    <span class="toast__text">
+      <span class="toast__eyebrow">Nova conquista!</span>
+      <strong class="toast__title">{{ unlocked.title }}</strong>
+      <span class="toast__description">{{ unlocked.description }}</span>
+    </span>
+
+    <button type="button" class="toast__close" aria-label="Fechar o aviso" (click)="dismiss()">
+      <span aria-hidden="true">✕</span>
+    </button>
+  </div>
+}

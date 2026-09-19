@@ -1,30 +1,66 @@
 @use 'mixins' as *;
 
 .games {
-  padding-block: var(--space-7) var(--space-8);
+  padding-block: var(--space-6) var(--space-8);
 
+  @include from($breakpoint-md) {
+    padding-block: var(--space-7) var(--space-8);
+  }
+
+  @include short-viewport {
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  /**
+   * Trilha de abas que rola na horizontal.
+   *
+   * Sete jogos quebrados em quatro linhas empurravam o tabuleiro para fora da
+   * primeira tela do celular. Numa faixa só, a aba seguinte aparece cortada na
+   * borda e mostra sozinha que há mais jogo para o lado.
+   */
   &__tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-4);
+
+    @include snap-row(var(--space-2));
+
+    @include from($breakpoint-lg) {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      margin-bottom: var(--space-5);
+    }
   }
 
   &__tab {
+    @include touch-target;
+
+    position: relative;
+
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-3) var(--space-5);
+    padding: var(--space-2) var(--space-4);
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-card);
     font-family: var(--font-display);
+    font-size: var(--text-sm);
     font-weight: 700;
+    white-space: nowrap;
     color: var(--text-strong);
     transition: transform var(--transition-fast), background-color var(--transition-fast);
 
-    &:hover {
+    @include from($breakpoint-md) {
+      padding: var(--space-3) var(--space-5);
+      font-size: var(--text-md);
+    }
+
+    @include hover {
       transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: scale(0.96);
     }
 
     &--active {
@@ -35,16 +71,146 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover {
+      &:hover,
+      &:active {
         transform: none;
       }
     }
   }
 
+  /** Selo do nível na aba: mostra a evolução sem entrar no jogo. */
+  &__tab-level {
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow);
+    font-size: var(--text-xs);
+    font-weight: 800;
+    color: var(--text-strong);
+  }
+
+  &__tab--active &__tab-level {
+    background: var(--surface-card);
+  }
+
   &__panel {
     @include card-surface;
 
-    padding: var(--space-6);
+    /* No celular cada pixel de largura conta para o tabuleiro. */
+    padding: var(--space-4);
     box-shadow: var(--shadow-md);
+
+    @include from($breakpoint-md) {
+      padding: var(--space-6);
+    }
+  }
+}
+
+/* Painel da jornada --------------------------------------------------------- */
+.dashboard {
+  @include card-surface(var(--color-mint-soft));
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-pop);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
+    gap: var(--space-2);
+    margin: 0;
+  }
+
+  &__stat {
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    text-align: center;
+
+    dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+    }
+
+    dd {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 800;
+      color: var(--text-strong);
+    }
+  }
+
+  &__bar {
+    height: 0.75rem;
+    overflow: hidden;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-mint);
+    transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &__caption {
+    font-size: var(--text-xs);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+  }
+
+  @include reduced-motion {
+    &__fill {
+      transition: none;
+    }
+  }
+}
+
+/** Próximo objetivo: o convite para continuar de onde parou. */
+.goal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 3px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+
+  &__text {
+    flex: 1 1 12rem;
+    min-width: 0;
+    font-size: var(--text-sm);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
   }
 }

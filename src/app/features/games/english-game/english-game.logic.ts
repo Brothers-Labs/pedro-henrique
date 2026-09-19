@@ -11,10 +11,6 @@ import type { EnglishChallenge } from '../../../core/models/english-quiz.model';
 /** Resultado da conferência de uma resposta escrita. */
 export type WritingVerdict = 'certa' | 'quase' | 'errada';
 
-/** XP extra concedido a partir de três acertos seguidos. */
-export const STREAK_BONUS_XP = 5;
-export const STREAK_BONUS_THRESHOLD = 3;
-
 /** Erros de digitação tolerados para dizer "quase lá", conforme o tamanho. */
 const LONG_ANSWER_LENGTH = 8;
 const SHORT_ANSWER_LENGTH = 5;
@@ -56,24 +52,6 @@ export function checkWritingAnswer(
   );
 
   return isNearMiss ? 'quase' : 'errada';
-}
-
-export interface XpAwardInput {
-  /** XP cheio da fase, definido pelo nível. */
-  readonly baseXp: number;
-  readonly usedHint: boolean;
-  readonly missCount: number;
-  /** Sequência de acertos já contando a fase recém-concluída. */
-  readonly streak: number;
-}
-
-/** XP de uma fase concluída: metade quando houve ajuda, mais bônus de sequência. */
-export function calculateEarnedXp({ baseXp, usedHint, missCount, streak }: XpAwardInput): number {
-  const wasHelped = usedHint || missCount > 0;
-  const earned = wasHelped ? Math.ceil(baseXp / 2) : baseXp;
-  const bonus = streak >= STREAK_BONUS_THRESHOLD ? STREAK_BONUS_XP : 0;
-
-  return earned + bonus;
 }
 
 /** Resposta certa já com a grafia que deve aparecer na tela. */

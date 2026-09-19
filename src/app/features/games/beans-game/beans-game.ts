@@ -1,5 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 
+import { gameDefinition } from '../../../core/data/game-progress.data';
+import { beansSkillFor } from '../../../core/games/difficulty';
+import type { GameId } from '../../../core/models/game-progress.model';
+import { GameProgressService } from '../../../core/services/game-progress.service';
+import { GameHud } from '../shared/game-hud/game-hud';
+import { celebrationFrom } from '../shared/level-up-celebration/celebration';
+import type { CelebrationData } from '../shared/level-up-celebration/level-up-celebration';
+import { LevelUpCelebration } from '../shared/level-up-celebration/level-up-celebration';
 import {
   applyMove,
   BEANS_PER_PLAYER,
@@ -34,14 +42,37 @@ const PLAYER_NAME: Readonly<Record<BeanPlayer, string>> = {
 
 const RIVAL_DELAY_IN_MS = 650;
 
+const GAME_ID: GameId = 'feijoes';
+
+const SKILL_LABELS = {
+  iniciante: 'Rival iniciante',
+  esperto: 'Rival esperto',
+  mestre: 'Rival mestre',
+} as const;
+
 @Component({
   selector: 'app-beans-game',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [GameHud, LevelUpCelebration],
   templateUrl: './beans-game.html',
   styleUrl: './beans-game.scss',
 })
 export class BeansGame {
+  private readonly progressService = inject(GameProgressService);
   private rivalTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  /** Trava de registro: uma partida encerrada vale um desafio, nunca dois. */
+  private hasRegisteredRound = false;
+
+  protected readonly gameId = GAME_ID;
+  protected readonly definition = gameDefinition(GAME_ID);
+  protected readonly celebration = signal<CelebrationData | null>(null);
+  protected readonly earnedPoints = signal(0);
+
+  protected readonly rivalSkill = computed(() =>
+    beansSkillFor(this.progressService.progressOf(GAME_ID).level),
+  );
+  protected readonly rivalSkillLabel = computed(() => SKILL_LABELS[this.rivalSkill()]);
 
   protected readonly points = BOARD_POINTS;
   protected readonly playerEmoji = PLAYER_EMOJI;
@@ -167,6 +198,8 @@ export class BeansGame {
     this.mustRemove.set(false);
     this.selectedPosition.set(null);
     this.winner.set(null);
+    this.hasRegisteredRound = false;
+    this.earnedPoints.set(0);
     this.isRivalThinking.set(false);
   }
 
@@ -178,6 +211,34 @@ export class BeansGame {
     const cell = this.board()[position];
     const occupant = cell === null ? 'casa vazia' : `feijão ${this.playerName[cell].toLowerCase()}`;
     return `Casa ${position + 1}: ${occupant}`;
+  }
+
+  protected continueAfterCelebration(): void {
+    this.celebration.set(null);
+    this.restart();
+  }
+
+  /**
+   * Encerra a partida e conta o desafio uma única vez.
+   *
+   * Só vale na partida contra o computador: no modo dupla o adversário é outra
+   * pessoa, e o nível da jornada não teria o que medir.
+   */
+  private declareWinner(winner: BeanPlayer): void {
+    this.winner.set(winner);
+
+    if (!this.isSolo() || this.hasRegisteredRound) {
+      return;
+    }
+
+    this.hasRegisteredRound = true;
+
+    const outcome = this.progressService.registerChallenge(GAME_ID, winner === 'crianca');
+    this.earnedPoints.set(outcome.earnedPoints);
+
+    if (outcome.didLevelUp) {
+      this.celebration.set(celebrationFrom(outcome, this.definition.label));
+    }
   }
 
   private isSolo(): boolean {
@@ -264,7 +325,7 @@ export class BeansGame {
     this.selectedPosition.set(null);
 
     if (!hasAnyMove(this.board(), next, this.beansInHand()[next])) {
-      this.winner.set(opponentOf(next));
+      this.declareWinner(opponentOf(next));
       return;
     }
 
@@ -278,7 +339,7 @@ export class BeansGame {
     const remaining = positionsOf(this.board(), player).length + this.beansInHand()[player];
 
     if (remaining < MINIMUM_BEANS) {
-      this.winner.set(opponentOf(player));
+      this.declareWinner(opponentOf(player));
       return true;
     }
 
@@ -307,9 +368,14 @@ export class BeansGame {
       return;
     }
 
-    const move = chooseBeanMove(this.board(), 'rival', this.beansInHand()['rival']);
+    const move = chooseBeanMove(
+      this.board(),
+      'rival',
+      this.beansInHand()['rival'],
+      this.rivalSkill(),
+    );
     if (move === null) {
-      this.winner.set('crianca');
+      this.declareWinner('crianca');
       return;
     }
 

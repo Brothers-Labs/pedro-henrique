@@ -25,6 +25,13 @@
     color: var(--text-strong);
   }
 
+  &__points {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-mint);
+  }
+
   &__board {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -45,9 +52,14 @@
     line-height: 1;
     transition: background-color var(--transition-fast), transform var(--transition-fast);
 
-    &:hover:not(:disabled) {
+    @include hover-enabled {
       background: var(--color-yellow-soft);
       transform: scale(1.04);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--color-yellow-soft);
+      transform: scale(0.95);
     }
 
     &:disabled {
@@ -62,7 +74,11 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover:not(:disabled) {
+      @include hover-enabled {
+        transform: none;
+      }
+
+      &:active:not(:disabled) {
         transform: none;
       }
     }

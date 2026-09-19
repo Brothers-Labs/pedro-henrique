@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "gallery:manifest": "node scripts/generate-gallery-manifest.mjs",
+    "prestart": "npm run gallery:manifest",
+    "prebuild": "npm run gallery:manifest"
   },
   "private": true,
   "dependencies": {

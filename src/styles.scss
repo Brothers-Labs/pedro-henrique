@@ -17,7 +17,13 @@
 html {
   color-scheme: light;
   scroll-behavior: smooth;
+
+  /* Âncoras não podem parar atrás do cabeçalho fixo nem da barra inferior. */
   scroll-padding-top: calc(var(--header-height) + var(--space-4));
+  scroll-padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
+
+  /* O toque não precisa de um retângulo cinza: cada controle tem o próprio retorno. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -72,6 +78,23 @@ p {
   text-wrap: pretty;
 }
 
+/**
+ * Uma palavra sem espaço — um nome comprido, uma URL colada — é capaz de
+ * empurrar a linha inteira para fora da tela num celular estreito.
+ */
+h1,
+h2,
+h3,
+h4,
+p,
+li,
+dd,
+dt,
+figcaption,
+label {
+  overflow-wrap: break-word;
+}
+
 a {
   color: var(--color-purple);
   font-weight: 700;
@@ -108,10 +131,14 @@ a {
 }
 
 .skip-link {
+  @include touch-target;
+
   position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
+  top: calc(var(--space-3) + var(--safe-top));
+  left: calc(var(--space-3) + var(--safe-left));
   z-index: 100;
+  display: inline-flex;
+  align-items: center;
   padding: var(--space-2) var(--space-4);
   background: var(--color-purple);
   color: var(--text-on-color);
@@ -126,6 +153,8 @@ a {
 
 /* Botões ----------------------------------------------------------------- */
 .button {
+  @include touch-target;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -142,9 +171,11 @@ a {
   box-shadow: var(--shadow-pop);
   transition: transform var(--transition-base), box-shadow var(--transition-base);
 
-  &:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 9px 0 var(--border-strong);
+  @include hover {
+    &:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 9px 0 var(--border-strong);
+    }
   }
 
   &:active:not(:disabled) {
@@ -175,9 +206,20 @@ a {
     background: transparent;
     box-shadow: none;
 
-    &:hover:not(:disabled) {
-      background: var(--surface-card);
-      box-shadow: none;
+    @include hover {
+      &:not(:disabled) {
+        background: var(--surface-card);
+        box-shadow: none;
+      }
+    }
+  }
+
+  /** No celular o CTA principal costuma ficar melhor ocupando a linha toda. */
+  &--block {
+    width: 100%;
+
+    @include from($breakpoint-sm) {
+      width: auto;
     }
   }
 
@@ -222,13 +264,17 @@ a {
 
   &__control {
     width: 100%;
+    min-height: var(--touch-target);
     padding: var(--space-3) var(--space-4);
     border: 3px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--surface-card);
+
+    /* `--text-md` nunca desce de 16px, o limite do zoom automático do Safari. */
+    font-size: var(--text-md);
     transition: border-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-blue);
     }
 
@@ -246,6 +292,15 @@ a {
     min-height: 7rem;
     resize: vertical;
   }
+}
+
+/* Diálogos modais -------------------------------------------------------- */
+/**
+ * Enquanto um `<dialog>` modal está aberto, a página atrás dele não rola —
+ * sem isso, o dedo que arrasta sobre a foto em tela cheia move o site inteiro.
+ */
+body:has(dialog[open]) {
+  overflow: hidden;
 }
 
 /* Animação de entrada controlada pela diretiva appReveal ------------------- */

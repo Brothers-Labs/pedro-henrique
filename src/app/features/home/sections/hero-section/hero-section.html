@@ -20,11 +20,11 @@
       <p class="hero__tagline" data-motion="hero-line">{{ profile.tagline }}</p>
 
       <div class="hero__actions" data-motion="hero-line">
-        <a class="button button--primary" routerLink="/galeria">
+        <a class="button button--primary button--block" routerLink="/galeria">
           <span aria-hidden="true">🖼️</span>
           Ver minha galeria
         </a>
-        <a class="button button--accent" routerLink="/jogos">
+        <a class="button button--accent button--block" routerLink="/jogos">
           <span aria-hidden="true">🎮</span>
           Brincar comigo
         </a>
@@ -32,7 +32,15 @@
     </div>
 
     <div class="hero__avatar" data-motion="hero-avatar">
-      <span class="hero__avatar-emoji" aria-hidden="true">{{ profile.avatarEmoji }}</span>
+      <img
+        class="hero__photo"
+        [src]="profile.photo.src"
+        [width]="profile.photo.width"
+        [height]="profile.photo.height"
+        [alt]="'Foto do ' + profile.firstName"
+        fetchpriority="high"
+        decoding="async"
+      />
       <span class="hero__badge">{{ age }} anos</span>
     </div>
   </div>

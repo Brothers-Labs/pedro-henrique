@@ -1,0 +1,36 @@
+<nav class="bottom-nav" aria-label="Navegação rápida">
+  <ul class="bottom-nav__list">
+    @for (destination of destinations; track destination.id) {
+      <li class="bottom-nav__item">
+        <a
+          class="bottom-nav__target"
+          [attr.data-color]="destination.color"
+          [routerLink]="destination.route"
+          routerLinkActive="bottom-nav__target--active"
+          [routerLinkActiveOptions]="{ exact: destination.route === '/' }"
+          ariaCurrentWhenActive="page"
+        >
+          <span class="bottom-nav__icon" aria-hidden="true">{{ destination.emoji }}</span>
+          <span class="bottom-nav__label">{{ destination.label }}</span>
+        </a>
+      </li>
+    }
+
+    <li class="bottom-nav__item">
+      <button
+        type="button"
+        class="bottom-nav__target"
+        data-color="yellow"
+        [class.bottom-nav__target--active]="isMenuOpen()"
+        [attr.aria-expanded]="isMenuOpen()"
+        aria-haspopup="dialog"
+        (click)="openMenu()"
+      >
+        <span class="bottom-nav__icon" aria-hidden="true">✨</span>
+        <span class="bottom-nav__label">Mais</span>
+      </button>
+    </li>
+  </ul>
+</nav>
+
+<app-nav-sheet [(isOpen)]="isMenuOpen" />

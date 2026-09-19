@@ -37,16 +37,31 @@
     color: var(--text-soft);
   }
 
+  /**
+   * No celular cada frase ocupa a linha inteira.
+   *
+   * Pílulas de larguras diferentes obrigam a mirar; em linhas iguais o dedo
+   * só precisa descer a lista. Numa página usada para pedir ajuda, isso
+   * importa mais do que a economia de espaço.
+   */
   &__quick-list {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: var(--space-2);
     list-style: none;
     padding: 0;
     margin-block-start: var(--space-1);
+
+    @include from($breakpoint-md) {
+      grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+    }
   }
 
   &__quick-item {
+    @include touch-target;
+
+    width: 100%;
+    justify-content: flex-start;
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
@@ -60,7 +75,7 @@
     color: var(--text-strong);
     text-align: start;
 
-    &:hover {
+    @include hover {
       background: var(--color-yellow-soft);
     }
   }
@@ -88,7 +103,7 @@
     font-weight: 700;
     color: var(--text-strong);
 
-    &:hover {
+    @include hover {
       border-color: var(--tone);
     }
 
@@ -101,7 +116,7 @@
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(8rem, 100%), 1fr));
     gap: var(--space-3);
     list-style: none;
     padding: 0;
@@ -126,7 +141,7 @@
     text-align: center;
     transition: transform var(--transition-base), background-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       transform: translateY(-4px);
       background: var(--tone-soft);
     }
@@ -173,7 +188,7 @@
 
   &__saved-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
     gap: var(--space-3);
     list-style: none;
     padding: 0;
@@ -200,7 +215,7 @@
     color: var(--text-strong);
     text-align: start;
 
-    &:hover {
+    @include hover {
       background: var(--color-mint-soft);
     }
   }
@@ -213,7 +228,7 @@
     border-radius: var(--radius-md);
     background: var(--surface-card);
 
-    &:hover {
+    @include hover {
       border-color: var(--color-pink);
     }
   }

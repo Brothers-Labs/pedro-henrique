@@ -1,54 +1,23 @@
+@let current = question();
+
 <section class="quiz" aria-labelledby="quiz-titulo">
   <header class="quiz__header">
     <h3 id="quiz-titulo" class="quiz__title">Quiz</h3>
-    <p class="quiz__subtitle">
-      Cada rodada sorteia {{ totalQuestions() }} perguntas. Vale chutar!
-    </p>
+    <p class="quiz__subtitle">{{ tierLabel() }}</p>
   </header>
 
-  <div class="quiz__categories" role="group" aria-label="Escolha o tipo de pergunta">
-    @for (category of categories; track category.value) {
-      <button
-        type="button"
-        class="quiz__category"
-        [class.quiz__category--active]="selectedCategory() === category.value"
-        [attr.aria-pressed]="selectedCategory() === category.value"
-        (click)="selectCategory(category.value)"
-      >
-        <span aria-hidden="true">{{ category.emoji }}</span>
-        {{ category.label }}
-      </button>
-    }
-  </div>
+  <app-game-hud [gameId]="gameId" />
 
-  @if (isFinished()) {
-    <div class="quiz__result" role="status">
-      <p class="quiz__result-emoji" aria-hidden="true">🏆</p>
-      <p class="quiz__result-score">{{ score() }} de {{ totalQuestions() }}</p>
-      <p class="quiz__result-message">{{ finalMessage() }}</p>
-      <button type="button" class="button button--primary" (click)="restart()">
-        <span aria-hidden="true">🔄</span>
-        Jogar de novo
-      </button>
-    </div>
-  } @else {
-    <div class="quiz__progress">
-      <div class="quiz__progress-bar">
-        <span class="quiz__progress-fill" [style.width.%]="progressPercentage()"></span>
-      </div>
-      <p class="quiz__progress-label">
-        Pergunta {{ currentIndex() + 1 }} de {{ totalQuestions() }} · {{ score() }} acertos
-      </p>
-    </div>
+  <div class="challenge">
+    <p class="challenge__prompt">Escolha a resposta certa</p>
+    <h4 class="challenge__question">{{ current.question }}</h4>
 
-    <p class="quiz__question">{{ currentQuestion().question }}</p>
-
-    <ul class="quiz__options">
-      @for (option of currentQuestion().options; track option; let index = $index) {
+    <ul class="options">
+      @for (option of current.options; track option; let index = $index) {
         <li>
           <button
             type="button"
-            class="quiz__option"
+            class="options__button"
             [attr.data-state]="optionState(index)"
             [disabled]="hasAnswered()"
             (click)="answer(index)"
@@ -60,16 +29,32 @@
     </ul>
 
     @if (hasAnswered()) {
-      <div class="quiz__feedback" role="status">
-        <p class="quiz__feedback-title">
-          {{ isCorrect() ? '🎉 Acertou!' : '🙃 Quase!' }}
+      <div class="feedback" [attr.data-status]="isCorrect() ? 'certo' : 'errado'" role="status">
+        <p class="feedback__message">
+          <span aria-hidden="true">{{ isCorrect() ? '🎉' : '💪' }}</span>
+          {{ feedbackMessage() }}
         </p>
-        <p class="quiz__feedback-fact">{{ currentQuestion().funFact }}</p>
-        <button type="button" class="button button--accent" (click)="next()">
-          {{ isLastQuestion() ? 'Ver resultado' : 'Próxima pergunta' }}
+
+        @if (isCorrect()) {
+          <p class="feedback__points">+{{ earnedPoints() }} <span aria-hidden="true">⭐</span></p>
+        } @else {
+          <p class="feedback__answer">
+            A resposta era <strong>{{ current.options[current.correctIndex] }}</strong>.
+          </p>
+        }
+
+        <p class="challenge__fact">
+          <span aria-hidden="true">💡</span>
+          {{ current.funFact }}
+        </p>
+
+        <button type="button" class="button button--accent button--block" (click)="next()">
+          Próxima pergunta
           <span aria-hidden="true">→</span>
         </button>
       </div>
     }
-  }
+  </div>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

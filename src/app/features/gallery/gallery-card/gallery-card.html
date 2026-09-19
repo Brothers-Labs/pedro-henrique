@@ -1,0 +1,30 @@
+@let currentPhoto = photo();
+
+<button
+  type="button"
+  class="card"
+  [attr.aria-label]="'Ver a foto ' + currentPhoto.position + ' em tela cheia'"
+  (click)="opened.emit(currentPhoto)"
+>
+  @if (!isLoaded()) {
+    <span class="card__skeleton" aria-hidden="true"></span>
+  }
+
+  <img
+    class="card__image"
+    [class.card__image--loaded]="isLoaded()"
+    [src]="currentPhoto.src"
+    [alt]="currentPhoto.alt"
+    [width]="currentPhoto.width"
+    [height]="currentPhoto.height"
+    [attr.loading]="isPriority() ? 'eager' : 'lazy'"
+    [attr.fetchpriority]="isPriority() ? 'high' : 'auto'"
+    decoding="async"
+    (load)="finishLoading()"
+    (error)="finishLoading()"
+  />
+
+  <span class="card__overlay" aria-hidden="true">
+    <span class="card__zoom">🔍</span>
+  </span>
+</button>

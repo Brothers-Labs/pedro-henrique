@@ -4,6 +4,10 @@
       <h3 id="feijoes-titulo" class="beans__title">Trilha dos feijões</h3>
       <p class="beans__subtitle">
         Nove feijões para cada um. Faça três em linha para comer um feijão do outro.
+        @if (mode() === 'computador') {
+          <br />
+          {{ rivalSkillLabel() }}.
+        }
       </p>
     </div>
 
@@ -30,6 +34,10 @@
       </button>
     </div>
   </header>
+
+  @if (mode() === 'computador') {
+    <app-game-hud [gameId]="gameId" />
+  }
 
   <p class="beans__status" role="status" aria-live="polite">{{ statusMessage() }}</p>
 
@@ -105,3 +113,5 @@
     </aside>
   </div>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

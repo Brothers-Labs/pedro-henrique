@@ -1,0 +1,11 @@
+<ul class="mosaic">
+  @for (photo of photos(); track photo.id; let index = $index) {
+    <li
+      class="mosaic__item"
+      [style.aspect-ratio]="photo.displayAspectRatio"
+      [appReveal]="revealDelay(index)"
+    >
+      <app-gallery-card [photo]="photo" (opened)="photoOpened.emit($event)" />
+    </li>
+  }
+</ul>

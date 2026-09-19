@@ -49,7 +49,7 @@
     font-size: var(--text-sm);
     color: var(--text-strong);
 
-    &:hover {
+    @include hover {
       background: var(--color-pink-soft);
     }
   }

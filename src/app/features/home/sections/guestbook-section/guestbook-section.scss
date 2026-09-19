@@ -46,7 +46,7 @@
     line-height: 1;
     transition: transform var(--transition-fast), border-color var(--transition-fast);
 
-    &:hover {
+    @include hover {
       transform: scale(1.1);
     }
 
@@ -58,7 +58,7 @@
     @include reduced-motion {
       transition: none;
 
-      &:hover {
+      @include hover {
         transform: none;
       }
     }
@@ -73,7 +73,7 @@
 
   &__list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
     gap: var(--space-4);
     list-style: none;
     padding: 0;
@@ -130,23 +130,47 @@
     color: var(--text-soft);
   }
 
+  /**
+   * O alvo de toque tem 44px; o círculo desenhado continua pequeno, centrado
+   * dentro dele. Assim o recado não ganha um botão pesado no canto e o dedo
+   * ainda acerta.
+   */
   &__remove {
     position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface-card);
-    font-size: var(--text-xs);
-    line-height: 1;
-    opacity: 0;
+    top: var(--space-1);
+    right: var(--space-1);
+    display: grid;
+    place-items: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    padding: 0;
+    border: 0;
+    background: transparent;
     transition: opacity var(--transition-fast);
 
-    .guestbook__note:hover &,
-    &:focus-visible {
-      opacity: 1;
+    > span {
+      display: grid;
+      place-items: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--surface-card);
+      font-size: var(--text-xs);
+      line-height: 1;
+    }
+
+    /**
+     * Só some quando existe um ponteiro para revelá-lo de novo. No toque não
+     * há "recado sob o cursor": escondido ali, o botão seria inalcançável.
+     */
+    @media (hover: hover) and (pointer: fine) {
+      opacity: 0;
+
+      .guestbook__note:hover &,
+      &:focus-visible {
+        opacity: 1;
+      }
     }
   }
 

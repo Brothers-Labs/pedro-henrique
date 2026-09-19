@@ -1,3 +1,5 @@
+import type { ImageAsset } from './image-asset.model';
+
 /** Fato curto exibido em destaque ("7 anos", "2º ano"...). */
 export interface QuickFact {
   readonly emoji: string;
@@ -39,6 +41,9 @@ export interface Profile {
   readonly birthDate: string;
   readonly tagline: string;
   readonly introduction: readonly string[];
+  /** Retrato do Pedro Henrique exibido no header e na abertura da home. */
+  readonly photo: ImageAsset;
+  /** Mascote usado onde a fotografia não cabe, como no rodapé. */
   readonly avatarEmoji: string;
   readonly quickFacts: readonly QuickFact[];
   readonly superPowers: readonly SuperPower[];

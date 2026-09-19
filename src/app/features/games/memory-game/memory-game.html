@@ -2,7 +2,9 @@
   <header class="memory__header">
     <div>
       <h3 id="memoria-titulo" class="memory__title">Jogo da memória</h3>
-      <p class="memory__subtitle">Encontre os oito pares de figurinhas.</p>
+      <p class="memory__subtitle">
+        Encontre os {{ totalPairs() }} pares em até {{ moveBudget() }} jogadas.
+      </p>
     </div>
 
     <dl class="memory__scoreboard">
@@ -12,15 +14,20 @@
       </div>
       <div>
         <dt>Pares</dt>
-        <dd>{{ matchedPairs() }}/{{ totalPairs }}</dd>
+        <dd>{{ matchedPairs() }}/{{ totalPairs() }}</dd>
       </div>
     </dl>
   </header>
+
+  <app-game-hud [gameId]="gameId" />
 
   @if (hasWon()) {
     <p class="memory__win" role="status">
       <span aria-hidden="true">🎉</span>
       Você achou todos os pares em {{ moves() }} jogadas!
+      @if (earnedPoints() > 0) {
+        <strong>+{{ earnedPoints() }} ⭐</strong>
+      }
     </p>
   }
 
@@ -45,8 +52,10 @@
     }
   </ul>
 
-  <button type="button" class="button button--secondary" (click)="restart()">
+  <button type="button" class="button button--secondary button--block" (click)="restart()">
     <span aria-hidden="true">🔄</span>
-    Embaralhar de novo
+    {{ hasWon() ? 'Próxima rodada' : 'Embaralhar de novo' }}
   </button>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

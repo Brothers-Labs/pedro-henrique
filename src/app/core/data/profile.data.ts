@@ -1,4 +1,5 @@
 import type { Profile } from '../models/profile.model';
+import { PROFILE_PHOTO } from './gallery-manifest.generated';
 
 /**
  * Conteúdo editorial do site. Centralizado aqui para que atualizar textos não
@@ -15,6 +16,7 @@ export const PROFILE: Profile = {
     'Aqui eu guardo meus desenhos, conto a minha história, mostro as invenções que ficam na minha cabeça e ainda deixo uns joguinhos para você brincar comigo.',
     'Pode explorar tudo com calma — e não esquece de deixar um recado no mural!',
   ],
+  photo: PROFILE_PHOTO,
   avatarEmoji: '🦖',
   quickFacts: [
     { emoji: '🎂', label: 'Aniversário', value: '19 de abril' },

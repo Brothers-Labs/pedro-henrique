@@ -1,0 +1,112 @@
+@use 'mixins' as *;
+
+:host {
+  /**
+   * A barra sai de cena exatamente onde o menu horizontal do cabeçalho entra —
+   * os dois nunca aparecem juntos.
+   */
+  @include from($breakpoint-xl) {
+    display: none;
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 60;
+  border-top: 3px solid var(--border-strong);
+  background: rgb(255 250 243 / 95%);
+  backdrop-filter: blur(12px);
+
+  /* A barra de gestos do iPhone não pode cobrir os destinos. */
+  padding-bottom: var(--safe-bottom);
+  padding-inline: var(--safe-left) var(--safe-right);
+
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    margin: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: grid;
+    min-width: 0;
+  }
+
+  &__target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    min-height: var(--touch-target);
+    padding: var(--space-2) var(--space-1);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+
+    @include short-viewport {
+      padding-block: var(--space-1);
+    }
+
+    /* Retorno imediato ao toque, sem depender de hover. */
+    &:active {
+      background: var(--tone-soft);
+    }
+
+    &--active {
+      background: var(--tone-soft);
+      color: var(--text-strong);
+    }
+
+    &--active .bottom-nav__icon {
+      transform: translateY(-2px) scale(1.12);
+    }
+
+    &--active .bottom-nav__label {
+      font-weight: 800;
+    }
+  }
+
+  &__icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    transition: transform var(--transition-base);
+
+    @include short-viewport {
+      font-size: 1.15rem;
+    }
+  }
+
+  &__label {
+    /* Rótulos curtos em telas de 320px: melhor encolher do que quebrar. */
+    font-family: var(--font-display);
+    font-size: clamp(0.625rem, 0.5rem + 0.5vw, 0.8125rem);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  @include reduced-motion {
+    &__target,
+    &__icon {
+      transition: none;
+    }
+
+    &__target--active .bottom-nav__icon {
+      transform: none;
+    }
+  }
+}

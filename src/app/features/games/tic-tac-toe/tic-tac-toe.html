@@ -1,8 +1,12 @@
 <section class="velha" aria-labelledby="velha-titulo">
   <header class="velha__header">
     <h3 id="velha-titulo" class="velha__title">Jogo da velha</h3>
-    <p class="velha__subtitle">Você é o ❌ e joga primeiro. Eu sou o ⭕.</p>
+    <p class="velha__subtitle">
+      Você é o ❌ e joga primeiro. {{ skillLabel() }} — empatar também vale ponto.
+    </p>
   </header>
+
+  <app-game-hud [gameId]="gameId" />
 
   <p class="velha__status" role="status" aria-live="polite">{{ statusMessage() }}</p>
 
@@ -21,8 +25,16 @@
     }
   </div>
 
-  <button type="button" class="button button--secondary" (click)="restart()">
+  @if (isFinished() && earnedPoints() > 0) {
+    <p class="velha__points" role="status">
+      +{{ earnedPoints() }} <span aria-hidden="true">⭐</span>
+    </p>
+  }
+
+  <button type="button" class="button button--secondary button--block" (click)="restart()">
     <span aria-hidden="true">🔄</span>
-    Jogar de novo
+    {{ isFinished() ? 'Próxima partida' : 'Recomeçar a partida' }}
   </button>
 </section>
+
+<app-level-up-celebration [data]="celebration()" (continued)="continueAfterCelebration()" />

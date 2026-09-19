@@ -1,0 +1,151 @@
+@use 'mixins' as *;
+
+@keyframes levelup-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes levelup-star-in {
+  from {
+    transform: scale(0.4) rotate(-25deg);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+.levelup {
+  width: min(24rem, 100%);
+  max-width: 100%;
+  max-height: 100dvh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+
+  &::backdrop {
+    background: rgb(42 35 80 / 62%);
+    backdrop-filter: blur(4px);
+  }
+
+  &__panel {
+    @include card-surface;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    border-width: 4px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    animation: levelup-pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  &__emoji {
+    font-size: clamp(2.5rem, 2rem + 4vw, 3.5rem);
+    line-height: 1;
+  }
+
+  &__title {
+    font-size: var(--text-xl);
+    color: var(--color-pink);
+  }
+
+  &__subtitle {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-soft);
+  }
+
+  &__level {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1.4rem + 3vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text-strong);
+    text-shadow: 3px 3px 0 var(--color-yellow);
+  }
+
+  &__stars {
+    display: flex;
+    gap: var(--space-2);
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  &__star {
+    /* A estrela não conquistada continua no lugar, apagada: a meta fica visível. */
+    opacity: 0.25;
+    filter: grayscale(1);
+
+    &--on {
+      opacity: 1;
+      filter: none;
+      animation: levelup-star-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    &--on:nth-child(2) {
+      animation-delay: 120ms;
+    }
+
+    &--on:nth-child(3) {
+      animation-delay: 240ms;
+    }
+  }
+
+  &__message {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+    text-wrap: balance;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    width: 100%;
+    margin: var(--space-2) 0;
+  }
+
+  &__stat {
+    flex: 1 1 6rem;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-yellow-soft);
+
+    dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-soft);
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 800;
+      color: var(--text-strong);
+    }
+  }
+
+  @include reduced-motion {
+    &__panel,
+    &__star--on {
+      animation: none;
+    }
+  }
+}

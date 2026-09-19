@@ -1,11 +1,16 @@
 /**
  * Mixins compartilhados. Importados pelos componentes com `@use 'mixins' as *`
  * (o diretório `src/styles` está registrado em `stylePreprocessorOptions`).
+ *
+ * A convenção é mobile first: o estilo base descreve o celular e `from()`
+ * acrescenta o que só faz sentido em telas maiores. `until()` existe para os
+ * poucos casos em que a regra é genuinamente exclusiva do toque.
  */
 
-$breakpoint-sm: 30rem; // 480px
-$breakpoint-md: 48rem; // 768px
-$breakpoint-lg: 64rem; // 1024px
+$breakpoint-sm: 30rem; // 480px — celular grande
+$breakpoint-md: 48rem; // 768px — tablet
+$breakpoint-lg: 64rem; // 1024px — notebook, onde o menu horizontal reaparece
+$breakpoint-xl: 80rem; // 1280px — monitor
 
 @mixin from($breakpoint) {
   @media (min-width: $breakpoint) {
@@ -19,10 +24,44 @@ $breakpoint-lg: 64rem; // 1024px
   }
 }
 
+/**
+ * Celular deitado: sobra pouca altura entre o cabeçalho e a barra inferior.
+ * O que abre a página precisa encolher para que o conteúdo apareça.
+ */
+@mixin short-viewport {
+  @media (orientation: landscape) and (max-height: 30rem) {
+    @content;
+  }
+}
+
 /** Respeita quem pediu menos movimento no sistema operacional. */
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     @content;
+  }
+}
+
+/**
+ * Efeito reservado a quem tem ponteiro de verdade.
+ *
+ * No celular o navegador "gruda" o estado `:hover` depois do toque, deixando
+ * o card preso no estado de destaque até o próximo toque em outro lugar. Todo
+ * realce de hover do site passa por aqui; o que é funcional nunca depende dele.
+ */
+@mixin hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+/** Mesma ideia de `hover`, para controles que podem estar desabilitados. */
+@mixin hover-enabled {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      @content;
+    }
   }
 }
 
@@ -40,9 +79,50 @@ $breakpoint-lg: 64rem; // 1024px
   box-shadow: var(--shadow-sm);
 }
 
+/**
+ * Faixa de conteúdo da página.
+ *
+ * O respiro lateral vem do padding — e não de uma largura menor — para que o
+ * recorte do aparelho possa ser somado a ele. Em paisagem no iPhone é o que
+ * impede o texto de sumir atrás da câmera.
+ */
 @mixin container {
-  width: min(100% - 2rem, var(--layout-max));
+  width: 100%;
+  max-width: calc(var(--layout-max) + var(--page-gutter) * 2);
   margin-inline: auto;
+  padding-inline:
+    calc(var(--page-gutter) + var(--safe-left))
+    calc(var(--page-gutter) + var(--safe-right));
+}
+
+/** Área mínima confortável para um dedo, sem alterar o tamanho aparente. */
+@mixin touch-target($size: var(--touch-target)) {
+  min-width: #{$size};
+  min-height: #{$size};
+}
+
+/**
+ * Lista que rola na horizontal com encaixe, para trilhas de abas e filtros.
+ *
+ * O respiro lateral é recriado com padding para que o primeiro e o último item
+ * não nasçam colados na borda da tela durante a rolagem.
+ */
+@mixin snap-row($gap: var(--space-2)) {
+  display: flex;
+  gap: #{$gap};
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
 }
 
 /** Limita o texto a um número fixo de linhas. */

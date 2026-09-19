@@ -2,6 +2,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+
+  /**
+   * A barra de navegação inferior flutua sobre a página. Reservar a altura dela
+   * aqui é o que impede o fim do rodapé de ficar embaixo da barra — e o token
+   * zera sozinho no desktop, onde a barra não existe.
+   */
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
 }
 
 .main {

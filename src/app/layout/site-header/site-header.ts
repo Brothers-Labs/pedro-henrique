@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SITE_SECTIONS } from '../../core/data/site-sections.data';
@@ -17,13 +17,4 @@ export class SiteHeader {
   protected readonly sections = SITE_SECTIONS;
   protected readonly profile = PROFILE;
   protected readonly age = calculateAgeInYears(PROFILE.birthDate);
-  protected readonly isMenuOpen = signal(false);
-
-  protected toggleMenu(): void {
-    this.isMenuOpen.update((isOpen) => !isOpen);
-  }
-
-  protected closeMenu(): void {
-    this.isMenuOpen.set(false);
-  }
 }

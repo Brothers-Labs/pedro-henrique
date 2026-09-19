@@ -26,10 +26,17 @@
 
   &__scoreboard {
     display: flex;
-    gap: var(--space-3);
+    flex-wrap: wrap;
+    gap: var(--space-2);
     margin: 0;
 
+    @include from($breakpoint-sm) {
+      gap: var(--space-3);
+    }
+
     > div {
+      flex: 1 1 auto;
+      min-width: 0;
       padding: var(--space-2) var(--space-4);
       border: 3px solid var(--border-strong);
       border-radius: var(--radius-md);
@@ -53,6 +60,14 @@
     }
   }
 
+  &__points {
+    align-self: flex-start;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-mint);
+  }
+
   &__win {
     display: flex;
     align-items: center;
@@ -68,6 +83,11 @@
     animation: pop-in 320ms ease both;
   }
 
+  /**
+   * Quatro colunas em qualquer nível: com dez pares a grade cresce para baixo,
+   * o que o celular resolve rolando. Mais colunas encolheriam a carta abaixo
+   * do tamanho de um dedo.
+   */
   &__board {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -77,7 +97,6 @@
     list-style: none;
 
     @include from($breakpoint-sm) {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
       max-width: 32rem;
     }
   }
@@ -90,9 +109,23 @@
     border: 0;
     background: transparent;
     perspective: 800px;
+    transition: transform var(--transition-fast);
+
+    /* Retorno imediato ao dedo: a carta afunda um pouco enquanto é tocada. */
+    &:active:not(:disabled) {
+      transform: scale(0.95);
+    }
 
     &:disabled {
       cursor: default;
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &:active:not(:disabled) {
+        transform: none;
+      }
     }
   }
 
