@@ -32,7 +32,15 @@
     </div>
 
     <div class="hero__avatar" data-motion="hero-avatar">
-      <span class="hero__avatar-emoji" aria-hidden="true">{{ profile.avatarEmoji }}</span>
+      <img
+        class="hero__photo"
+        [src]="profile.photo.src"
+        [width]="profile.photo.width"
+        [height]="profile.photo.height"
+        [alt]="'Foto do ' + profile.firstName"
+        fetchpriority="high"
+        decoding="async"
+      />
       <span class="hero__badge">{{ age }} anos</span>
     </div>
   </div>

@@ -1,0 +1,11 @@
+<ul class="bento">
+  @for (photo of photos(); track photo.id; let index = $index) {
+    <li class="bento__slot" [attr.data-slot]="photo.slot" [appReveal]="revealDelay(index)">
+      <app-gallery-card
+        [photo]="photo"
+        [isPriority]="index === 0"
+        (opened)="photoOpened.emit($event)"
+      />
+    </li>
+  }
+</ul>

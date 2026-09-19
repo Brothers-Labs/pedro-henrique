@@ -1,80 +1,57 @@
 <div class="gallery container">
+  <span #topSentinel class="gallery__anchor" tabindex="-1" aria-hidden="true"></span>
+
   <app-page-intro
-    emoji="🖼️"
-    title="Minha galeria"
-    subtitle="Desenhos, passeios e momentos que eu não quero esquecer."
-    color="blue"
+    emoji="📸"
+    title="Meu álbum"
+    subtitle="Toque em qualquer foto para ver em tela cheia."
+    color="purple"
   />
 
-  <div class="gallery__filters" role="group" aria-label="Filtrar por categoria">
-    @for (category of categories; track category.value) {
-      <button
-        type="button"
-        class="gallery__filter"
-        [class.gallery__filter--active]="selectedCategory() === category.value"
-        [attr.aria-pressed]="selectedCategory() === category.value"
-        (click)="selectCategory(category.value)"
-      >
-        <span aria-hidden="true">{{ category.emoji }}</span>
-        {{ category.label }}
-      </button>
-    }
-  </div>
-
-  <p class="gallery__count" role="status" aria-live="polite">
-    {{ items().length }} {{ items().length === 1 ? 'lembrança' : 'lembranças' }} nesta categoria.
+  <p class="gallery__count">
+    <span aria-hidden="true">📸</span>
+    {{ photoCount }} momentos registrados
   </p>
 
-  @if (items().length) {
-    <ul class="gallery__grid">
-      @for (item of items(); track item.id; let index = $index) {
-        <li [appReveal]="revealDelay(index)">
-          <button
-            type="button"
-            class="gallery__card"
-            [attr.data-color]="item.color"
-            (click)="openItem(item)"
-          >
-            <img
-              class="gallery__image"
-              [src]="item.imageUrl"
-              [alt]="item.title"
-              loading="lazy"
-              decoding="async"
-              width="640"
-              height="480"
-            />
-            <span class="gallery__info">
-              <span class="gallery__title">{{ item.title }}</span>
-              <span class="gallery__date">
-                {{ item.takenAt | date: "MMMM 'de' y" : 'UTC' }}
-              </span>
-            </span>
-          </button>
-        </li>
-      }
-    </ul>
-  } @else {
-    <app-empty-state
-      emoji="🔍"
-      title="Nada por aqui ainda"
-      message="Escolha outra categoria para ver mais lembranças."
-    />
+  @if (featuredPhotos.length) {
+    <section class="gallery__section" aria-labelledby="destaques-titulo">
+      <app-section-heading
+        emoji="✨"
+        eyebrow="Para começar"
+        title="Momentos especiais"
+        subtitle="As fotos de abertura do álbum, em tamanho grande."
+        titleId="destaques-titulo"
+        [isCentered]="false"
+      />
+
+      <app-featured-moments [photos]="featuredPhotos" (photoOpened)="openPhoto($event)" />
+    </section>
   }
+
+  <section class="gallery__section" aria-labelledby="mosaico-titulo">
+    <app-section-heading
+      emoji="📸"
+      eyebrow="O álbum inteiro"
+      title="Todas as aventuras"
+      subtitle="Role para baixo e escolha a foto que você quiser ver de perto."
+      titleId="mosaico-titulo"
+      [isCentered]="false"
+    />
+
+    <app-gallery-grid [photos]="mosaicPhotos" (photoOpened)="openPhoto($event)" />
+  </section>
 </div>
 
-<dialog #lightbox class="lightbox" (close)="clearSelection()" (click)="closeItem()">
-  @if (selectedItem(); as item) {
-    <div class="lightbox__content" (click)="$event.stopPropagation()">
-      <img class="lightbox__image" [src]="item.imageUrl" [alt]="item.title" />
-      <div class="lightbox__text">
-        <h2 class="lightbox__title">{{ item.title }}</h2>
-        <p class="lightbox__description">{{ item.description }}</p>
-        <p class="lightbox__date">{{ item.takenAt | date: "d 'de' MMMM 'de' y" : 'UTC' }}</p>
-      </div>
-      <button type="button" class="button button--small lightbox__close" (click)="closeItem()">
-        Fechar
-      </button>
-    </div>
-  }
-</dialog>
+<app-gallery-lightbox [photos]="photos" [(index)]="openPhotoIndex" />
+
+<button
+  type="button"
+  class="to-top"
+  [class.to-top--visible]="isAwayFromTop()"
+  [attr.tabindex]="isAwayFromTop() ? null : -1"
+  [attr.aria-hidden]="isAwayFromTop() ? null : true"
+  aria-label="Voltar ao topo da página"
+  (click)="scrollToTop()"
+>
+  <span aria-hidden="true">↑</span>
+</button>

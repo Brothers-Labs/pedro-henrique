@@ -1,0 +1,35 @@
+@use 'mixins' as *;
+
+/**
+ * Multi-colunas em vez de grade: as fotos têm alturas diferentes e o navegador
+ * encaixa cada uma logo abaixo da anterior, sem buracos e sem precisar medir
+ * nada em JavaScript.
+ */
+.mosaic {
+  columns: 2;
+  column-gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  @include from($breakpoint-md) {
+    columns: 3;
+    column-gap: var(--space-4);
+  }
+
+  @include from($breakpoint-lg) {
+    columns: 4;
+  }
+
+  &__item {
+    display: grid;
+
+    /* Impede que uma foto seja partida entre o fim de uma coluna e o início da seguinte. */
+    break-inside: avoid;
+    margin-bottom: var(--space-3);
+
+    @include from($breakpoint-md) {
+      margin-bottom: var(--space-4);
+    }
+  }
+}

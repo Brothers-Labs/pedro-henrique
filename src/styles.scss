@@ -248,6 +248,15 @@ a {
   }
 }
 
+/* Diálogos modais -------------------------------------------------------- */
+/**
+ * Enquanto um `<dialog>` modal está aberto, a página atrás dele não rola —
+ * sem isso, o dedo que arrasta sobre a foto em tela cheia move o site inteiro.
+ */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
 /* Animação de entrada controlada pela diretiva appReveal ------------------- */
 [data-reveal] {
   opacity: 0;

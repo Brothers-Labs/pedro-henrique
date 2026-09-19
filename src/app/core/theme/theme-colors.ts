@@ -7,8 +7,8 @@ export interface ThemeColorPair {
 
 /**
  * Espelho em TypeScript dos tokens de cor definidos em `styles/_tokens.scss`.
- * Necessário porque SVGs gerados em runtime (data URI) não enxergam as custom
- * properties da página.
+ * Define também a ordem canônica da paleta, usada para distribuir cores entre
+ * itens de uma lista.
  */
 export const THEME_COLOR_HEX: Readonly<Record<ThemeColor, ThemeColorPair>> = {
   pink: { base: '#ff4f9a', soft: '#ffd9e9' },

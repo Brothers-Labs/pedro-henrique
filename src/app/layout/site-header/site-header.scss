@@ -52,19 +52,29 @@
   color: inherit;
 
   &__badge {
-    display: grid;
-    place-items: center;
+    flex: 0 0 auto;
+    display: block;
     width: 3rem;
     height: 3rem;
+    overflow: hidden;
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--color-pink-soft);
-    font-size: 1.5rem;
+    box-shadow: var(--shadow-sm);
     animation: float-soft 4s ease-in-out infinite;
 
     @include reduced-motion {
       animation: none;
     }
+  }
+
+  &__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    /* Retrato quadrado: subir o enquadramento mantém o rosto no centro do círculo. */
+    object-position: 50% 22%;
   }
 
   &__text {

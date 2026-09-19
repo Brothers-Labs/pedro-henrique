@@ -1,7 +1,18 @@
 <header class="header">
   <div class="header__inner container">
     <a class="brand" routerLink="/" (click)="closeMenu()">
-      <span class="brand__badge" aria-hidden="true">{{ profile.avatarEmoji }}</span>
+      <span class="brand__badge">
+        <!-- Decorativa: o nome do Pedro Henrique já é o texto deste link. -->
+        <img
+          class="brand__photo"
+          [src]="profile.photo.src"
+          [width]="profile.photo.width"
+          [height]="profile.photo.height"
+          alt=""
+          fetchpriority="high"
+          decoding="async"
+        />
+      </span>
       <span class="brand__text">
         <strong class="brand__name">{{ profile.firstName }}</strong>
         <small class="brand__role">{{ age }} anos de aventuras</small>

@@ -1,0 +1,188 @@
+@use 'mixins' as *;
+
+@keyframes gallery-lightbox-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gallery-photo-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(4%) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gallery-photo-in-previous {
+  from {
+    opacity: 0;
+    transform: translateX(-4%) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lightbox {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: var(--space-3);
+  border: 0;
+  background: rgb(26 21 51 / 94%);
+  color: var(--text-on-color);
+  overflow: hidden;
+
+  /**
+   * O `<dialog>` fechado precisa continuar escondido: só o aberto vira grade.
+   *
+   * A faixa do meio é `minmax(0, 1fr)` dentro de uma altura definida, e é isso
+   * que dá ao palco uma altura concreta — sem ela, o `max-height: 100%` da
+   * fotografia não teria contra o que resolver e a foto sairia da tela.
+   */
+  &[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: var(--space-2);
+    animation: gallery-lightbox-in 220ms ease both;
+  }
+
+  &::backdrop {
+    background: rgb(26 21 51 / 70%);
+    backdrop-filter: blur(4px);
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__counter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 14%);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+  }
+
+  &__stage {
+    position: relative;
+    display: grid;
+
+    /* Faixas explícitas e zeráveis: é contra elas que a foto limita o próprio tamanho. */
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    place-items: center;
+    min-height: 0;
+
+    /* Deixa a rolagem vertical e o zoom com o navegador; o eixo X é do deslize. */
+    touch-action: pan-y pinch-zoom;
+  }
+
+  &__image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 45%);
+    animation: gallery-photo-in-next 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    &[data-direction='previous'] {
+      animation-name: gallery-photo-in-previous;
+    }
+  }
+
+  &__button {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid rgb(255 255 255 / 35%);
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 16%);
+    color: var(--text-on-color);
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+
+    &:hover {
+      background: rgb(255 255 255 / 30%);
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+
+    &:focus-visible {
+      @include focus-ring(var(--color-yellow));
+    }
+
+    &--step {
+      position: absolute;
+      top: 50%;
+      translate: 0 -50%;
+      font-size: 2rem;
+      padding-bottom: 0.35rem;
+
+      @include from($breakpoint-md) {
+        width: 3.5rem;
+        height: 3.5rem;
+      }
+    }
+
+    &--previous {
+      left: 0;
+    }
+
+    &--next {
+      right: 0;
+    }
+  }
+
+  &__hint {
+    text-align: center;
+    font-size: var(--text-xs);
+    color: rgb(255 255 255 / 70%);
+
+    @include until($breakpoint-md) {
+      display: none;
+    }
+  }
+
+  @include reduced-motion {
+    &[open],
+    &__image {
+      animation: none;
+    }
+
+    &__button {
+      transition: none;
+
+      &:active {
+        transform: none;
+      }
+    }
+  }
+}

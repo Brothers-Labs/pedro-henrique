@@ -3,143 +3,68 @@
 .gallery {
   padding-block: var(--space-7) var(--space-8);
 
-  &__filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: var(--space-4);
-  }
+  &__anchor {
+    display: block;
+    height: 0;
 
-  &__filter {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    border: 3px solid var(--border-soft);
-    border-radius: var(--radius-pill);
-    background: var(--surface-card);
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--text-strong);
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
-
-    &:hover {
-      border-color: var(--color-blue);
-    }
-
-    &--active {
-      border-color: var(--border-strong);
-      background: var(--color-blue-soft);
+    /* Alvo de rolagem, não um controle: o anel de foco não teria o que marcar. */
+    &:focus {
+      outline: none;
     }
   }
 
   &__count {
-    margin-bottom: var(--space-5);
-    font-size: var(--text-sm);
-    color: var(--text-soft);
-  }
-
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-    gap: var(--space-5);
-    list-style: none;
-    padding: 0;
-  }
-
-  &__card {
-    @include card-surface;
-
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 0;
-    overflow: hidden;
-    text-align: left;
-    border-bottom-width: 8px;
-    border-bottom-color: var(--tone);
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-6px) rotate(-1deg);
-      box-shadow: var(--shadow-md);
-    }
-
-    @include reduced-motion {
-      transition: none;
-
-      &:hover,
-      &:focus-visible {
-        transform: none;
-      }
-    }
-  }
-
-  &__image {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-bottom: 3px solid var(--border-strong);
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-4);
-  }
-
-  &__title {
-    font-family: var(--font-display);
-    font-size: var(--text-lg);
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+    padding: var(--space-2) var(--space-5);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow);
     color: var(--text-strong);
+    font-family: var(--font-display);
+    font-weight: 800;
+    box-shadow: var(--shadow-pop);
   }
 
-  &__date {
-    font-size: var(--text-xs);
-    color: var(--text-soft);
-    text-transform: capitalize;
+  &__section + &__section {
+    margin-top: var(--space-8);
   }
 }
 
-.lightbox {
-  width: min(46rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 3rem);
-  padding: 0;
-  border: 4px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  overflow: auto;
+.to-top {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-purple);
+  color: var(--text-on-color);
+  font-size: 1.35rem;
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  translate: 0 1.25rem;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), translate var(--transition-base);
 
-  &::backdrop {
-    background: rgb(42 35 80 / 65%);
-    backdrop-filter: blur(3px);
+  &--visible {
+    opacity: 1;
+    translate: 0;
+    pointer-events: auto;
   }
 
-  &__image {
-    width: 100%;
-    border-bottom: 4px solid var(--border-strong);
+  &:active {
+    box-shadow: 0 2px 0 var(--border-strong);
   }
 
-  &__text {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-5);
-  }
-
-  &__title {
-    font-size: var(--text-xl);
-  }
-
-  &__date {
-    font-size: var(--text-sm);
-    color: var(--text-soft);
-  }
-
-  &__close {
-    margin: 0 var(--space-5) var(--space-5);
+  @include reduced-motion {
+    transition: none;
+    translate: 0;
   }
 }

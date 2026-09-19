@@ -1,0 +1,123 @@
+@use 'mixins' as *;
+
+/**
+ * Grade de uma célula só: o card se estica até preencher o espaço que o
+ * mosaico ou os destaques reservaram. Declarar `height: 100%` aqui seria pior —
+ * uma altura declarada cancela o estiramento do grid, e a porcentagem só
+ * resolveria se cada ancestral tivesse altura definida.
+ */
+:host {
+  display: grid;
+}
+
+.card {
+  position: relative;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--tone-soft, var(--surface-muted));
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  &:active {
+    transform: translateY(-2px) scale(0.985);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:hover &__image,
+  &:focus-visible &__image {
+    transform: scale(1.06);
+  }
+
+  &:hover &__overlay,
+  &:focus-visible &__overlay {
+    opacity: 1;
+  }
+
+  /* Posicionada de forma absoluta para preencher a moldura sem influenciar o tamanho dela. */
+  &__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    /* Fotos de retrato: o enquadramento acima do centro preserva os rostos. */
+    object-position: 50% 30%;
+    opacity: 0;
+    transition: opacity 420ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+
+    &--loaded {
+      opacity: 1;
+    }
+  }
+
+  /* Esqueleto exibido enquanto a foto não chega, no espaço já reservado. */
+  &__skeleton {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      100deg,
+      var(--surface-muted) 28%,
+      var(--tone-soft, var(--surface-card)) 50%,
+      var(--surface-muted) 72%
+    );
+    background-size: 220% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: var(--space-3);
+    background-image: linear-gradient(to top, rgb(42 35 80 / 45%) 0%, transparent 42%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  &__zoom {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  @include reduced-motion {
+    transition: none;
+
+    &:hover,
+    &:focus-visible,
+    &:active {
+      transform: none;
+    }
+
+    &:hover &__image,
+    &:focus-visible &__image {
+      transform: none;
+    }
+
+    &__image {
+      transition: opacity 120ms linear;
+    }
+
+    &__skeleton {
+      animation: none;
+    }
+  }
+}
