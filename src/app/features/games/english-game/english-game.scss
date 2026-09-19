@@ -142,8 +142,8 @@
   }
 
   &__step {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: var(--touch-target);
+    height: var(--touch-target);
     border: 3px solid var(--border-soft);
     border-radius: var(--radius-pill);
     background: var(--surface-card);
@@ -365,8 +365,8 @@
   &__speak {
     display: grid;
     place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: var(--touch-target);
+    height: var(--touch-target);
     border: 3px solid var(--border-strong);
     border-radius: var(--radius-pill);
     background: var(--surface-card);

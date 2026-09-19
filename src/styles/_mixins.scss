@@ -24,6 +24,16 @@ $breakpoint-xl: 80rem; // 1280px — monitor
   }
 }
 
+/**
+ * Celular deitado: sobra pouca altura entre o cabeçalho e a barra inferior.
+ * O que abre a página precisa encolher para que o conteúdo apareça.
+ */
+@mixin short-viewport {
+  @media (orientation: landscape) and (max-height: 30rem) {
+    @content;
+  }
+}
+
 /** Respeita quem pediu menos movimento no sistema operacional. */
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {

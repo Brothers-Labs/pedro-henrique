@@ -35,8 +35,10 @@
 
 .to-top {
   position: fixed;
-  right: var(--space-4);
-  bottom: var(--space-4);
+
+  /* Flutua acima da barra inferior e do recorte do aparelho, nunca atrás deles. */
+  right: calc(var(--space-4) + var(--safe-right));
+  bottom: calc(var(--space-4) + var(--bottom-nav-height) + var(--safe-bottom));
   z-index: 40;
   display: grid;
   place-items: center;

@@ -131,10 +131,14 @@ a {
 }
 
 .skip-link {
+  @include touch-target;
+
   position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
+  top: calc(var(--space-3) + var(--safe-top));
+  left: calc(var(--space-3) + var(--safe-left));
   z-index: 100;
+  display: inline-flex;
+  align-items: center;
   padding: var(--space-2) var(--space-4);
   background: var(--color-purple);
   color: var(--text-on-color);

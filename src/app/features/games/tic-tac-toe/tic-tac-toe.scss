@@ -50,6 +50,11 @@
       transform: scale(1.04);
     }
 
+    &:active:not(:disabled) {
+      background: var(--color-yellow-soft);
+      transform: scale(0.95);
+    }
+
     &:disabled {
       cursor: default;
     }
@@ -63,6 +68,10 @@
       transition: none;
 
       @include hover-enabled {
+        transform: none;
+      }
+
+      &:active:not(:disabled) {
         transform: none;
       }
     }

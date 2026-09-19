@@ -30,9 +30,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+
+  /* No celular o nome cede espaço ao que estiver ao lado; no desktop, nunca. */
   min-width: 0;
   text-decoration: none;
   color: inherit;
+
+  @include from($breakpoint-xl) {
+    flex: 0 0 auto;
+  }
 
   &__badge {
     flex: 0 0 auto;
@@ -93,14 +99,16 @@
 .nav {
   display: none;
 
-  @include from($breakpoint-lg) {
+  @include from($breakpoint-xl) {
     display: block;
   }
 
   &__list {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+
+    /* Sete destinos em uma linha só: o respiro é o que sobra depois deles. */
+    gap: var(--space-1);
     list-style: none;
     padding: 0;
     margin: 0;
@@ -110,7 +118,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
+
+    padding: var(--space-2) var(--space-3);
     border: 2px solid transparent;
     border-radius: var(--radius-pill);
     color: var(--text-strong);

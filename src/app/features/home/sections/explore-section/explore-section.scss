@@ -5,7 +5,7 @@
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
     gap: var(--space-5);
     list-style: none;
     padding: 0;
@@ -24,17 +24,27 @@
     box-shadow: var(--shadow-pop);
     transition: transform var(--transition-base), box-shadow var(--transition-base);
 
-    &:hover,
+    @include hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 0 var(--border-strong);
+    }
+
     &:focus-visible {
       transform: translateY(-6px);
       box-shadow: 0 12px 0 var(--border-strong);
+    }
+
+    /* No toque o retorno é imediato e não fica grudado depois do dedo sair. */
+    &:active {
+      transform: translateY(-2px) scale(0.99);
     }
 
     @include reduced-motion {
       transition: none;
 
       &:hover,
-      &:focus-visible {
+      &:focus-visible,
+      &:active {
         transform: none;
       }
     }

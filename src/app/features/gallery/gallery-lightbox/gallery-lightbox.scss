@@ -37,11 +37,18 @@
 }
 
 .lightbox {
-  width: 100vw;
-  max-width: 100vw;
+  /**
+   * `100%` em vez de `100vw`: a unidade de viewport ignora a barra de rolagem
+   * e passa a largura da janela, o que cria rolagem horizontal no desktop.
+   */
+  width: 100%;
+  max-width: 100%;
   height: 100dvh;
   max-height: 100dvh;
-  padding: var(--space-3);
+
+  /* O recorte do aparelho entra no respiro: nada de botão atrás do notch. */
+  padding: calc(var(--space-3) + var(--safe-top)) calc(var(--space-3) + var(--safe-right))
+    calc(var(--space-3) + var(--safe-bottom)) calc(var(--space-3) + var(--safe-left));
   border: 0;
   background: rgb(26 21 51 / 94%);
   color: var(--text-on-color);

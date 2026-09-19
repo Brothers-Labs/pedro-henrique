@@ -7,6 +7,10 @@
     padding-block: var(--space-7) var(--space-8);
   }
 
+  @include short-viewport {
+    padding-block: var(--space-4) var(--space-6);
+  }
+
   /**
    * Trilha de abas que rola na horizontal.
    *

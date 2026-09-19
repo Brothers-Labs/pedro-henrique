@@ -1,8 +1,11 @@
 @use 'mixins' as *;
 
 :host {
-  /* A barra só existe no toque; do notebook em diante o menu é o do cabeçalho. */
-  @include from($breakpoint-lg) {
+  /**
+   * A barra sai de cena exatamente onde o menu horizontal do cabeçalho entra —
+   * os dois nunca aparecem juntos.
+   */
+  @include from($breakpoint-xl) {
     display: none;
   }
 }
@@ -50,6 +53,10 @@
     text-decoration: none;
     transition: background-color var(--transition-fast), color var(--transition-fast);
 
+    @include short-viewport {
+      padding-block: var(--space-1);
+    }
+
     /* Retorno imediato ao toque, sem depender de hover. */
     &:active {
       background: var(--tone-soft);
@@ -73,6 +80,10 @@
     font-size: 1.4rem;
     line-height: 1;
     transition: transform var(--transition-base);
+
+    @include short-viewport {
+      font-size: 1.15rem;
+    }
   }
 
   &__label {
