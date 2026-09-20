@@ -1,0 +1,54 @@
+<div class="drawings container">
+  <app-page-intro
+    emoji="🎨"
+    title="Meus desenhos"
+    subtitle="Escolha uma cor e desenhe o que você quiser."
+    color="orange"
+  />
+
+  <app-drawing-board (saved)="keep($event)" />
+
+  @if (saveError(); as message) {
+    <p class="drawings__error" role="alert">
+      <span aria-hidden="true">⚠️</span>
+      {{ message }}
+    </p>
+  }
+
+  <section class="drawings__shelf" aria-labelledby="estante-titulo">
+    <app-section-heading
+      emoji="🖼️"
+      eyebrow="Minha pasta"
+      title="Desenhos guardados"
+      [subtitle]="countLabel()"
+      titleId="estante-titulo"
+      [isCentered]="false"
+    />
+
+    @switch (status()) {
+      @case ('loading') {
+        <p class="drawings__loading" role="status">Abrindo a sua pasta de desenhos…</p>
+      }
+
+      @case ('error') {
+        <app-empty-state
+          emoji="😕"
+          title="Não deu para abrir a pasta"
+          [message]="errorMessage() ?? 'Tente novamente daqui a pouco.'"
+        />
+      }
+
+      @default {
+        @if (isEmpty()) {
+          <app-empty-state
+            emoji="🎨"
+            title="Nenhum desenho guardado ainda"
+            message="Faça um desenho lá em cima e toque em Guardar desenho."
+          />
+        } @else {
+          <app-drawing-shelf [drawings]="drawings()" />
+        }
+      }
+    }
+  </section>
+</div>

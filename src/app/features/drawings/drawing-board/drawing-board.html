@@ -1,0 +1,191 @@
+<div class="board">
+  <!-- Folha ------------------------------------------------------------- -->
+  <div class="board__paper">
+    <canvas
+      #canvas
+      class="board__canvas"
+      [width]="paperWidth"
+      [height]="paperHeight"
+      role="img"
+      aria-label="Folha de desenho. Arraste o dedo ou o mouse para desenhar."
+      (pointerdown)="startStroke($event)"
+      (pointermove)="continueStroke($event)"
+      (pointerup)="endStroke()"
+      (pointercancel)="endStroke()"
+    ></canvas>
+
+    @if (isEmpty()) {
+      <p class="board__hint" aria-hidden="true">
+        <span class="board__hint-emoji">✏️</span>
+        Comece a desenhar aqui!
+      </p>
+    }
+  </div>
+
+  <!-- Ferramentas ------------------------------------------------------- -->
+  <div class="tools">
+    <div class="tools__row" role="group" aria-label="Ferramenta">
+      <button
+        type="button"
+        class="tools__button"
+        [class.tools__button--active]="tool() === 'pincel'"
+        [attr.aria-pressed]="tool() === 'pincel'"
+        (click)="selectTool('pincel')"
+      >
+        <span aria-hidden="true">🖌️</span>
+        Pincel
+      </button>
+
+      <button
+        type="button"
+        class="tools__button"
+        [class.tools__button--active]="tool() === 'borracha'"
+        [attr.aria-pressed]="tool() === 'borracha'"
+        (click)="selectTool('borracha')"
+      >
+        <span aria-hidden="true">🧽</span>
+        Borracha
+      </button>
+
+      <button
+        type="button"
+        class="tools__button"
+        [class.tools__button--active]="tool() === 'carimbo'"
+        [attr.aria-pressed]="tool() === 'carimbo'"
+        (click)="selectTool('carimbo')"
+      >
+        <span aria-hidden="true">{{ stamp() }}</span>
+        Carimbo
+      </button>
+    </div>
+
+    <!-- Cores ----------------------------------------------------------- -->
+    <div class="palette" role="group" aria-label="Cor do pincel">
+      @for (item of colors; track item.value) {
+        <button
+          type="button"
+          class="palette__chip"
+          [class.palette__chip--active]="isColorActive(item.value)"
+          [style.background-color]="item.value"
+          [attr.aria-label]="item.label"
+          [attr.aria-pressed]="isColorActive(item.value)"
+          (click)="selectColor(item.value)"
+        ></button>
+      }
+    </div>
+
+    <!-- Espessura ------------------------------------------------------- -->
+    <div class="tools__row" role="group" aria-label="Espessura">
+      @for (size of sizes; track size.value) {
+        <button
+          type="button"
+          class="sizes__button"
+          [class.sizes__button--active]="brushSize() === size.value"
+          [attr.aria-pressed]="brushSize() === size.value"
+          [attr.aria-label]="'Espessura ' + size.label"
+          (click)="brushSize.set(size.value)"
+        >
+          <span
+            class="sizes__dot"
+            [style.width.px]="size.value / 3"
+            [style.height.px]="size.value / 3"
+            aria-hidden="true"
+          ></span>
+          {{ size.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Carimbos -------------------------------------------------------- -->
+    <div class="stamps" role="group" aria-label="Figurinhas para carimbar">
+      @for (emoji of stamps; track emoji) {
+        <button
+          type="button"
+          class="stamps__button"
+          [class.stamps__button--active]="tool() === 'carimbo' && stamp() === emoji"
+          [attr.aria-pressed]="tool() === 'carimbo' && stamp() === emoji"
+          [attr.aria-label]="'Carimbo ' + emoji"
+          (click)="selectStamp(emoji)"
+        >
+          <span aria-hidden="true">{{ emoji }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Histórico ------------------------------------------------------- -->
+    <div class="tools__row" role="group" aria-label="Desfazer e limpar">
+      <button
+        type="button"
+        class="tools__button"
+        [disabled]="!canUndo()"
+        (click)="undo()"
+      >
+        <span aria-hidden="true">↩️</span>
+        Desfazer
+      </button>
+
+      <button
+        type="button"
+        class="tools__button"
+        [disabled]="!canRedo()"
+        (click)="redo()"
+      >
+        <span aria-hidden="true">↪️</span>
+        Refazer
+      </button>
+
+      <button
+        type="button"
+        class="tools__button"
+        [class.tools__button--warning]="isConfirmingClear()"
+        [disabled]="isEmpty()"
+        (click)="clear()"
+      >
+        <span aria-hidden="true">{{ isConfirmingClear() ? '⚠️' : '🗑️' }}</span>
+        {{ isConfirmingClear() ? 'Tem certeza?' : 'Limpar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Guardar ----------------------------------------------------------- -->
+  <div class="keep">
+    <div class="field keep__field">
+      <label class="field__label" for="titulo-desenho">Nome do desenho</label>
+      <input
+        #titleField
+        id="titulo-desenho"
+        class="field__control"
+        type="text"
+        maxlength="40"
+        autocomplete="off"
+        placeholder="Ex.: Meu dinossauro"
+        [value]="title()"
+        (input)="title.set(titleField.value)"
+      />
+    </div>
+
+    <div class="keep__actions">
+      <button
+        type="button"
+        class="button button--primary button--block"
+        [disabled]="isEmpty() || isSaving()"
+        (click)="save()"
+      >
+        <span aria-hidden="true">💾</span>
+        {{ isSaving() ? 'Guardando…' : 'Guardar desenho' }}
+      </button>
+
+      <button
+        type="button"
+        class="button button--secondary button--block"
+        [disabled]="isEmpty()"
+        (click)="download()"
+      >
+        <span aria-hidden="true">⬇️</span>
+        Baixar
+      </button>
+    </div>
+  </div>
+
+  <p class="visually-hidden" role="status" aria-live="polite">{{ statusMessage() }}</p>
+</div>

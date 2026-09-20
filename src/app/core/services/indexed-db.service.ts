@@ -1,9 +1,14 @@
 import { Injectable } from '@angular/core';
 
 export const VIDEO_STORE = 'videos';
+export const DRAWING_STORE = 'drawings';
 
 const DATABASE_NAME = 'pedro-henrique-site';
-const DATABASE_VERSION = 1;
+
+/** Versão 2 acrescentou a prancheta de desenho ao banco dos vídeos. */
+const DATABASE_VERSION = 2;
+
+const STORES: readonly string[] = [VIDEO_STORE, DRAWING_STORE];
 
 /**
  * Wrapper mínimo e tipado sobre a IndexedDB nativa.
@@ -48,10 +53,19 @@ export class IndexedDbService {
     this.databasePromise ??= new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
+      /**
+       * Cria apenas o que falta.
+       *
+       * Quem já tinha a versão 1 ganha a coleção de desenhos sem perder
+       * nenhum vídeo: a migração é aditiva de propósito.
+       */
       request.onupgradeneeded = () => {
         const database = request.result;
-        if (!database.objectStoreNames.contains(VIDEO_STORE)) {
-          database.createObjectStore(VIDEO_STORE, { keyPath: 'id' });
+
+        for (const store of STORES) {
+          if (!database.objectStoreNames.contains(store)) {
+            database.createObjectStore(store, { keyPath: 'id' });
+          }
         }
       };
 

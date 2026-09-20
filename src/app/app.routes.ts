@@ -25,6 +25,15 @@ export const routes: Routes = [
       import('./features/communication/communication-page').then((m) => m.CommunicationPage),
   },
   {
+    path: 'desenhos',
+    title: 'Meus desenhos',
+    data: {
+      description:
+        'A prancheta do Pedro Henrique: escolha as cores, desenhe no site e guarde os desenhos no aparelho.',
+    },
+    loadComponent: () => import('./features/drawings/drawings-page').then((m) => m.DrawingsPage),
+  },
+  {
     path: 'galeria',
     title: 'Galeria',
     data: {

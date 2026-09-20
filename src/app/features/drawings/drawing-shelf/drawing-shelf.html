@@ -1,0 +1,49 @@
+<ul class="shelf">
+  @for (drawing of drawings(); track drawing.id) {
+    <li class="shelf__item">
+      <img
+        class="shelf__image"
+        [src]="drawing.imageUrl"
+        [alt]="'Desenho: ' + drawing.title"
+        [width]="drawing.width"
+        [height]="drawing.height"
+        loading="lazy"
+        decoding="async"
+      />
+
+      <div class="shelf__body">
+        <h4 class="shelf__title">{{ drawing.title }}</h4>
+        <p class="shelf__date">{{ drawing.createdAt | date: "d 'de' MMMM 'de' y" }}</p>
+      </div>
+
+      <div class="shelf__actions">
+        <a
+          class="shelf__action"
+          [href]="drawing.imageUrl"
+          [download]="drawing.title + '.png'"
+          [attr.aria-label]="'Baixar o desenho ' + drawing.title"
+        >
+          <span aria-hidden="true">⬇️</span>
+          Baixar
+        </a>
+
+        <button
+          type="button"
+          class="shelf__action shelf__action--danger"
+          [class.shelf__action--confirming]="isConfirming(drawing.id)"
+          [attr.aria-label]="
+            isConfirming(drawing.id)
+              ? 'Confirmar que quer apagar o desenho ' + drawing.title
+              : 'Apagar o desenho ' + drawing.title
+          "
+          (click)="remove(drawing)"
+        >
+          <span aria-hidden="true">{{ isConfirming(drawing.id) ? '⚠️' : '🗑️' }}</span>
+          {{ isConfirming(drawing.id) ? 'Tem certeza?' : 'Apagar' }}
+        </button>
+      </div>
+    </li>
+  }
+</ul>
+
+<p class="visually-hidden" role="status" aria-live="polite">{{ statusMessage() }}</p>

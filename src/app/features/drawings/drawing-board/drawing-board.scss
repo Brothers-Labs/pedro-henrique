@@ -1,0 +1,271 @@
+@use 'mixins' as *;
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  /**
+   * No monitor a folha fica ao lado das ferramentas, como numa mesa de
+   * desenho. No celular tudo empilha, com a folha primeiro.
+   */
+  @include from($breakpoint-lg) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-areas:
+      'paper tools'
+      'paper keep';
+    align-items: start;
+    gap: var(--space-5);
+  }
+
+  &__paper {
+    position: relative;
+
+    @include from($breakpoint-lg) {
+      grid-area: paper;
+      position: sticky;
+      top: calc(var(--header-height) + var(--space-4));
+    }
+  }
+
+  /**
+   * A folha tem resolução fixa e é exibida esticada. `touch-action: none` é o
+   * que impede o dedo de rolar a página enquanto desenha — sem isso, não dá
+   * para desenhar no celular.
+   */
+  &__canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    box-shadow: var(--shadow-md);
+    touch-action: none;
+    cursor: crosshair;
+
+    @include from($breakpoint-lg) {
+      max-height: calc(100dvh - var(--header-height) - var(--space-8));
+      width: auto;
+      margin-inline: auto;
+    }
+  }
+
+  &__hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-soft);
+    pointer-events: none;
+  }
+
+  &__hint-emoji {
+    font-size: 2.5rem;
+    line-height: 1;
+    animation: float-soft 3s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+}
+
+/* Ferramentas -------------------------------------------------------------- */
+.tools {
+  @include card-surface(var(--color-yellow-soft));
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+
+  @include from($breakpoint-lg) {
+    grid-area: tools;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  &__button {
+    @include touch-target;
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: var(--space-2) var(--space-3);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-strong);
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
+
+    @include hover-enabled {
+      transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    &--active {
+      background: var(--color-mint);
+      color: var(--text-on-color);
+    }
+
+    &--warning {
+      background: var(--color-orange);
+      color: var(--text-on-color);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &:active:not(:disabled) {
+        transform: none;
+      }
+    }
+  }
+}
+
+/* Paleta ------------------------------------------------------------------- */
+.palette {
+  display: grid;
+
+  /* Oito por linha no celular, e o quadradinho nunca fica menor que o dedo. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--touch-target), 1fr));
+  gap: var(--space-2);
+
+  &__chip {
+    @include touch-target;
+
+    aspect-ratio: 1;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    transition: transform var(--transition-fast);
+
+    @include hover-enabled {
+      transform: scale(1.08);
+    }
+
+    /* A cor ativa não é indicada só pela cor: ganha anel e sobe um degrau. */
+    &--active {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 4px var(--color-purple);
+    }
+
+    @include reduced-motion {
+      transition: none;
+
+      &--active {
+        transform: none;
+      }
+    }
+  }
+}
+
+/* Espessura ---------------------------------------------------------------- */
+.sizes {
+  &__button {
+    @include touch-target;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex: 1 1 auto;
+    padding: var(--space-2) var(--space-3);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text-strong);
+
+    &--active {
+      background: var(--color-blue-soft);
+      box-shadow: inset 0 -4px 0 var(--color-blue);
+    }
+  }
+
+  &__dot {
+    display: block;
+    flex: 0 0 auto;
+    border-radius: var(--radius-pill);
+    background: var(--text-strong);
+  }
+}
+
+/* Carimbos ----------------------------------------------------------------- */
+.stamps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--touch-target), 1fr));
+  gap: var(--space-2);
+
+  &__button {
+    @include touch-target;
+
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border: 3px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface-card);
+    font-size: 1.4rem;
+    line-height: 1;
+
+    &--active {
+      border-color: var(--border-strong);
+      background: var(--color-purple-soft);
+    }
+  }
+}
+
+/* Guardar ------------------------------------------------------------------ */
+.keep {
+  @include card-surface;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+
+  @include from($breakpoint-lg) {
+    grid-area: keep;
+  }
+
+  &__field {
+    min-width: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    @include from($breakpoint-sm) {
+      flex-direction: row;
+    }
+  }
+}
