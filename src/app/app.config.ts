@@ -17,6 +17,7 @@ import {
 
 import { routes } from './app.routes';
 import { CalmModeService } from './core/services/calm-mode.service';
+import { PetService } from './core/services/pet.service';
 import { SiteTitleStrategy } from './core/services/site-title.strategy';
 
 registerLocaleData(localePt, 'pt-BR');
@@ -35,6 +36,11 @@ export const appConfig: ApplicationConfig = {
     // momento em que algum componente que o consome for renderizado.
     provideAppInitializer(() => {
       inject(CalmModeService);
+
+      // O mascote escuta os eventos dos jogos desde o primeiro clique: se ele
+      // só nascesse ao abrir a própria página, o XP dos desafios já jogados
+      // se perderia no caminho.
+      inject(PetService);
     }),
     { provide: TitleStrategy, useExisting: SiteTitleStrategy },
   ],

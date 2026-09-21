@@ -1,0 +1,50 @@
+@use 'pet' as *;
+
+.xp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  &__level {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--text-strong);
+  }
+
+  &__numbers {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-body);
+  }
+
+  &__bar {
+    @include pet-meter;
+  }
+
+  &__fill {
+    @include pet-meter-fill;
+  }
+
+  &__caption {
+    font-size: var(--text-xs);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+  }
+}

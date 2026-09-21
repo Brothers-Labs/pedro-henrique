@@ -1,0 +1,52 @@
+@let look = traits();
+
+<svg viewBox="0 0 120 120" class="art" aria-hidden="true" focusable="false">
+  @if (look.hasAura) {
+    <circle class="art__aura" cx="60" cy="62" r="54" />
+    <path class="art__sparkle" d="M16 40 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" />
+    <path class="art__sparkle" d="M104 76 l2.5 6 l6 2.5 l-6 2.5 l-2.5 6 l-2.5 -6 l-6 -2.5 l6 -2.5 z" />
+  }
+
+  <ellipse class="art__shadow" cx="60" cy="112" rx="25" ry="5" />
+
+  <g [attr.transform]="scaleTransform()">
+    <path class="art__line" [attr.d]="look.tail" stroke-width="9" />
+
+    <rect class="art__shape" x="46" y="92" width="11" height="16" rx="5.5" />
+    <rect class="art__shape" x="68" y="92" width="11" height="16" rx="5.5" />
+
+    <ellipse class="art__shape" cx="62" cy="84" rx="25" ry="19" />
+    <ellipse class="art__soft" cx="62" cy="90" rx="14" ry="11" />
+
+    @if (look.hasCollar) {
+      <rect class="art__soft" x="44" y="64" width="30" height="9" rx="4.5" />
+      @if (look.hasAura) {
+        <path class="art__sparkle" d="M59 74 l2.5 5.5 l6 2.5 l-6 2.5 l-2.5 5.5 l-2.5 -5.5 l-6 -2.5 l6 -2.5 z" />
+      } @else {
+        <circle class="art__sparkle" cx="59" cy="77" r="5" />
+      }
+    }
+
+    @if (look.ears === 'caidas') {
+      <ellipse class="art__soft" cx="32" cy="54" rx="9" ry="15" transform="rotate(-12 32 54)" />
+      <ellipse class="art__soft" cx="80" cy="54" rx="9" ry="15" transform="rotate(12 80 54)" />
+    } @else {
+      <path class="art__soft" d="M38 30 l-6 -18 l17 10 z" />
+      <path class="art__soft" d="M74 30 l6 -18 l-17 10 z" />
+    }
+
+    <circle class="art__shape" cx="56" cy="46" [attr.r]="look.headRadius" />
+
+    <ellipse class="art__soft" cx="56" cy="58" rx="14" ry="10" />
+    <ellipse class="art__pupil" cx="56" cy="53" rx="5" ry="4" />
+    <path class="art__line" d="M56 57 L56 60 M50 63 Q56 66 62 63" stroke-width="2.5" />
+
+    <circle class="art__eye-white" cx="47" cy="41" r="6" />
+    <circle class="art__pupil" cx="47.5" cy="41.5" r="3" />
+    <circle class="art__glint" cx="46" cy="39.5" r="1.6" />
+
+    <circle class="art__eye-white" cx="65" cy="41" r="6" />
+    <circle class="art__pupil" cx="65.5" cy="41.5" r="3" />
+    <circle class="art__glint" cx="64" cy="39.5" r="1.6" />
+  </g>
+</svg>

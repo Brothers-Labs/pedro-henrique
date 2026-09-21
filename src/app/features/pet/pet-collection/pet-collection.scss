@@ -1,0 +1,30 @@
+@use 'pet' as *;
+
+.collection {
+  @include pet-grid(10rem);
+
+  &__card {
+    @include pet-item-card;
+
+    &[data-state='companheiro'] {
+      background: var(--tone-soft);
+      box-shadow: var(--shadow-pop);
+    }
+  }
+
+  &__name {
+    font-size: var(--text-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  &__badge {
+    @include pet-chip(var(--surface-card));
+  }
+
+  &__hint {
+    font-size: var(--text-xs);
+    color: var(--text-body);
+  }
+}

@@ -11,8 +11,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { MotionPreferenceService } from '../../../../core/services/motion-preference.service';
-import { THEME_COLOR_HEX, THEME_COLORS } from '../../../../core/theme/theme-colors';
+import { MotionPreferenceService } from '../../../core/services/motion-preference.service';
+import { THEME_COLOR_HEX, THEME_COLORS } from '../../../core/theme/theme-colors';
 
 /** Duração total da chuva de confetes. Comemoração curta é comemoração boa. */
 const DURATION_IN_MS = 2600;

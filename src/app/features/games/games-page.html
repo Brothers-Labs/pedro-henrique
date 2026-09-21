@@ -8,66 +8,70 @@
     color="mint"
   />
 
-  <section class="dashboard" aria-labelledby="painel-titulo">
-    <h3 id="painel-titulo" class="dashboard__title">
-      <span aria-hidden="true">👋</span>
-      Vamos jogar, {{ childName }}!
-    </h3>
+  <div class="games__top">
+    <section class="dashboard" aria-labelledby="painel-titulo">
+      <h3 id="painel-titulo" class="dashboard__title">
+        <span aria-hidden="true">👋</span>
+        Vamos jogar, {{ childName }}!
+      </h3>
 
-    <dl class="dashboard__stats">
-      <div class="dashboard__stat">
-        <dt>Pontos</dt>
-        <dd><span aria-hidden="true">⭐</span> {{ formattedScore() }}</dd>
-      </div>
-      <div class="dashboard__stat">
-        <dt>Nível geral</dt>
-        <dd><span aria-hidden="true">🏆</span> {{ player.overallLevel }}</dd>
-      </div>
-      <div class="dashboard__stat">
-        <dt>Melhor sequência</dt>
-        <dd><span aria-hidden="true">🔥</span> {{ player.bestStreak }}</dd>
-      </div>
-      <div class="dashboard__stat">
-        <dt>Desafios</dt>
-        <dd><span aria-hidden="true">🎯</span> {{ player.challengesCompleted }}</dd>
-      </div>
-    </dl>
+      <dl class="dashboard__stats">
+        <div class="dashboard__stat">
+          <dt>Pontos</dt>
+          <dd><span aria-hidden="true">⭐</span> {{ formattedScore() }}</dd>
+        </div>
+        <div class="dashboard__stat">
+          <dt>Nível geral</dt>
+          <dd><span aria-hidden="true">🏆</span> {{ player.overallLevel }}</dd>
+        </div>
+        <div class="dashboard__stat">
+          <dt>Melhor sequência</dt>
+          <dd><span aria-hidden="true">🔥</span> {{ player.bestStreak }}</dd>
+        </div>
+        <div class="dashboard__stat">
+          <dt>Desafios</dt>
+          <dd><span aria-hidden="true">🎯</span> {{ player.challengesCompleted }}</dd>
+        </div>
+      </dl>
 
-    <div
-      class="dashboard__bar"
-      role="progressbar"
-      [attr.aria-valuenow]="player.progressToNextLevel"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      [attr.aria-label]="
-        'Faltam ' + player.pointsToNextLevel + ' pontos para o nível geral ' +
-        (player.overallLevel + 1)
-      "
-    >
-      <span class="dashboard__fill" [style.width.%]="player.progressToNextLevel"></span>
-    </div>
-
-    <p class="dashboard__caption">
-      Faltam <strong>{{ player.pointsToNextLevel }}</strong> pontos para o nível geral
-      {{ player.overallLevel + 1 }}.
-    </p>
-
-    @if (nextGoal(); as goal) {
-      <div class="goal">
-        <p class="goal__text">
-          <span aria-hidden="true">🎯</span>
-          Faltam <strong>{{ goal.remaining }}</strong>
-          {{ goal.remaining === 1 ? goal.game.unit : goal.game.unit + 's' }}
-          para o nível {{ goal.nextLevel }} em {{ goal.game.label }}!
-        </p>
-
-        <button type="button" class="button button--primary button--small" (click)="goToNextGoal()">
-          Continuar
-          <span aria-hidden="true">→</span>
-        </button>
+      <div
+        class="dashboard__bar"
+        role="progressbar"
+        [attr.aria-valuenow]="player.progressToNextLevel"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-label]="
+          'Faltam ' + player.pointsToNextLevel + ' pontos para o nível geral ' +
+          (player.overallLevel + 1)
+        "
+      >
+        <span class="dashboard__fill" [style.width.%]="player.progressToNextLevel"></span>
       </div>
-    }
-  </section>
+
+      <p class="dashboard__caption">
+        Faltam <strong>{{ player.pointsToNextLevel }}</strong> pontos para o nível geral
+        {{ player.overallLevel + 1 }}.
+      </p>
+
+      @if (nextGoal(); as goal) {
+        <div class="goal">
+          <p class="goal__text">
+            <span aria-hidden="true">🎯</span>
+            Faltam <strong>{{ goal.remaining }}</strong>
+            {{ goal.remaining === 1 ? goal.game.unit : goal.game.unit + 's' }}
+            para o nível {{ goal.nextLevel }} em {{ goal.game.label }}!
+          </p>
+
+          <button type="button" class="button button--primary button--small" (click)="goToNextGoal()">
+            Continuar
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      }
+    </section>
+
+    <app-pet-summary-card variant="jogos" />
+  </div>
 
   <div class="games__tabs" role="tablist" aria-label="Escolha um jogo">
     @for (game of games; track game.id) {
@@ -123,3 +127,5 @@
 </div>
 
 <app-achievement-toast />
+<app-pet-companion />
+<app-pet-celebrations />

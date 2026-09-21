@@ -1,0 +1,62 @@
+@let look = traits();
+
+<svg viewBox="0 0 120 120" class="art" aria-hidden="true" focusable="false">
+  @if (look.hasAura) {
+    <circle class="art__aura" cx="60" cy="62" r="54" />
+    <path class="art__sparkle" d="M18 44 l2.5 6 l6 2.5 l-6 2.5 l-2.5 6 l-2.5 -6 l-6 -2.5 l6 -2.5 z" />
+    <path class="art__sparkle" d="M102 40 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" />
+  }
+
+  <ellipse class="art__shadow" cx="60" cy="112" rx="22" ry="5" />
+
+  <g [attr.transform]="scaleTransform()">
+    @switch (look.base) {
+      @case ('roda') {
+        <ellipse class="art__shape" cx="60" cy="102" rx="17" ry="8" />
+      }
+      @case ('pernas') {
+        <rect class="art__shape" x="45" y="98" width="11" height="12" rx="5" />
+        <rect class="art__shape" x="64" y="98" width="11" height="12" rx="5" />
+      }
+      @case ('flutua') {
+        <path class="art__aura" d="M38 104 Q60 116 82 104" />
+        <path class="art__aura" d="M44 112 Q60 120 76 112" />
+      }
+    }
+
+    @if (look.hasArms) {
+      <rect class="art__shape" x="18" y="76" width="18" height="10" rx="5" />
+      <circle class="art__soft" cx="18" cy="81" r="6" />
+      <rect class="art__shape" x="84" y="76" width="18" height="10" rx="5" />
+      <circle class="art__soft" cx="102" cy="81" r="6" />
+    }
+
+    <rect class="art__shape" [attr.x]="look.bodyX" y="72" [attr.width]="look.bodyWidth" height="30" rx="10" />
+
+    @if (look.hasShoulders) {
+      <rect class="art__soft" x="34" y="70" width="14" height="9" rx="4" />
+      <rect class="art__soft" x="72" y="70" width="14" height="9" rx="4" />
+    }
+
+    @if (look.hasChestPanel) {
+      <circle class="art__soft" cx="60" cy="87" r="9" />
+      <path class="art__line" d="M60 82 L60 87 L64 90" />
+    }
+
+    <path class="art__line" d="M60 30 L60 17" />
+    <circle class="art__sparkle" cx="60" cy="13" r="5" />
+
+    <rect class="art__shape" x="34" y="28" width="52" height="40" rx="13" />
+    <rect class="art__soft" x="40" y="36" width="40" height="23" rx="9" />
+
+    <circle class="art__eye-white" cx="52" cy="46" r="6" />
+    <circle class="art__pupil" cx="52" cy="46" r="3" />
+    <circle class="art__glint" cx="50.5" cy="44" r="1.6" />
+
+    <circle class="art__eye-white" cx="68" cy="46" r="6" />
+    <circle class="art__pupil" cx="68" cy="46" r="3" />
+    <circle class="art__glint" cx="66.5" cy="44" r="1.6" />
+
+    <path class="art__line" d="M53 55 Q60 60 67 55" />
+  </g>
+</svg>

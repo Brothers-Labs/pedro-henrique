@@ -25,7 +25,7 @@ import type {
 } from '../../../core/models/iq-game.model';
 import { GameProgressService } from '../../../core/services/game-progress.service';
 import { pickRandom } from '../../../core/utils/shuffle';
-import { CelebrationEffects } from '../shared/celebration-effects/celebration-effects';
+import { CelebrationEffects } from '../../../shared/components/celebration-effects/celebration-effects';
 import { GameHud } from '../shared/game-hud/game-hud';
 import { celebrationFrom } from '../shared/level-up-celebration/celebration';
 import type { CelebrationData } from '../shared/level-up-celebration/level-up-celebration';

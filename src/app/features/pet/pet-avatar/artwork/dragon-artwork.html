@@ -1,0 +1,58 @@
+@let look = traits();
+
+<svg viewBox="0 0 120 120" class="art" aria-hidden="true" focusable="false">
+  @if (look.hasAura) {
+    <circle class="art__aura" cx="60" cy="62" r="54" />
+    <path class="art__sparkle" d="M16 28 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" />
+    <path class="art__sparkle" d="M104 34 l2.5 6 l6 2.5 l-6 2.5 l-2.5 6 l-2.5 -6 l-6 -2.5 l6 -2.5 z" />
+    <path class="art__sparkle" d="M100 92 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z" />
+  }
+
+  <ellipse class="art__shadow" cx="60" cy="112" rx="24" ry="5" />
+
+  <g [attr.transform]="scaleTransform()">
+    @if (look.wings === 'pequenas') {
+      <path class="art__soft" d="M40 64 C30 54 22 56 22 64 C22 70 30 74 40 74 Z" />
+      <path class="art__soft" d="M80 64 C90 54 98 56 98 64 C98 70 90 74 80 74 Z" />
+    } @else if (look.wings === 'grandes') {
+      <path class="art__soft" d="M38 62 C20 44 6 50 9 66 C12 80 24 84 38 78 Z" />
+      <path class="art__line" d="M20 54 L30 72 M12 62 L28 78" />
+      <path class="art__soft" d="M82 62 C100 44 114 50 111 66 C108 80 96 84 82 78 Z" />
+      <path class="art__line" d="M100 54 L90 72 M108 62 L92 78" />
+    }
+
+    <path class="art__line" d="M82 84 C98 88 104 74 96 62" stroke-width="9" />
+
+    @if (look.hasSpikes) {
+      <path class="art__sparkle" d="M96 60 l7 -3 l-2 8 z" />
+      <path class="art__sparkle" d="M100 76 l8 1 l-6 6 z" />
+    }
+
+    <ellipse class="art__shape" cx="48" cy="100" rx="10" ry="7" />
+    <ellipse class="art__shape" cx="72" cy="100" rx="10" ry="7" />
+
+    <ellipse class="art__shape" cx="60" [attr.cy]="look.bodyY" rx="25" ry="23" />
+    <ellipse class="art__soft" cx="60" [attr.cy]="look.bodyY + 5" rx="15" ry="14" />
+
+    @if (look.horns === 'pequenos') {
+      <path class="art__shape" d="M48 26 l-3 -10 l9 6 z" />
+      <path class="art__shape" d="M72 26 l3 -10 l-9 6 z" />
+    } @else if (look.horns === 'grandes') {
+      <path class="art__shape" d="M46 26 l-7 -17 l15 10 z" />
+      <path class="art__shape" d="M74 26 l7 -17 l-15 10 z" />
+    }
+
+    <circle class="art__shape" cx="60" cy="46" [attr.r]="look.headRadius" />
+    <ellipse class="art__soft" cx="60" cy="56" rx="13" ry="9" />
+    <circle class="art__pupil" cx="55" cy="55" r="1.8" />
+    <circle class="art__pupil" cx="65" cy="55" r="1.8" />
+
+    <circle class="art__eye-white" cx="51" cy="41" r="6" />
+    <circle class="art__pupil" cx="52" cy="42" r="3" />
+    <circle class="art__glint" cx="50" cy="39.5" r="1.6" />
+
+    <circle class="art__eye-white" cx="69" cy="41" r="6" />
+    <circle class="art__pupil" cx="70" cy="42" r="3" />
+    <circle class="art__glint" cx="68" cy="39.5" r="1.6" />
+  </g>
+</svg>

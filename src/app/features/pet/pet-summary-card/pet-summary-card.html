@@ -1,0 +1,55 @@
+@let current = pet();
+
+@if (current) {
+  <article class="summary" [attr.data-color]="color()" [attr.data-variant]="variant()">
+    <app-pet-avatar
+      [type]="current.type"
+      [stage]="stage()"
+      [accessoryId]="current.equippedAccessory"
+      mood="parado"
+      [size]="variant() === 'home' ? 'medio' : 'pequeno'"
+      [label]="current.name"
+    />
+
+    <div class="summary__text">
+      @if (variant() === 'home') {
+        <p class="summary__greeting">{{ greeting() }}, {{ childName }}! <span aria-hidden="true">👋</span></p>
+        <p class="summary__line">
+          <strong>{{ current.name }}</strong> está pronto para aprender com você!
+        </p>
+      } @else {
+        <h3 class="summary__name">
+          <span aria-hidden="true">{{ typeEmoji() }}</span>
+          {{ current.name }}
+        </h3>
+      }
+
+      <app-pet-xp-bar [pet]="current" [isCompact]="true" />
+
+      @if (variant() === 'jogos') {
+        <p class="summary__line">Vamos conquistar mais XP?</p>
+      }
+    </div>
+
+    <a class="button button--primary button--block summary__action" routerLink="/mascote">
+      <span aria-hidden="true">{{ variant() === 'home' ? '🚀' : '🐣' }}</span>
+      {{ variant() === 'home' ? 'Continuar aventura' : 'Ver meu mascote' }}
+    </a>
+  </article>
+} @else {
+  <article class="summary summary--convite" data-color="purple" [attr.data-variant]="variant()">
+    <span class="summary__egg" aria-hidden="true">🥚</span>
+
+    <div class="summary__text">
+      <h3 class="summary__name">Escolha seu companheiro!</h3>
+      <p class="summary__line">
+        Um amigo que aprende, cresce e evolui junto com você a cada desafio.
+      </p>
+    </div>
+
+    <a class="button button--primary button--block summary__action" routerLink="/mascote">
+      <span aria-hidden="true">✨</span>
+      Escolher agora
+    </a>
+  </article>
+}

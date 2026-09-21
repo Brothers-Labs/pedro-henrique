@@ -1,0 +1,35 @@
+<div class="avatar" [attr.data-mood]="mood()" [attr.data-size]="size()">
+  <div class="avatar__art" role="img" [attr.aria-label]="description()">
+    @switch (type()) {
+      @case ('dragao') {
+        <app-dragon-artwork [stage]="stage()" />
+      }
+      @case ('robo') {
+        <app-robot-artwork [stage]="stage()" />
+      }
+      @case ('dino') {
+        <app-dino-artwork [stage]="stage()" />
+      }
+      @case ('cachorro') {
+        <app-dog-artwork [stage]="stage()" />
+      }
+    }
+  </div>
+
+  @if (isMystery()) {
+    <span class="avatar__mystery" aria-hidden="true">?</span>
+  }
+
+  @if (accessory(); as item) {
+    <span
+      class="avatar__accessory"
+      aria-hidden="true"
+      [style.left.%]="item.anchor.x"
+      [style.top.%]="item.anchor.y"
+      [style.font-size]="'calc(var(--avatar-size) * ' + item.anchor.scale + ')'"
+      [style.transform]="'translate(-50%, -50%) rotate(' + item.anchor.rotation + 'deg)'"
+    >
+      {{ item.emoji }}
+    </span>
+  }
+</div>

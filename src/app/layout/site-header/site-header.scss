@@ -105,9 +105,13 @@
 
   &__list {
     display: flex;
-    flex-wrap: wrap;
 
-    /* Sete destinos em uma linha só: o respiro é o que sobra depois deles. */
+    /**
+     * Oito destinos em uma linha só. O `wrap` é a rede de segurança: se algum
+     * dia não couberem, o menu quebra em duas linhas em vez de empurrar o
+     * cabeçalho para fora da tela.
+     */
+    flex-wrap: wrap;
     gap: var(--space-1);
     list-style: none;
     padding: 0;
@@ -117,9 +121,11 @@
   &__link {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-1);
 
-    padding: var(--space-2) var(--space-3);
+    /* Aperto proposital: é o que mantém tudo em uma linha a partir de 1280px. */
+    padding: var(--space-2);
+    font-size: var(--text-sm);
     border: 2px solid transparent;
     border-radius: var(--radius-pill);
     color: var(--text-strong);
@@ -131,6 +137,13 @@
     @include hover {
       background: var(--tone-soft);
       border-color: var(--border-strong);
+    }
+
+    /* No monitor grande sobra espaço: o menu volta a respirar. */
+    @include from(90rem) {
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-md);
     }
 
     // Tons pastel garantem contraste com o texto escuro em qualquer cor do tema.

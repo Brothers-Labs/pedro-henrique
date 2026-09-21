@@ -1,6 +1,7 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { ACHIEVEMENTS, GAME_IDS, gameDefinition } from '../data/game-progress.data';
+import { GameEventBus } from '../events/game-event-bus';
 import {
   applyChallenge,
   createGameProgress,
@@ -33,10 +34,15 @@ const LEGACY_ENGLISH_KEY = 'pedro-henrique:english-progress';
  *
  * O progresso vive só no aparelho de quem joga. Não há conta, servidor nem
  * comparação com outras crianças — a única comparação é com o próprio ontem.
+ *
+ * Cada desafio registrado também é anunciado no `GameEventBus`. O serviço não
+ * sabe quem escuta — hoje é o mascote, amanhã pode ser outra coisa — e é isso
+ * que permite recompensar a criança fora dos jogos sem tocar em nenhum deles.
  */
 @Injectable({ providedIn: 'root' })
 export class GameProgressService {
   private readonly state = signal<PlayerProgress>(loadProgress());
+  private readonly events = inject(GameEventBus);
 
   /**
    * Fila de conquistas ainda não comemoradas.
@@ -79,7 +85,32 @@ export class GameProgressService {
       this.pending.update((queue) => [...queue, ...outcome.unlockedAchievements]);
     }
 
+    this.announce(outcome);
+
     return outcome;
+  }
+
+  /** Publica o que aconteceu, já com o estado novo gravado no aparelho. */
+  private announce(outcome: ChallengeOutcome): void {
+    this.events.emit({
+      type: 'CHALLENGE_COMPLETED',
+      gameId: outcome.gameId,
+      wasCorrect: outcome.wasCorrect,
+      streak: outcome.streak,
+    });
+
+    if (outcome.didLevelUp) {
+      this.events.emit({
+        type: 'LEVEL_COMPLETED',
+        gameId: outcome.gameId,
+        level: outcome.level,
+        wasPerfect: outcome.wasPerfectLevel,
+      });
+    }
+
+    for (const achievement of outcome.unlockedAchievements) {
+      this.events.emit({ type: 'ACHIEVEMENT_UNLOCKED', achievementId: achievement.id });
+    }
   }
 
   /** Marca a conquista do topo da fila como já comemorada. */

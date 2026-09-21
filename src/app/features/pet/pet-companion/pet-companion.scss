@@ -1,0 +1,53 @@
+@use 'mixins' as *;
+
+/**
+ * O mascote no canto da área de jogo.
+ *
+ * Fica preso à base da tela, acima da barra de navegação do celular, e nunca
+ * cobre o caminho de volta. Não recebe toque: é companhia, não botão — e um
+ * dedo que erra o alvo não pode cair nele em vez de na resposta.
+ */
+.companion {
+  position: fixed;
+  left: calc(var(--space-3) + var(--safe-left));
+  bottom: calc(var(--bottom-nav-height) + var(--space-3) + var(--safe-bottom));
+  z-index: 55;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(18rem, calc(100vw - var(--space-6)));
+  pointer-events: none;
+  animation: pop-in 260ms ease-out;
+
+  @include reduced-motion {
+    animation: none;
+  }
+
+  /** Balão de fala, com o bico apontando para o mascote. */
+  &__bubble {
+    position: relative;
+    padding: var(--space-2) var(--space-3);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-strong);
+    box-shadow: var(--shadow-md);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -9px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      transform: translateY(-50%) rotate(45deg);
+      border-left: 3px solid var(--border-strong);
+      border-bottom: 3px solid var(--border-strong);
+      background: var(--surface-card);
+    }
+  }
+}

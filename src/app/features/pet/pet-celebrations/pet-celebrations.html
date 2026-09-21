@@ -1,0 +1,99 @@
+@let toastData = toast();
+
+@if (toastData) {
+  <div class="pet-toast" role="status" aria-live="polite">
+    @switch (toastData.kind) {
+      @case ('nivel') {
+        <span class="pet-toast__emoji" aria-hidden="true">⭐</span>
+        <span class="pet-toast__text">
+          <span class="pet-toast__eyebrow">Nível novo!</span>
+          <strong class="pet-toast__title">
+            {{ petName() }} chegou ao nível {{ toastData.level }}!
+          </strong>
+          @if (toastData.accessory; as unlocked) {
+            <span class="pet-toast__extra">
+              <span aria-hidden="true">{{ unlocked.emoji }}</span>
+              {{ unlocked.label }} desbloqueado!
+            </span>
+          }
+        </span>
+      }
+      @case ('conquista') {
+        <span class="pet-toast__emoji" aria-hidden="true">{{ toastData.achievement.emoji }}</span>
+        <span class="pet-toast__text">
+          <span class="pet-toast__eyebrow">Conquista do mascote!</span>
+          <strong class="pet-toast__title">{{ toastData.achievement.title }}</strong>
+          <span class="pet-toast__extra">{{ toastData.achievement.description }}</span>
+        </span>
+      }
+    }
+
+    <button type="button" class="pet-toast__close" aria-label="Fechar o aviso" (click)="dismiss()">
+      <span aria-hidden="true">✕</span>
+    </button>
+  </div>
+}
+
+<dialog #dialog class="evolution" aria-labelledby="evolucao-titulo" (close)="dismiss()">
+  @if (evolution(); as moment) {
+    <div class="evolution__panel" [attr.data-phase]="phase()">
+      @if (phase() === 'suspense') {
+        <p class="evolution__eyebrow" id="evolucao-titulo">
+          <span aria-hidden="true">✨</span>
+          ALGO INCRÍVEL ESTÁ ACONTECENDO!
+          <span aria-hidden="true">✨</span>
+        </p>
+
+        <div class="evolution__stage evolution__stage--glowing">
+          <app-pet-avatar
+            [type]="type()"
+            [stage]="moment.from.id"
+            mood="comemorando"
+            size="grande"
+            [label]="petName() + ' está evoluindo'"
+          />
+        </div>
+      } @else {
+        <p class="evolution__eyebrow" id="evolucao-titulo">
+          <span aria-hidden="true">🎉</span>
+          {{ petName() }} evoluiu!
+          <span aria-hidden="true">🎈</span>
+        </p>
+
+        <div class="evolution__stage">
+          <app-pet-avatar
+            [type]="type()"
+            [stage]="moment.to.id"
+            [accessoryId]="accessoryId()"
+            mood="comemorando"
+            size="grande"
+            [label]="petName() + ' ' + moment.to.label"
+          />
+        </div>
+
+        <p class="evolution__path">
+          <span aria-hidden="true">{{ moment.from.emoji }}</span>
+          {{ moment.from.label }}
+          <span aria-hidden="true">→</span>
+          <strong>{{ moment.to.label }}</strong>
+          <span aria-hidden="true">{{ moment.to.emoji }}</span>
+        </p>
+
+        <p class="evolution__description">{{ moment.to.description }}</p>
+
+        @if (moment.accessory; as unlocked) {
+          <p class="evolution__unlock">
+            <span aria-hidden="true">{{ unlocked.emoji }}</span>
+            {{ unlocked.label }} novo desbloqueado!
+          </p>
+        }
+
+        <button type="button" class="button button--primary button--block" (click)="dismiss()" autofocus>
+          UAAAAU! Continuar
+        </button>
+      }
+    </div>
+
+    <app-celebration-effects [isActive]="phase() === 'revelacao'" />
+  }
+</dialog>

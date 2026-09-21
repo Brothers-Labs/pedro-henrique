@@ -63,6 +63,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/games/games-page').then((m) => m.GamesPage),
   },
   {
+    path: 'mascote',
+    title: 'Meu mascote',
+    data: {
+      description:
+        'O companheiro de aventuras do Pedro Henrique: escolha o mascote, ganhe XP nos jogos e veja ele evoluir.',
+    },
+    loadComponent: () => import('./features/pet/pet-page').then((m) => m.PetPage),
+  },
+  {
     path: 'videos',
     title: 'Vídeos',
     data: { description: 'Vídeos do Pedro Henrique em cards, com descrição e data de gravação.' },

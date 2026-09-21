@@ -1,0 +1,152 @@
+@use 'pet' as *;
+@use 'mixins' as *;
+
+/**
+ * A casa do mascote.
+ *
+ * Mobile first de verdade: no celular é uma coluna só, com o mascote grande no
+ * topo e o resto embaixo, na ordem em que a criança procura. A partir do
+ * notebook os blocos menores se emparelham, para a página não virar um rolo
+ * infinito em uma tela larga.
+ */
+.pet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-block: var(--space-6) var(--space-8);
+
+  @include from($breakpoint-md) {
+    padding-block: var(--space-7) var(--space-8);
+  }
+
+  @include short-viewport {
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  /* Cartão de abertura: o mascote e quem ele é. */
+  &__hero {
+    @include card-surface(var(--tone-soft));
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-4);
+    text-align: center;
+    box-shadow: var(--shadow-pop);
+
+    @include from($breakpoint-md) {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-6);
+      padding: var(--space-6);
+      text-align: left;
+    }
+  }
+
+  &__identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    min-width: 0;
+
+    @include from($breakpoint-md) {
+      align-items: flex-start;
+    }
+  }
+
+  &__name {
+    font-size: var(--text-2xl);
+  }
+
+  &__type {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-body);
+  }
+
+  &__personality {
+    @include pet-chip(var(--surface-card));
+  }
+
+  /* Troca de nome: mesmo campo grande da escolha inicial, em versão curta. */
+  &__rename {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    max-width: 22rem;
+  }
+
+  &__rename-label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__rename-input {
+    width: 100%;
+    min-height: var(--touch-target);
+    padding: var(--space-2) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    font-family: var(--font-display);
+
+    /* Nunca abaixo de 16px: é o limite do zoom automático do Safari no iPhone. */
+    font-size: var(--text-lg);
+    font-weight: 800;
+    text-align: center;
+    color: var(--text-strong);
+  }
+
+  &__rename-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  &__panel {
+    @include pet-panel;
+  }
+
+  &__panel-title {
+    @include pet-panel-title;
+  }
+
+  &__panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  /** Interruptor de som: discreto, mas sempre alcançável pela criança. */
+  &__sound {
+    @include pet-chip(var(--surface-muted));
+    @include touch-target(2.5rem);
+
+    padding-inline: var(--space-3);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: var(--color-mint-soft);
+    }
+  }
+
+  &__columns {
+    display: grid;
+    gap: var(--space-5);
+
+    @include from($breakpoint-lg) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+  }
+}

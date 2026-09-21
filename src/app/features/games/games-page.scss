@@ -18,6 +18,24 @@
    * primeira tela do celular. Numa faixa só, a aba seguinte aparece cortada na
    * borda e mostra sozinha que há mais jogo para o lado.
    */
+  /**
+   * Painel da jornada e cartão do mascote.
+   *
+   * No celular um embaixo do outro; do notebook em diante lado a lado, com o
+   * mascote ocupando a coluna estreita — ele acompanha a jornada, não a
+   * substitui.
+   */
+  &__top {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+
+    @include from($breakpoint-lg) {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
   &__tabs {
     padding-bottom: var(--space-2);
     margin-bottom: var(--space-4);
@@ -113,7 +131,6 @@
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
-  margin-bottom: var(--space-5);
   box-shadow: var(--shadow-pop);
 
   &__title {

@@ -1,0 +1,78 @@
+@use 'pet' as *;
+@use 'mixins' as *;
+
+.next {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+
+  /* Do tablet em diante a silhueta fica ao lado do texto, não acima dele. */
+  @include from($breakpoint-sm) {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__path {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    color: var(--text-strong);
+
+    strong {
+      display: block;
+      font-size: var(--text-lg);
+    }
+  }
+
+  &__bar {
+    @include pet-meter;
+  }
+
+  &__fill {
+    @include pet-meter-fill(var(--color-purple));
+  }
+
+  &__levels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: 0;
+
+    dt {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 800;
+      color: var(--text-strong);
+    }
+  }
+
+  &__remaining {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+  }
+}

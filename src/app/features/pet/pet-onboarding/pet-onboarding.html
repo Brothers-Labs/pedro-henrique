@@ -1,0 +1,106 @@
+@if (chosenType(); as selected) {
+  <app-page-intro
+    emoji="✏️"
+    title="Como seu novo amigo vai se chamar?"
+    subtitle="Escolha um nome bem legal. Dá para trocar depois, sem problema."
+    [color]="selected.color"
+  />
+
+  <section class="naming" [attr.data-color]="selected.color" aria-labelledby="nome-titulo">
+    <h2 id="nome-titulo" class="visually-hidden">Escolha o nome do seu mascote</h2>
+
+    <app-pet-avatar
+      [type]="selected.id"
+      stage="bebe"
+      mood="feliz"
+      size="grande"
+      [label]="'Seu novo ' + selected.label"
+    />
+
+    <div class="naming__form">
+      <label class="naming__label" for="nome-do-mascote">Digite um nome...</label>
+      <input
+        #nameField
+        id="nome-do-mascote"
+        class="naming__input"
+        type="text"
+        autocomplete="off"
+        [attr.maxlength]="maxNameLength"
+        [value]="name()"
+        [placeholder]="selected.label"
+        (input)="name.set(nameField.value)"
+        (keyup.enter)="confirm()"
+      />
+
+      <p class="naming__preview" role="status">
+        @if (canConfirm()) {
+          <span aria-hidden="true">🎉</span>
+          {{ childName }} e {{ cleanName() }} agora são uma equipe!
+        } @else {
+          <span aria-hidden="true">💡</span>
+          Escreva o nome para começar.
+        }
+      </p>
+
+      <div class="naming__actions">
+        <button
+          type="button"
+          class="button button--primary button--block"
+          [disabled]="!canConfirm()"
+          (click)="confirm()"
+        >
+          <span aria-hidden="true">🚀</span>
+          Começar nossa aventura!
+        </button>
+
+        <button type="button" class="button button--ghost button--block" (click)="goBack()">
+          <span aria-hidden="true">←</span>
+          Escolher outro amigo
+        </button>
+      </div>
+    </div>
+  </section>
+} @else {
+  <app-page-intro
+    emoji="🐣"
+    title="Escolha seu companheiro de aventuras!"
+    subtitle="Ele vai aprender, crescer e evoluir junto com você."
+    color="purple"
+  />
+
+  <ul class="choices">
+    @for (type of types; track type.id) {
+      <li class="choices__item">
+        <article class="choice" [attr.data-color]="type.color">
+          <app-pet-avatar
+            [type]="type.id"
+            stage="bebe"
+            mood="parado"
+            size="medio"
+            [label]="type.label + ' bebê'"
+          />
+
+          <h2 class="choice__name">
+            <span aria-hidden="true">{{ type.emoji }}</span>
+            {{ type.label }}
+          </h2>
+
+          <p class="choice__description">{{ type.description }}</p>
+
+          <p class="choice__personality">
+            <span aria-hidden="true">✨</span>
+            {{ type.personality }}
+          </p>
+
+          <button
+            type="button"
+            class="button button--primary button--block"
+            (click)="select(type.id)"
+          >
+            Escolher
+          </button>
+        </article>
+      </li>
+    }
+  </ul>
+}

@@ -10,6 +10,9 @@ import { EnglishGame } from './english-game/english-game';
 import { IqGame } from './iq-game/iq-game';
 import { MathGame } from './math-game/math-game';
 import { MemoryGame } from './memory-game/memory-game';
+import { PetCelebrations } from '../pet/pet-celebrations/pet-celebrations';
+import { PetCompanion } from '../pet/pet-companion/pet-companion';
+import { PetSummaryCard } from '../pet/pet-summary-card/pet-summary-card';
 import { QuizGame } from './quiz-game/quiz-game';
 import { AchievementToast } from './shared/achievement-toast/achievement-toast';
 import { TicTacToe } from './tic-tac-toe/tic-tac-toe';
@@ -25,6 +28,10 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
  *
  * As abas vêm do catálogo, e não de uma lista própria: um jogo novo aparece
  * aqui só de entrar no catálogo.
+ *
+ * O mascote entra por três peças que não sabem nada sobre jogo nenhum: o
+ * cartão ao lado do painel, o companheiro que comenta as jogadas e as
+ * comemorações de nível e evolução.
  */
 @Component({
   selector: 'app-games-page',
@@ -32,6 +39,9 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
   imports: [
     PageIntro,
     AchievementToast,
+    PetSummaryCard,
+    PetCompanion,
+    PetCelebrations,
     MemoryGame,
     TicTacToe,
     BeansGame,

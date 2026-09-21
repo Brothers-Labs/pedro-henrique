@@ -59,6 +59,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'mint',
   },
   {
+    id: 'mascote',
+    label: 'Mascote',
+    route: '/mascote',
+    emoji: '🐣',
+    description: 'Meu companheiro de aventuras: ele cresce e evolui junto comigo.',
+    color: 'purple',
+  },
+  {
     id: 'videos',
     label: 'Vídeos',
     route: '/videos',

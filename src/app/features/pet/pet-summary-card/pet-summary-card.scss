@@ -1,0 +1,70 @@
+@use 'mixins' as *;
+
+/**
+ * Cartão compacto do mascote.
+ *
+ * No celular tudo empilha; a partir do tablet o desenho fica à esquerda, o
+ * texto no meio e o botão à direita — sem nunca roubar a largura do conteúdo
+ * principal da página que o hospeda.
+ */
+.summary {
+  @include card-surface(var(--tone-soft));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-align: center;
+  box-shadow: var(--shadow-pop);
+
+  @include from($breakpoint-sm) {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__greeting {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--text-strong);
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+  }
+
+  &__line {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+  }
+
+  &__egg {
+    font-size: var(--text-2xl);
+    line-height: 1;
+  }
+
+  &__action {
+    flex: 0 0 auto;
+
+    @include from($breakpoint-sm) {
+      width: auto;
+    }
+  }
+}

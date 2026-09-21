@@ -1,0 +1,85 @@
+/**
+ * Traço comum dos quatro mascotes.
+ *
+ * Todos são desenhados no mesmo `viewBox` de 120×120, com contorno grosso e
+ * cantos arredondados — o mesmo estilo de gibi dos cartões do site. Manter a
+ * régua aqui é o que faz um dragão e um robô parecerem do mesmo desenho.
+ *
+ * As cores vêm de `--tone` e `--tone-soft`, que o atributo `data-color` do
+ * avatar define. É por isso que o modo calmo dessatura o mascote de graça.
+ */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.art {
+  --art-outline: var(--border-strong);
+
+  &__shape {
+    fill: var(--tone);
+    stroke: var(--art-outline);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  /** Partes claras: barriga, asas por dentro, painéis. */
+  &__soft {
+    fill: var(--tone-soft);
+    stroke: var(--art-outline);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--art-outline);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &__eye-white {
+    fill: #ffffff;
+    stroke: var(--art-outline);
+    stroke-width: 2.5;
+  }
+
+  &__pupil {
+    fill: var(--art-outline);
+  }
+
+  &__glint {
+    fill: #ffffff;
+  }
+
+  &__shadow {
+    fill: rgb(42 35 80 / 12%);
+  }
+
+  /** Brilho do estágio lendário: sempre por trás do corpo. */
+  &__aura {
+    fill: none;
+    stroke: var(--color-yellow);
+    stroke-width: 3;
+    stroke-dasharray: 6 9;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+
+  &__sparkle {
+    fill: var(--color-yellow);
+    stroke: var(--art-outline);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+}

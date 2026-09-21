@@ -15,7 +15,7 @@ import {
 
 import { PROFILE } from '../../../../core/data/profile.data';
 import { MotionPreferenceService } from '../../../../core/services/motion-preference.service';
-import { CelebrationEffects } from '../celebration-effects/celebration-effects';
+import { CelebrationEffects } from '../../../../shared/components/celebration-effects/celebration-effects';
 
 /**
  * Espera antes de abrir, para a barra de progresso terminar de encher.

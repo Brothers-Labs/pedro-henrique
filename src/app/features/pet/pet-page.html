@@ -1,0 +1,161 @@
+@if (companion(); as view) {
+  @let pet = view.pet;
+
+  <div class="pet container">
+    <app-page-intro
+      emoji="🐣"
+      title="Meu mascote"
+      [subtitle]="'O companheiro de aventuras do ' + childName + '.'"
+      [color]="view.type.color"
+    />
+
+    <section class="pet__hero" [attr.data-color]="view.type.color" aria-labelledby="mascote-nome">
+      <app-pet-avatar
+        [type]="pet.type"
+        [stage]="view.stage.id"
+        [accessoryId]="pet.equippedAccessory"
+        [mood]="mood()"
+        size="grande"
+        [label]="pet.name + ', ' + view.type.label + ' ' + view.stage.label"
+      />
+
+      <div class="pet__identity">
+        @if (isRenaming()) {
+          <div class="pet__rename">
+            <label class="pet__rename-label" for="novo-nome">Novo nome</label>
+            <input
+              #renameField
+              id="novo-nome"
+              class="pet__rename-input"
+              type="text"
+              autocomplete="off"
+              [attr.maxlength]="maxNameLength"
+              [value]="draftName()"
+              (input)="draftName.set(renameField.value)"
+              (keyup.enter)="confirmRenaming()"
+              (keyup.escape)="cancelRenaming()"
+            />
+            <div class="pet__rename-actions">
+              <button
+                type="button"
+                class="button button--primary button--small"
+                [disabled]="!canRename()"
+                (click)="confirmRenaming()"
+              >
+                Salvar
+              </button>
+              <button
+                type="button"
+                class="button button--ghost button--small"
+                (click)="cancelRenaming()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        } @else {
+          <h2 id="mascote-nome" class="pet__name">{{ pet.name }}</h2>
+
+          <p class="pet__type">
+            <span aria-hidden="true">{{ view.type.emoji }}</span>
+            {{ view.type.label }} · {{ view.stage.label }}
+          </p>
+
+          <p class="pet__personality">{{ view.type.personality }}</p>
+
+          <button type="button" class="button button--ghost button--small" (click)="startRenaming()">
+            <span aria-hidden="true">✏️</span>
+            Trocar o nome
+          </button>
+        }
+
+        <app-pet-xp-bar [pet]="pet" />
+      </div>
+    </section>
+
+    <section class="pet__panel" aria-labelledby="estado-titulo">
+      <h2 id="estado-titulo" class="pet__panel-title">
+        <span aria-hidden="true">💫</span>
+        Como {{ pet.name }} está
+      </h2>
+
+      <app-pet-status [pet]="pet" />
+    </section>
+
+    <section class="pet__panel" aria-labelledby="brincar-titulo">
+      <div class="pet__panel-head">
+        <h2 id="brincar-titulo" class="pet__panel-title">
+          <span aria-hidden="true">🎈</span>
+          Brincar com {{ pet.name }}
+        </h2>
+
+        <button
+          type="button"
+          class="pet__sound"
+          [attr.aria-pressed]="sound.isEnabled()"
+          (click)="sound.toggle()"
+        >
+          <span aria-hidden="true">{{ sound.isEnabled() ? '🔊' : '🔇' }}</span>
+          {{ sound.isEnabled() ? 'Som ligado' : 'Som desligado' }}
+        </button>
+      </div>
+
+      <app-pet-actions [petName]="pet.name" (played)="play($event)" />
+    </section>
+
+    <section class="pet__panel" aria-labelledby="evolucao-titulo">
+      <h2 id="evolucao-titulo" class="pet__panel-title">
+        <span aria-hidden="true">✨</span>
+        Próxima evolução
+      </h2>
+
+      <app-pet-next-evolution [pet]="pet" />
+    </section>
+
+    <div class="pet__columns">
+      <section class="pet__panel" aria-labelledby="acessorios-titulo">
+        <h2 id="acessorios-titulo" class="pet__panel-title">
+          <span aria-hidden="true">🎒</span>
+          Meus acessórios
+        </h2>
+
+        <app-pet-accessories [pet]="pet" (equipped)="equip($event)" />
+      </section>
+
+      <section class="pet__panel" aria-labelledby="conquistas-titulo">
+        <h2 id="conquistas-titulo" class="pet__panel-title">
+          <span aria-hidden="true">🏆</span>
+          Conquistas
+        </h2>
+
+        <app-pet-achievements [items]="achievements()" />
+      </section>
+    </div>
+
+    <div class="pet__columns">
+      <section class="pet__panel" aria-labelledby="colecao-titulo">
+        <h2 id="colecao-titulo" class="pet__panel-title">
+          <span aria-hidden="true">🧭</span>
+          Minha coleção
+        </h2>
+
+        <app-pet-collection [pet]="pet" />
+      </section>
+
+      <section class="pet__panel" aria-labelledby="aventura-titulo">
+        <h2 id="aventura-titulo" class="pet__panel-title">
+          <span aria-hidden="true">📖</span>
+          Nossa aventura
+        </h2>
+
+        <app-pet-timeline [events]="timeline()" />
+      </section>
+    </div>
+  </div>
+} @else {
+  <div class="pet container">
+    <app-pet-onboarding (chosen)="adopt($event)" />
+  </div>
+}
+
+<app-pet-celebrations />

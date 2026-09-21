@@ -1,0 +1,187 @@
+@use 'mixins' as *;
+
+/**
+ * Aviso de nível e de conquista.
+ *
+ * Fica acima da barra de navegação do celular, nunca por cima dela: o aviso
+ * não pode tapar o caminho de volta enquanto está na tela.
+ */
+.pet-toast {
+  position: fixed;
+  right: calc(var(--space-3) + var(--safe-right));
+  bottom: calc(var(--bottom-nav-height) + var(--space-3) + var(--safe-bottom));
+  left: calc(var(--space-3) + var(--safe-left));
+  z-index: 60;
+
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  box-shadow: var(--shadow-lg);
+  animation: rise-in 320ms ease-out;
+
+  @include from($breakpoint-md) {
+    left: auto;
+    max-width: 24rem;
+  }
+
+  @include reduced-motion {
+    animation: none;
+  }
+
+  &__emoji {
+    font-size: var(--text-xl);
+    line-height: 1.1;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    font-size: var(--text-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-purple);
+  }
+
+  &__title {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    color: var(--text-strong);
+  }
+
+  &__extra {
+    font-size: var(--text-xs);
+    color: var(--text-body);
+  }
+
+  &__close {
+    @include touch-target(2.25rem);
+
+    flex: 0 0 auto;
+    margin-left: auto;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    color: var(--text-strong);
+  }
+}
+
+/* Modal da evolução -------------------------------------------------------- */
+.evolution {
+  width: min(32rem, 100%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+
+  &::backdrop {
+    background: rgb(42 35 80 / 72%);
+    backdrop-filter: blur(3px);
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-card);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+
+    @include from($breakpoint-md) {
+      padding: var(--space-6);
+    }
+  }
+
+  &__eyebrow {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-purple);
+    text-wrap: balance;
+  }
+
+  /**
+   * O brilho da transformação.
+   *
+   * É um halo que pulsa atrás do mascote enquanto a forma antiga ainda está
+   * na tela — o bastante para anunciar que algo vai mudar, sem piscar.
+   */
+  &__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+
+    &--glowing::before {
+      content: '';
+      position: absolute;
+      inset: -12%;
+      border-radius: var(--radius-pill);
+      background: radial-gradient(circle, var(--color-yellow-soft) 0, transparent 70%);
+      animation: evolution-glow 900ms ease-in-out infinite;
+    }
+  }
+
+  &__path {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-body);
+
+    strong {
+      color: var(--text-strong);
+    }
+  }
+
+  &__description {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+  }
+
+  &__unlock {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow-soft);
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  @include reduced-motion {
+    &__stage--glowing::before {
+      animation: none;
+    }
+  }
+}
+
+@keyframes evolution-glow {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
