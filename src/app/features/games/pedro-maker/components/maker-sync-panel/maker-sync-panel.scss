@@ -1,0 +1,95 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+:host {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.sync__status {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.sync__text {
+  font-size: var(--text-sm);
+  color: #4b4470;
+}
+
+.sync__button {
+  @include maker.game-button;
+
+  & {
+    padding: 0.4rem 0.9rem;
+    font-size: var(--text-sm);
+  }
+}
+
+.sync__field {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 700;
+}
+
+.sync__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sync__input {
+  flex: 1 1 12rem;
+  min-height: var(--touch-target);
+  padding: 0.3rem 0.7rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  font-family: monospace;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.sync__code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+
+  code {
+    padding: 0.2rem 0.5rem;
+    border: 2px solid maker.$ink;
+    border-radius: 0.5rem;
+    background: #fff0c9;
+    word-break: break-all;
+  }
+}
+
+.sync__small {
+  @include touch-target(2.5rem);
+
+  padding: 0.2rem 0.7rem;
+  border: 2px solid maker.$ink;
+  border-radius: 0.6rem;
+  background: #ffffff;
+  font-weight: 700;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.sync__facts {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: var(--text-sm);
+}
+
+.sync__error {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #c92a5a;
+}

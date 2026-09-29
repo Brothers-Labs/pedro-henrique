@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
+import { MakerSyncPanel } from '../../components/maker-sync-panel/maker-sync-panel';
 import { DIFFICULTY_ORDER, DIFFICULTY_RULES } from '../../config/rules.config';
 import type { MakerDifficulty, TouchControlsMode } from '../../models/settings.model';
 import { MakerAudioService } from '../../services/maker-audio.service';
@@ -40,7 +41,7 @@ const KEYBOARD: readonly { readonly keys: string; readonly action: string }[] = 
 @Component({
   selector: 'app-maker-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MakerPageFrame],
+  imports: [MakerPageFrame, MakerSyncPanel],
   templateUrl: './maker-settings-page.html',
   styleUrl: './maker-settings-page.scss',
 })

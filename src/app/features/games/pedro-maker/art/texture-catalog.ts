@@ -56,7 +56,8 @@ import {
   TREE_HEIGHT,
   TREE_WIDTH,
 } from './decor-art';
-import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, ENEMY_FRAME, paintBossStrip, paintEnemyIcon, paintEnemyStrip } from './enemy-art';
+import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, paintBossStrip } from './boss-art';
+import { ENEMY_FRAME, paintEnemyIcon, paintEnemyStrip } from './enemy-art';
 import {
   CHEST_HEIGHT,
   CHEST_WIDTH,

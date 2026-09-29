@@ -1,6 +1,7 @@
 import { DEFAULT_LEVEL_HEIGHT } from '../../config/physics.config';
 import type { LevelBlueprint } from '../../models/level.model';
 import { LevelBuilder } from '../level-builder';
+import { hiddenRoom } from './sections';
 
 const SURFACE = 12;
 
@@ -75,7 +76,12 @@ export function buildFlorestaSaltitante(): LevelBlueprint {
   builder.coins(100, SURFACE - 8, 4);
   builder.add('crystal', 104, SURFACE - 8);
 
-  buildTreetopRoom(builder);
+  hiddenRoom(builder, {
+    left: 108,
+    pair: TREETOP_DOOR,
+    mascotText: 'Uau! Uma sala secreta nas árvores!',
+    hasSecretDoor: true,
+  });
 
   // Reta final ----------------------------------------------------------------------
   builder.add('slime', 126, floor);
@@ -99,28 +105,4 @@ export function buildFlorestaSaltitante(): LevelBlueprint {
     theme: 'floresta',
     targetTimeSeconds: 110,
   });
-}
-
-/**
- * Sala escondida nas copas: só se chega pela porta do tronco.
- *
- * Fica alta demais para qualquer pulo do chão, e as paredes fecham os lados.
- */
-function buildTreetopRoom(builder: LevelBuilder): void {
-  const left = 108;
-  const right = 122;
-  const ceiling = 1;
-  const roomFloor = 6;
-
-  builder.fill('stone', left, right, ceiling, ceiling);
-  builder.fill('stone', left, right, roomFloor, roomFloor);
-  builder.fill('stone', left, left, ceiling, roomFloor);
-  builder.fill('stone', right, right, ceiling, roomFloor);
-
-  builder.add('door', left + 2, roomFloor - 1, { pair: TREETOP_DOOR });
-  builder.coins(left + 4, roomFloor - 2, 6);
-  builder.add('crystal', left + 8, roomFloor - 3);
-  builder.add('mascot-tip', left + 3, roomFloor - 1, { text: 'Uau! Uma sala secreta nas árvores!' });
-  builder.add('sign', left + 11, roomFloor - 1, { text: 'Toque na porta dourada…' });
-  builder.add('secret-door', left + 12, roomFloor - 1);
 }

@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, BOSS_FRAMES } from '../../art/enemy-art';
+import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, BOSS_FRAMES } from '../../art/boss-art';
 import { TEXTURES } from '../../art/texture-catalog';
 import { TILE_SIZE } from '../../config/physics.config';
 import type { BossDefinition } from '../../models/level.model';

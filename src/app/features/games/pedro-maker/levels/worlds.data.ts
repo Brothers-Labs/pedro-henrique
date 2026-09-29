@@ -4,8 +4,8 @@ import type { EnemyKind } from '../models/level.model';
 /**
  * Os cinco mundos da aventura.
  *
- * Cada chefão é original: todos nascem do mesmo molde de "rei gelatina", mas
- * com cor, fúria e ajudantes próprios.
+ * Cada chefão é original e tem desenho próprio — gelatina, cacto, bloco de gelo,
+ * rocha de magma e cometa —, além de cor, fúria e ajudantes próprios.
  */
 export const WORLDS: readonly World[] = [
   {
@@ -23,23 +23,25 @@ export const WORLDS: readonly World[] = [
       hitPoints: 3,
       fury: 1,
       minion: 'slime',
+      look: 'slime',
     },
   },
   {
     id: 2,
     name: 'Deserto Dourado',
     emoji: '🏜️',
-    description: 'Dunas quentes, espinhudos e ruínas cheias de tesouro.',
+    description: 'Dunas quentes, espinhudos e o castelo do Rei Cacto.',
     theme: 'deserto',
     color: '#e8a93a',
     boss: {
-      name: 'Duna Gigante',
+      name: 'Rei Cacto',
       emoji: '🌵',
-      color: '#e6b85c',
-      accent: '#7cc46a',
+      color: '#5fbf5a',
+      accent: '#ff7aa8',
       hitPoints: 3,
       fury: 1.1,
       minion: 'spiky',
+      look: 'cactus',
     },
   },
   {
@@ -57,6 +59,7 @@ export const WORLDS: readonly World[] = [
       hitPoints: 3,
       fury: 1.2,
       minion: 'bat',
+      look: 'ice',
     },
   },
   {
@@ -74,6 +77,7 @@ export const WORLDS: readonly World[] = [
       hitPoints: 3,
       fury: 1.3,
       minion: 'robot',
+      look: 'magma',
     },
   },
   {
@@ -91,6 +95,7 @@ export const WORLDS: readonly World[] = [
       hitPoints: 3,
       fury: 1.4,
       minion: 'ghost',
+      look: 'comet',
     },
   },
 ];

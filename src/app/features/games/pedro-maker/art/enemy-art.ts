@@ -1,26 +1,18 @@
-import type { BossDefinition, EnemyKind } from '../models/level.model';
+import type { EnemyKind } from '../models/level.model';
 import {
   circle,
   darken,
   ellipse,
   eye,
   fillAndOutline,
-  lighten,
   OUTLINE,
   paintStrip,
   roundedRect,
   shine,
-  star,
 } from './canvas';
 
 export const ENEMY_FRAME = 48;
 export const ENEMY_FRAMES = 2;
-
-export const BOSS_FRAME_WIDTH = 144;
-export const BOSS_FRAME_HEIGHT = 120;
-
-/** Quadros do chefão: parado, amassado no pouso, cansado e atingido. */
-export const BOSS_FRAMES = { idle: 0, squash: 1, tired: 2, hurt: 3 } as const;
 
 const ENEMY_PAINTERS: Readonly<Record<EnemyKind, (context: CanvasRenderingContext2D, frame: number) => void>> = {
   slime: paintSlime,
@@ -214,113 +206,5 @@ function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: 
   context.lineWidth = 2;
   context.beginPath();
   context.arc(x, y - radius / 2, radius, Math.PI * 0.2, Math.PI * 0.8);
-  context.stroke();
-}
-
-/* Chefão ------------------------------------------------------------------- */
-
-export function paintBossStrip(boss: BossDefinition): HTMLCanvasElement {
-  return paintStrip(BOSS_FRAME_WIDTH, BOSS_FRAME_HEIGHT, 4, (context, frame) => paintBoss(context, boss, frame));
-}
-
-function paintBoss(context: CanvasRenderingContext2D, boss: BossDefinition, frame: number): void {
-  const isSquash = frame === BOSS_FRAMES.squash;
-  const top = isSquash ? 40 : 26;
-  const sideBulge = isSquash ? 6 : 0;
-  const body = frame === BOSS_FRAMES.hurt ? lighten(boss.color, 0.45) : boss.color;
-
-  context.beginPath();
-  context.moveTo(10 - sideBulge, 114);
-  context.bezierCurveTo(4 - sideBulge, top, 140 + sideBulge, top, 134 + sideBulge, 114);
-  context.closePath();
-  fillAndOutline(context, body, 4);
-  shine(context, 44, top + 26, 16, 9);
-  context.fillStyle = darken(boss.color, 0.18);
-  ellipse(context, 72, 112, 58, 5);
-  context.fill();
-
-  paintCrown(context, boss.accent, top - 2);
-  paintBossFace(context, frame, top);
-}
-
-function paintCrown(context: CanvasRenderingContext2D, color: string, baseY: number): void {
-  context.beginPath();
-  context.moveTo(50, baseY + 14);
-  context.lineTo(46, baseY - 8);
-  context.lineTo(60, baseY + 2);
-  context.lineTo(72, baseY - 14);
-  context.lineTo(84, baseY + 2);
-  context.lineTo(98, baseY - 8);
-  context.lineTo(94, baseY + 14);
-  context.closePath();
-  fillAndOutline(context, color, 3);
-
-  context.fillStyle = '#ff5a8a';
-  circle(context, 72, baseY + 4, 4);
-  context.fill();
-  context.fillStyle = '#ffffff';
-  star(context, 72, baseY - 6, 3, 1.4);
-  context.fill();
-}
-
-function paintBossFace(context: CanvasRenderingContext2D, frame: number, top: number): void {
-  const eyeY = top + 44;
-
-  context.strokeStyle = OUTLINE;
-  context.lineWidth = 3.5;
-
-  if (frame === BOSS_FRAMES.tired) {
-    // Olhos em espiral: é a deixa para o Pedro pular nele.
-    for (const eyeX of [56, 88]) {
-      context.beginPath();
-
-      for (let step = 0; step < 24; step += 1) {
-        const angle = step * 0.55;
-        const radius = 1 + step * 0.42;
-        const x = eyeX + Math.cos(angle) * radius;
-        const y = eyeY + Math.sin(angle) * radius;
-
-        if (step === 0) {
-          context.moveTo(x, y);
-        } else {
-          context.lineTo(x, y);
-        }
-      }
-
-      context.stroke();
-    }
-
-    context.beginPath();
-    context.arc(72, eyeY + 26, 7, Math.PI * 1.15, Math.PI * 1.85);
-    context.stroke();
-    return;
-  }
-
-  if (frame === BOSS_FRAMES.hurt) {
-    for (const eyeX of [56, 88]) {
-      context.beginPath();
-      context.moveTo(eyeX - 7, eyeY - 5);
-      context.lineTo(eyeX + 7, eyeY + 5);
-      context.moveTo(eyeX + 7, eyeY - 5);
-      context.lineTo(eyeX - 7, eyeY + 5);
-      context.stroke();
-    }
-
-    return;
-  }
-
-  eye(context, 56, eyeY, 10, 0);
-  eye(context, 88, eyeY, 10, 0);
-
-  // Sobrancelhas de bravo, mas de mentirinha.
-  context.beginPath();
-  context.moveTo(44, eyeY - 16);
-  context.lineTo(64, eyeY - 10);
-  context.moveTo(100, eyeY - 16);
-  context.lineTo(80, eyeY - 10);
-  context.stroke();
-
-  context.beginPath();
-  context.arc(72, eyeY + 18, 9, Math.PI * 0.15, Math.PI * 0.85);
   context.stroke();
 }

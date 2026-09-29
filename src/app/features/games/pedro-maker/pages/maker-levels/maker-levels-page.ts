@@ -1,12 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LevelThumbnail } from '../../components/level-thumbnail/level-thumbnail';
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
+import { syncStatusLabel } from '../../components/maker-sync-panel/maker-sync-panel';
 import { THEME_LABELS } from '../../config/object-catalog';
 import type { CustomLevel } from '../../models/level.model';
 import { CustomLevelService } from '../../services/custom-level.service';
+import { LevelSyncService } from '../../sync/level-sync.service';
 
 /**
  * Minhas fases: tudo o que o Pedro criou no editor.
@@ -23,12 +25,21 @@ import { CustomLevelService } from '../../services/custom-level.service';
 })
 export class MakerLevelsPage {
   private readonly customLevels = inject(CustomLevelService);
+  private readonly sync = inject(LevelSyncService);
 
   protected readonly levels = this.customLevels.levels;
   protected readonly status = this.customLevels.status;
   protected readonly isEmpty = this.customLevels.isEmpty;
   protected readonly busyId = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
+
+  /** Indicador de sincronização; some quando ela não está ligada neste aparelho. */
+  protected readonly syncLabel = computed(() => {
+    const status = this.sync.status();
+
+    return status === 'desligada' || status === 'sem-codigo' ? null : syncStatusLabel(status);
+  });
+  protected readonly isSyncing = computed(() => this.sync.status() === 'sincronizando');
 
   constructor() {
     void this.customLevels.load();
@@ -58,6 +69,10 @@ export class MakerLevelsPage {
 
   protected retry(): void {
     void this.customLevels.load();
+  }
+
+  protected syncNow(): void {
+    void this.sync.syncNow();
   }
 
   private async run(id: string, action: () => Promise<unknown>, failure: string): Promise<void> {

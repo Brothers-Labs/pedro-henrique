@@ -1,12 +1,31 @@
-import { CAMPAIGN_LEVELS, campaignLevelById, nextCampaignLevel } from './campaign';
+import { CAMPAIGN_LEVELS, campaignLevelById, nextCampaignLevel, SECRET_ENTRANCES } from './campaign';
 import { analyzeReachability } from './level-reachability';
 import { findStructuralProblems } from './level-validation';
 
 describe('Campanha do Pedro Maker', () => {
-  it('tem cinco mundos de dez fases e a fase secreta do Vale', () => {
+  it('tem cinco mundos de dez fases e uma fase secreta por mundo', () => {
     expect(CAMPAIGN_LEVELS.filter((level) => level.kind !== 'secret').length).toBe(50);
     expect(CAMPAIGN_LEVELS.filter((level) => level.kind === 'boss').length).toBe(5);
-    expect(campaignLevelById('1-S')?.kind).toBe('secret');
+
+    for (const world of [1, 2, 3, 4, 5] as const) {
+      expect(campaignLevelById(`${world}-S`)?.kind).withContext(`mundo ${world}`).toBe('secret');
+    }
+  });
+
+  it('esconde uma porta secreta na fase de entrada de cada mundo', () => {
+    for (const [world, entrance] of Object.entries(SECRET_ENTRANCES)) {
+      const blueprint = campaignLevelById(entrance)?.build();
+
+      expect(blueprint?.objects.some((object) => object.type === 'secret-door'))
+        .withContext(`mundo ${world}, fase ${entrance}`)
+        .toBeTrue();
+    }
+  });
+
+  it('dá um chefão com desenho próprio a cada mundo', () => {
+    const looks = [1, 2, 3, 4, 5].map((world) => campaignLevelById(`${world}-10`)?.build().boss?.look);
+
+    expect(new Set(looks).size).toBe(5);
   });
 
   it('encadeia a próxima fase atravessando os mundos e pulando a secreta', () => {

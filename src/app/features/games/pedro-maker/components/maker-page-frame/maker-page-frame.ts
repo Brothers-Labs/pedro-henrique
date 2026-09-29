@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { MakerAchievementToast } from '../maker-achievement-toast/maker-achievement-toast';
+import { LevelSyncService } from '../../sync/level-sync.service';
 import { MakerStatusBar } from '../maker-status-bar/maker-status-bar';
 
 /**
@@ -40,4 +41,10 @@ export class MakerPageFrame {
   readonly emoji = input('');
   readonly backLink = input('/jogos/pedro-maker');
   readonly backLabel = input('Voltar');
+
+  constructor() {
+    // Acorda a sincronização em qualquer tela de menu do jogo: a fila guardada
+    // no aparelho sobe assim que alguém abre o Pedro Maker, sem clique nenhum.
+    inject(LevelSyncService);
+  }
 }

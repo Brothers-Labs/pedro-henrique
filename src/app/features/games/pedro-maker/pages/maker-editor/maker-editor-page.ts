@@ -51,6 +51,7 @@ import { CustomLevelService } from '../../services/custom-level.service';
 import { MakerAudioService } from '../../services/maker-audio.service';
 import { MakerProgressService } from '../../services/maker-progress.service';
 import { MakerSettingsService } from '../../services/maker-settings.service';
+import { LevelSyncService } from '../../sync/level-sync.service';
 
 type EditorMode = 'editar' | 'testar' | 'resultado';
 
@@ -165,6 +166,9 @@ export class MakerEditorPage {
   });
 
   constructor() {
+    // Com a sincronização ligada, a fase salva aqui sobe para os outros aparelhos em seguida.
+    inject(LevelSyncService);
+
     const customId = this.route.snapshot.paramMap.get('customId');
 
     if (customId) {

@@ -80,6 +80,9 @@ export interface LevelObject {
   readonly properties?: LevelObjectProperties;
 }
 
+/** Molde do desenho do chefão: cada mundo tem o seu. */
+export type BossLook = 'slime' | 'cactus' | 'ice' | 'magma' | 'comet';
+
 /** Chefão da fase final de cada mundo. */
 export interface BossDefinition {
   readonly name: string;
@@ -91,6 +94,7 @@ export interface BossDefinition {
   /** Multiplica velocidade de investida e altura do pulo. */
   readonly fury: number;
   readonly minion: EnemyKind;
+  readonly look: BossLook;
 }
 
 /** Tudo o que o motor precisa para montar uma fase. */

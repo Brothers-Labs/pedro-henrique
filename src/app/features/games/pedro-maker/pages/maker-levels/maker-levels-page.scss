@@ -19,6 +19,37 @@
   color: maker.$ink;
 }
 
+.sync {
+  @include maker.panel(#e8ddff);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.sync__button {
+  @include touch-target(2.5rem);
+
+  padding: 0.2rem 0.8rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  background: #ffffff;
+  font-weight: 800;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
 .alert {
   @include maker.panel(#ffe3d1);
 

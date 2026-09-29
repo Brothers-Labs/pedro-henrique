@@ -6,6 +6,13 @@
     <p class="intro__tip">Dica: no editor, o botão 🎲 cria uma fase surpresa para você brincar e mudar.</p>
   </div>
 
+  @if (syncLabel(); as sync) {
+    <div class="sync" role="status">
+      <span><span aria-hidden="true">{{ sync.emoji }}</span> {{ sync.text }}</span>
+      <button type="button" class="sync__button" [disabled]="isSyncing()" (click)="syncNow()">Sincronizar agora</button>
+    </div>
+  }
+
   @if (errorMessage(); as message) {
     <p class="alert" role="alert">{{ message }}</p>
   }

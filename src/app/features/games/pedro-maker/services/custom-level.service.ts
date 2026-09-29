@@ -5,6 +5,7 @@ import { createId } from '../../../../core/utils/format';
 import { EDITOR_THEMES } from '../config/object-catalog';
 import { LEVEL_LIMITS, sanitizeLevelObject } from '../levels/level-validation';
 import type { CustomLevel, LevelBlueprint, LevelObject } from '../models/level.model';
+import { SyncOutbox } from '../sync/sync-outbox';
 
 export type CustomLevelStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -23,13 +24,15 @@ const MAX_NAME_LENGTH = 40;
 /**
  * As fases que o Pedro cria no editor.
  *
- * Vivem no IndexedDB do aparelho, como os desenhos: o site não tem backend e
- * nada sai daqui. O formato já é o mesmo que um backend receberia, para que
- * sincronizar no futuro seja trocar a gravação, e não o modelo.
+ * Vivem no IndexedDB do aparelho, como os desenhos. Toda mudança feita aqui
+ * também entra na caixa de saída da sincronização; quando há um servidor
+ * configurado, o `LevelSyncService` leva a fila até ele. As mudanças que
+ * chegam do servidor entram por `applyRemote`, que não volta para a fila.
  */
 @Injectable({ providedIn: 'root' })
 export class CustomLevelService {
   private readonly database = inject(IndexedDbService);
+  private readonly outbox = inject(SyncOutbox);
 
   private readonly levelsState = signal<readonly CustomLevel[]>([]);
   private readonly statusState = signal<CustomLevelStatus>('idle');
@@ -73,6 +76,7 @@ export class CustomLevelService {
 
     await this.database.put(MAKER_LEVEL_STORE, level);
     this.upsert(level);
+    this.outbox.enqueue({ kind: 'upsert', id: level.id, at: level.updatedAt });
 
     return level;
   }
@@ -90,6 +94,7 @@ export class CustomLevelService {
   async remove(id: string): Promise<void> {
     await this.database.delete(MAKER_LEVEL_STORE, id);
     this.levelsState.update((levels) => levels.filter((level) => level.id !== id));
+    this.outbox.enqueue({ kind: 'delete', id, at: new Date().toISOString() });
   }
 
   /** Marca a fase como vencida, guardando a melhor quantidade de estrelas. */
@@ -100,10 +105,50 @@ export class CustomLevelService {
       return;
     }
 
-    const updated: CustomLevel = { ...level, completed: true, bestStars: Math.max(level.bestStars, stars) };
+    // A data muda junto: é ela que decide qual versão vence entre dois aparelhos.
+    const updated: CustomLevel = {
+      ...level,
+      completed: true,
+      bestStars: Math.max(level.bestStars, stars),
+      updatedAt: new Date().toISOString(),
+    };
 
     await this.database.put(MAKER_LEVEL_STORE, updated);
     this.upsert(updated);
+    this.outbox.enqueue({ kind: 'upsert', id, at: updated.updatedAt });
+  }
+
+  /**
+   * Grava uma fase que veio do servidor.
+   *
+   * Só substitui a local se a do servidor for mais nova; nunca entra na caixa
+   * de saída, senão a fase voltaria para o servidor de onde acabou de sair.
+   */
+  async applyRemote(level: CustomLevel): Promise<boolean> {
+    const local = await this.find(level.id);
+
+    if (local && timeOf(local.updatedAt) >= timeOf(level.updatedAt)) {
+      return false;
+    }
+
+    await this.database.put(MAKER_LEVEL_STORE, level);
+    this.upsert(level);
+
+    return true;
+  }
+
+  /** Apaga uma fase excluída em outro aparelho, a menos que ela tenha sido editada aqui depois. */
+  async applyRemoteDeletion(id: string, deletedAt: string): Promise<boolean> {
+    const local = await this.find(id);
+
+    if (!local || timeOf(local.updatedAt) > timeOf(deletedAt)) {
+      return false;
+    }
+
+    await this.database.delete(MAKER_LEVEL_STORE, id);
+    this.levelsState.update((levels) => levels.filter((level) => level.id !== id));
+
+    return true;
   }
 
   private async readAll(): Promise<void> {
@@ -201,6 +246,13 @@ function cleanName(name: string, position: number): string {
   const trimmed = name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME_LENGTH);
 
   return trimmed || `Fase do Pedro #${position}`;
+}
+
+/** Momento de uma data ISO; data ilegível conta como a mais antiga possível. */
+function timeOf(iso: string): number {
+  const time = Date.parse(iso);
+
+  return Number.isNaN(time) ? 0 : time;
 }
 
 function byNewestFirst(first: CustomLevel, second: CustomLevel): number {
