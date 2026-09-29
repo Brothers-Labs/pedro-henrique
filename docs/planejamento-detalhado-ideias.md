@@ -10,7 +10,7 @@ passo sem perder a simplicidade.
 O projeto Pedro Henrique deve evoluir de um conjunto de páginas e
 minijogos para uma plataforma infantil integrada, em que aprender,
 brincar, criar e explorar fazem parte da mesma jornada.
-
+  
 A criança não deve sentir que está apenas respondendo exercícios. A
 experiência deve transmitir:
 

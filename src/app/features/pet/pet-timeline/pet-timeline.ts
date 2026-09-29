@@ -15,6 +15,14 @@ import type { PetEvent } from '../../../core/models/pet.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe],
   template: `
+    @if (events().length === 0) {
+      <p class="timeline__empty">
+        <span aria-hidden="true">📗</span>
+        A aventura de vocês está só começando. Jogue um pouquinho e os momentos
+        importantes vão aparecer aqui!
+      </p>
+    }
+
     <ol class="timeline">
       @for (event of events(); track event.id) {
         <li class="timeline__item">

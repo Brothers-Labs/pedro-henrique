@@ -13,60 +13,65 @@ interface DinoLook {
   readonly tail: string;
   readonly hasArms: boolean;
   readonly hasPlates: boolean;
-  /** As placas do lendário brilham; as dos outros seguem a cor do corpo. */
+  readonly hasTeeth: boolean;
+  /** As placas do lendário brilham; as dos outros seguem o tom claro do corpo. */
   readonly plateClass: string;
   readonly hasAura: boolean;
 }
 
 /**
- * A evolução alonga o dinossauro.
+ * A evolução vai enchendo o dinossauro.
  *
- * O filhote é redondo, de cabeçorra e rabo curtinho. O jovem estica a cauda e
- * ganha bracinhos; o adulto ganha as placas nas costas; o lendário acende as
- * placas e a aura.
+ * O filhote é redondo, de cabeçorra, rabinho curto e nenhum dente à mostra. O
+ * jovem estica a cauda e ganha bracinhos; o adulto ganha as placas das costas
+ * e os dentinhos; o lendário acende as placas e a aura.
  */
 const LOOKS: Readonly<Record<PetStageId, DinoLook>> = {
   bebe: {
     scale: 0.82,
     bodyRx: 24,
-    headRx: 19,
-    headRy: 16,
-    tail: 'M82 86 q14 2 16 -6',
+    headRx: 25,
+    headRy: 22,
+    tail: 'M82 88 q14 3 16 -5',
     hasArms: false,
     hasPlates: false,
-    plateClass: 'art__shape',
+    hasTeeth: false,
+    plateClass: 'art__soft',
     hasAura: false,
   },
   jovem: {
     scale: 0.92,
     bodyRx: 25,
-    headRx: 18,
-    headRy: 15,
-    tail: 'M82 84 q18 2 22 -12',
+    headRx: 24,
+    headRy: 21,
+    tail: 'M84 86 q18 2 18 -12',
     hasArms: true,
     hasPlates: false,
-    plateClass: 'art__shape',
+    hasTeeth: true,
+    plateClass: 'art__soft',
     hasAura: false,
   },
   adulto: {
     scale: 1,
-    bodyRx: 27,
-    headRx: 18,
-    headRy: 15,
-    tail: 'M84 82 q22 0 26 -20',
+    bodyRx: 26,
+    headRx: 23,
+    headRy: 20,
+    tail: 'M86 84 q22 0 24 -18',
     hasArms: true,
     hasPlates: true,
+    hasTeeth: true,
     plateClass: 'art__soft',
     hasAura: false,
   },
   lendario: {
     scale: 1.04,
-    bodyRx: 27,
-    headRx: 18,
-    headRy: 15,
-    tail: 'M84 82 q22 0 26 -20',
+    bodyRx: 26,
+    headRx: 23,
+    headRy: 20,
+    tail: 'M86 84 q22 0 24 -18',
     hasArms: true,
     hasPlates: true,
+    hasTeeth: true,
     plateClass: 'art__sparkle',
     hasAura: true,
   },

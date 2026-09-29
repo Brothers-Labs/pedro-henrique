@@ -118,14 +118,25 @@
     margin: 0;
   }
 
+  /**
+   * Destino em duas linhas: emoji em cima, nome embaixo.
+   *
+   * São nove destinos para a faixa de 1180px do conteúdo. Lado a lado eles não
+   * cabem em uma linha só, e um deles sempre cairia sozinho para a segunda —
+   * empilhados, cada um ocupa a largura do próprio nome e todos cabem.
+   *
+   * É também o mesmo desenho da barra inferior do celular, então o site diz a
+   * mesma coisa do mesmo jeito nos dois tamanhos de tela.
+   */
   &__link {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--space-1);
+    gap: 2px;
 
-    /* Aperto proposital: é o que mantém tudo em uma linha a partir de 1280px. */
-    padding: var(--space-2);
-    font-size: var(--text-sm);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+    line-height: 1.2;
     border: 2px solid transparent;
     border-radius: var(--radius-pill);
     color: var(--text-strong);
@@ -139,11 +150,10 @@
       border-color: var(--border-strong);
     }
 
-    /* No monitor grande sobra espaço: o menu volta a respirar. */
-    @include from(90rem) {
-      gap: var(--space-2);
+    /** No monitor bem largo sobra espaço para o destino respirar. */
+    @include from(100rem) {
       padding: var(--space-2) var(--space-3);
-      font-size: var(--text-md);
+      font-size: var(--text-sm);
     }
 
     // Tons pastel garantem contraste com o texto escuro em qualquer cor do tema.

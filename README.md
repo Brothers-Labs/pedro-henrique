@@ -20,6 +20,7 @@ navegador.
 - [Arquitetura](#arquitetura)
 - [Seções do site](#seções-do-site)
 - [Prancha de falar](#prancha-de-falar)
+- [Mascote](#mascote)
 - [Modo calmo](#modo-calmo)
 - [Movimento (GSAP)](#movimento-gsap)
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
@@ -110,13 +111,16 @@ src/
    ├─ app.routes.ts           Rotas, títulos e meta descriptions (lazy loading)
    ├─ core/
    │  ├─ animations/          Cenas do GSAP como funções puras (motion-scene.ts)
-   │  ├─ data/                Conteúdo editorial (perfil, galeria, história, ideias, quiz, prancha)
+   │  ├─ data/                Conteúdo editorial (perfil, galeria, história, ideias, quiz, prancha, mascote)
+   │  ├─ events/              Canal de eventos da jornada de jogos (game-event-bus.ts)
+   │  ├─ games/               Regras puras de pontos, níveis e conquistas (progression.ts)
    │  ├─ models/              Interfaces e tipos do domínio
-   │  ├─ services/            IndexedDB, vídeos, mural, fala, frases, idioma, modo calmo, TitleStrategy
+   │  ├─ pet/                 Regras puras do mascote: XP, evolução, acessórios (pet-progress.ts)
+   │  ├─ services/            IndexedDB, vídeos, mural, fala, frases, idioma, modo calmo, mascote, som, TitleStrategy
    │  ├─ theme/               Mapa de cores do tema em TypeScript
    │  └─ utils/               Funções puras (datas, formatação, frase, embaralhar, SVG, metadados)
    ├─ shared/
-   │  ├─ components/          section-heading, page-intro, empty-state
+   │  ├─ components/          section-heading, page-intro, empty-state, celebration-effects
    │  ├─ directives/          reveal.directive (entrada em CSS) e motion-scene.directive (GSAP)
    │  └─ pipes/               duration, fileSize
    ├─ layout/                 site-header (menu responsivo), calm-mode-toggle e site-footer
@@ -126,7 +130,8 @@ src/
       ├─ gallery/             Grade com filtros e lightbox
       ├─ story/               Linha do tempo
       ├─ ideas/               Cartões de invenções com filtro por status
-      ├─ games/               Abas + memory-game, tic-tac-toe, quiz-game
+      ├─ games/               Abas + os sete jogos, HUD, conquistas e comemorações
+      ├─ pet/                 Mascote: escolha, casa, avatar em SVG, acessórios, conquistas, coleção
       ├─ videos/              Página + video-upload-form + video-card
       └─ not-found/           Página 404
 ```
@@ -167,7 +172,8 @@ src/
 | `/galeria` | Galeria | 12 lembranças com filtro por categoria e lightbox (`<dialog>` nativo) |
 | `/historia` | História | Linha do tempo de 2019 a 2026, com destaques por ano |
 | `/ideias` | Ideias | Invenções com status (sonhando, desenhando, construindo, pronta), materiais e filtro |
-| `/jogos` | Jogos | Abas com jogo da memória, jogo da velha, Trilha dos feijões e quiz |
+| `/jogos` | Jogos | Abas com os sete jogos, painel da jornada e cartão do mascote |
+| `/mascote` | Mascote | Escolha do companheiro, XP, evolução em quatro estágios, brincadeiras, acessórios, conquistas, coleção e linha do tempo |
 | `/videos` | Vídeos | Upload com título, descrição e data; cards com busca, ordenação e exclusão |
 
 As imagens da galeria são **SVGs gerados em runtime** (`core/utils/illustration.ts`): o
@@ -218,6 +224,57 @@ visual — a frase ainda é montada e mostrada.
 
 Para trocar as palavras, basta editar `communication.data.ts`, e os textos da tela em
 `communication-texts.data.ts`: nenhum componente conhece o conteúdo dos cartões.
+
+---
+
+## Mascote
+
+A criança escolhe um companheiro — dragão, robô, dinossauro ou cachorro —, dá um nome a ele
+e passa a fazê-lo crescer jogando. É o ciclo que fecha a jornada de jogos: jogar → ganhar XP →
+evoluir → desbloquear → personalizar → querer jogar de novo.
+
+**Nunca é punitivo.** Nada decai com o tempo, errar não tira XP e ficar dias sem entrar não
+custa nada. Felicidade e energia são retorno visual, não cobrança.
+
+### Como o XP chega até o mascote
+
+Nenhum jogo conhece o mascote. O `GameProgressService` — funil único de todo desafio dos sete
+jogos — publica o que aconteceu no `GameEventBus`, e o `PetService` escuta:
+
+| Evento | O que rende |
+| --- | --- |
+| `CHALLENGE_COMPLETED` | +10 XP pelo desafio, +2 se acertou, +30 a cada dez desafios, +40 na primeira atividade do dia |
+| `LEVEL_COMPLETED` | +50 XP |
+| `ACHIEVEMENT_UNLOCKED` | +100 XP |
+
+Todas as parcelas de um mesmo evento entram em uma chamada só (`addXp`), para que o nível suba
+no máximo uma vez por desafio e nunca apareçam dois avisos seguidos.
+
+### Níveis e estágios
+
+O nível `n` custa `100 + (n - 1) × 150` XP, com teto de 1.600 — subir continua possível para
+sempre. O estágio é **derivado do nível**, nunca guardado: níveis 1–5 bebê, 6–15 jovem, 16–30
+adulto, 31+ lendário. Mudar essas faixas é mudar `PET_EVOLUTION_STAGES`, e só.
+
+Ao mudar de estágio, o aviso comum dá lugar ao modal de evolução — que espera qualquer outro
+`<dialog>` fechar antes de abrir, para nunca cair por cima da comemoração de fim de nível.
+
+### Como estender
+
+Tudo mora em `core/data/pet.data.ts`; nenhuma tela precisa ser tocada.
+
+| Para adicionar | Faça |
+| --- | --- |
+| **Um mascote novo** | Acrescente o id em `PetTypeId`, a ficha em `PET_TYPES` e um componente de desenho em `features/pet/pet-avatar/artwork/` (mesmo `viewBox` de 120×120), ligado no `@switch` do `pet-avatar` |
+| **Uma evolução nova** | Acrescente o id em `PetStageId`, a entrada em `PET_EVOLUTION_STAGES` com o `minLevel` e a variação de traço em cada um dos quatro desenhos |
+| **Um acessório** | Acrescente o id em `PetAccessoryId` e a entrada em `PET_ACCESSORIES`, com `unlockLevel` e a âncora (posição em % sobre o avatar) |
+| **Uma conquista** | Acrescente o id em `PetAchievementId` e a entrada em `PET_ACHIEVEMENTS`, apontando um `measure` já existente e a meta; se o contador ainda não existir, some-o a `PetCounters` |
+
+### Onde fica guardado
+
+No aparelho, em `localStorage`, na chave `pedro-henrique:pet:v1`. Não há conta nem servidor. O
+que for lido é sempre reconciliado: valor fora da faixa é aparado, id desconhecido é descartado e
+o resto da aventura continua de pé. **Não existe migration de banco** — o site não tem banco.
 
 ---
 
