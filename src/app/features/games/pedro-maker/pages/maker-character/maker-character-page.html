@@ -1,0 +1,91 @@
+<app-maker-page-frame heading="Meu personagem" emoji="👤">
+  <div class="layout">
+    <nav class="categories" aria-label="Partes do visual">
+      @for (entry of categories; track entry.id) {
+        <button
+          type="button"
+          class="category"
+          [class.category--active]="category() === entry.id"
+          [attr.aria-pressed]="category() === entry.id"
+          (click)="chooseCategory(entry.id)"
+        >
+          <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+        </button>
+      }
+      <a class="category" routerLink="/mascote">
+        <span aria-hidden="true">🐾</span> Mascote
+      </a>
+    </nav>
+
+    <section class="stage" aria-label="Prévia do Pedro">
+      <app-pedro-figure class="stage__pedro" [look]="previewLook()" />
+      @if (pet(); as companion) {
+        <span class="stage__pet" role="img" [attr.aria-label]="'O mascote ' + companion.name">{{ companion.emoji }}</span>
+      }
+      <span class="stage__base" aria-hidden="true"></span>
+
+      @if (previewState(); as state) {
+        <div class="stage__action">
+          <strong>{{ state.option.label }}</strong>
+          @switch (state.availability) {
+            @case ('equipado') {
+              <span class="stage__tag">Você já está usando</span>
+            }
+            @case ('disponivel') {
+              <button type="button" class="stage__button" data-tone="green" (click)="confirm(state.option)">
+                Vestir
+              </button>
+            }
+            @case ('comprar') {
+              <button
+                type="button"
+                class="stage__button"
+                data-tone="yellow"
+                [disabled]="coins() < state.option.price"
+                (click)="confirm(state.option)"
+              >
+                Comprar por {{ state.option.price }} 🪙
+              </button>
+              @if (coins() < state.option.price) {
+                <small>Faltam {{ state.option.price - coins() }} moedas — elas aparecem nas fases!</small>
+              }
+            }
+            @case ('bloqueado') {
+              <span class="stage__tag">🔒 Libera no nível {{ state.option.unlockLevel }}</span>
+            }
+          }
+        </div>
+      }
+    </section>
+
+    <ul class="options" aria-label="Opções">
+      @for (card of options(); track card.option.id) {
+        <li>
+          <button
+            type="button"
+            class="option"
+            [class.option--selected]="preview()?.id === card.option.id"
+            [class.option--equipped]="card.availability === 'equipado'"
+            [attr.aria-pressed]="preview()?.id === card.option.id"
+            (click)="tryOn(card.option)"
+          >
+            <span class="option__swatch" [style.background]="card.option.color" aria-hidden="true">
+              @if (card.availability === 'bloqueado') {
+                🔒
+              }
+            </span>
+            <span class="option__label">{{ card.option.label }}</span>
+            <span class="option__state">
+              @switch (card.availability) {
+                @case ('equipado') { Equipado }
+                @case ('disponivel') { Liberado }
+                @case ('comprar') { {{ card.option.price }} 🪙 }
+                @case ('bloqueado') { Nível {{ card.option.unlockLevel }} }
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+</app-maker-page-frame>

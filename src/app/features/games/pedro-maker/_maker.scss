@@ -1,0 +1,142 @@
+@use 'sass:list';
+@use 'mixins' as *;
+
+/**
+ * Peças visuais do Pedro Maker.
+ *
+ * O jogo tem cara de jogo — botões gordinhos em cores fortes, painéis com
+ * contorno grosso —, mas fala a mesma língua do site: a mesma fonte, o mesmo
+ * contorno azul-escuro e os mesmos cuidados com toque e movimento reduzido.
+ */
+
+$ink: #2a2350;
+
+$tones: (
+  'green': (#4cc94a, #2f9a3a),
+  'blue': (#3fa3f5, #2477c9),
+  'orange': (#ff9d2e, #de6f12),
+  'purple': (#9a6cf0, #6d45c4),
+  'pink': (#ff5fa2, #d63a7c),
+  'gray': (#8e98b3, #636c88),
+  'yellow': (#ffcf3f, #e0a613),
+  'red': (#ff6a6a, #d13f4b),
+);
+
+/** Define `--tone` e `--tone-dark` conforme o atributo `data-tone`. */
+@mixin tone-variables {
+  @each $name, $pair in $tones {
+    &[data-tone='#{$name}'] {
+      --tone: #{list.nth($pair, 1)};
+      --tone-dark: #{list.nth($pair, 2)};
+    }
+  }
+
+  // Branco sobre amarelo não se lê bem: o tom amarelo usa a tinta escura.
+  &[data-tone='yellow'] {
+    color: $ink;
+    text-shadow: 0 1px 0 rgb(255 255 255 / 60%);
+  }
+}
+
+@mixin panel($background: rgb(255 255 255 / 94%)) {
+  background: $background;
+  border: 4px solid $ink;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 0 rgb(42 35 80 / 30%);
+}
+
+/** Botão de jogo: grosso, colorido e afundando ao toque. */
+@mixin game-button {
+  @include touch-target(3.25rem);
+
+  --tone: #3fa3f5;
+  --tone-dark: #2477c9;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.4rem;
+  border: 4px solid $ink;
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 80%, white) 0%, var(--tone) 55%);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-shadow: 0 2px 0 rgb(42 35 80 / 45%);
+  box-shadow: inset 0 -5px 0 var(--tone-dark), 0 5px 0 $ink;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+
+  @include hover-enabled {
+    transform: translateY(-2px);
+    box-shadow: inset 0 -5px 0 var(--tone-dark), 0 7px 0 $ink;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: inset 0 -3px 0 var(--tone-dark), 0 1px 0 $ink;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#ffcf3f);
+  }
+
+  &:disabled {
+    filter: grayscale(0.7);
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  @include reduced-motion {
+    transition: none;
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+
+  // Depois das declarações: o `data-tone` é mais específico e vence o azul padrão.
+  @include tone-variables;
+}
+
+/** Fundo de céu com colinas, usado nas telas de menu do jogo. */
+@mixin sky-scene {
+  background:
+    radial-gradient(ellipse 60% 22% at 15% 100%, #4fc24d 0 60%, transparent 61%),
+    radial-gradient(ellipse 55% 20% at 85% 100%, #58b85b 0 60%, transparent 61%),
+    radial-gradient(circle at 85% 12%, rgb(255 244 196 / 90%) 0 6%, transparent 6.5%),
+    linear-gradient(180deg, #6ec3ff 0%, #bfe8ff 70%, #d9f2ff 100%);
+}
+
+@mixin pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border: 3px solid $ink;
+  border-radius: 999px;
+  background: #ffffff;
+  color: $ink;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+@mixin title-text($size: var(--text-2xl)) {
+  font-family: var(--font-display);
+  font-size: $size;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow:
+    0 3px 0 $ink,
+    3px 0 0 $ink,
+    -3px 0 0 $ink,
+    0 -3px 0 $ink,
+    0 7px 0 rgb(42 35 80 / 35%);
+}

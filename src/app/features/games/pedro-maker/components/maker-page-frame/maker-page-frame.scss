@@ -1,0 +1,45 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+:host {
+  @include maker.sky-scene;
+
+  display: block;
+  min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height));
+}
+
+.frame {
+  @include container;
+
+  display: grid;
+  gap: 1rem;
+  padding-block: 1rem 2.5rem;
+}
+
+.frame__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.frame__back {
+  @include maker.game-button;
+
+  & {
+    font-size: var(--text-md);
+    padding-inline: 1rem;
+  }
+}
+
+.frame__status {
+  flex: 1 1 22rem;
+  max-width: 40rem;
+}
+
+.frame__title {
+  @include maker.title-text(clamp(1.8rem, 1.2rem + 2.4vw, 3rem));
+
+  text-align: center;
+}

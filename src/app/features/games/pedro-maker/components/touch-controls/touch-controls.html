@@ -1,0 +1,38 @@
+<div
+  class="pad"
+  role="group"
+  aria-label="Andar para os lados"
+  (pointerdown)="pressPad($event)"
+  (pointermove)="steer($event)"
+  (pointerup)="releasePad()"
+  (pointercancel)="releasePad()"
+  (lostpointercapture)="releasePad()"
+>
+  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'left'" aria-hidden="true">◀</span>
+  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'right'" aria-hidden="true">▶</span>
+</div>
+
+<div class="actions">
+  <button
+    type="button"
+    class="action action--small"
+    [class.action--pressed]="isActionPressed()"
+    (pointerdown)="pressButton($event, 'action')"
+    (pointerup)="releaseButton('action')"
+    (pointercancel)="releaseButton('action')"
+    (lostpointercapture)="releaseButton('action')"
+  >
+    AÇÃO
+  </button>
+  <button
+    type="button"
+    class="action action--jump"
+    [class.action--pressed]="isJumpPressed()"
+    (pointerdown)="pressButton($event, 'jump')"
+    (pointerup)="releaseButton('jump')"
+    (pointercancel)="releaseButton('jump')"
+    (lostpointercapture)="releaseButton('jump')"
+  >
+    PULAR
+  </button>
+</div>

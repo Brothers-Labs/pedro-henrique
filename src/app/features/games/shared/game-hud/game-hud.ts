@@ -86,6 +86,7 @@ export class GameHud {
       conta: 'contas',
       rodada: 'rodadas',
       partida: 'partidas',
+      fase: 'fases',
     };
 
     return this.remaining() === 1 ? unit : plural[unit];

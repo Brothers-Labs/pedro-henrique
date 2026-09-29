@@ -119,6 +119,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-maker',
+    label: 'Pedro Maker',
+    emoji: '🗺️',
+    color: 'blue',
+    /** Cada fase vencida no Pedro Maker conta como um desafio da jornada. */
+    tagline: 'A grande aventura de plataforma: corra, pule e crie fases.',
+    unit: 'fase',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));

@@ -1,0 +1,79 @@
+@let current = result();
+@let prize = reward();
+@let level = adventurer();
+
+<app-celebration-effects [isActive]="true" />
+
+<div class="victory" role="dialog" aria-modal="true" aria-labelledby="vitoria-titulo">
+  @if (prize.worldCompleted) {
+    <p class="victory__trophy" aria-hidden="true">🏆</p>
+  }
+
+  <h2 id="vitoria-titulo" class="victory__title">{{ title() }}</h2>
+
+  <p class="victory__stars" role="img" [attr.aria-label]="prize.stars + ' de 3 estrelas'">
+    @for (isEarned of stars(); track $index) {
+      <span class="victory__star" [class.victory__star--empty]="!isEarned" aria-hidden="true">⭐</span>
+    }
+  </p>
+
+  @if (prize.isNewRecord) {
+    <p class="victory__record">🎉 Novo recorde de tempo!</p>
+  }
+
+  <div class="victory__boards">
+    <dl class="victory__board">
+      <div><dt><span aria-hidden="true">⏱️</span> Tempo</dt><dd>{{ time() }}</dd></div>
+      <div><dt><span aria-hidden="true">🪙</span> Moedas</dt><dd>{{ current.coinsCollected }}/{{ current.coinsTotal }}</dd></div>
+      <div>
+        <dt><span aria-hidden="true">💎</span> Cristais</dt>
+        <dd>
+          @for (isFound of crystals(); track $index) {
+            <span [class.victory__missing]="!isFound" aria-hidden="true">💎</span>
+          } @empty {
+            —
+          }
+          <span class="visually-hidden">{{ foundCrystals() }} encontrados</span>
+        </dd>
+      </div>
+      <div><dt><span aria-hidden="true">👾</span> Inimigos</dt><dd>{{ current.enemiesDefeated }}</dd></div>
+    </dl>
+
+    <dl class="victory__board victory__board--prize">
+      <div><dt>XP</dt><dd>+{{ prize.xpGained }} XP</dd></div>
+      <div><dt>Moedas</dt><dd>+{{ prize.coinsGained }} 🪙</dd></div>
+      @if (prize.missionCompleted) {
+        <div class="victory__mission"><dt>🎯 Missão do dia</dt><dd>Completa!</dd></div>
+      }
+    </dl>
+  </div>
+
+  <div class="victory__level">
+    <span>
+      Nível {{ level.level }}
+      @if (prize.levelAfter > prize.levelBefore) {
+        <strong class="victory__up">— subiu de nível! 🚀</strong>
+      }
+    </span>
+    <div class="victory__bar" aria-hidden="true">
+      <span class="victory__fill" [style.width.%]="isBarFilled() ? level.percentage : 0"></span>
+    </div>
+    <small>{{ level.xpIntoLevel }} / {{ level.xpForLevel }} XP</small>
+  </div>
+
+  @if (prize.unlockedAchievements.length > 0) {
+    <ul class="victory__achievements" aria-label="Conquistas novas">
+      @for (achievement of prize.unlockedAchievements; track achievement.id) {
+        <li><span aria-hidden="true">{{ achievement.emoji }}</span> {{ achievement.title }}</li>
+      }
+    </ul>
+  }
+
+  <div class="victory__actions">
+    @for (action of actions(); track action.id) {
+      <button type="button" class="victory__button" [attr.data-tone]="action.tone" #actionButton (click)="chose.emit(action.id)">
+        <span aria-hidden="true">{{ action.emoji }}</span> {{ action.label }}
+      </button>
+    }
+  </div>
+</div>

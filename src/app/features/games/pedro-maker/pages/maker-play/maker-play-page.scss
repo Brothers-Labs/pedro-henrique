@@ -1,0 +1,37 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+.message {
+  @include maker.sky-scene;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.message__emoji {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.message__title {
+  @include maker.title-text(var(--text-2xl));
+}
+
+.message__text {
+  max-width: 28rem;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: maker.$ink;
+}
+
+.message__button {
+  @include maker.game-button;
+}

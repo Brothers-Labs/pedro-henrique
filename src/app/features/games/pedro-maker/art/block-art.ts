@@ -1,0 +1,558 @@
+import { TILE_SIZE } from '../config/physics.config';
+import type { TerrainType } from '../models/level.model';
+import {
+  circle,
+  createCanvas,
+  context2d,
+  darken,
+  ellipse,
+  fillAndOutline,
+  lighten,
+  OUTLINE,
+  paint,
+  paintStrip,
+  roundedRect,
+  shine,
+  star,
+  textureNoise,
+} from './canvas';
+import type { ThemePalette } from './palettes';
+
+/**
+ * Variações de borda de um bloco de terreno.
+ *
+ * As quatro primeiras têm o topo exposto (grama, neve, areia); as quatro
+ * últimas são o miolo. Em cada grupo: borda à esquerda, nenhuma, à direita e
+ * as duas. É o que deixa o chão com cantos arredondados sem desenhar à mão.
+ */
+export function terrainVariant(isTopExposed: boolean, isLeftExposed: boolean, isRightExposed: boolean): number {
+  const side = isLeftExposed && isRightExposed ? 3 : isLeftExposed ? 0 : isRightExposed ? 2 : 1;
+
+  return (isTopExposed ? 0 : 4) + side;
+}
+
+const VARIANTS_PER_MATERIAL = 8;
+const MATERIALS: readonly TerrainType[] = ['ground', 'stone', 'ice'];
+
+/** Primeiro índice de cada material no tileset. */
+export const TILESET_INDEX: Readonly<Record<TerrainType | 'platform', number>> = {
+  ground: 0,
+  stone: VARIANTS_PER_MATERIAL,
+  ice: VARIANTS_PER_MATERIAL * 2,
+  platform: VARIANTS_PER_MATERIAL * 3,
+};
+
+/** Borda repetida em volta de cada bloco, para a GPU nunca amostrar o vizinho. */
+export const TILESET_MARGIN = 1;
+export const TILESET_SPACING = 2;
+
+/** Tileset do tema: três materiais com oito variações e a plataforma de mão única. */
+export function paintTileset(palette: ThemePalette): HTMLCanvasElement {
+  const stride = TILE_SIZE + TILESET_SPACING;
+  const rows = MATERIALS.length + 1;
+  const canvas = createCanvas(VARIANTS_PER_MATERIAL * stride, rows * stride);
+  const context = context2d(canvas);
+
+  MATERIALS.forEach((material, row) => {
+    for (let variant = 0; variant < VARIANTS_PER_MATERIAL; variant += 1) {
+      const tile = paint(TILE_SIZE, TILE_SIZE, (tileContext) => paintTerrainTile(tileContext, material, variant, palette));
+      placeExtruded(context, tile, variant * stride + TILESET_MARGIN, row * stride + TILESET_MARGIN);
+    }
+  });
+
+  const platform = paint(TILE_SIZE, TILE_SIZE, (tileContext) => paintPlatformTile(tileContext, palette));
+  placeExtruded(context, platform, TILESET_MARGIN, MATERIALS.length * stride + TILESET_MARGIN);
+
+  return canvas;
+}
+
+/** Copia o bloco e repete a última linha de pixels de cada lado para fora. */
+function placeExtruded(context: CanvasRenderingContext2D, tile: HTMLCanvasElement, x: number, y: number): void {
+  const size = TILE_SIZE;
+
+  context.drawImage(tile, x, y);
+  context.drawImage(tile, 0, 0, size, 1, x, y - 1, size, 1);
+  context.drawImage(tile, 0, size - 1, size, 1, x, y + size, size, 1);
+  context.drawImage(tile, 0, 0, 1, size, x - 1, y, 1, size);
+  context.drawImage(tile, size - 1, 0, 1, size, x + size, y, 1, size);
+}
+
+export function paintTerrainTile(
+  context: CanvasRenderingContext2D,
+  material: TerrainType,
+  variant: number,
+  palette: ThemePalette,
+): void {
+  const isTop = variant < 4;
+  const side = variant % 4;
+  const isLeft = side === 0 || side === 3;
+  const isRight = side === 2 || side === 3;
+
+  switch (material) {
+    case 'ground':
+      paintSoil(context, palette, variant);
+      break;
+    case 'stone':
+      paintStone(context, palette);
+      break;
+    case 'ice':
+      paintIce(context);
+      break;
+  }
+
+  if (isTop) {
+    paintTopLayer(context, material, palette);
+  }
+
+  paintEdges(context, isTop, isLeft, isRight);
+}
+
+function paintSoil(context: CanvasRenderingContext2D, palette: ThemePalette, seed: number): void {
+  context.fillStyle = palette.soil;
+  context.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+  const random = textureNoise(seed * 97 + 13);
+  context.fillStyle = palette.soilDark;
+
+  for (let speck = 0; speck < 7; speck += 1) {
+    ellipse(context, 4 + random() * 40, 16 + random() * 28, 2.5 + random() * 2.5, 1.8 + random() * 1.5);
+    context.fill();
+  }
+
+  context.fillStyle = lighten(palette.soil, 0.18);
+
+  for (let speck = 0; speck < 3; speck += 1) {
+    circle(context, 6 + random() * 36, 18 + random() * 26, 1.3);
+    context.fill();
+  }
+}
+
+function paintStone(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  context.fillStyle = palette.stone;
+  context.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+  context.strokeStyle = darken(palette.stone, 0.28);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(0, 24);
+  context.lineTo(48, 24);
+  context.moveTo(24, 0);
+  context.lineTo(24, 24);
+  context.moveTo(10, 24);
+  context.lineTo(10, 48);
+  context.moveTo(36, 24);
+  context.lineTo(36, 48);
+  context.stroke();
+  context.fillStyle = lighten(palette.stone, 0.25);
+  context.fillRect(3, 3, 18, 3);
+  context.fillRect(27, 3, 18, 3);
+  context.fillRect(13, 27, 20, 3);
+}
+
+function paintIce(context: CanvasRenderingContext2D): void {
+  context.fillStyle = '#bfe9ff';
+  context.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+  context.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(8, 40);
+  context.lineTo(22, 26);
+  context.moveTo(26, 42);
+  context.lineTo(40, 28);
+  context.stroke();
+  context.fillStyle = '#8fd0f5';
+  context.fillRect(0, 40, TILE_SIZE, 8);
+}
+
+/** Grama, areia, neve ou musgo: a camada de cima muda com o tema. */
+function paintTopLayer(context: CanvasRenderingContext2D, material: TerrainType, palette: ThemePalette): void {
+  if (material === 'stone') {
+    return;
+  }
+
+  const color = material === 'ice' ? '#ffffff' : palette.surface;
+  const highlight = material === 'ice' ? '#ffffff' : palette.surfaceLight;
+
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(TILE_SIZE, 0);
+  context.lineTo(TILE_SIZE, 12);
+
+  // Borda de baixo em ondinhas, como grama pendendo.
+  for (let bump = 4; bump >= 0; bump -= 1) {
+    const x = bump * 12;
+    context.quadraticCurveTo(x + 6, 19, x, 12);
+  }
+
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = highlight;
+  context.fillRect(0, 3, TILE_SIZE, 3);
+}
+
+function paintEdges(context: CanvasRenderingContext2D, isTop: boolean, isLeft: boolean, isRight: boolean): void {
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 3;
+  context.beginPath();
+
+  if (isTop) {
+    context.moveTo(0, 1.5);
+    context.lineTo(TILE_SIZE, 1.5);
+  }
+
+  if (isLeft) {
+    context.moveTo(1.5, 0);
+    context.lineTo(1.5, TILE_SIZE);
+  }
+
+  if (isRight) {
+    context.moveTo(TILE_SIZE - 1.5, 0);
+    context.lineTo(TILE_SIZE - 1.5, TILE_SIZE);
+  }
+
+  context.stroke();
+}
+
+/** Plataforma de mão única: só a tábua de cima, o resto do bloco é vazio. */
+export function paintPlatformTile(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  const wood = palette.isDark ? palette.stone : '#c98a4b';
+
+  context.fillStyle = darken(wood, 0.3);
+  context.fillRect(10, 14, 5, 12);
+  context.fillRect(33, 14, 5, 12);
+
+  context.fillStyle = wood;
+  context.fillRect(0, 2, TILE_SIZE, 13);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 3;
+  context.strokeRect(0, 1.5, TILE_SIZE, 13);
+  context.fillStyle = lighten(wood, 0.3);
+  context.fillRect(2, 4, TILE_SIZE - 4, 3);
+}
+
+/* Blocos com comportamento --------------------------------------------------- */
+
+export function paintBrick(context: CanvasRenderingContext2D): void {
+  const color = '#d9793e';
+
+  context.fillStyle = color;
+  context.fillRect(0, 0, 48, 48);
+  context.strokeStyle = darken(color, 0.35);
+  context.lineWidth = 2.5;
+  context.beginPath();
+
+  for (const y of [16, 32]) {
+    context.moveTo(0, y);
+    context.lineTo(48, y);
+  }
+
+  for (const [x, y] of [[24, 0], [12, 16], [36, 16], [24, 32]] as const) {
+    context.moveTo(x, y);
+    context.lineTo(x, y + 16);
+  }
+
+  context.stroke();
+  context.fillStyle = lighten(color, 0.3);
+  context.fillRect(3, 3, 18, 3);
+  context.fillRect(27, 3, 18, 3);
+  roundedRect(context, 1.5, 1.5, 45, 45, 4);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 3;
+  context.stroke();
+}
+
+/** Bloco surpresa: dourado com "?" enquanto guarda algo, marrom depois. */
+export function paintSurpriseStrip(): HTMLCanvasElement {
+  return paintStrip(48, 48, 2, (context, frame) => paintSurprise(context, frame === 1));
+}
+
+export function paintSurprise(context: CanvasRenderingContext2D, isUsed = false): void {
+  const color = isUsed ? '#a8784f' : '#ffc629';
+
+  roundedRect(context, 1.5, 1.5, 45, 45, 6);
+  fillAndOutline(context, color, 3);
+  context.fillStyle = isUsed ? darken(color, 0.25) : darken(color, 0.3);
+
+  for (const [x, y] of [[8, 8], [40, 8], [8, 40], [40, 40]] as const) {
+    circle(context, x, y, 2.2);
+    context.fill();
+  }
+
+  if (isUsed) {
+    return;
+  }
+
+  context.font = 'bold 30px "Baloo 2", "Trebuchet MS", sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.lineWidth = 5;
+  context.strokeStyle = OUTLINE;
+  context.strokeText('?', 24, 26);
+  context.fillStyle = '#ffffff';
+  context.fillText('?', 24, 26);
+}
+
+/** Mola: esticada e encolhida. */
+export function paintSpringStrip(): HTMLCanvasElement {
+  return paintStrip(48, 48, 2, (context, frame) => paintSpring(context, frame === 1));
+}
+
+export function paintSpring(context: CanvasRenderingContext2D, isCompressed = false): void {
+  const top = isCompressed ? 26 : 10;
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 5;
+  context.beginPath();
+
+  const coils = 4;
+
+  for (let coil = 0; coil <= coils; coil += 1) {
+    const y = 42 - ((42 - top - 6) * coil) / coils;
+    context.lineTo(coil % 2 === 0 ? 12 : 36, y);
+  }
+
+  context.stroke();
+  context.strokeStyle = '#9aa3b5';
+  context.lineWidth = 2.5;
+  context.stroke();
+
+  roundedRect(context, 6, top, 36, 9, 4);
+  fillAndOutline(context, '#ff5a8a', 3);
+  roundedRect(context, 8, 40, 32, 7, 3);
+  fillAndOutline(context, '#4b4470', 3);
+}
+
+export function paintCrumble(context: CanvasRenderingContext2D): void {
+  const color = '#e3c28a';
+
+  roundedRect(context, 1.5, 1.5, 45, 20, 4);
+  fillAndOutline(context, color, 3);
+  context.strokeStyle = darken(color, 0.35);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(14, 3);
+  context.lineTo(18, 11);
+  context.lineTo(14, 20);
+  context.moveTo(32, 3);
+  context.lineTo(29, 12);
+  context.lineTo(34, 20);
+  context.stroke();
+}
+
+export const MOVING_PLATFORM_WIDTH = 96;
+export const MOVING_PLATFORM_HEIGHT = 24;
+
+export function paintMovingPlatform(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 1.5, 1.5, 93, 21, 8);
+  fillAndOutline(context, '#7b88a8', 3);
+  context.fillStyle = '#ffd23f';
+
+  for (let stripe = 0; stripe < 6; stripe += 1) {
+    context.beginPath();
+    context.moveTo(10 + stripe * 14, 4);
+    context.lineTo(17 + stripe * 14, 4);
+    context.lineTo(12 + stripe * 14, 20);
+    context.lineTo(5 + stripe * 14, 20);
+    context.closePath();
+    context.fill();
+  }
+
+  context.fillStyle = '#ffffff';
+  circle(context, 8, 12, 2);
+  context.fill();
+  circle(context, 88, 12, 2);
+  context.fill();
+}
+
+/** Lava em dois quadros, ondulando. */
+export function paintLavaStrip(): HTMLCanvasElement {
+  return paintStrip(48, 48, 2, (context, frame) => paintLava(context, frame));
+}
+
+export function paintLava(context: CanvasRenderingContext2D, frame = 0): void {
+  const offset = frame * 12;
+  const gradient = context.createLinearGradient(0, 0, 0, 48);
+
+  gradient.addColorStop(0, '#ffd23f');
+  gradient.addColorStop(0.35, '#ff7a2e');
+  gradient.addColorStop(1, '#c2302a');
+  context.fillStyle = gradient;
+  context.beginPath();
+  context.moveTo(0, 48);
+  context.lineTo(0, 10);
+
+  for (let wave = 0; wave < 5; wave += 1) {
+    const x = wave * 12 - offset;
+    context.quadraticCurveTo(x + 6, 2, x + 12, 10);
+  }
+
+  context.lineTo(48, 48);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = 'rgba(255, 245, 200, 0.8)';
+  circle(context, 14 + offset, 26, 3);
+  context.fill();
+  circle(context, 36 - offset / 2, 36, 2);
+  context.fill();
+}
+
+export const TALL_SPRITE_WIDTH = 48;
+export const TALL_SPRITE_HEIGHT = 96;
+
+/** Bandeira do checkpoint: abaixada e cinza, depois erguida e colorida. */
+export function paintCheckpointStrip(): HTMLCanvasElement {
+  return paintStrip(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, 2, (context, frame) => paintCheckpoint(context, frame === 1));
+}
+
+export function paintCheckpoint(context: CanvasRenderingContext2D, isActive = false): void {
+  roundedRect(context, 10, 86, 20, 9, 3);
+  fillAndOutline(context, '#8a8fa8', 3);
+  roundedRect(context, 17, 8, 6, 80, 3);
+  fillAndOutline(context, '#e8eef7', 3);
+  circle(context, 20, 8, 5);
+  fillAndOutline(context, '#ffd23f', 3);
+
+  const flagTop = isActive ? 14 : 58;
+  const flagColor = isActive ? '#ff4f9a' : '#b8bdd0';
+
+  context.beginPath();
+  context.moveTo(23, flagTop);
+  context.lineTo(46, flagTop + 9);
+  context.lineTo(23, flagTop + 20);
+  context.closePath();
+  fillAndOutline(context, flagColor, 3);
+
+  if (isActive) {
+    context.fillStyle = '#ffffff';
+    star(context, 31, flagTop + 10, 4, 1.8);
+    context.fill();
+  }
+}
+
+export function paintDoor(context: CanvasRenderingContext2D): void {
+  const wood = '#9a5f33';
+
+  context.beginPath();
+  context.moveTo(4, 95);
+  context.lineTo(4, 28);
+  context.arc(24, 28, 20, Math.PI, 0);
+  context.lineTo(44, 95);
+  context.closePath();
+  fillAndOutline(context, wood, 3);
+
+  context.strokeStyle = darken(wood, 0.3);
+  context.lineWidth = 2;
+  context.beginPath();
+
+  for (const x of [17, 31]) {
+    context.moveTo(x, 12);
+    context.lineTo(x, 95);
+  }
+
+  context.stroke();
+  context.fillStyle = '#ffd23f';
+  circle(context, 36, 60, 3);
+  context.fill();
+}
+
+/** Porta secreta: dourada, com brilho — difícil de achar, fácil de reconhecer. */
+export function paintSecretDoor(context: CanvasRenderingContext2D): void {
+  const gold = '#ffcf3f';
+
+  context.beginPath();
+  context.moveTo(4, 95);
+  context.lineTo(4, 28);
+  context.arc(24, 28, 20, Math.PI, 0);
+  context.lineTo(44, 95);
+  context.closePath();
+  fillAndOutline(context, gold, 3);
+
+  context.fillStyle = lighten(gold, 0.5);
+  star(context, 24, 36, 11, 5);
+  context.fill();
+  context.fillStyle = OUTLINE;
+  circle(context, 24, 64, 4);
+  context.fill();
+  context.fillRect(22, 64, 4, 10);
+  shine(context, 14, 24, 4, 7);
+}
+
+export const PORTAL_WIDTH = 112;
+export const PORTAL_HEIGHT = 128;
+
+/** Moldura do portal. O redemoinho gira por cima dela, em outra textura. */
+export function paintPortalFrame(context: CanvasRenderingContext2D): void {
+  context.lineWidth = 12;
+  context.strokeStyle = OUTLINE;
+  ellipse(context, 56, 64, 44, 58);
+  context.stroke();
+  context.lineWidth = 7;
+  context.strokeStyle = '#b39cff';
+  context.stroke();
+
+  for (let gem = 0; gem < 6; gem += 1) {
+    const angle = (gem / 6) * Math.PI * 2;
+    const x = 56 + Math.cos(angle) * 44;
+    const y = 64 + Math.sin(angle) * 58;
+    star(context, x, y, 7, 3);
+    fillAndOutline(context, '#ffd23f', 2);
+  }
+}
+
+export const PORTAL_SWIRL_SIZE = 96;
+
+export function paintPortalSwirl(context: CanvasRenderingContext2D): void {
+  const gradient = context.createRadialGradient(48, 48, 4, 48, 48, 46);
+
+  gradient.addColorStop(0, '#ffffff');
+  gradient.addColorStop(0.35, '#9ee8ff');
+  gradient.addColorStop(0.75, '#8a63d9');
+  gradient.addColorStop(1, 'rgba(138, 99, 217, 0)');
+  context.fillStyle = gradient;
+  circle(context, 48, 48, 46);
+  context.fill();
+
+  context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  context.lineWidth = 3;
+
+  for (let arm = 0; arm < 3; arm += 1) {
+    context.beginPath();
+
+    for (let step = 0; step < 30; step += 1) {
+      const angle = (arm * Math.PI * 2) / 3 + step * 0.18;
+      const radius = 4 + step * 1.3;
+      const x = 48 + Math.cos(angle) * radius;
+      const y = 48 + Math.sin(angle) * radius;
+
+      if (step === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    }
+
+    context.stroke();
+  }
+}
+
+export function paintSign(context: CanvasRenderingContext2D): void {
+  const wood = '#c98a4b';
+
+  context.fillStyle = darken(wood, 0.3);
+  context.fillRect(21, 26, 6, 22);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2.5;
+  context.strokeRect(21, 26, 6, 22);
+  roundedRect(context, 4, 6, 40, 24, 4);
+  fillAndOutline(context, wood, 3);
+  context.strokeStyle = darken(wood, 0.3);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(10, 14);
+  context.lineTo(38, 14);
+  context.moveTo(10, 21);
+  context.lineTo(32, 21);
+  context.stroke();
+}

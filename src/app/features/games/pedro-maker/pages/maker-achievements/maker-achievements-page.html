@@ -1,0 +1,54 @@
+@let level = adventurer();
+
+<app-maker-page-frame heading="Conquistas" emoji="🏆">
+  <div class="layout">
+    <ul class="list" aria-label="Lista de conquistas">
+      @for (entry of achievements(); track entry.achievement.id) {
+        <li class="item" [class.item--done]="entry.isUnlocked">
+          <span class="item__emoji" aria-hidden="true">{{ entry.achievement.emoji }}</span>
+          <div class="item__body">
+            <h2 class="item__title">{{ entry.achievement.title }}</h2>
+            <p class="item__description">{{ entry.achievement.description }}</p>
+          </div>
+          @if (entry.isUnlocked) {
+            <span class="item__badge">Concluída! <span aria-hidden="true">✅</span></span>
+          } @else {
+            <div class="item__progress">
+              <div
+                class="item__bar"
+                role="progressbar"
+                aria-valuemin="0"
+                [attr.aria-valuemax]="entry.achievement.goal"
+                [attr.aria-valuenow]="entry.current"
+                [attr.aria-label]="entry.achievement.title"
+              >
+                <span class="item__fill" [style.width.%]="percentage(entry.current, entry.achievement.goal)"></span>
+              </div>
+              <small>{{ entry.current }} / {{ entry.achievement.goal }}</small>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    <aside class="level-card">
+      <p class="level-card__label">Nível</p>
+      <p class="level-card__value">{{ level.level }}</p>
+      <div class="level-card__bar" aria-hidden="true">
+        <span class="level-card__fill" [style.width.%]="level.percentage"></span>
+      </div>
+      <p>{{ level.xpIntoLevel }} / {{ level.xpForLevel }} XP</p>
+      <p class="level-card__count">🏆 {{ unlockedCount() }} de {{ achievements().length }} conquistas</p>
+
+      @if (nextReward(); as reward) {
+        <div class="level-card__reward">
+          <p class="level-card__label">Próxima recompensa</p>
+          <p class="level-card__chest" aria-hidden="true">🎁</p>
+          <p><strong>Nível {{ reward.unlockLevel }}</strong>: {{ reward.label }}</p>
+        </div>
+      } @else {
+        <p class="level-card__reward">Você liberou todo o visual! <span aria-hidden="true">🌟</span></p>
+      }
+    </aside>
+  </div>
+</app-maker-page-frame>

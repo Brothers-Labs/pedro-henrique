@@ -1,0 +1,47 @@
+@let current = settings();
+
+<div class="pause" role="dialog" aria-modal="true" aria-labelledby="pausa-titulo">
+  <h2 id="pausa-titulo" class="pause__title">PAUSADO</h2>
+
+  <div class="pause__actions">
+    <button type="button" class="pause__button" data-tone="green" #firstAction (click)="chosen.emit('continuar')">
+      <span aria-hidden="true">▶</span> Continuar
+    </button>
+    <button type="button" class="pause__button" data-tone="blue" (click)="chosen.emit('recomecar')">
+      <span aria-hidden="true">🔄</span> Recomeçar
+    </button>
+    <button
+      type="button"
+      class="pause__button"
+      data-tone="gray"
+      [attr.aria-expanded]="isShowingSettings()"
+      (click)="toggleSettings()"
+    >
+      <span aria-hidden="true">⚙</span> Configurações
+    </button>
+
+    @if (isShowingSettings()) {
+      <div class="pause__settings">
+        <button type="button" class="pause__toggle" [attr.aria-pressed]="current.sounds" (click)="toggle('sounds')">
+          <span aria-hidden="true">🔊</span> Sons: {{ current.sounds ? 'ligados' : 'desligados' }}
+        </button>
+        <button type="button" class="pause__toggle" [attr.aria-pressed]="current.music" (click)="toggle('music')">
+          <span aria-hidden="true">🎵</span> Música: {{ current.music ? 'ligada' : 'desligada' }}
+        </button>
+        <button type="button" class="pause__toggle" [attr.aria-pressed]="current.vibration" (click)="toggle('vibration')">
+          <span aria-hidden="true">📱</span> Vibração: {{ current.vibration ? 'ligada' : 'desligada' }}
+        </button>
+        <button type="button" class="pause__toggle" [attr.aria-pressed]="current.effects" (click)="toggle('effects')">
+          <span aria-hidden="true">✨</span> Efeitos: {{ current.effects ? 'ligados' : 'desligados' }}
+        </button>
+        <button type="button" class="pause__toggle" [attr.aria-pressed]="isFullscreen()" (click)="fullscreenToggled.emit()">
+          <span aria-hidden="true">⛶</span> Tela cheia: {{ isFullscreen() ? 'ligada' : 'desligada' }}
+        </button>
+      </div>
+    }
+
+    <button type="button" class="pause__button" data-tone="orange" (click)="chosen.emit('sair')">
+      <span aria-hidden="true">🗺</span> {{ exitLabel() }}
+    </button>
+  </div>
+</div>

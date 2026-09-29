@@ -123,8 +123,8 @@
     align-items: center;
     gap: var(--space-1);
 
-    /* Aperto proposital: é o que mantém tudo em uma linha a partir de 1280px. */
-    padding: var(--space-2);
+    /* Aperto proposital: é o que mantém os dez destinos em uma linha a partir de 1280px. */
+    padding: var(--space-2) 0.3rem;
     font-size: var(--text-sm);
     border: 2px solid transparent;
     border-radius: var(--radius-pill);

@@ -1,0 +1,81 @@
+@let world = selectedWorld();
+
+<app-maker-page-frame heading="Mapa da aventura" emoji="🗺️">
+  <ul class="worlds" aria-label="Mundos">
+    @for (card of worlds(); track card.world.id) {
+      <li>
+        <button
+          type="button"
+          class="world"
+          [style.--world-color]="card.world.color"
+          [class.world--selected]="card.world.id === world.id"
+          [attr.aria-pressed]="card.world.id === world.id"
+          [disabled]="!card.isUnlocked"
+          (click)="selectWorld(card)"
+        >
+          <span class="world__emoji" aria-hidden="true">{{ card.isUnlocked ? card.world.emoji : '🔒' }}</span>
+          <span class="world__number">Mundo {{ card.world.id }}</span>
+          <strong class="world__name">{{ card.world.name }}</strong>
+          <span class="world__stars">⭐ {{ card.stars }}/{{ card.maxStars }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <section class="trail" [style.--world-color]="world.color" aria-labelledby="mundo-titulo">
+    <header class="trail__header">
+      <h2 id="mundo-titulo" class="trail__title">
+        <span aria-hidden="true">{{ world.emoji }}</span> Mundo {{ world.id }} — {{ world.name }}
+      </h2>
+      <p class="trail__description">{{ world.description }}</p>
+    </header>
+
+    <ol class="trail__path">
+      @for (node of nodes(); track node.level.id) {
+        @let isSecret = node.level.kind === 'secret';
+        @let isBoss = node.level.kind === 'boss';
+
+        @if (!isSecret || node.isUnlocked) {
+          <li class="trail__stop" [class.trail__stop--secret]="isSecret">
+            @if (node.isUnlocked) {
+              <a
+                class="node"
+                [class.node--done]="node.isCompleted"
+                [class.node--next]="node.isNext"
+                [class.node--boss]="isBoss"
+                [routerLink]="['../jogar', node.level.id]"
+                [attr.aria-label]="'Fase ' + node.level.id + ': ' + node.level.name + (node.isCompleted ? ', ' + node.stars + ' estrelas' : '')"
+              >
+                <span class="node__number">{{ isSecret ? '🌟' : node.level.number }}</span>
+                @if (isBoss) {
+                  <span class="node__badge">CHEFÃO</span>
+                }
+              </a>
+            } @else {
+              <span class="node node--locked" [attr.aria-label]="'Fase ' + node.level.id + ' bloqueada'">
+                <span class="node__number" aria-hidden="true">🔒</span>
+                @if (isBoss) {
+                  <span class="node__badge">CHEFÃO</span>
+                }
+              </span>
+            }
+
+            <span class="trail__name">{{ node.level.id }} · {{ node.level.name }}</span>
+            <span class="trail__stars" aria-hidden="true">
+              @for (isEarned of starsOf(node.stars); track $index) {
+                <span [class.trail__star--empty]="!isEarned">⭐</span>
+              }
+            </span>
+          </li>
+        } @else {
+          <li class="trail__stop trail__stop--secret">
+            <span class="node node--locked node--mystery" aria-label="Fase secreta ainda escondida">
+              <span class="node__number" aria-hidden="true">🔐</span>
+            </span>
+            <span class="trail__name">???</span>
+          </li>
+        }
+      }
+    </ol>
+  </section>
+</app-maker-page-frame>

@@ -1,0 +1,83 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+.status {
+  @include maker.panel(rgb(42 35 80 / 88%));
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding: 0.5rem 0.9rem;
+  color: #ffffff;
+  font-family: var(--font-display);
+}
+
+.status__hero {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.status__avatar {
+  width: 2.6rem;
+  flex: 0 0 auto;
+}
+
+.status__level {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 8rem;
+}
+
+.status__level-label {
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.status__bar {
+  height: 0.75rem;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 20%);
+  overflow: hidden;
+}
+
+.status__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5cd6ff, #4cc94a);
+  transition: width 600ms ease;
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+.status__xp {
+  font-size: var(--text-xs);
+  opacity: 0.85;
+}
+
+.status__counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.status__counter {
+  @include maker.pill;
+
+  font-size: var(--text-md);
+}
+
+.status__max {
+  font-size: 0.75em;
+  opacity: 0.6;
+}

@@ -23,6 +23,7 @@ navegador.
 - [Modo calmo](#modo-calmo)
 - [Movimento (GSAP)](#movimento-gsap)
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
+- [Pedro Maker](#pedro-maker)
 - [Design system](#design-system)
 - [Acessibilidade](#acessibilidade)
 - [Como editar o conteúdo](#como-editar-o-conteúdo)
@@ -68,6 +69,7 @@ navegador.
 | Persistência | IndexedDB (vídeos) e `localStorage` (recados, frases favoritas, idioma, modo calmo) |
 | Voz | Web Speech API (`speechSynthesis`), nativa do navegador |
 | Movimento | GSAP 3.15.0 (core, sem plugins), carregado só no chunk da home |
+| Jogo de plataforma | Phaser 3.90 (física Arcade), carregado só quando uma fase do Pedro Maker abre |
 | Testes | Karma + Jasmine |
 
 Requisitos: **Node.js 20.19+, 22.12+ ou 24+** e npm.
@@ -335,6 +337,33 @@ Todas as regras vivem em `beans-game.logic.ts`, separadas do componente.
 As perguntas ficam em duas categorias — **sobre mim** (8) e **gerais** (16) — e o jogador escolhe
 entre elas ou pede tudo misturado. Cada rodada **sorteia 8 perguntas** do conjunto escolhido, então
 duas partidas seguidas nunca são iguais.
+
+### Pedro Maker
+
+Jogo de plataforma 2D em `/jogos/pedro-maker`: 5 mundos, 50 fases com chefões, uma fase secreta e
+um editor para o Pedro criar as próprias fases. Todo o código fica em
+`src/app/features/games/pedro-maker/`.
+
+| Pasta | O que tem |
+| --- | --- |
+| `models/`, `config/` | Tipos das fases e do progresso; física, regras de XP, moedas, estrelas e conquistas |
+| `levels/` | Campanha (1-1, 1-2, 1-3 e as arenas de chefão desenhadas à mão), gerador com semente e o validador de alcance |
+| `progress/` | Regras puras de estrelas, XP, desbloqueio, missão do dia e visual do personagem |
+| `art/` | Toda a arte, pintada em Canvas 2D — nenhum arquivo de imagem, nenhum traço de outro jogo |
+| `engine/` | O único código que conhece o Phaser: cenas, jogador, inimigos, chefão, blocos e efeitos |
+| `services/` | Progresso (`localStorage`), configurações, áudio sintetizado e fases criadas (IndexedDB) |
+| `components/`, `pages/`, `editor/` | Telas Angular: menu, mapa, HUD, pausa, vitória, editor e afins |
+
+Decisões que valem saber antes de mexer:
+
+- **Uma fase é uma lista de objetos numa grade** (`LevelObject[]`) — campanha, editor e gerador usam o
+  mesmo formato, então o editor testa exatamente o que o motor vai rodar.
+- **Toda fase da campanha é validada por teste**: o validador de alcance simula os pulos com a física do
+  jogo e garante portal e três cristais alcançáveis. Mudou uma fase? `npm test` diz se ela ainda fecha.
+- **O motor é isolado**: o Angular fala com ele só por `launchMakerGame` (eventos de saída e meia dúzia
+  de comandos), cria o jogo fora da zona do Angular e o destrói ao sair da tela.
+- **Nada de dinheiro de verdade**: as moedas são do jogo e só compram visual para o Pedro. Cada fase
+  vencida também conta como desafio na jornada de jogos do site, e é assim que o mascote ganha XP.
 
 ---
 

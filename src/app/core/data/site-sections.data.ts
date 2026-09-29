@@ -59,6 +59,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'mint',
   },
   {
+    id: 'pedro-maker',
+    label: 'Pedro Maker',
+    route: '/jogos/pedro-maker',
+    emoji: '🗺️',
+    description: 'Minha aventura de plataforma: corro, pulo, pego cristais e crio as minhas fases.',
+    color: 'blue',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',

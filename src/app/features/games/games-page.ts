@@ -10,6 +10,7 @@ import { EnglishGame } from './english-game/english-game';
 import { IqGame } from './iq-game/iq-game';
 import { MathGame } from './math-game/math-game';
 import { MemoryGame } from './memory-game/memory-game';
+import { MakerLauncherCard } from './pedro-maker/components/maker-launcher-card/maker-launcher-card';
 import { PetCelebrations } from '../pet/pet-celebrations/pet-celebrations';
 import { PetCompanion } from '../pet/pet-companion/pet-companion';
 import { PetSummaryCard } from '../pet/pet-summary-card/pet-summary-card';
@@ -49,6 +50,7 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
     EnglishGame,
     MathGame,
     IqGame,
+    MakerLauncherCard,
   ],
   templateUrl: './games-page.html',
   styleUrl: './games-page.scss',

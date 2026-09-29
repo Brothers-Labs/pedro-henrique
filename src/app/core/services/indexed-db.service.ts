@@ -2,13 +2,17 @@ import { Injectable } from '@angular/core';
 
 export const VIDEO_STORE = 'videos';
 export const DRAWING_STORE = 'drawings';
+export const MAKER_LEVEL_STORE = 'maker-levels';
 
 const DATABASE_NAME = 'pedro-henrique-site';
 
-/** Versão 2 acrescentou a prancheta de desenho ao banco dos vídeos. */
-const DATABASE_VERSION = 2;
+/**
+ * Versão 2 acrescentou a prancheta de desenho ao banco dos vídeos; a versão 3,
+ * as fases criadas no editor do Pedro Maker.
+ */
+const DATABASE_VERSION = 3;
 
-const STORES: readonly string[] = [VIDEO_STORE, DRAWING_STORE];
+const STORES: readonly string[] = [VIDEO_STORE, DRAWING_STORE, MAKER_LEVEL_STORE];
 
 /**
  * Wrapper mínimo e tipado sobre a IndexedDB nativa.
@@ -56,8 +60,8 @@ export class IndexedDbService {
       /**
        * Cria apenas o que falta.
        *
-       * Quem já tinha a versão 1 ganha a coleção de desenhos sem perder
-       * nenhum vídeo: a migração é aditiva de propósito.
+       * Quem já tinha uma versão anterior ganha só as coleções novas, sem
+       * perder nenhum vídeo nem desenho: a migração é aditiva de propósito.
        */
       request.onupgradeneeded = () => {
         const database = request.result;

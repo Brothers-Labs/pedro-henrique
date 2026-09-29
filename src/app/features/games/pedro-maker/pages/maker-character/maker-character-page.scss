@@ -1,0 +1,145 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+.layout {
+  display: grid;
+  gap: 1rem;
+
+  @include from($breakpoint-lg) {
+    grid-template-columns: 12rem minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+}
+
+.categories {
+  @include snap-row(0.4rem);
+
+  @include from($breakpoint-lg) {
+    display: grid;
+  }
+}
+
+.category {
+  @include touch-target;
+
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-decoration: none;
+
+  &--active {
+    background: #3fa3f5;
+    color: #ffffff;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.stage {
+  @include maker.panel(linear-gradient(180deg, #8fd6ff, #d9f2ff));
+
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1rem;
+}
+
+.stage__pedro {
+  width: min(12rem, 60%);
+}
+
+.stage__pet {
+  position: absolute;
+  top: 38%;
+  right: 12%;
+  font-size: 3rem;
+}
+
+.stage__base {
+  width: 70%;
+  height: 1.2rem;
+  margin-top: -1.2rem;
+  border-radius: 50%;
+  background: rgb(42 35 80 / 25%);
+}
+
+.stage__action {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-display);
+  text-align: center;
+}
+
+.stage__button {
+  @include maker.game-button;
+}
+
+.stage__tag {
+  @include maker.pill;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  @include maker.panel;
+
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.7rem 0.5rem;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  cursor: pointer;
+
+  &--selected {
+    outline: 4px solid #ffcf3f;
+    outline-offset: 2px;
+  }
+
+  &--equipped {
+    background: #d3f7ea;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.option__swatch {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid maker.$ink;
+  border-radius: 50%;
+}
+
+.option__label {
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.option__state {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #4b4470;
+}

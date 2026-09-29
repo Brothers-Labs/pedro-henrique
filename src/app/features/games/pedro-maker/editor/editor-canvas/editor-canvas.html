@@ -1,0 +1,17 @@
+<canvas #canvas class="canvas"></canvas>
+
+<div
+  #viewport
+  class="viewport"
+  [attr.data-tool]="tool()"
+  role="application"
+  aria-label="Grade da fase. Toque para colocar a peça escolhida."
+  (scroll)="onScroll()"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointercancel)="onPointerUp($event)"
+  (pointerleave)="onPointerLeave()"
+>
+  <div class="spacer" [style.width.px]="contentWidth()" [style.height.px]="contentHeight()"></div>
+</div>
