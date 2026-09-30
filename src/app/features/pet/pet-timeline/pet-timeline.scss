@@ -7,6 +7,21 @@
  * posicionado: assim ele acompanha qualquer altura de texto sem cálculo.
  */
 .timeline {
+  /** Primeira visita, ou save sem memórias: a página não pode ficar muda. */
+  &__empty {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 3px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    font-size: var(--text-sm);
+    color: var(--text-body);
+  }
+}
+
+.timeline {
   display: flex;
   flex-direction: column;
   padding: 0;

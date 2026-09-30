@@ -74,6 +74,16 @@
     @include pet-chip(var(--surface-card));
   }
 
+  /** A fala do tipo escolhido: o dragão fala como dragão, o robô como robô. */
+  &__greeting {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-style: italic;
+    color: var(--text-body);
+  }
+
   /* Troca de nome: mesmo campo grande da escolha inicial, em versão curta. */
   &__rename {
     display: flex;
