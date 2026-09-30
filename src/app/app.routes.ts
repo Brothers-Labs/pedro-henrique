@@ -54,6 +54,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ideas/ideas-page').then((m) => m.IdeasPage),
   },
   {
+    path: 'jogos/pedro-maker',
+    data: {
+      description:
+        'Pedro Maker: a grande aventura de plataforma do Pedro Henrique. Corra, pule, pegue cristais, vença chefões e crie as suas próprias fases.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-maker/pedro-maker.routes').then((m) => m.PEDRO_MAKER_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

@@ -1,0 +1,71 @@
+@let next = nextLevel();
+@let today = mission();
+@let friend = companion();
+
+<app-maker-page-frame backLink="/jogos" backLabel="Jogos">
+  <div class="home">
+    <section class="home__intro" aria-labelledby="pedro-maker-titulo">
+      <h1 id="pedro-maker-titulo" class="logo">
+        <span class="logo__top">PEDRO</span>
+        <span class="logo__bottom">MAKER</span>
+        <span class="logo__ribbon">A grande aventura</span>
+      </h1>
+      <p class="home__tagline">Uma aventura criada por você!</p>
+      <p class="home__motto">Crie. Jogue. Explore. Evolua.</p>
+
+      <nav class="menu" aria-label="Menu do Pedro Maker">
+        @for (entry of menu(); track entry.label) {
+          <a
+            class="menu__button"
+            [attr.data-tone]="entry.tone"
+            [routerLink]="entry.route"
+            [queryParams]="entry.queryParams ?? null"
+          >
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </a>
+        }
+      </nav>
+    </section>
+
+    <section class="home__scene" aria-label="O Pedro e o companheiro dele">
+      <span class="scene__cloud scene__cloud--one" aria-hidden="true"></span>
+      <span class="scene__cloud scene__cloud--two" aria-hidden="true"></span>
+      <span class="scene__coin" aria-hidden="true">🪙</span>
+      <span class="scene__star" aria-hidden="true">⭐</span>
+
+      <div class="scene__hero">
+        <app-pedro-figure class="scene__pedro" [look]="look()" />
+        <span class="scene__pet" role="img" [attr.aria-label]="'O companheiro ' + friend.name">{{ friend.emoji }}</span>
+      </div>
+      <span class="scene__ground" aria-hidden="true"></span>
+
+      <a class="continue" [routerLink]="['jogar', next.id]">
+        <span class="continue__label">Continuar</span>
+        <strong>{{ next.id }} · {{ next.name }}</strong>
+      </a>
+    </section>
+
+    <section class="cards" aria-label="Seu progresso">
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🗺️</span> Fases concluídas</h2>
+        <p class="card__value">{{ completedCount() }} <small>/ {{ totalLevels }}</small></p>
+      </article>
+
+      <article class="card" [class.card--done]="today.rewardClaimed">
+        <h2 class="card__title"><span aria-hidden="true">🎯</span> Missão do dia</h2>
+        <p class="card__text">{{ missionTitle }}</p>
+        @if (today.rewardClaimed) {
+          <p class="card__value">Completa! <span aria-hidden="true">✅</span></p>
+        } @else {
+          <p class="card__value">{{ today.levelsCompleted }} <small>/ {{ missionGoal }}</small></p>
+          <p class="card__hint">Recompensa: {{ missionReward }}</p>
+        }
+      </article>
+
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">{{ friend.emoji }}</span> {{ friend.name }}</h2>
+        <p class="card__text">Seu companheiro vai junto em todas as fases e avisa quando tem cristal por perto!</p>
+      </article>
+    </section>
+  </div>
+</app-maker-page-frame>

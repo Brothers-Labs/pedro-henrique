@@ -3,7 +3,6 @@ import {
   PET_ACHIEVEMENTS,
   PET_CONFIG,
   PET_EVOLUTION_STAGES,
-  PET_XP,
   petAccessory,
   petInteraction,
   petType,
@@ -328,11 +327,6 @@ export function achievementProgressOf(
 /** Todas as conquistas com o progresso atual, na ordem do catálogo. */
 export function achievementsProgressOf(pet: Pet): readonly PetAchievementProgress[] {
   return PET_ACHIEVEMENTS.map((achievement) => achievementProgressOf(pet, achievement));
-}
-
-/** XP de uma origem, para quem concede não precisar conhecer a tabela. */
-export function grantFor(source: keyof typeof PET_XP): PetXpGrant {
-  return { source, amount: PET_XP[source] };
 }
 
 /**

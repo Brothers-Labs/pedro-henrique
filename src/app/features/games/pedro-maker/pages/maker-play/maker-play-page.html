@@ -1,0 +1,56 @@
+@switch (status()) {
+  @case ('ready') {
+    @if (blueprint(); as level) {
+      @for (key of runKeys(); track key) {
+        <app-maker-game-host
+          [blueprint]="level"
+          [label]="label()"
+          [exitLabel]="exitLabel"
+          (completed)="onCompleted($event)"
+          (exited)="exit()"
+          (secretFound)="onSecretFound()"
+        />
+      }
+    }
+  }
+
+  @case ('loading') {
+    <div class="message" role="status">
+      <p class="message__emoji" aria-hidden="true">🚀</p>
+      <p class="message__title">Abrindo a fase…</p>
+    </div>
+  }
+
+  @case ('locked') {
+    <div class="message" role="alert">
+      <p class="message__emoji" aria-hidden="true">🔒</p>
+      <h1 class="message__title">Essa fase ainda está trancada</h1>
+      <p class="message__text">Termine a fase anterior no mapa para abrir esta.</p>
+      <a class="message__button" routerLink="/jogos/pedro-maker/mapa">🗺 Ir para o mapa</a>
+    </div>
+  }
+
+  @case ('not-found') {
+    <div class="message" role="alert">
+      <p class="message__emoji" aria-hidden="true">🧭</p>
+      <h1 class="message__title">Não encontramos essa fase</h1>
+      <p class="message__text">Ela pode ter sido apagada ou o endereço está diferente.</p>
+      <a class="message__button" routerLink="/jogos/pedro-maker">🏠 Voltar ao Pedro Maker</a>
+    </div>
+  }
+
+  @case ('error') {
+    <div class="message" role="alert">
+      <p class="message__emoji" aria-hidden="true">🧰</p>
+      <h1 class="message__title">Ops! Essa fase não abriu</h1>
+      <p class="message__text">Tente de novo daqui a pouquinho.</p>
+      <a class="message__button" routerLink="/jogos/pedro-maker">🏠 Voltar ao Pedro Maker</a>
+    </div>
+  }
+}
+
+@if (victory(); as won) {
+  <app-maker-victory [result]="won.result" [reward]="won.reward" [actions]="won.actions" (chose)="onVictoryChoice($event)" />
+}
+
+<app-maker-achievement-toast />

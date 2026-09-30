@@ -1,0 +1,72 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+:host {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(20 15 45 / 60%);
+  backdrop-filter: blur(3px);
+  overflow-y: auto;
+}
+
+.pause {
+  @include maker.panel;
+
+  display: grid;
+  gap: 1rem;
+  width: min(24rem, 100%);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.pause__title {
+  @include maker.title-text(var(--text-2xl));
+}
+
+.pause__actions {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.pause__button {
+  @include maker.game-button;
+
+  & {
+    width: 100%;
+  }
+}
+
+.pause__settings {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 3px dashed rgb(42 35 80 / 30%);
+  border-radius: 1rem;
+}
+
+.pause__toggle {
+  @include touch-target;
+
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  background: #ffffff;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: left;
+
+  &[aria-pressed='true'] {
+    background: #d3f7ea;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

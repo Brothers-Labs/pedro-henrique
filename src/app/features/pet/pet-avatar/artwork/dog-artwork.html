@@ -10,7 +10,8 @@
   <ellipse class="art__shadow" cx="60" cy="112" rx="25" ry="5" />
 
   <g [attr.transform]="scaleTransform()">
-    <path class="art__line" [attr.d]="look.tail" stroke-width="9" />
+    <path class="art__limb-outline" [attr.d]="look.tail" stroke-width="14" />
+    <path class="art__limb" [attr.d]="look.tail" stroke-width="8" />
 
     <rect class="art__shape" x="46" y="92" width="11" height="16" rx="5.5" />
     <rect class="art__shape" x="68" y="92" width="11" height="16" rx="5.5" />
@@ -27,12 +28,17 @@
       }
     }
 
+    <!-- Orelha por fora com a cor do corpo e por dentro com o tom claro. -->
     @if (look.ears === 'caidas') {
-      <ellipse class="art__soft" cx="32" cy="54" rx="9" ry="15" transform="rotate(-12 32 54)" />
-      <ellipse class="art__soft" cx="80" cy="54" rx="9" ry="15" transform="rotate(12 80 54)" />
+      <ellipse class="art__shape" cx="32" cy="54" rx="9" ry="15" transform="rotate(-12 32 54)" />
+      <ellipse class="art__soft" cx="32" cy="55" rx="4" ry="8" transform="rotate(-12 32 55)" />
+      <ellipse class="art__shape" cx="80" cy="54" rx="9" ry="15" transform="rotate(12 80 54)" />
+      <ellipse class="art__soft" cx="80" cy="55" rx="4" ry="8" transform="rotate(12 80 55)" />
     } @else {
-      <path class="art__soft" d="M38 30 l-6 -18 l17 10 z" />
-      <path class="art__soft" d="M74 30 l6 -18 l-17 10 z" />
+      <path class="art__shape" d="M38 30 l-6 -18 l17 10 z" />
+      <path class="art__soft" d="M38 26 l-3 -9 l8 5 z" />
+      <path class="art__shape" d="M74 30 l6 -18 l-17 10 z" />
+      <path class="art__soft" d="M74 26 l3 -9 l-8 5 z" />
     }
 
     <circle class="art__shape" cx="56" cy="46" [attr.r]="look.headRadius" />

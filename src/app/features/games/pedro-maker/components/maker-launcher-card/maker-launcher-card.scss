@@ -1,0 +1,89 @@
+@use 'mixins' as *;
+
+.launcher {
+  @include card-surface;
+
+  display: grid;
+  overflow: hidden;
+
+  @include from($breakpoint-md) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  }
+}
+
+.launcher__art {
+  position: relative;
+  min-height: 12rem;
+  background: linear-gradient(180deg, #6ec3ff 0%, #d9f2ff 100%);
+}
+
+.launcher__cloud {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  width: 5rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 1.2rem -0.7rem 0 0.1rem #ffffff;
+}
+
+.launcher__hero,
+.launcher__coin,
+.launcher__crystal {
+  position: absolute;
+  font-size: 2.6rem;
+}
+
+.launcher__hero {
+  bottom: 22%;
+  left: 40%;
+  font-size: 3.6rem;
+}
+
+.launcher__coin {
+  top: 35%;
+  left: 18%;
+}
+
+.launcher__crystal {
+  top: 22%;
+  right: 16%;
+}
+
+.launcher__ground {
+  position: absolute;
+  inset: auto 0 0;
+  height: 24%;
+  border-top: 3px solid var(--border-strong);
+  background: linear-gradient(180deg, #4fc24d 0 25%, #c07f47 25%);
+}
+
+.launcher__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.launcher__title {
+  font-size: var(--text-2xl);
+  color: var(--color-blue);
+}
+
+.launcher__subtitle {
+  font-weight: 700;
+}
+
+.launcher__features {
+  display: grid;
+  gap: var(--space-1);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.launcher__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

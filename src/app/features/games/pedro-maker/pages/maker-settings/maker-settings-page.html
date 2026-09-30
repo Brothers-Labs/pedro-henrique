@@ -1,0 +1,88 @@
+@let current = settings();
+
+<app-maker-page-frame heading="Configurações" emoji="⚙️">
+  <div class="sections">
+    <section class="section" aria-labelledby="som-titulo">
+      <h2 id="som-titulo" class="section__title">Som e efeitos</h2>
+      <div class="toggles">
+        @for (option of toggles; track option.id) {
+          <button
+            type="button"
+            class="toggle"
+            role="switch"
+            [attr.aria-checked]="current[option.id]"
+            (click)="toggle(option.id)"
+          >
+            <span class="toggle__emoji" aria-hidden="true">{{ option.emoji }}</span>
+            <span class="toggle__label">{{ option.label }}</span>
+            <span class="toggle__state">{{ current[option.id] ? 'Ligado' : 'Desligado' }}</span>
+          </button>
+        }
+      </div>
+      <p class="section__hint">
+        O modo calmo do site também deixa o jogo em silêncio e sem tremidas.
+      </p>
+    </section>
+
+    <section class="section" aria-labelledby="dificuldade-titulo">
+      <h2 id="dificuldade-titulo" class="section__title">Dificuldade</h2>
+      <div class="choices" role="radiogroup" aria-labelledby="dificuldade-titulo">
+        @for (option of difficulties; track option.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.difficulty === option.id"
+            (click)="chooseDifficulty(option.id)"
+          >
+            <span class="choice__emoji" aria-hidden="true">{{ option.emoji }}</span>
+            <strong>{{ option.label }}</strong>
+            <small>{{ option.description }}</small>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="controles-titulo">
+      <h2 id="controles-titulo" class="section__title"><span aria-hidden="true">🎮</span> Controles</h2>
+      <p class="section__label">Botões na tela durante a fase:</p>
+      <div class="choices choices--compact" role="radiogroup" aria-label="Botões de toque">
+        @for (mode of touchModes; track mode.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.touchControls === mode.id"
+            (click)="chooseTouchMode(mode.id)"
+          >
+            {{ mode.label }}
+          </button>
+        }
+      </div>
+
+      <table class="keys">
+        <caption class="section__label">No teclado:</caption>
+        <tbody>
+          @for (entry of keyboard; track entry.keys) {
+            <tr>
+              <th scope="row"><kbd>{{ entry.keys }}</kbd></th>
+              <td>{{ entry.action }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="section__hint">A tela cheia fica no menu de pausa (⏸) durante a fase.</p>
+    </section>
+
+    <section class="section" aria-labelledby="sincronizar-titulo">
+      <h2 id="sincronizar-titulo" class="section__title"><span aria-hidden="true">☁️</span> Fases em outros aparelhos</h2>
+      <app-maker-sync-panel />
+    </section>
+
+    <section class="section section--danger" aria-labelledby="recomecar-titulo">
+      <h2 id="recomecar-titulo" class="section__title">Recomeçar a aventura</h2>
+      <p>Zera fases, estrelas, moedas e conquistas do Pedro Maker. As fases que você criou continuam salvas.</p>
+      <button type="button" class="danger" data-tone="red" (click)="resetAdventure()">Recomeçar do zero</button>
+    </section>
+  </div>
+</app-maker-page-frame>

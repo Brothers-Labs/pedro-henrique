@@ -31,19 +31,51 @@ svg {
     stroke-linecap: round;
   }
 
-  /** Partes claras: barriga, asas por dentro, painéis. */
+  /**
+   * Partes claras: barriga, asas por dentro, painéis.
+   *
+   * É o tom claro misturado com branco, e não o tom claro puro, porque o
+   * cartão do mascote usa exatamente `--tone-soft` como fundo — sem a mistura,
+   * a barriga e as asas sumiriam dentro dele.
+   */
   &__soft {
-    fill: var(--tone-soft);
+    fill: color-mix(in srgb, var(--tone-soft) 55%, #ffffff);
     stroke: var(--art-outline);
     stroke-width: 3;
     stroke-linejoin: round;
     stroke-linecap: round;
   }
 
+  /**
+   * Traço de detalhe: boca, nervura da asa, antena.
+   *
+   * A espessura vem sempre do atributo `stroke-width` de cada traço, e não
+   * daqui: declarar um valor nesta classe venceria o atributo e deixaria todos
+   * os traços com a mesma grossura.
+   */
   &__line {
     fill: none;
     stroke: var(--art-outline);
-    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /**
+   * Membros — cauda, bracinhos.
+   *
+   * São dois traços sobre a mesma curva: o escuro por baixo faz o contorno e o
+   * colorido por cima faz o corpo. É o que impede a cauda de parecer um arame.
+   */
+  &__limb-outline {
+    fill: none;
+    stroke: var(--art-outline);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &__limb {
+    fill: none;
+    stroke: var(--tone);
     stroke-linecap: round;
     stroke-linejoin: round;
   }

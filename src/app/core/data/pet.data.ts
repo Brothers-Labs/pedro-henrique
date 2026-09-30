@@ -2,7 +2,6 @@ import type {
   PetAccessory,
   PetAccessoryId,
   PetAchievement,
-  PetAchievementId,
   PetInteraction,
   PetInteractionId,
   PetStage,
@@ -62,17 +61,6 @@ export const PET_XP: Readonly<Record<PetXpSource, number>> = {
   conquista: 100,
 };
 
-/** Texto curto que explica a origem do XP, usado nos avisos. */
-export const PET_XP_LABELS: Readonly<Record<PetXpSource, string>> = {
-  'boas-vindas': 'começo da aventura',
-  atividade: 'desafio concluído',
-  acerto: 'resposta certa',
-  'dez-atividades': 'dez desafios concluídos',
-  'nivel-de-jogo': 'nível novo no jogo',
-  'meta-diaria': 'primeira atividade do dia',
-  conquista: 'conquista especial',
-};
-
 /**
  * Estágios de evolução.
  *
@@ -130,8 +118,8 @@ export const PET_TYPES: readonly PetType[] = [
       comfort: 'Dragão nenhum acerta de primeira. Bora de novo!',
     },
     stageLooks: {
-      bebe: 'Filhote fofo, ainda sem asas.',
-      jovem: 'Ganhou asas pequenas e um chifre.',
+      bebe: 'Filhote fofo, de crista pequena e ainda sem asas.',
+      jovem: 'Ganhou asas pequenas e dois chifres.',
       adulto: 'Dragão completo, de asas grandes.',
       lendario: 'Dragão mágico, cercado de brilho.',
     },
@@ -168,8 +156,8 @@ export const PET_TYPES: readonly PetType[] = [
       comfort: 'Dinossauro nunca desiste. Tenta mais uma!',
     },
     stageLooks: {
-      bebe: 'Filhote pequenininho, de rabo curto.',
-      jovem: 'Jovem aventureiro, de patas firmes.',
+      bebe: 'Filhote redondinho, de rabo curto.',
+      jovem: 'Jovem aventureiro, com bracinhos e dentinhos.',
       adulto: 'Dinossauro forte, com placas nas costas.',
       lendario: 'Versão épica, com espinhos brilhantes.',
     },
@@ -398,9 +386,6 @@ export const PET_STREAK_MESSAGES: readonly string[] = [
 const TYPES_BY_ID = new Map(PET_TYPES.map((type) => [type.id, type]));
 const STAGES_BY_ID = new Map(PET_EVOLUTION_STAGES.map((stage) => [stage.id, stage]));
 const ACCESSORIES_BY_ID = new Map(PET_ACCESSORIES.map((accessory) => [accessory.id, accessory]));
-const ACHIEVEMENTS_BY_ID = new Map(
-  PET_ACHIEVEMENTS.map((achievement) => [achievement.id, achievement]),
-);
 const INTERACTIONS_BY_ID = new Map(
   PET_INTERACTIONS.map((interaction) => [interaction.id, interaction]),
 );
@@ -436,16 +421,6 @@ export function petAccessory(id: PetAccessoryId): PetAccessory {
   }
 
   return accessory;
-}
-
-export function petAchievement(id: PetAchievementId): PetAchievement {
-  const achievement = ACHIEVEMENTS_BY_ID.get(id);
-
-  if (!achievement) {
-    throw new Error(`Conquista "${id}" não existe no catálogo.`);
-  }
-
-  return achievement;
 }
 
 export function petInteraction(id: PetInteractionId): PetInteraction {

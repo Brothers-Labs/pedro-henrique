@@ -30,14 +30,10 @@ import {
   createPet,
   dayKey,
   equipAccessory,
-  evolutionPreview,
-  levelPercentage,
   PET_SCHEMA_VERSION,
   renamePet,
   stageFor,
   withActivity,
-  xpForLevel,
-  xpToNextLevel,
 } from '../pet/pet-progress';
 
 const STORAGE_KEY = `pedro-henrique:pet:v${PET_SCHEMA_VERSION}`;
@@ -74,8 +70,6 @@ export class PetService {
 
   private readonly lastGain = signal<PetXpGrant | null>(null);
 
-  readonly collection = this.state.asReadonly();
-
   /** Mascote ativo, ou `null` enquanto a criança ainda não escolheu. */
   readonly pet = computed<Pet | null>(() => {
     const { activeType, pets } = this.state();
@@ -96,30 +90,6 @@ export class PetService {
     const pet = this.pet();
 
     return pet ? stageFor(pet.level) : null;
-  });
-
-  readonly levelPercentage = computed(() => {
-    const pet = this.pet();
-
-    return pet ? levelPercentage(pet) : 0;
-  });
-
-  readonly xpRemaining = computed(() => {
-    const pet = this.pet();
-
-    return pet ? xpToNextLevel(pet) : 0;
-  });
-
-  readonly xpForCurrentLevel = computed(() => {
-    const pet = this.pet();
-
-    return pet ? xpForLevel(pet.level) : 0;
-  });
-
-  readonly evolution = computed(() => {
-    const pet = this.pet();
-
-    return pet ? evolutionPreview(pet) : null;
   });
 
   readonly achievements = computed(() => {

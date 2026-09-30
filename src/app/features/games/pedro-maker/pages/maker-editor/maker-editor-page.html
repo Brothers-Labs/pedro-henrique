@@ -1,0 +1,176 @@
+@let current = level();
+
+<div class="editor">
+  <header class="toolbar">
+    <h1 class="toolbar__title"><span aria-hidden="true">🛠️</span> Criar minha fase</h1>
+
+    <label class="toolbar__field">
+      <span class="visually-hidden">Nome da fase</span>
+      <input
+        class="toolbar__input"
+        type="text"
+        maxlength="40"
+        [value]="current.name"
+        (change)="rename($event)"
+        placeholder="Nome da fase"
+      />
+    </label>
+
+    <label class="toolbar__field">
+      <span class="visually-hidden">Tema da fase</span>
+      <select class="toolbar__input" [value]="current.theme" (change)="changeTheme($event)">
+        @for (theme of themes; track theme.id) {
+          <option [value]="theme.id" [selected]="theme.id === current.theme">{{ theme.emoji }} {{ theme.label }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="toolbar__group" role="group" aria-label="Ferramentas">
+      @for (option of tools; track option.id) {
+        <button
+          type="button"
+          class="tool"
+          [class.tool--active]="tool() === option.id"
+          [attr.aria-pressed]="tool() === option.id"
+          (click)="chooseTool(option.id)"
+        >
+          <span aria-hidden="true">{{ option.emoji }}</span>
+          <span class="tool__label">{{ option.label }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="toolbar__group" role="group" aria-label="Histórico e tamanho">
+      <button type="button" class="tool" [disabled]="!canUndo()" (click)="undo()" aria-label="Desfazer">↶</button>
+      <button type="button" class="tool" [disabled]="!canRedo()" (click)="redo()" aria-label="Refazer">↷</button>
+      <button type="button" class="tool" (click)="changeZoom(-1)" aria-label="Diminuir zoom">−</button>
+      <span class="toolbar__value" aria-live="polite">{{ zoom() * 100 }}%</span>
+      <button type="button" class="tool" (click)="changeZoom(1)" aria-label="Aumentar zoom">+</button>
+      <button type="button" class="tool" (click)="changeWidth(-1)" aria-label="Fase mais curta">⇤</button>
+      <span class="toolbar__value">{{ current.width }} col.</span>
+      <button type="button" class="tool" (click)="changeWidth(1)" aria-label="Fase mais longa">⇥</button>
+    </div>
+
+    <div class="toolbar__group toolbar__group--main">
+      <button type="button" class="main-button" data-tone="purple" (click)="surprise()">
+        <span aria-hidden="true">🎲</span> Fase surpresa
+      </button>
+      <button type="button" class="main-button" data-tone="green" (click)="test()">
+        <span aria-hidden="true">▶</span> Testar
+      </button>
+      <button type="button" class="main-button" data-tone="blue" [disabled]="isSaving()" (click)="save()">
+        <span aria-hidden="true">💾</span> Salvar
+      </button>
+      <button type="button" class="main-button" data-tone="gray" (click)="exit()">
+        <span aria-hidden="true">✕</span> Sair
+      </button>
+    </div>
+  </header>
+
+  <aside class="palette" aria-label="Peças">
+    <div class="palette__categories" role="tablist" aria-label="Categorias de peças">
+      @for (entry of categories; track entry.id) {
+        <button
+          type="button"
+          role="tab"
+          class="category"
+          [class.category--active]="category() === entry.id"
+          [attr.aria-selected]="category() === entry.id"
+          (click)="chooseCategory(entry.id)"
+        >
+          <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+        </button>
+      }
+    </div>
+
+    <div class="palette__pieces" role="tabpanel">
+      @for (entry of palette(); track entry.piece.id) {
+        <button
+          type="button"
+          class="piece"
+          [class.piece--active]="piece().id === entry.piece.id"
+          [attr.aria-pressed]="piece().id === entry.piece.id"
+          (pointerdown)="startPaletteDrag($event, entry.piece)"
+          (pointermove)="movePaletteDrag($event)"
+          (pointerup)="endPaletteDrag($event)"
+          (keydown.enter)="choosePiece(entry.piece)"
+          (keydown.space)="choosePiece(entry.piece)"
+        >
+          <img class="piece__icon" [src]="entry.icon" alt="" width="48" height="48" draggable="false" />
+          <span class="piece__label">{{ entry.piece.label }}</span>
+        </button>
+      }
+    </div>
+
+    @if (selectedObject()) {
+      <div class="selection">
+        <span>Selecionado: <strong>{{ selectedLabel() }}</strong></span>
+        <button type="button" class="tool" (click)="removeSelected()">🗑️ Apagar</button>
+      </div>
+    }
+
+    <p class="palette__help">
+      Toque numa peça e depois na grade — ou arraste a peça direto para a grade.
+    </p>
+  </aside>
+
+  <app-editor-canvas
+    class="grid"
+    [level]="current"
+    [zoom]="zoom()"
+    [tool]="tool()"
+    [selected]="selected()"
+    [ghost]="ghost()"
+    (cellPointer)="onCellPointer($event)"
+  />
+
+  @if (problems().length > 0) {
+    <div class="problems" role="alert">
+      <strong>Falta pouco para testar:</strong>
+      <ul>
+        @for (problem of problems(); track problem) {
+          <li>{{ problem }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (notice(); as message) {
+    <p class="notice" role="status">{{ message }}</p>
+  }
+</div>
+
+@if (mode() === 'testar') {
+  @if (testBlueprint(); as blueprint) {
+    <app-maker-game-host
+      [blueprint]="blueprint"
+      label="TESTANDO"
+      exitLabel="Voltar ao editor"
+      (completed)="onTestCompleted($event)"
+      (exited)="backToEditor()"
+    />
+  }
+}
+
+@if (mode() === 'resultado') {
+  <div class="result">
+    <div class="result__card" role="dialog" aria-modal="true" aria-labelledby="teste-titulo">
+      <p class="result__emoji" aria-hidden="true">🎉</p>
+      <h2 id="teste-titulo" class="result__title">FASE CONCLUÍDA!</h2>
+      <p class="result__text">Sua fase funciona! Dá para chegar até o fim.</p>
+      <p class="result__stars" role="img" [attr.aria-label]="testStars() + ' de 3 estrelas'">
+        @for (position of [1, 2, 3]; track position) {
+          <span [class.result__star--empty]="position > testStars()" aria-hidden="true">⭐</span>
+        }
+      </p>
+      <button type="button" class="main-button" data-tone="blue" (click)="save()">
+        <span aria-hidden="true">💾</span> Salvar fase
+      </button>
+      <button type="button" class="main-button" data-tone="orange" (click)="backToEditor()">
+        <span aria-hidden="true">🛠️</span> Voltar ao editor
+      </button>
+    </div>
+  </div>
+}
+
+<app-maker-achievement-toast />

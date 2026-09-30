@@ -1,0 +1,69 @@
+@let state = label();
+
+<p class="sync__status" role="status">
+  <span aria-hidden="true">{{ state.emoji }}</span> {{ state.text }}
+</p>
+
+@switch (status()) {
+  @case ('desligada') {
+    <p class="sync__text">
+      As fases criadas ficam guardadas neste aparelho. Para vê-las em outros aparelhos, quem cuida do
+      site precisa ligar um servidor de sincronização.
+    </p>
+  }
+
+  @case ('sem-codigo') {
+    <p class="sync__text">
+      Crie um código neste aparelho e digite o mesmo código nos outros: todos passam a ter as mesmas fases.
+    </p>
+    <button type="button" class="sync__button" data-tone="green" (click)="createCode()">
+      <span aria-hidden="true">✨</span> Criar código novo
+    </button>
+
+    <label class="sync__field">
+      <span>Já tenho um código</span>
+      <span class="sync__row">
+        <input #codeInput class="sync__input" type="text" autocomplete="off" spellcheck="false" maxlength="64" />
+        <button type="button" class="sync__button" data-tone="blue" (click)="useCode(codeInput)">Ligar</button>
+      </span>
+    </label>
+
+    @if (codeError(); as message) {
+      <p class="sync__error" role="alert">{{ message }}</p>
+    }
+  }
+
+  @default {
+    <div class="sync__code">
+      <span>Código deste aparelho:</span>
+      <code>{{ code() }}</code>
+      <button type="button" class="sync__small" (click)="copyCode()">
+        {{ wasCopied() ? 'Copiado! ✓' : 'Copiar' }}
+      </button>
+    </div>
+
+    <ul class="sync__facts">
+      <li>Fases esperando para subir: <strong>{{ pendingCount() }}</strong></li>
+      @if (lastSyncedAt(); as last) {
+        <li>Última sincronização: <strong>{{ last | date: 'dd/MM/yyyy HH:mm' }}</strong></li>
+      }
+    </ul>
+
+    @if (errorMessage(); as message) {
+      <p class="sync__error" role="alert">{{ message }}</p>
+    }
+
+    <div class="sync__row">
+      <button
+        type="button"
+        class="sync__button"
+        data-tone="green"
+        [disabled]="status() === 'sincronizando'"
+        (click)="syncNow()"
+      >
+        <span aria-hidden="true">🔄</span> Sincronizar agora
+      </button>
+      <button type="button" class="sync__button" data-tone="gray" (click)="disconnect()">Desligar este aparelho</button>
+    </div>
+  }
+}

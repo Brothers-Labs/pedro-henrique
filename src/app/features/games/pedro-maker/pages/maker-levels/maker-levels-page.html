@@ -1,0 +1,80 @@
+<app-maker-page-frame heading="Minhas fases" emoji="📂">
+  <div class="intro">
+    <a class="intro__button" data-tone="orange" routerLink="../criar">
+      <span aria-hidden="true">🛠️</span> Criar fase nova
+    </a>
+    <p class="intro__tip">Dica: no editor, o botão 🎲 cria uma fase surpresa para você brincar e mudar.</p>
+  </div>
+
+  @if (syncLabel(); as sync) {
+    <div class="sync" role="status">
+      <span><span aria-hidden="true">{{ sync.emoji }}</span> {{ sync.text }}</span>
+      <button type="button" class="sync__button" [disabled]="isSyncing()" (click)="syncNow()">Sincronizar agora</button>
+    </div>
+  }
+
+  @if (errorMessage(); as message) {
+    <p class="alert" role="alert">{{ message }}</p>
+  }
+
+  @switch (status()) {
+    @case ('error') {
+      <div class="empty" role="alert">
+        <p class="empty__emoji" aria-hidden="true">🧰</p>
+        <p>Não conseguimos abrir as fases salvas neste aparelho.</p>
+        <button type="button" class="intro__button" data-tone="blue" (click)="retry()">Tentar de novo</button>
+      </div>
+    }
+
+    @case ('ready') {
+      @if (isEmpty()) {
+        <div class="empty">
+          <p class="empty__emoji" aria-hidden="true">🌱</p>
+          <p>Você ainda não criou nenhuma fase. Que tal a primeira?</p>
+        </div>
+      } @else {
+        <ul class="levels">
+          @for (level of levels(); track level.id) {
+            <li class="level">
+              <app-level-thumbnail class="level__thumb" [level]="level" />
+
+              <div class="level__info">
+                <h2 class="level__name">{{ level.name }}</h2>
+                <p class="level__meta">
+                  {{ themeOf(level) }} · {{ level.width }} colunas · {{ level.updatedAt | date: 'dd/MM/yyyy' }}
+                </p>
+                <p class="level__stars" role="img" [attr.aria-label]="level.bestStars + ' de 3 estrelas'">
+                  @for (isEarned of starsOf(level); track $index) {
+                    <span [class.level__star--empty]="!isEarned" aria-hidden="true">⭐</span>
+                  }
+                  @if (!level.completed) {
+                    <small class="level__pending">ainda não vencida</small>
+                  }
+                </p>
+              </div>
+
+              <div class="level__actions">
+                <a class="action" data-tone="green" [routerLink]="['jogar', level.id]">
+                  <span aria-hidden="true">▶</span> Jogar
+                </a>
+                <a class="action" data-tone="orange" [routerLink]="['../criar', level.id]">
+                  <span aria-hidden="true">✏️</span> Editar
+                </a>
+                <button type="button" class="action" data-tone="blue" [disabled]="busyId() === level.id" (click)="duplicate(level)">
+                  <span aria-hidden="true">📋</span> Duplicar
+                </button>
+                <button type="button" class="action" data-tone="red" [disabled]="busyId() === level.id" (click)="remove(level)">
+                  <span aria-hidden="true">🗑️</span> Excluir
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @default {
+      <p class="empty" role="status">Abrindo suas fases…</p>
+    }
+  }
+</app-maker-page-frame>

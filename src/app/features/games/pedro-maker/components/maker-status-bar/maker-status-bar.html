@@ -1,0 +1,40 @@
+@let level = adventurer();
+
+<div class="status">
+  <div class="status__hero">
+    <app-pedro-figure class="status__avatar" [look]="look()" label="" />
+
+    <div class="status__level">
+      <span class="status__level-label">Nível {{ level.level }}</span>
+      <div
+        class="status__bar"
+        role="progressbar"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="level.xpForLevel"
+        [attr.aria-valuenow]="level.xpIntoLevel"
+        [attr.aria-label]="'Experiência: ' + level.xpIntoLevel + ' de ' + level.xpForLevel"
+      >
+        <span class="status__fill" [style.width.%]="level.percentage"></span>
+      </div>
+      <span class="status__xp">{{ level.xpIntoLevel }} / {{ level.xpForLevel }} XP</span>
+    </div>
+  </div>
+
+  <ul class="status__counters" aria-label="Seus tesouros">
+    <li class="status__counter">
+      <span aria-hidden="true">🪙</span>
+      <span class="visually-hidden">Moedas:</span>
+      {{ coins() }}
+    </li>
+    <li class="status__counter">
+      <span aria-hidden="true">💎</span>
+      <span class="visually-hidden">Cristais:</span>
+      {{ crystals() }}
+    </li>
+    <li class="status__counter">
+      <span aria-hidden="true">⭐</span>
+      <span class="visually-hidden">Estrelas:</span>
+      {{ stars() }}<small class="status__max">/{{ maxStars }}</small>
+    </li>
+  </ul>
+</div>

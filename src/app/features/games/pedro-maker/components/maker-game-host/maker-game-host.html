@@ -1,0 +1,100 @@
+<div #stage class="stage" aria-label="Área do jogo"></div>
+
+@switch (phase()) {
+  @case ('loading') {
+    <div class="loading" role="status" aria-live="polite">
+      <p class="loading__title">PEDRO MAKER</p>
+      <span class="loading__rocket" aria-hidden="true">🚀</span>
+      <p class="loading__text">Preparando a aventura…</p>
+      <div
+        class="loading__bar"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="loadingProgress()"
+        aria-label="Carregando a fase"
+      >
+        <span class="loading__fill" [style.width.%]="loadingProgress()"></span>
+      </div>
+      <p class="loading__percent">{{ loadingProgress() }}%</p>
+      <p class="loading__tip"><span aria-hidden="true">💡</span> {{ tip() }}</p>
+    </div>
+  }
+
+  @case ('error') {
+    <div class="card" role="alert">
+      <p class="card__emoji" aria-hidden="true">🧰</p>
+      <h2 class="card__title">Ops!</h2>
+      <p class="card__text">{{ errorMessage() }}</p>
+      <button type="button" class="card__button" data-tone="orange" (click)="exit()">{{ exitLabel() }}</button>
+    </div>
+  }
+
+  @default {
+    <app-maker-hud
+      [hud]="hud()"
+      [label]="label()"
+      [subtitle]="blueprint().name"
+      [boss]="boss()"
+      [powerUps]="powerUps()"
+      (pauseRequested)="pause()"
+    />
+
+    @if (showsTouchControls() && phase() === 'playing') {
+      <app-touch-controls [state]="virtualInput" />
+    }
+  }
+}
+
+@if (toast(); as message) {
+  <p class="toast" role="status">{{ message }}</p>
+}
+
+@if (mascotMessage(); as message) {
+  @let companion = mascot();
+  <aside class="mascot" aria-live="polite">
+    <span class="mascot__face" aria-hidden="true">{{ companion.emoji }}</span>
+    <p class="mascot__bubble"><strong>{{ companion.name }}:</strong> {{ message }}</p>
+  </aside>
+}
+
+@if (isSaved()) {
+  <p class="saved" role="status"><span aria-hidden="true">✓</span> Progresso salvo</p>
+}
+
+@if (phase() === 'paused') {
+  <app-maker-pause-menu
+    [exitLabel]="exitLabel()"
+    [isFullscreen]="isFullscreen()"
+    (chosen)="choosePause($event)"
+    (fullscreenToggled)="toggleFullscreen()"
+  />
+}
+
+@if (phase() === 'defeated') {
+  <div class="overlay">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="quase-titulo">
+      <p class="card__emoji" aria-hidden="true">💪</p>
+      <h2 id="quase-titulo" class="card__title">QUASE!</h2>
+      <p class="card__text">Vamos tentar novamente?</p>
+      <button type="button" class="card__button" data-tone="green" (click)="retry()">
+        <span aria-hidden="true">🔄</span> Tentar de novo
+      </button>
+      <button type="button" class="card__button" data-tone="orange" (click)="exit()">
+        <span aria-hidden="true">🗺</span> {{ exitLabel() }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (showsTouchControls() && !isPortraitDismissed() && phase() !== 'error') {
+  <div class="portrait">
+    <div class="card">
+      <p class="card__emoji portrait__phone" aria-hidden="true">📱</p>
+      <p class="card__title">Vire o celular para jogar melhor!</p>
+      <button type="button" class="card__button" data-tone="blue" (click)="dismissPortraitHint()">
+        Jogar assim mesmo
+      </button>
+    </div>
+  </div>
+}

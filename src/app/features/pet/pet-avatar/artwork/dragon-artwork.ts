@@ -10,16 +10,19 @@ interface DragonLook {
   readonly headRadius: number;
   readonly wings: 'nenhuma' | 'pequenas' | 'grandes';
   readonly horns: 'nenhum' | 'pequenos' | 'grandes';
-  readonly hasSpikes: boolean;
+  /** Crista das costas: cresce com ele e já existe no filhote. */
+  readonly crest: string;
+  readonly tail: string;
+  readonly tailTip: string;
   readonly hasAura: boolean;
 }
 
 /**
  * A evolução não é o mesmo desenho ampliado.
  *
- * O filhote é quase só cabeça, sem asa nem chifre. O jovem ganha asas curtas e
- * chifres pequenos, o adulto abre asas grandes com espinhos na cauda e o
- * lendário acrescenta a aura — a silhueta muda em cada degrau.
+ * O filhote é quase só cabeça, com uma crista miúda e nenhuma asa. O jovem
+ * ganha asas curtas e chifres, o adulto abre asas grandes e a cauda inteira, e
+ * o lendário acrescenta a aura — a silhueta muda em cada degrau.
  */
 const LOOKS: Readonly<Record<PetStageId, DragonLook>> = {
   bebe: {
@@ -28,7 +31,9 @@ const LOOKS: Readonly<Record<PetStageId, DragonLook>> = {
     headRadius: 26,
     wings: 'nenhuma',
     horns: 'nenhum',
-    hasSpikes: false,
+    crest: 'M49 23 l5 -9 l6 9 l5 -9 l5 9 z',
+    tail: 'M80 88 q14 4 16 -5',
+    tailTip: 'M93 78 l9 2 l-5 8 z',
     hasAura: false,
   },
   jovem: {
@@ -37,25 +42,31 @@ const LOOKS: Readonly<Record<PetStageId, DragonLook>> = {
     headRadius: 24,
     wings: 'pequenas',
     horns: 'pequenos',
-    hasSpikes: false,
+    crest: 'M47 25 l6 -12 l7 12 l6 -12 l6 12 z',
+    tail: 'M82 88 q16 5 19 -3',
+    tailTip: 'M97 79 l10 3 l-5 9 z',
     hasAura: false,
   },
   adulto: {
     scale: 1,
-    bodyY: 80,
+    bodyY: 82,
     headRadius: 23,
     wings: 'grandes',
     horns: 'grandes',
-    hasSpikes: true,
+    crest: 'M45 26 l7 -14 l8 14 l7 -14 l7 14 z',
+    tail: 'M84 88 q22 6 25 -4',
+    tailTip: 'M104 78 l11 4 l-6 9 z',
     hasAura: false,
   },
   lendario: {
     scale: 1.05,
-    bodyY: 80,
+    bodyY: 82,
     headRadius: 23,
     wings: 'grandes',
     horns: 'grandes',
-    hasSpikes: true,
+    crest: 'M45 26 l7 -14 l8 14 l7 -14 l7 14 z',
+    tail: 'M84 88 q22 6 25 -4',
+    tailTip: 'M104 78 l11 4 l-6 9 z',
     hasAura: true,
   },
 };

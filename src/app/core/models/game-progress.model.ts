@@ -7,7 +7,15 @@ import type { ThemeColor } from './profile.model';
  * perfil como referência, mas nunca limita até onde a criança pode chegar.
  */
 
-export type GameId = 'memoria' | 'velha' | 'feijoes' | 'quiz' | 'ingles' | 'matematica' | 'qi';
+export type GameId =
+  | 'memoria'
+  | 'velha'
+  | 'feijoes'
+  | 'quiz'
+  | 'ingles'
+  | 'matematica'
+  | 'qi'
+  | 'pedro-maker';
 
 /**
  * Nome da unidade de desafio de cada jogo.
@@ -15,7 +23,7 @@ export type GameId = 'memoria' | 'velha' | 'feijoes' | 'quiz' | 'ingles' | 'mate
  * Existe porque "10 perguntas" não descreve o jogo da velha nem a trilha dos
  * feijões. Cada jogo diz na própria ficha o que conta como um desafio.
  */
-export type ChallengeUnit = 'desafio' | 'pergunta' | 'conta' | 'rodada' | 'partida';
+export type ChallengeUnit = 'desafio' | 'pergunta' | 'conta' | 'rodada' | 'partida' | 'fase';
 
 /** Ficha de um jogo: o que o catálogo sabe sobre ele sem carregá-lo. */
 export interface GameDefinition {

@@ -79,7 +79,11 @@ export class PetCompanion {
   protected readonly pet = computed(() => this.petService.pet());
   protected readonly stage = computed(() => this.petService.stage()?.id ?? 'bebe');
   protected readonly color = computed(() => this.petService.type()?.color ?? 'purple');
+
   protected readonly mood = signal<'parado' | 'feliz' | 'comemorando'>('feliz');
+
+  /** Falas próprias do tipo escolhido: é delas que vem a personalidade. */
+  private readonly voice = computed(() => this.petService.type()?.voice ?? null);
 
   /** A fala some sozinha quando uma comemoração maior toma a tela. */
   protected readonly visibleMessage = computed(() =>
@@ -111,15 +115,20 @@ export class PetCompanion {
       return;
     }
 
-    const isMilestone = event.wasCorrect && event.streak >= STREAK_MILESTONE && event.streak % STREAK_MILESTONE === 0;
+    const isMilestone =
+      event.wasCorrect && event.streak >= STREAK_MILESTONE && event.streak % STREAK_MILESTONE === 0;
+
+    const voice = this.voice();
 
     if (isMilestone) {
-      this.say(this.draw(PET_STREAK_MESSAGES), 'comemorando', true);
+      this.say(this.draw(PET_STREAK_MESSAGES, voice?.cheer), 'comemorando', true);
       return;
     }
 
     this.say(
-      this.draw(event.wasCorrect ? PET_CORRECT_MESSAGES : PET_WRONG_MESSAGES),
+      event.wasCorrect
+        ? this.draw(PET_CORRECT_MESSAGES, voice?.cheer)
+        : this.draw(PET_WRONG_MESSAGES, voice?.comfort),
       event.wasCorrect ? 'feliz' : 'parado',
       false,
     );
@@ -141,8 +150,14 @@ export class PetCompanion {
     this.hideTimeout = setTimeout(() => this.message.set(''), VISIBLE_IN_MS);
   }
 
-  private draw(pool: readonly string[]): string {
-    const template = pickRandom(pool) ?? '';
+  /**
+   * Sorteia uma fala do repertório comum somada à fala própria do tipo.
+   *
+   * É o que faz o robô comemorar como robô e o cachorro como cachorro, sem
+   * escrever quatro repertórios inteiros nem um `if` por tipo.
+   */
+  private draw(pool: readonly string[], ownLine: string | undefined): string {
+    const template = pickRandom(ownLine ? [...pool, ownLine] : pool) ?? '';
     const name = this.petService.pet()?.name ?? '';
 
     return fillNames(template, name, PROFILE.firstName);

@@ -1,0 +1,48 @@
+/*
+ * O canvas fica parado por baixo; por cima dele, uma janela transparente rola
+ * sobre um espaçador do tamanho da fase inteira. O desenho acompanha a rolagem.
+ */
+:host {
+  position: relative;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  border: 4px solid #2a2350;
+  border-radius: 1rem;
+  background: #d9f2ff;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  /* O dedo desenha na grade; rolar a fase é com as barras ou com a ferramenta Mover. */
+  touch-action: none;
+  cursor: crosshair;
+
+  &[data-tool='mover'] {
+    cursor: grab;
+  }
+
+  &[data-tool='apagar'] {
+    cursor: not-allowed;
+  }
+
+  &[data-tool='selecionar'] {
+    cursor: pointer;
+  }
+}
+
+.spacer {
+  pointer-events: none;
+}

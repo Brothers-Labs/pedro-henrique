@@ -1,0 +1,59 @@
+@let state = hud();
+
+<div class="hud">
+  <div class="hud__hearts" role="img" [attr.aria-label]="state.hearts + ' de ' + state.maxHearts + ' corações'">
+    @for (isFull of hearts(); track $index) {
+      <span class="hud__heart" [class.hud__heart--empty]="!isFull" aria-hidden="true">❤️</span>
+    }
+    @if (state.hasShield) {
+      <span class="hud__shield" aria-hidden="true">🛡️</span>
+    }
+  </div>
+
+  <div class="hud__title">
+    <strong>{{ label() }}</strong>
+    @if (subtitle()) {
+      <span>{{ subtitle() }}</span>
+    }
+  </div>
+
+  <div class="hud__right">
+    <span class="hud__pill"><span aria-hidden="true">🪙</span> {{ state.coins }}</span>
+    @if (state.crystalsTotal > 0) {
+      <span class="hud__pill" role="img" [attr.aria-label]="state.crystalsFound + ' de ' + state.crystalsTotal + ' cristais'">
+        @for (isFound of crystals(); track $index) {
+          <span [class.hud__missing]="!isFound" aria-hidden="true">💎</span>
+        }
+      </span>
+    }
+    <button type="button" class="hud__pause" aria-label="Pausar" (click)="pauseRequested.emit()">
+      <span aria-hidden="true">⏸</span>
+    </button>
+  </div>
+</div>
+
+@if (boss(); as current) {
+  <div class="boss" role="status">
+    <span class="boss__name"><span aria-hidden="true">{{ current.emoji }}</span> {{ current.name }}</span>
+    <div class="boss__hearts" role="img" [attr.aria-label]="current.hitPoints + ' de ' + current.maxHitPoints + ' de vida'">
+      @for (isFull of bossHearts(); track $index) {
+        <span [class.hud__heart--empty]="!isFull" aria-hidden="true">❤️</span>
+      }
+    </div>
+  </div>
+}
+
+@if (powerUps().length > 0) {
+  <ul class="powers" aria-label="Poderes ativos">
+    @for (power of powerUps(); track power.key) {
+      @let info = labelOf(power.kind);
+      <li class="powers__item">
+        <span aria-hidden="true">{{ info.emoji }}</span>
+        {{ info.label }}
+        @if (power.durationMs > 0) {
+          <span class="powers__timer" [style.animation-duration.ms]="power.durationMs"></span>
+        }
+      </li>
+    }
+  </ul>
+}
