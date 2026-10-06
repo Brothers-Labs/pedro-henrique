@@ -1,4 +1,5 @@
 import type {
+  LevelObject,
   LevelObjectProperties,
   LevelObjectType,
   LevelTheme,
@@ -24,11 +25,15 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   ground: { surface: 'solid', isUnique: false },
   stone: { surface: 'solid', isUnique: false },
   ice: { surface: 'solid', isUnique: false },
+  sand: { surface: 'solid', isUnique: false },
+  wood: { surface: 'solid', isUnique: false },
+  pipe: { surface: 'solid', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   spring: { surface: 'one-way', isUnique: false },
   crumble: { surface: 'one-way', isUnique: false },
   platform: { surface: 'one-way', isUnique: false },
+  cloud: { surface: 'one-way', isUnique: false },
   lava: { surface: 'hazard', isUnique: false },
   'moving-platform': { surface: 'none', isUnique: false },
   slime: { surface: 'none', isUnique: false },
@@ -102,9 +107,12 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'ground', category: 'terreno', type: 'ground', label: 'Grama' },
   { id: 'stone', category: 'terreno', type: 'stone', label: 'Pedra' },
   { id: 'ice', category: 'terreno', type: 'ice', label: 'Gelo' },
+  { id: 'sand', category: 'terreno', type: 'sand', label: 'Areia' },
+  { id: 'wood', category: 'terreno', type: 'wood', label: 'Madeira' },
   { id: 'lava', category: 'terreno', type: 'lava', label: 'Lava' },
 
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
+  { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'surprise-coins', category: 'blocos', type: 'surprise', label: 'Surpresa', properties: { contents: 'coins' } },
   { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
   { id: 'surprise-crystal', category: 'blocos', type: 'surprise', label: 'Surpresa 💎', properties: { contents: 'crystal' } },
@@ -127,6 +135,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
 
   { id: 'platform', category: 'plataformas', type: 'platform', label: 'Plataforma' },
+  { id: 'cloud', category: 'plataformas', type: 'cloud', label: 'Nuvem' },
   {
     id: 'moving-horizontal',
     category: 'plataformas',
@@ -158,9 +167,29 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
 
   { id: 'start', category: 'portais', type: 'start', label: 'Início' },
   { id: 'portal', category: 'portais', type: 'portal', label: 'Portal final' },
+  { id: 'door-a', category: 'portais', type: 'door', label: 'Porta A', properties: { pair: 'A' } },
+  { id: 'door-b', category: 'portais', type: 'door', label: 'Porta B', properties: { pair: 'B' } },
 
   { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },
 ];
+
+/**
+ * Peça da paleta que corresponde a uma peça já colocada na fase.
+ *
+ * O mesmo tipo pode ter várias peças (Porta A e Porta B, surpresa de moedas e
+ * de coração): vale a que tem as mesmas propriedades; sem nenhuma igual, a
+ * primeira do tipo.
+ */
+export function findEditorPiece(object: Pick<LevelObject, 'type' | 'properties'>): EditorPiece | undefined {
+  const sameType = EDITOR_PIECES.filter((piece) => piece.type === object.type);
+  const properties = object.properties ?? {};
+
+  return (
+    sameType.find((piece) =>
+      Object.entries(piece.properties ?? {}).every(([key, value]) => properties[key as keyof LevelObjectProperties] === value),
+    ) ?? sameType[0]
+  );
+}
 
 export const POWER_UP_LABELS = {
   'super-jump': { label: 'Super Pulo', emoji: '🦘' },

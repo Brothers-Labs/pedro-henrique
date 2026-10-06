@@ -1,29 +1,14 @@
 import { TILE_SIZE } from '../config/physics.config';
 import type { CharacterPalette } from '../config/character.config';
-import type {
-  BossDefinition,
-  EnemyKind,
-  LevelObject,
-  LevelTheme,
-  PowerUpKind,
-} from '../models/level.model';
-import {
-  paintCloudLayer,
-  paintFarLayer,
-  paintMidLayer,
-  paintSky,
-  paintSpotlight,
-} from './background-art';
+import type { LevelObject, LevelTheme } from '../models/level.model';
 import {
   MOVING_PLATFORM_HEIGHT,
   MOVING_PLATFORM_WIDTH,
   paintBrick,
   paintCheckpoint,
-  paintCheckpointStrip,
   paintCrumble,
   paintDoor,
   paintLava,
-  paintLavaStrip,
   paintMovingPlatform,
   paintPlatformTile,
   paintPortalFrame,
@@ -31,11 +16,8 @@ import {
   paintSecretDoor,
   paintSign,
   paintSpring,
-  paintSpringStrip,
   paintSurprise,
-  paintSurpriseStrip,
   paintTerrainTile,
-  paintTileset,
   PORTAL_HEIGHT,
   PORTAL_SWIRL_SIZE,
   PORTAL_WIDTH,
@@ -56,168 +38,29 @@ import {
   TREE_HEIGHT,
   TREE_WIDTH,
 } from './decor-art';
-import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, paintBossStrip } from './boss-art';
-import { ENEMY_FRAME, paintEnemyIcon, paintEnemyStrip } from './enemy-art';
+import { paintEnemyIcon } from './enemy-art';
 import {
-  CHEST_HEIGHT,
-  CHEST_WIDTH,
   COIN_SIZE,
   CRYSTAL_HEIGHT,
   CRYSTAL_WIDTH,
   HEART_SIZE,
-  paintChestStrip,
   paintCoinIcon,
-  paintCoinStrip,
   paintCrystal,
   paintHeart,
-  paintParticleDot,
-  paintParticleSpark,
-  paintParticleStar,
   paintPowerUp,
   POWER_UP_SIZE,
 } from './item-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
-import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait, paintPedroStrip } from './pedro-art';
-
-/** Nomes das texturas no motor. Um lugar só, para nenhum texto se repetir solto. */
-export const TEXTURES = {
-  pedro: 'pedro',
-  tiles: 'tiles',
-  coin: 'coin',
-  crystal: 'crystal',
-  heart: 'heart',
-  boss: 'boss',
-  chest: 'chest',
-  brick: 'brick',
-  surprise: 'surprise',
-  spring: 'spring',
-  crumble: 'crumble',
-  movingPlatform: 'moving-platform',
-  lava: 'lava',
-  checkpoint: 'checkpoint',
-  door: 'door',
-  secretDoor: 'secret-door',
-  portalFrame: 'portal-frame',
-  portalSwirl: 'portal-swirl',
-  sign: 'sign',
-  tree: 'tree',
-  bush: 'bush',
-  flower: 'flower',
-  rock: 'rock',
-  sky: 'sky',
-  far: 'far',
-  mid: 'mid',
-  clouds: 'clouds',
-  spotlight: 'spotlight',
-  dot: 'particle-dot',
-  star: 'particle-star',
-  spark: 'particle-spark',
-} as const;
-
-export function powerUpTexture(kind: PowerUpKind): string {
-  return `power-${kind}`;
-}
-
-export function enemyTexture(kind: EnemyKind): string {
-  return `enemy-${kind}`;
-}
-
-/** Uma textura a gerar: quadros opcionais para as tiras de animação. */
-export interface TextureSpec {
-  readonly key: string;
-  readonly frameWidth?: number;
-  readonly frameHeight?: number;
-  readonly create: () => HTMLCanvasElement;
-}
-
-export interface TextureRequest {
-  readonly theme: LevelTheme;
-  readonly character: CharacterPalette;
-  readonly boss?: BossDefinition;
-}
-
-const ENEMIES: readonly EnemyKind[] = ['slime', 'spiky', 'bat', 'robot', 'ghost'];
-const POWER_UPS: readonly PowerUpKind[] = ['super-jump', 'shield', 'turbo', 'magnet', 'wings'];
-
-/** Tudo o que uma fase precisa desenhar, na ordem em que vale gerar. */
-export function textureSpecsFor(request: TextureRequest): readonly TextureSpec[] {
-  const palette = THEME_PALETTES[request.theme];
-  const theme = request.theme;
-  const boss = request.boss;
-
-  return [
-    { key: TEXTURES.sky, create: () => paintSky(palette) },
-    { key: TEXTURES.far, create: () => paintFarLayer(palette) },
-    { key: TEXTURES.mid, create: () => paintMidLayer(palette) },
-    { key: TEXTURES.clouds, create: paintCloudLayer },
-    { key: TEXTURES.spotlight, create: paintSpotlight },
-    { key: TEXTURES.tiles, create: () => paintTileset(palette) },
-    {
-      key: TEXTURES.pedro,
-      frameWidth: PEDRO_FRAME_WIDTH,
-      frameHeight: PEDRO_FRAME_HEIGHT,
-      create: () => paintPedroStrip(request.character),
-    },
-    ...ENEMIES.map((kind) => ({
-      key: enemyTexture(kind),
-      frameWidth: ENEMY_FRAME,
-      frameHeight: ENEMY_FRAME,
-      create: () => paintEnemyStrip(kind),
-    })),
-    ...(boss
-      ? [
-          {
-            key: TEXTURES.boss,
-            frameWidth: BOSS_FRAME_WIDTH,
-            frameHeight: BOSS_FRAME_HEIGHT,
-            create: () => paintBossStrip(boss),
-          },
-          { key: TEXTURES.chest, frameWidth: CHEST_WIDTH, frameHeight: CHEST_HEIGHT, create: paintChestStrip },
-        ]
-      : []),
-    { key: TEXTURES.coin, frameWidth: COIN_SIZE, frameHeight: COIN_SIZE, create: paintCoinStrip },
-    { key: TEXTURES.crystal, create: () => paint(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal) },
-    { key: TEXTURES.heart, create: () => paint(HEART_SIZE, HEART_SIZE, paintHeart) },
-    ...POWER_UPS.map((kind) => ({
-      key: powerUpTexture(kind),
-      create: () => paint(POWER_UP_SIZE, POWER_UP_SIZE, (context) => paintPowerUp(context, kind)),
-    })),
-    { key: TEXTURES.brick, create: () => paint(TILE_SIZE, TILE_SIZE, paintBrick) },
-    { key: TEXTURES.surprise, frameWidth: TILE_SIZE, frameHeight: TILE_SIZE, create: paintSurpriseStrip },
-    { key: TEXTURES.spring, frameWidth: TILE_SIZE, frameHeight: TILE_SIZE, create: paintSpringStrip },
-    { key: TEXTURES.crumble, create: () => paint(TILE_SIZE, TILE_SIZE / 2, paintCrumble) },
-    {
-      key: TEXTURES.movingPlatform,
-      create: () => paint(MOVING_PLATFORM_WIDTH, MOVING_PLATFORM_HEIGHT, paintMovingPlatform),
-    },
-    { key: TEXTURES.lava, frameWidth: TILE_SIZE, frameHeight: TILE_SIZE, create: paintLavaStrip },
-    {
-      key: TEXTURES.checkpoint,
-      frameWidth: TALL_SPRITE_WIDTH,
-      frameHeight: TALL_SPRITE_HEIGHT,
-      create: paintCheckpointStrip,
-    },
-    { key: TEXTURES.door, create: () => paint(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintDoor) },
-    { key: TEXTURES.secretDoor, create: () => paint(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintSecretDoor) },
-    { key: TEXTURES.portalFrame, create: () => paint(PORTAL_WIDTH, PORTAL_HEIGHT, paintPortalFrame) },
-    { key: TEXTURES.portalSwirl, create: () => paint(PORTAL_SWIRL_SIZE, PORTAL_SWIRL_SIZE, paintPortalSwirl) },
-    { key: TEXTURES.sign, create: () => paint(TILE_SIZE, TILE_SIZE, paintSign) },
-    { key: TEXTURES.tree, create: () => paint(TREE_WIDTH, TREE_HEIGHT, (context) => paintTree(context, theme, palette)) },
-    { key: TEXTURES.bush, create: () => paint(BUSH_WIDTH, BUSH_HEIGHT, (context) => paintBush(context, theme, palette)) },
-    { key: TEXTURES.flower, create: () => paint(FLOWER_SIZE, FLOWER_SIZE, (context) => paintFlower(context, palette)) },
-    { key: TEXTURES.rock, create: () => paint(ROCK_WIDTH, ROCK_HEIGHT, (context) => paintRock(context, palette)) },
-    { key: TEXTURES.dot, create: paintParticleDot },
-    { key: TEXTURES.star, create: paintParticleStar },
-    { key: TEXTURES.spark, create: paintParticleSpark },
-  ];
-}
+import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
+import { paintVoxelIcon } from './voxel-tiles';
 
 /* Ícones do editor ------------------------------------------------------------- */
 
 const ICON_SIZE = TILE_SIZE;
 
 /**
- * Ícone de uma peça na grade do editor, com o mesmo desenho do jogo.
+ * Ícone de uma peça na grade do editor, pintado em 2D a partir do mesmo
+ * catálogo de peças que o jogo monta em 3D.
  *
  * Peças maiores que uma célula (árvore, portal, bandeira) são reduzidas para
  * caber nela — no editor o que importa é reconhecer a peça.
@@ -228,7 +71,7 @@ export function paintObjectIcon(object: Pick<LevelObject, 'type' | 'properties'>
   return paint(ICON_SIZE, ICON_SIZE, (context) => drawIcon(context, object, theme, palette));
 }
 
-/** O Pedro parado, pintado em `scale` vezes o tamanho do jogo para ficar nítido ampliado. */
+/** O Pedro parado, pintado em `scale` vezes o tamanho base para ficar nítido ampliado. */
 export function paintPedroIcon(character: CharacterPalette, scale = 1): HTMLCanvasElement {
   return paint(PEDRO_FRAME_WIDTH * scale, PEDRO_FRAME_HEIGHT * scale, (context) => {
     context.scale(scale, scale);
@@ -256,7 +99,19 @@ function drawIcon(
     case 'ground':
     case 'stone':
     case 'ice':
-      paintTerrainTile(context, object.type, 3, palette);
+      paintTerrainTile(context, object.type, palette);
+      return;
+    case 'sand':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'sand');
+      return;
+    case 'wood':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'wood');
+      return;
+    case 'pipe':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'pipe-side', 'pipe-top');
+      return;
+    case 'cloud':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'cloud');
       return;
     case 'platform':
       paintPlatformTile(context, palette);
@@ -307,7 +162,7 @@ function drawIcon(
       );
       return;
     case 'checkpoint':
-      fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, (inner) => paintCheckpoint(inner, true));
+      fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintCheckpoint);
       return;
     case 'portal':
       fit(PORTAL_WIDTH, PORTAL_HEIGHT, (inner) => {

@@ -5,13 +5,14 @@
   class="viewport"
   [attr.data-tool]="tool()"
   role="application"
-  aria-label="Grade da fase. Toque para colocar a peça escolhida."
+  aria-label="Grade da fase. Um dedo coloca a peça escolhida; dois dedos aproximam e rolam a fase."
   (scroll)="onScroll()"
   (pointerdown)="onPointerDown($event)"
   (pointermove)="onPointerMove($event)"
   (pointerup)="onPointerUp($event)"
   (pointercancel)="onPointerUp($event)"
   (pointerleave)="onPointerLeave()"
+  (wheel)="onWheel($event)"
 >
   <div class="spacer" [style.width.px]="contentWidth()" [style.height.px]="contentHeight()"></div>
 </div>

@@ -26,9 +26,6 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
-            "allowedCommonJsDependencies": [
-              "phaser"
-            ],
             "inlineStyleLanguage": "scss",
             "assets": [
               {

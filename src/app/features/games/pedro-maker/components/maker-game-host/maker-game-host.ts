@@ -96,7 +96,7 @@ export class MakerGameHost {
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
 
   /** Estado dos botões de toque, lido pelo motor a cada quadro. */
-  protected readonly virtualInput: VirtualInputState = { left: false, right: false, jump: false, action: false };
+  protected readonly virtualInput: VirtualInputState = { left: false, right: false, run: false, jump: false, action: false };
 
   protected readonly phase = signal<HostPhase>('loading');
   protected readonly loadingProgress = signal(0);
@@ -108,6 +108,7 @@ export class MakerGameHost {
   protected readonly toast = signal<string | null>(null);
   protected readonly tip = signal(LOADING_TIPS[0]);
   protected readonly isFullscreen = signal(false);
+  protected readonly canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
   protected readonly isPortraitDismissed = signal(false);
   protected readonly isSaved = this.progress.isSavedNoticeVisible;
 
@@ -198,12 +199,18 @@ export class MakerGameHost {
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen();
-      } else {
-        await this.root.nativeElement.requestFullscreen();
+        return;
       }
+
+      await this.root.nativeElement.requestFullscreen({ navigationUI: 'hide' });
     } catch (error) {
       // Alguns navegadores (iPhone) não deixam: o jogo segue do mesmo tamanho.
       console.warn('Pedro Maker: tela cheia indisponível neste navegador.', error);
+      return;
+    }
+
+    if (this.showsTouchControls()) {
+      await lockLandscape();
     }
   }
 
@@ -403,4 +410,29 @@ export class MakerGameHost {
 
 function isTouchDevice(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+}
+
+/** A trava de orientação só existe em parte dos navegadores e fora do padrão do TypeScript. */
+interface LockableOrientation extends ScreenOrientation {
+  lock?(orientation: 'landscape'): Promise<void>;
+}
+
+/**
+ * Deita a tela do celular em tela cheia, onde o navegador permitir.
+ *
+ * Recusar é normal (tablet travado, navegador sem suporte): o aviso "vire o
+ * celular" continua fazendo o trabalho, então a falha só vai para o console.
+ */
+async function lockLandscape(): Promise<void> {
+  const orientation = screen.orientation as LockableOrientation | undefined;
+
+  if (typeof orientation?.lock !== 'function') {
+    return;
+  }
+
+  try {
+    await orientation.lock('landscape');
+  } catch (error) {
+    console.warn('Pedro Maker: não foi possível deitar a tela automaticamente.', error);
+  }
 }

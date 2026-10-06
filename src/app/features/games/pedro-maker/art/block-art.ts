@@ -2,15 +2,11 @@ import { TILE_SIZE } from '../config/physics.config';
 import type { TerrainType } from '../models/level.model';
 import {
   circle,
-  createCanvas,
-  context2d,
   darken,
   ellipse,
   fillAndOutline,
   lighten,
   OUTLINE,
-  paint,
-  paintStrip,
   roundedRect,
   shine,
   star,
@@ -18,79 +14,14 @@ import {
 } from './canvas';
 import type { ThemePalette } from './palettes';
 
-/**
- * Variações de borda de um bloco de terreno.
- *
- * As quatro primeiras têm o topo exposto (grama, neve, areia); as quatro
- * últimas são o miolo. Em cada grupo: borda à esquerda, nenhuma, à direita e
- * as duas. É o que deixa o chão com cantos arredondados sem desenhar à mão.
- */
-export function terrainVariant(isTopExposed: boolean, isLeftExposed: boolean, isRightExposed: boolean): number {
-  const side = isLeftExposed && isRightExposed ? 3 : isLeftExposed ? 0 : isRightExposed ? 2 : 1;
+/** Semente das manchas da terra: o ícone sai sempre igual. */
+const SOIL_NOISE_SEED = 304;
 
-  return (isTopExposed ? 0 : 4) + side;
-}
-
-const VARIANTS_PER_MATERIAL = 8;
-const MATERIALS: readonly TerrainType[] = ['ground', 'stone', 'ice'];
-
-/** Primeiro índice de cada material no tileset. */
-export const TILESET_INDEX: Readonly<Record<TerrainType | 'platform', number>> = {
-  ground: 0,
-  stone: VARIANTS_PER_MATERIAL,
-  ice: VARIANTS_PER_MATERIAL * 2,
-  platform: VARIANTS_PER_MATERIAL * 3,
-};
-
-/** Borda repetida em volta de cada bloco, para a GPU nunca amostrar o vizinho. */
-export const TILESET_MARGIN = 1;
-export const TILESET_SPACING = 2;
-
-/** Tileset do tema: três materiais com oito variações e a plataforma de mão única. */
-export function paintTileset(palette: ThemePalette): HTMLCanvasElement {
-  const stride = TILE_SIZE + TILESET_SPACING;
-  const rows = MATERIALS.length + 1;
-  const canvas = createCanvas(VARIANTS_PER_MATERIAL * stride, rows * stride);
-  const context = context2d(canvas);
-
-  MATERIALS.forEach((material, row) => {
-    for (let variant = 0; variant < VARIANTS_PER_MATERIAL; variant += 1) {
-      const tile = paint(TILE_SIZE, TILE_SIZE, (tileContext) => paintTerrainTile(tileContext, material, variant, palette));
-      placeExtruded(context, tile, variant * stride + TILESET_MARGIN, row * stride + TILESET_MARGIN);
-    }
-  });
-
-  const platform = paint(TILE_SIZE, TILE_SIZE, (tileContext) => paintPlatformTile(tileContext, palette));
-  placeExtruded(context, platform, TILESET_MARGIN, MATERIALS.length * stride + TILESET_MARGIN);
-
-  return canvas;
-}
-
-/** Copia o bloco e repete a última linha de pixels de cada lado para fora. */
-function placeExtruded(context: CanvasRenderingContext2D, tile: HTMLCanvasElement, x: number, y: number): void {
-  const size = TILE_SIZE;
-
-  context.drawImage(tile, x, y);
-  context.drawImage(tile, 0, 0, size, 1, x, y - 1, size, 1);
-  context.drawImage(tile, 0, size - 1, size, 1, x, y + size, size, 1);
-  context.drawImage(tile, 0, 0, 1, size, x - 1, y, 1, size);
-  context.drawImage(tile, size - 1, 0, 1, size, x + size, y, 1, size);
-}
-
-export function paintTerrainTile(
-  context: CanvasRenderingContext2D,
-  material: TerrainType,
-  variant: number,
-  palette: ThemePalette,
-): void {
-  const isTop = variant < 4;
-  const side = variant % 4;
-  const isLeft = side === 0 || side === 3;
-  const isRight = side === 2 || side === 3;
-
+/** Bloco de terreno solto, com o topo e os dois lados à mostra, como no editor. */
+export function paintTerrainTile(context: CanvasRenderingContext2D, material: TerrainType, palette: ThemePalette): void {
   switch (material) {
     case 'ground':
-      paintSoil(context, palette, variant);
+      paintSoil(context, palette);
       break;
     case 'stone':
       paintStone(context, palette);
@@ -100,18 +31,15 @@ export function paintTerrainTile(
       break;
   }
 
-  if (isTop) {
-    paintTopLayer(context, material, palette);
-  }
-
-  paintEdges(context, isTop, isLeft, isRight);
+  paintTopLayer(context, material, palette);
+  paintEdges(context);
 }
 
-function paintSoil(context: CanvasRenderingContext2D, palette: ThemePalette, seed: number): void {
+function paintSoil(context: CanvasRenderingContext2D, palette: ThemePalette): void {
   context.fillStyle = palette.soil;
   context.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
 
-  const random = textureNoise(seed * 97 + 13);
+  const random = textureNoise(SOIL_NOISE_SEED);
   context.fillStyle = palette.soilDark;
 
   for (let speck = 0; speck < 7; speck += 1) {
@@ -191,26 +119,16 @@ function paintTopLayer(context: CanvasRenderingContext2D, material: TerrainType,
   context.fillRect(0, 3, TILE_SIZE, 3);
 }
 
-function paintEdges(context: CanvasRenderingContext2D, isTop: boolean, isLeft: boolean, isRight: boolean): void {
+function paintEdges(context: CanvasRenderingContext2D): void {
   context.strokeStyle = OUTLINE;
   context.lineWidth = 3;
   context.beginPath();
-
-  if (isTop) {
-    context.moveTo(0, 1.5);
-    context.lineTo(TILE_SIZE, 1.5);
-  }
-
-  if (isLeft) {
-    context.moveTo(1.5, 0);
-    context.lineTo(1.5, TILE_SIZE);
-  }
-
-  if (isRight) {
-    context.moveTo(TILE_SIZE - 1.5, 0);
-    context.lineTo(TILE_SIZE - 1.5, TILE_SIZE);
-  }
-
+  context.moveTo(0, 1.5);
+  context.lineTo(TILE_SIZE, 1.5);
+  context.moveTo(1.5, 0);
+  context.lineTo(1.5, TILE_SIZE);
+  context.moveTo(TILE_SIZE - 1.5, 0);
+  context.lineTo(TILE_SIZE - 1.5, TILE_SIZE);
   context.stroke();
 }
 
@@ -262,25 +180,17 @@ export function paintBrick(context: CanvasRenderingContext2D): void {
   context.stroke();
 }
 
-/** Bloco surpresa: dourado com "?" enquanto guarda algo, marrom depois. */
-export function paintSurpriseStrip(): HTMLCanvasElement {
-  return paintStrip(48, 48, 2, (context, frame) => paintSurprise(context, frame === 1));
-}
-
-export function paintSurprise(context: CanvasRenderingContext2D, isUsed = false): void {
-  const color = isUsed ? '#a8784f' : '#ffc629';
+/** Bloco surpresa: dourado, com o "?" de quem ainda guarda algo. */
+export function paintSurprise(context: CanvasRenderingContext2D): void {
+  const color = '#ffc629';
 
   roundedRect(context, 1.5, 1.5, 45, 45, 6);
   fillAndOutline(context, color, 3);
-  context.fillStyle = isUsed ? darken(color, 0.25) : darken(color, 0.3);
+  context.fillStyle = darken(color, 0.3);
 
   for (const [x, y] of [[8, 8], [40, 8], [8, 40], [40, 40]] as const) {
     circle(context, x, y, 2.2);
     context.fill();
-  }
-
-  if (isUsed) {
-    return;
   }
 
   context.font = 'bold 30px "Baloo 2", "Trebuchet MS", sans-serif';
@@ -293,13 +203,9 @@ export function paintSurprise(context: CanvasRenderingContext2D, isUsed = false)
   context.fillText('?', 24, 26);
 }
 
-/** Mola: esticada e encolhida. */
-export function paintSpringStrip(): HTMLCanvasElement {
-  return paintStrip(48, 48, 2, (context, frame) => paintSpring(context, frame === 1));
-}
-
-export function paintSpring(context: CanvasRenderingContext2D, isCompressed = false): void {
-  const top = isCompressed ? 26 : 10;
+/** Mola esticada, pronta para lançar. */
+export function paintSpring(context: CanvasRenderingContext2D): void {
+  const top = 10;
 
   context.strokeStyle = OUTLINE;
   context.lineWidth = 5;
@@ -365,13 +271,8 @@ export function paintMovingPlatform(context: CanvasRenderingContext2D): void {
   context.fill();
 }
 
-/** Lava em dois quadros, ondulando. */
-export function paintLavaStrip(): HTMLCanvasElement {
-  return paintStrip(48, 48, 2, (context, frame) => paintLava(context, frame));
-}
-
-export function paintLava(context: CanvasRenderingContext2D, frame = 0): void {
-  const offset = frame * 12;
+/** Lava ondulando, com bolhas claras. */
+export function paintLava(context: CanvasRenderingContext2D): void {
   const gradient = context.createLinearGradient(0, 0, 0, 48);
 
   gradient.addColorStop(0, '#ffd23f');
@@ -383,7 +284,7 @@ export function paintLava(context: CanvasRenderingContext2D, frame = 0): void {
   context.lineTo(0, 10);
 
   for (let wave = 0; wave < 5; wave += 1) {
-    const x = wave * 12 - offset;
+    const x = wave * 12;
     context.quadraticCurveTo(x + 6, 2, x + 12, 10);
   }
 
@@ -392,21 +293,17 @@ export function paintLava(context: CanvasRenderingContext2D, frame = 0): void {
   context.fill();
 
   context.fillStyle = 'rgba(255, 245, 200, 0.8)';
-  circle(context, 14 + offset, 26, 3);
+  circle(context, 14, 26, 3);
   context.fill();
-  circle(context, 36 - offset / 2, 36, 2);
+  circle(context, 36, 36, 2);
   context.fill();
 }
 
 export const TALL_SPRITE_WIDTH = 48;
 export const TALL_SPRITE_HEIGHT = 96;
 
-/** Bandeira do checkpoint: abaixada e cinza, depois erguida e colorida. */
-export function paintCheckpointStrip(): HTMLCanvasElement {
-  return paintStrip(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, 2, (context, frame) => paintCheckpoint(context, frame === 1));
-}
-
-export function paintCheckpoint(context: CanvasRenderingContext2D, isActive = false): void {
+/** Bandeira do checkpoint erguida e colorida. */
+export function paintCheckpoint(context: CanvasRenderingContext2D): void {
   roundedRect(context, 10, 86, 20, 9, 3);
   fillAndOutline(context, '#8a8fa8', 3);
   roundedRect(context, 17, 8, 6, 80, 3);
@@ -414,21 +311,17 @@ export function paintCheckpoint(context: CanvasRenderingContext2D, isActive = fa
   circle(context, 20, 8, 5);
   fillAndOutline(context, '#ffd23f', 3);
 
-  const flagTop = isActive ? 14 : 58;
-  const flagColor = isActive ? '#ff4f9a' : '#b8bdd0';
+  const flagTop = 14;
 
   context.beginPath();
   context.moveTo(23, flagTop);
   context.lineTo(46, flagTop + 9);
   context.lineTo(23, flagTop + 20);
   context.closePath();
-  fillAndOutline(context, flagColor, 3);
-
-  if (isActive) {
-    context.fillStyle = '#ffffff';
-    star(context, 31, flagTop + 10, 4, 1.8);
-    context.fill();
-  }
+  fillAndOutline(context, '#ff4f9a', 3);
+  context.fillStyle = '#ffffff';
+  star(context, 31, flagTop + 10, 4, 1.8);
+  context.fill();
 }
 
 export function paintDoor(context: CanvasRenderingContext2D): void {
@@ -482,7 +375,7 @@ export function paintSecretDoor(context: CanvasRenderingContext2D): void {
 export const PORTAL_WIDTH = 112;
 export const PORTAL_HEIGHT = 128;
 
-/** Moldura do portal. O redemoinho gira por cima dela, em outra textura. */
+/** Moldura do portal. O redemoinho é pintado à parte e vai por cima dela. */
 export function paintPortalFrame(context: CanvasRenderingContext2D): void {
   context.lineWidth = 12;
   context.strokeStyle = OUTLINE;

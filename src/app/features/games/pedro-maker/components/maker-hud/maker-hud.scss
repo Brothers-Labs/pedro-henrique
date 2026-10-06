@@ -78,7 +78,7 @@
   opacity: 0.35;
 }
 
-.hud__pause {
+.hud__button {
   @include touch-target(3rem);
 
   display: grid;
@@ -171,5 +171,24 @@
     grid-column: 1 / -1;
     grid-row: 2;
     justify-self: center;
+  }
+}
+
+/* Celular deitado tem pouca altura: o painel encolhe e deixa a fase aparecer. */
+@media (max-height: 26rem) {
+  .hud {
+    padding-top: calc(0.35rem + var(--safe-top));
+  }
+
+  .hud__title {
+    padding: 0.15rem 0.7rem;
+
+    span {
+      display: none;
+    }
+  }
+
+  .hud__hearts {
+    font-size: 1.3rem;
   }
 }

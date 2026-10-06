@@ -3,8 +3,9 @@
  *
  * Toda a arte do Pedro Maker é desenhada em código: não existe arquivo de
  * imagem para baixar, falhar ou pesar no carregamento — e nenhum traço vem de
- * outro jogo. Estes pintores não conhecem o Phaser; o editor usa os mesmos
- * desenhos para mostrar as peças.
+ * outro jogo. O motor 3D reaproveita estes utilitários nas próprias texturas;
+ * os pintores de peças em 2D servem aos ícones do editor e ao retrato do
+ * personagem.
  */
 
 /** Contorno padrão, o mesmo azul-escuro das bordas "de gibi" do site. */
@@ -37,26 +38,6 @@ export function paint(width: number, height: number, painter: Painter): HTMLCanv
   painter(context2d(canvas));
 
   return canvas;
-}
-
-/** Tira horizontal de quadros de animação, cada um pintado pela mesma função. */
-export function paintStrip(
-  frameWidth: number,
-  frameHeight: number,
-  frames: number,
-  painter: (context: CanvasRenderingContext2D, frame: number) => void,
-): HTMLCanvasElement {
-  return paint(frameWidth * frames, frameHeight, (context) => {
-    for (let frame = 0; frame < frames; frame += 1) {
-      context.save();
-      context.translate(frame * frameWidth, 0);
-      context.beginPath();
-      context.rect(0, 0, frameWidth, frameHeight);
-      context.clip();
-      painter(context, frame);
-      context.restore();
-    }
-  });
 }
 
 export function roundedRect(

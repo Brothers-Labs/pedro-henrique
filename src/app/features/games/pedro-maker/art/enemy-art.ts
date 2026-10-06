@@ -6,15 +6,12 @@ import {
   eye,
   fillAndOutline,
   OUTLINE,
-  paintStrip,
+  type Painter,
   roundedRect,
   shine,
 } from './canvas';
 
-export const ENEMY_FRAME = 48;
-export const ENEMY_FRAMES = 2;
-
-const ENEMY_PAINTERS: Readonly<Record<EnemyKind, (context: CanvasRenderingContext2D, frame: number) => void>> = {
+const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   slime: paintSlime,
   spiky: paintSpiky,
   bat: paintBat,
@@ -22,37 +19,30 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, (context: CanvasRenderingContex
   ghost: paintGhost,
 };
 
-/** Dois quadros de animação de um inimigo, lado a lado. */
-export function paintEnemyStrip(kind: EnemyKind): HTMLCanvasElement {
-  return paintStrip(ENEMY_FRAME, ENEMY_FRAME, ENEMY_FRAMES, ENEMY_PAINTERS[kind]);
-}
-
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
-  ENEMY_PAINTERS[kind](context, 0);
+  ENEMY_PAINTERS[kind](context);
 }
 
-function paintSlime(context: CanvasRenderingContext2D, frame: number): void {
-  const squash = frame === 1 ? 3 : 0;
+function paintSlime(context: CanvasRenderingContext2D): void {
   const color = '#6fd66a';
 
   context.beginPath();
   context.moveTo(5, 44);
-  context.bezierCurveTo(4, 16 + squash, 44, 16 + squash, 43, 44);
+  context.bezierCurveTo(4, 16, 44, 16, 43, 44);
   context.closePath();
   fillAndOutline(context, color);
-  shine(context, 16, 26 + squash, 5, 3);
+  shine(context, 16, 26, 5, 3);
   context.fillStyle = darken(color, 0.15);
   ellipse(context, 24, 42, 14, 2.5);
   context.fill();
 
-  eye(context, 19, 31 + squash, 4.5, 0);
-  eye(context, 30, 31 + squash, 4.5, 0);
-  smile(context, 24.5, 37 + squash, 3.5);
+  eye(context, 19, 31, 4.5, 0);
+  eye(context, 30, 31, 4.5, 0);
+  smile(context, 24.5, 37, 3.5);
 }
 
-function paintSpiky(context: CanvasRenderingContext2D, frame: number): void {
+function paintSpiky(context: CanvasRenderingContext2D): void {
   const color = '#f28b3a';
-  const bounce = frame === 1 ? 1.5 : 0;
 
   // Os espinhos claros no topo avisam, sem palavra nenhuma, que não se pisa.
   context.fillStyle = '#fff3d6';
@@ -62,9 +52,9 @@ function paintSpiky(context: CanvasRenderingContext2D, frame: number): void {
   for (let spike = 0; spike < 5; spike += 1) {
     const angle = Math.PI * (1.1 + spike * 0.2);
     const baseX = 24 + Math.cos(angle) * 14;
-    const baseY = 30 + bounce + Math.sin(angle) * 14;
+    const baseY = 30 + Math.sin(angle) * 14;
     const tipX = 24 + Math.cos(angle) * 24;
-    const tipY = 30 + bounce + Math.sin(angle) * 24;
+    const tipY = 30 + Math.sin(angle) * 24;
     const side = 5;
 
     context.beginPath();
@@ -76,30 +66,29 @@ function paintSpiky(context: CanvasRenderingContext2D, frame: number): void {
     context.stroke();
   }
 
-  ellipse(context, 24, 32 + bounce, 17, 14);
+  ellipse(context, 24, 32, 17, 14);
   fillAndOutline(context, color);
-  shine(context, 17, 25 + bounce, 4, 2.5);
+  shine(context, 17, 25, 4, 2.5);
 
-  // Patinhas que alternam, dando a ideia de andar.
   context.fillStyle = darken(color, 0.25);
-  ellipse(context, frame === 0 ? 15 : 17, 45, 5, 3);
+  ellipse(context, 15, 45, 5, 3);
   context.fill();
-  ellipse(context, frame === 0 ? 33 : 31, 45, 5, 3);
+  ellipse(context, 33, 45, 5, 3);
   context.fill();
 
-  eye(context, 19, 31 + bounce, 3.8, 0.1);
-  eye(context, 29, 31 + bounce, 3.8, 0.1);
+  eye(context, 19, 31, 3.8, 0.1);
+  eye(context, 29, 31, 3.8, 0.1);
   context.strokeStyle = OUTLINE;
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(20, 38 + bounce);
-  context.lineTo(28, 38 + bounce);
+  context.moveTo(20, 38);
+  context.lineTo(28, 38);
   context.stroke();
 }
 
-function paintBat(context: CanvasRenderingContext2D, frame: number): void {
+function paintBat(context: CanvasRenderingContext2D): void {
   const color = '#8a63d9';
-  const wingLift = frame === 0 ? -8 : 6;
+  const wingLift = -8;
 
   for (const side of [-1, 1]) {
     context.beginPath();
@@ -135,7 +124,7 @@ function paintBat(context: CanvasRenderingContext2D, frame: number): void {
   context.fill();
 }
 
-function paintRobot(context: CanvasRenderingContext2D, frame: number): void {
+function paintRobot(context: CanvasRenderingContext2D): void {
   const body = '#a9b4c8';
 
   context.strokeStyle = OUTLINE;
@@ -145,16 +134,16 @@ function paintRobot(context: CanvasRenderingContext2D, frame: number): void {
   context.lineTo(24, 5);
   context.stroke();
   circle(context, 24, 5, 3.5);
-  fillAndOutline(context, frame === 0 ? '#ff5a5a' : '#ffd23f', 2);
+  fillAndOutline(context, '#ff5a5a', 2);
 
   roundedRect(context, 9, 12, 30, 27, 7);
   fillAndOutline(context, body);
   roundedRect(context, 13, 17, 22, 11, 5);
   fillAndOutline(context, '#2a2350', 2);
   context.fillStyle = '#5ff0ff';
-  roundedRect(context, 16 + (frame === 0 ? 0 : 3), 20, 7, 5, 2.5);
+  roundedRect(context, 16, 20, 7, 5, 2.5);
   context.fill();
-  roundedRect(context, 25 + (frame === 0 ? 0 : 3), 20, 7, 5, 2.5);
+  roundedRect(context, 25, 20, 7, 5, 2.5);
   context.fill();
 
   context.fillStyle = darken(body, 0.2);
@@ -164,22 +153,19 @@ function paintRobot(context: CanvasRenderingContext2D, frame: number): void {
     circle(context, wheelX, 42, 5.5);
     fillAndOutline(context, '#4b4470', 2.5);
     context.fillStyle = '#ffffff';
-    const angle = frame === 0 ? 0 : Math.PI / 4;
-    circle(context, wheelX + Math.cos(angle) * 2.5, 42 + Math.sin(angle) * 2.5, 1.2);
+    circle(context, wheelX + 2.5, 42, 1.2);
     context.fill();
   }
 }
 
-function paintGhost(context: CanvasRenderingContext2D, frame: number): void {
-  const wave = frame === 0 ? 0 : 3;
-
+function paintGhost(context: CanvasRenderingContext2D): void {
   context.beginPath();
   context.moveTo(8, 42);
   context.bezierCurveTo(4, 4, 44, 4, 40, 42);
 
   for (let bump = 0; bump < 4; bump += 1) {
     const x = 40 - bump * 8;
-    context.quadraticCurveTo(x - 4, 46 + (bump % 2 === 0 ? wave : -wave), x - 8, 42);
+    context.quadraticCurveTo(x - 4, 46, x - 8, 42);
   }
 
   context.closePath();

@@ -1,0 +1,103 @@
+import { MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
+import type { LevelObject, PowerUpKind } from '../../models/level.model';
+
+export type CollectibleKind = 'coin' | 'crystal' | 'heart' | 'power-up';
+
+export interface Collectible {
+  readonly id: number;
+  readonly kind: CollectibleKind;
+  /** Centro, em pixels do mundo. O ímã puxa, então muda. */
+  x: number;
+  y: number;
+  readonly powerUp?: PowerUpKind;
+  readonly crystalIndex?: number;
+  /** Saiu de um bloco surpresa: a tela faz o item crescer ao aparecer. */
+  readonly spawnedAt: number | null;
+}
+
+export interface CollectibleHost {
+  onCollected(item: Collectible): void;
+}
+
+/** Meia largura e meia altura da área de coleta em volta do centro do Pedro. */
+const REACH_X = 30;
+const REACH_Y = 42;
+const MAGNET_PULL_PER_SECOND = 9;
+
+/**
+ * Moedas, cristais, corações e power-ups.
+ *
+ * Nenhum deles tem corpo físico: a coleta é uma conta de distância por passo,
+ * muito mais barata que cem corpos sobrepostos e fácil de combinar com o ímã,
+ * que só precisa puxar a moeda para perto.
+ */
+export class CollectibleSystem {
+  readonly items: Collectible[] = [];
+
+  private nextId = 1;
+
+  constructor(
+    objects: readonly LevelObject[],
+    crystalIndexOf: ReadonlyMap<LevelObject, number>,
+    private readonly host: CollectibleHost,
+  ) {
+    for (const object of objects) {
+      const x = (object.x + 0.5) * TILE_SIZE;
+      const y = (object.y + 0.5) * TILE_SIZE;
+
+      switch (object.type) {
+        case 'coin':
+        case 'heart':
+          this.spawn(object.type, x, y, {}, null);
+          break;
+        case 'crystal':
+          this.spawn('crystal', x, y, { crystalIndex: crystalIndexOf.get(object) }, null);
+          break;
+        case 'power-up':
+          this.spawn('power-up', x, y, { powerUp: object.properties?.powerUp ?? 'super-jump' }, null);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  /** Quantas moedas soltas a fase tem, para a meta de 70% das estrelas. */
+  get coinCount(): number {
+    return this.items.filter((item) => item.kind === 'coin').length;
+  }
+
+  spawn(
+    kind: CollectibleKind,
+    x: number,
+    y: number,
+    extra: { readonly powerUp?: PowerUpKind; readonly crystalIndex?: number },
+    spawnedAt: number | null,
+  ): void {
+    this.items.push({ id: this.nextId, kind, x, y, powerUp: extra.powerUp, crystalIndex: extra.crystalIndex, spawnedAt });
+    this.nextId += 1;
+  }
+
+  update(deltaMs: number, playerX: number, playerY: number, hasMagnet: boolean): void {
+    const pull = Math.min(1, (MAGNET_PULL_PER_SECOND * deltaMs) / 1000);
+
+    for (let index = this.items.length - 1; index >= 0; index -= 1) {
+      const item = this.items[index];
+
+      if (hasMagnet && item.kind === 'coin') {
+        const distanceX = playerX - item.x;
+        const distanceY = playerY - item.y;
+
+        if (distanceX * distanceX + distanceY * distanceY < MAGNET_RADIUS * MAGNET_RADIUS) {
+          item.x += distanceX * pull;
+          item.y += distanceY * pull;
+        }
+      }
+
+      if (Math.abs(playerX - item.x) < REACH_X && Math.abs(playerY - item.y) < REACH_Y) {
+        this.items.splice(index, 1);
+        this.host.onCollected(item);
+      }
+    }
+  }
+}

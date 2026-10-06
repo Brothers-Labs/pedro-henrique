@@ -1,0 +1,592 @@
+import { POWER_UP_LABELS } from '../../config/object-catalog';
+import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
+import { SeededRandom, seedFromText } from '../../levels/seeded-random';
+import type { EnemyKind, LevelBlueprint, LevelObject, LevelObjectType, PowerUpKind } from '../../models/level.model';
+import type { LevelRunResult } from '../../models/progress.model';
+import type { GameSessionEvent, GameSessionListener, MakerSoundCue } from '../../models/session.model';
+import type { DifficultyRules } from '../../models/settings.model';
+import type { InputSnapshot } from '../input/input-snapshot';
+import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
+import { Boss, type BossHost } from './boss';
+import { type Collectible, CollectibleSystem, type CollectibleHost } from './collectibles';
+import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
+import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
+import { Player, type PlayerHost } from './player';
+import { Scheduler } from './scheduler';
+import { TileGrid } from './tile-grid';
+import { TriggerSystem, type TriggerHost } from './triggers';
+import { VisualEventQueue } from './visual-events';
+
+/** Um passo fixo de física: 60 por segundo em qualquer tela, de 60 ou 120 Hz. */
+export const STEP_MS = 1000 / 60;
+
+/** Distância do Pedro além da qual os inimigos esperam parados. */
+const ENEMY_ACTIVE_DISTANCE = 1000;
+
+/** Distância, em células, a partir da qual o chefão acorda. */
+const BOSS_WAKE_DISTANCE = 11;
+
+const VICTORY_DELAY_MS = 1300;
+const DEFEAT_DELAY_MS = 700;
+const CHEST_COINS = 10;
+
+const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost']);
+
+function isEnemyKind(type: LevelObjectType): type is EnemyKind {
+  return ENEMY_KINDS.has(type);
+}
+
+export interface SimulationOptions {
+  readonly blueprint: LevelBlueprint;
+  readonly rules: DifficultyRules;
+  readonly isTouch: boolean;
+  readonly listener: GameSessionListener;
+}
+
+/**
+ * A fase em andamento, sem tela nenhuma.
+ *
+ * Monta o mundo a partir da planta, liga os sistemas entre si e cuida das
+ * regras da partida: corações, moedas, cristais, checkpoint, vitória e o
+ * "quase!" quando os corações acabam. O que o Angular precisa saber sai pelo
+ * `listener`; o que a tela precisa mostrar fica no estado público e na fila de
+ * efeitos.
+ *
+ * Há dois relógios: `clockMs` anima e agenda e nunca para enquanto a partida
+ * roda; `runTimeMs` é o tempo que vale para o resultado e para no portal.
+ */
+export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, TriggerHost, BossHost {
+  readonly effects = new VisualEventQueue();
+  readonly scheduler = new Scheduler();
+  readonly grid: TileGrid;
+  readonly player: Player;
+  readonly blocks: BlockSystem;
+  readonly collectibles: CollectibleSystem;
+  readonly triggers: TriggerSystem;
+  readonly enemies: Enemy[] = [];
+  boss: Boss | null = null;
+
+  clockMs = 0;
+  isFinished = false;
+  isDefeated = false;
+
+  private readonly world: PhysicsWorld;
+  private readonly random: SeededRandom;
+  private runTimeMs = 0;
+  private hearts: number;
+  private coins = 0;
+  private readonly coinsTotal: number;
+  private readonly crystalsFound: boolean[];
+  private enemiesDefeated = 0;
+  private respawnX = 0;
+  private respawnY = 0;
+  private bossDefeated = false;
+  private bossWakeX = 0;
+  private bossGroundY = 0;
+  private nextEnemyId = 1;
+
+  constructor(private readonly options: SimulationOptions) {
+    const { blueprint } = options;
+    const crystalIndexOf = indexCrystals(blueprint.objects);
+
+    this.random = new SeededRandom(seedFromText(blueprint.id));
+    this.hearts = options.rules.hearts;
+    this.crystalsFound = Array.from({ length: crystalIndexOf.size }, () => false);
+    this.grid = TileGrid.fromBlueprint(blueprint);
+    this.blocks = new BlockSystem(blueprint.objects, crystalIndexOf, this.grid, this);
+    this.collectibles = new CollectibleSystem(blueprint.objects, crystalIndexOf, this);
+    this.triggers = new TriggerSystem(blueprint.objects, options.isTouch, this);
+    this.world = { grid: this.grid, platforms: this.blocks.platforms };
+    this.coinsTotal = this.collectibles.coinCount + countSurpriseCoins(blueprint.objects) * SURPRISE_COIN_COUNT;
+    this.player = this.createPlayer(blueprint.objects);
+    this.createEnemies(blueprint.objects);
+    this.createBoss(blueprint.objects);
+  }
+
+  get blueprint(): LevelBlueprint {
+    return this.options.blueprint;
+  }
+
+  /** Avisa a tela de que a fase está de pé, com o placar inicial. */
+  announceReady(): void {
+    this.emit({ type: 'ready' });
+    this.emitHud();
+  }
+
+  step(input: InputSnapshot): void {
+    const seconds = STEP_MS / 1000;
+
+    this.clockMs += STEP_MS;
+    this.scheduler.run(this.clockMs);
+
+    if (this.isFinished || this.isDefeated) {
+      return;
+    }
+
+    this.runTimeMs += STEP_MS;
+
+    if (input.pausePressed) {
+      this.emit({ type: 'pause-requested' });
+    }
+
+    const player = this.player;
+    const body = player.body;
+    const isOnIce = this.grid.isIceAtPoint(centerX(body), bottom(body) + 4);
+
+    player.control(this.clockMs, STEP_MS, input, isOnIce);
+    this.blocks.update(seconds);
+
+    if (player.isActive) {
+      stepBody(body, this.world, seconds, true);
+      this.reactToPlayerCollisions();
+    }
+
+    this.updateEnemies(seconds);
+    this.updateBoss(seconds);
+    this.collectibles.update(STEP_MS, centerX(body), centerY(body), player.hasPowerUp('magnet'));
+    this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
+    this.checkHazards();
+  }
+
+  /* Comandos vindos da tela ------------------------------------------------------ */
+
+  /** Volta ao último checkpoint com os corações cheios. */
+  retryFromCheckpoint(): void {
+    this.hearts = this.options.rules.hearts;
+    this.isDefeated = false;
+    this.player.clearPowerUps();
+    this.player.placeFeetAt(this.respawnX, this.respawnY);
+    this.player.revive(this.clockMs, this.options.rules.invincibilityMs);
+    this.effects.flash();
+    this.emitHud();
+  }
+
+  /* Montagem ------------------------------------------------------------------------ */
+
+  private createPlayer(objects: readonly LevelObject[]): Player {
+    const start = objects.find((object) => object.type === 'start');
+
+    if (!start) {
+      throw new Error('A fase não tem ponto de início.');
+    }
+
+    this.respawnX = (start.x + 0.5) * TILE_SIZE;
+    this.respawnY = (start.y + 1) * TILE_SIZE;
+
+    return new Player(this.respawnX, this.respawnY, this);
+  }
+
+  private createEnemies(objects: readonly LevelObject[]): void {
+    for (const object of objects) {
+      if (isEnemyKind(object.type)) {
+        this.addEnemy(object.type, object.x, object.y, 1);
+      }
+    }
+  }
+
+  private addEnemy(kind: EnemyKind, cellX: number, cellY: number, scale: number): Enemy {
+    const enemy = new Enemy(
+      this.nextEnemyId,
+      kind,
+      cellX,
+      cellY,
+      this.options.rules.enemySpeed,
+      (worldX, worldY) => this.grid.isGroundAtPoint(worldX, worldY),
+      this.random.next() * Math.PI * 2,
+      scale,
+    );
+
+    this.nextEnemyId += 1;
+    this.enemies.push(enemy);
+
+    return enemy;
+  }
+
+  private createBoss(objects: readonly LevelObject[]): void {
+    const definition = this.options.blueprint.boss;
+    const marker = objects.find((object) => object.type === 'boss');
+
+    if (!definition || !marker) {
+      return;
+    }
+
+    const arenaLeft = Math.max(0, marker.x - 22) * TILE_SIZE;
+    let arenaRightCell = marker.x;
+
+    while (arenaRightCell < this.grid.width - 1 && !this.grid.isSolidCell(arenaRightCell, marker.y)) {
+      arenaRightCell += 1;
+    }
+
+    this.boss = new Boss(definition, marker.x, marker.y, arenaLeft, arenaRightCell * TILE_SIZE, this);
+    this.bossWakeX = (marker.x - BOSS_WAKE_DISTANCE) * TILE_SIZE;
+    this.bossGroundY = (marker.y + 1) * TILE_SIZE;
+    this.triggers.closePortal();
+  }
+
+  /* Passo a passo ------------------------------------------------------------------- */
+
+  private reactToPlayerCollisions(): void {
+    const body = this.player.body;
+
+    if (body.headHitColumn >= 0) {
+      this.blocks.handleHeadHit(body.headHitColumn, body.headHitRow, this.clockMs);
+    }
+
+    if (body.landedRow >= 0) {
+      this.blocks.handleLanding(this.player, body.landedRow, body.landedFromColumn, body.landedToColumn, this.clockMs);
+    }
+  }
+
+  private updateEnemies(seconds: number): void {
+    const playerBody = this.player.body;
+    const playerX = centerX(playerBody);
+    const playerY = centerY(playerBody);
+    const fallLimit = this.grid.heightPx + TILE_SIZE * 5;
+
+    for (let index = this.enemies.length - 1; index >= 0; index -= 1) {
+      const enemy = this.enemies[index];
+      const body = enemy.body;
+
+      if ((enemy.isDefeated && this.clockMs - enemy.defeatedAt > ENEMY_DEFEAT_MS) || body.y > fallLimit) {
+        this.enemies.splice(index, 1);
+        continue;
+      }
+
+      if (enemy.isDefeated) {
+        continue;
+      }
+
+      if (Math.abs(centerX(body) - playerX) < ENEMY_ACTIVE_DISTANCE) {
+        enemy.step(this.clockMs, playerX, playerY);
+        stepBody(body, this.world, seconds, true);
+      } else {
+        enemy.freeze();
+        body.previousX = body.x;
+        body.previousY = body.y;
+      }
+
+      if (this.player.isActive && enemy.isHarmful && overlaps(playerBody, body)) {
+        this.onEnemyContact(enemy);
+      }
+    }
+  }
+
+  private updateBoss(seconds: number): void {
+    const boss = this.boss;
+
+    if (!boss) {
+      return;
+    }
+
+    if (boss.isGone) {
+      this.boss = null;
+      return;
+    }
+
+    const playerX = centerX(this.player.body);
+
+    if (boss.mode === 'waiting' && !this.bossDefeated && playerX >= this.bossWakeX) {
+      boss.wake(this.clockMs);
+      this.emitBoss(boss.hitPoints);
+    }
+
+    boss.step(this.clockMs, playerX);
+    stepBody(boss.body, this.world, seconds, true);
+
+    if (boss.isAwake && this.player.isActive && overlaps(this.player.body, boss.body)) {
+      this.onBossContact(boss);
+    }
+  }
+
+  private checkHazards(): void {
+    const player = this.player;
+
+    if (!player.isActive) {
+      return;
+    }
+
+    const fellOut = player.body.y > this.grid.heightPx + TILE_SIZE;
+
+    if (!fellOut && !this.blocks.touchesHazard(player.body)) {
+      return;
+    }
+
+    this.loseHeart();
+
+    if (!this.isDefeated) {
+      player.placeFeetAt(this.respawnX, this.respawnY);
+      player.revive(this.clockMs, this.options.rules.invincibilityMs);
+      this.effects.flash();
+    }
+  }
+
+  /* Contatos --------------------------------------------------------------------------- */
+
+  private onEnemyContact(enemy: Enemy): void {
+    const body = this.player.body;
+    const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
+
+    if (isStomp && enemy.canBeStomped) {
+      enemy.defeat(this.clockMs);
+      this.enemiesDefeated += 1;
+      this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
+      this.playSound('enemyHit');
+      this.effects.burst('poof', centerX(enemy.body), centerY(enemy.body), 12);
+      return;
+    }
+
+    this.hurtPlayer(centerX(enemy.body));
+  }
+
+  private onBossContact(boss: Boss): void {
+    const body = this.player.body;
+    const isStomp = body.impactVelocityY > 0 && bottom(body) <= boss.body.y + PLAYER_PHYSICS.stompTolerance * 1.5;
+
+    if (isStomp) {
+      // Pisar no chefão nunca machuca o Pedro; só conta quando ele está cansado.
+      this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity * 1.15, true);
+      boss.takeHit(this.clockMs);
+      return;
+    }
+
+    if (boss.isHarmful) {
+      this.hurtPlayer(centerX(boss.body));
+    }
+  }
+
+  private hurtPlayer(sourceX: number): void {
+    const now = this.clockMs;
+    const player = this.player;
+    const x = centerX(player.body);
+
+    if (player.isInvincible(now) || !player.isActive) {
+      return;
+    }
+
+    if (player.hasShield) {
+      player.hasShield = false;
+      player.makeInvincible(now, 1000);
+      this.effects.burst('sparkle', x, centerY(player.body), 16);
+      this.effects.floatingText(x, player.body.y - 30, '🛡️ PROTEGIDO!');
+      this.playSound('powerup');
+      this.emit({ type: 'power-up-ended', kind: 'shield' });
+      this.emitHud();
+      return;
+    }
+
+    this.loseHeart();
+
+    if (!this.isDefeated) {
+      player.showHitPose(now, Math.sign(x - sourceX) || 1);
+      player.makeInvincible(now, this.options.rules.invincibilityMs);
+    }
+  }
+
+  private loseHeart(): void {
+    this.hearts = Math.max(0, this.hearts - 1);
+    this.playSound('damage');
+    this.effects.shake('leve');
+    this.emit({ type: 'damage' });
+    this.emitHud();
+
+    if (this.hearts === 0) {
+      this.isDefeated = true;
+      this.player.defeat();
+      this.scheduler.after(this.clockMs, DEFEAT_DELAY_MS, () => this.emit({ type: 'defeated' }));
+    }
+  }
+
+  /* Anfitrião dos sistemas ------------------------------------------------------------ */
+
+  playSound(cue: MakerSoundCue): void {
+    this.emit({ type: 'sound', cue });
+  }
+
+  onPowerUpEnded(kind: PowerUpKind): void {
+    this.emit({ type: 'power-up-ended', kind });
+  }
+
+  addCoins(amount: number, x: number, y: number): void {
+    this.coins += amount;
+    this.playSound('coin');
+    this.effects.floatingText(x, y - 20, `+${amount}`, '#ffe066');
+    this.emitHud();
+  }
+
+  spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void {
+    this.collectibles.spawn(kind, x, y, extra, this.clockMs);
+  }
+
+  onCollected(item: Collectible): void {
+    const { x, y } = item;
+
+    switch (item.kind) {
+      case 'coin':
+        this.coins += 1;
+        this.playSound('coin');
+        this.effects.burst('coin', x, y, 5);
+        break;
+      case 'crystal':
+        if (item.crystalIndex !== undefined) {
+          this.crystalsFound[item.crystalIndex] = true;
+        }
+
+        this.playSound('crystal');
+        this.effects.burst('crystal', x, y, 18);
+        this.effects.floatingText(x, y - 30, '💎 CRISTAL!', '#9ee8ff');
+        this.emit({ type: 'mascot', text: 'Uau! Você encontrou um cristal!' });
+        break;
+      case 'heart':
+        this.hearts = Math.min(this.options.rules.hearts, this.hearts + 1);
+        this.playSound('powerup');
+        this.effects.floatingText(x, y - 30, '❤️ +1', '#ff8fa3');
+        break;
+      case 'power-up':
+        this.activatePowerUp(item.powerUp ?? 'super-jump', x, y);
+        break;
+    }
+
+    this.emitHud();
+  }
+
+  onCheckpoint(feetX: number, feetY: number): void {
+    this.respawnX = feetX;
+    this.respawnY = feetY;
+    this.playSound('checkpoint');
+    this.emit({ type: 'checkpoint' });
+  }
+
+  onDoor(destinationFeetX: number, destinationFeetY: number): void {
+    this.playSound('button');
+    this.effects.flash();
+    this.player.placeFeetAt(destinationFeetX, destinationFeetY);
+  }
+
+  onSecretDoor(): void {
+    const body = this.player.body;
+
+    this.playSound('secret');
+    this.effects.floatingText(centerX(body), body.y - 40, '🌟 SEGREDO!', '#ffe066');
+    this.emit({ type: 'secret-found' });
+  }
+
+  onPortal(portalX: number, portalY: number): void {
+    this.isFinished = true;
+    this.player.celebrate(this.clockMs, portalX, portalY);
+    this.playSound('victory');
+    this.effects.burst('confetti', portalX, portalY, 50);
+    this.effects.burst('sparkle', portalX, portalY, 30);
+
+    const result = this.result();
+    this.scheduler.after(this.clockMs, VICTORY_DELAY_MS, () => this.emit({ type: 'completed', result }));
+  }
+
+  onChestOpened(x: number, y: number): void {
+    this.addCoins(CHEST_COINS, x, y);
+    this.playSound('victory');
+    this.triggers.openPortal(this.clockMs);
+    this.emit({ type: 'mascot', text: 'Um baú de tesouro! O portal abriu!' });
+  }
+
+  onMascotTip(text: string): void {
+    this.emit({ type: 'mascot', text });
+  }
+
+  spawnMinion(worldX: number, worldY: number): void {
+    const kind = this.options.blueprint.boss?.minion ?? 'slime';
+    const cellX = Math.min(this.grid.width - 2, Math.max(1, Math.floor(worldX / TILE_SIZE)));
+    const cellY = Math.max(1, Math.floor(worldY / TILE_SIZE));
+    const minion = this.addEnemy(kind, cellX, cellY, 0.8);
+
+    this.effects.burst('poof', centerX(minion.body), centerY(minion.body), 10);
+  }
+
+  onHitPointsChanged(hitPoints: number): void {
+    this.emitBoss(hitPoints);
+  }
+
+  onDefeated(x: number): void {
+    this.bossDefeated = true;
+    this.enemiesDefeated += 1;
+    this.emit({ type: 'boss', boss: null });
+
+    for (const enemy of this.enemies) {
+      if (!enemy.isDefeated) {
+        enemy.defeat(this.clockMs);
+      }
+    }
+
+    this.triggers.dropChest(x, this.bossGroundY, this.clockMs);
+  }
+
+  /* Auxiliares ------------------------------------------------------------------------ */
+
+  private activatePowerUp(kind: PowerUpKind, x: number, y: number): void {
+    this.player.grantPowerUp(kind, this.clockMs);
+    this.playSound('powerup');
+    this.effects.burst('sparkle', x, y, 16);
+
+    const { emoji, label } = POWER_UP_LABELS[kind];
+    this.effects.floatingText(x, y - 30, `${emoji} ${label.toUpperCase()}!`, '#ffffff');
+    this.emit({ type: 'power-up', kind, durationMs: POWER_UP_DURATION_MS[kind] });
+  }
+
+  private result(): LevelRunResult {
+    return {
+      timeMs: Math.round(this.runTimeMs),
+      coinsCollected: this.coins,
+      coinsTotal: this.coinsTotal,
+      crystalsFound: [...this.crystalsFound],
+      enemiesDefeated: this.enemiesDefeated,
+      bossDefeated: this.bossDefeated,
+    };
+  }
+
+  private emitHud(): void {
+    this.emit({
+      type: 'hud',
+      hud: {
+        hearts: this.hearts,
+        maxHearts: this.options.rules.hearts,
+        coins: this.coins,
+        crystalsFound: this.crystalsFound.filter(Boolean).length,
+        crystalsTotal: this.crystalsFound.length,
+        hasShield: this.player.hasShield,
+      },
+    });
+  }
+
+  private emitBoss(hitPoints: number): void {
+    const definition = this.options.blueprint.boss;
+
+    if (definition) {
+      this.emit({
+        type: 'boss',
+        boss: { name: definition.name, emoji: definition.emoji, hitPoints, maxHitPoints: definition.hitPoints },
+      });
+    }
+  }
+
+  private emit(event: GameSessionEvent): void {
+    this.options.listener(event);
+  }
+}
+
+/** Índice de cada cristal, na ordem em que aparece na planta da fase. */
+function indexCrystals(objects: readonly LevelObject[]): ReadonlyMap<LevelObject, number> {
+  const index = new Map<LevelObject, number>();
+
+  for (const object of objects) {
+    if (object.type === 'crystal' || (object.type === 'surprise' && object.properties?.contents === 'crystal')) {
+      index.set(object, index.size);
+    }
+  }
+
+  return index;
+}
+
+function countSurpriseCoins(objects: readonly LevelObject[]): number {
+  return objects.filter(
+    (object) => object.type === 'surprise' && (object.properties?.contents ?? 'coins') === 'coins',
+  ).length;
+}

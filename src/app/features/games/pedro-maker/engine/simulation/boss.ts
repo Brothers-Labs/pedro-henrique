@@ -1,27 +1,23 @@
-import * as Phaser from 'phaser';
-
-import { BOSS_FRAME_HEIGHT, BOSS_FRAME_WIDTH, BOSS_FRAMES } from '../../art/boss-art';
-import { TEXTURES } from '../../art/texture-catalog';
 import { TILE_SIZE } from '../../config/physics.config';
 import type { BossDefinition } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
-import { DEPTH, type Effects } from '../effects';
+import { bottom, centerX, createBody, type PhysicsBody } from './physics-body';
+import type { VisualEventQueue } from './visual-events';
 
 export interface BossHost {
-  readonly effects: Effects;
+  readonly effects: VisualEventQueue;
   playSound(cue: MakerSoundCue): void;
   spawnMinion(worldX: number, worldY: number): void;
   onHitPointsChanged(hitPoints: number): void;
   onDefeated(x: number): void;
 }
 
-type BossMode = 'waiting' | 'idle' | 'windup' | 'leap' | 'charge' | 'summon' | 'tired' | 'hurt' | 'defeated';
+export type BossMode = 'waiting' | 'idle' | 'windup' | 'leap' | 'charge' | 'summon' | 'tired' | 'hurt' | 'defeated';
 
 type Attack = 'leap' | 'charge' | 'summon';
 
 const BODY_WIDTH = 112;
 const BODY_HEIGHT = 78;
-const BODY_BOTTOM = 114;
 
 const IDLE_MS = 1000;
 const WINDUP_MS = 550;
@@ -29,6 +25,7 @@ const TIRED_MS = 1800;
 const HURT_MS = 900;
 const LEAP_VELOCITY = 880;
 const CHARGE_SPEED = 400;
+export const BOSS_DEFEAT_MS = 1100;
 
 /** Ordem dos ataques: previsível de propósito, para a criança aprender o ritmo. */
 const ATTACK_CYCLE: readonly Attack[] = ['leap', 'charge', 'summon', 'leap', 'charge'];
@@ -41,17 +38,21 @@ const ATTACK_CYCLE: readonly Attack[] = ['leap', 'charge', 'summon', 'leap', 'ch
  * viram espiral e é aí que um pisão vale. Pisar nele fora dessa janela só faz
  * o Pedro quicar, sem machucar ninguém.
  */
-export class Boss extends Phaser.Physics.Arcade.Sprite {
+export class Boss {
+  readonly body: PhysicsBody = createBody(BODY_WIDTH, BODY_HEIGHT, true);
   hitPoints: number;
+  mode: BossMode = 'waiting';
+  modeStartedAt = 0;
+  /** 1 olhando para a direita, -1 para a esquerda. */
+  direction: 1 | -1 = -1;
+  /** Terminou a animação de derrota: sai da partida e larga o baú. */
+  isGone = false;
 
-  private mode: BossMode = 'waiting';
   private modeUntil = 0;
   private attackIndex = 0;
-  private direction = -1;
   private wasAirborne = false;
 
   constructor(
-    scene: Phaser.Scene,
     readonly definition: BossDefinition,
     cellX: number,
     cellY: number,
@@ -59,23 +60,11 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     private readonly arenaRight: number,
     private readonly host: BossHost,
   ) {
-    const feetY = (cellY + 1) * TILE_SIZE;
-
-    super(scene, cellX * TILE_SIZE + TILE_SIZE / 2, feetY - (BODY_BOTTOM - BOSS_FRAME_HEIGHT / 2), TEXTURES.boss, BOSS_FRAMES.idle);
-
     this.hitPoints = definition.hitPoints;
-
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-
-    this.arcadeBody.setSize(BODY_WIDTH, BODY_HEIGHT);
-    this.arcadeBody.setOffset((BOSS_FRAME_WIDTH - BODY_WIDTH) / 2, BODY_BOTTOM - BODY_HEIGHT);
-    this.arcadeBody.setImmovable(true);
-    this.setDepth(DEPTH.enemies);
-  }
-
-  get arcadeBody(): Phaser.Physics.Arcade.Body {
-    return this.body as Phaser.Physics.Arcade.Body;
+    this.body.x = cellX * TILE_SIZE + TILE_SIZE / 2 - BODY_WIDTH / 2;
+    this.body.y = (cellY + 1) * TILE_SIZE - BODY_HEIGHT;
+    this.body.previousX = this.body.x;
+    this.body.previousY = this.body.y;
   }
 
   get isAwake(): boolean {
@@ -102,6 +91,11 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   step(now: number, playerX: number): void {
+    if (this.mode === 'defeated') {
+      this.finishDefeat(now);
+      return;
+    }
+
     if (!this.isAwake) {
       return;
     }
@@ -110,8 +104,8 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
     switch (this.mode) {
       case 'idle':
-        this.arcadeBody.setVelocityX(0);
-        this.faceTowards(playerX);
+        this.body.vx = 0;
+        this.direction = playerX < centerX(this.body) ? -1 : 1;
 
         if (now >= this.modeUntil) {
           this.startNextAttack(now);
@@ -119,12 +113,9 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
         return;
       case 'windup':
-        // Tremidinha antes da investida: o aviso de que ele vai correr.
-        this.setX(this.x + Math.sin(now / 25) * 1.5);
-
         if (now >= this.modeUntil) {
           this.enter('charge', now, 4000);
-          this.arcadeBody.setVelocityX(this.direction * CHARGE_SPEED * this.definition.fury);
+          this.body.vx = this.direction * CHARGE_SPEED * this.definition.fury;
         }
 
         return;
@@ -137,15 +128,12 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
       case 'summon':
       case 'tired':
       case 'hurt':
-        this.arcadeBody.setVelocityX(0);
+        this.body.vx = 0;
 
         if (now >= this.modeUntil) {
           this.enter('idle', now, IDLE_MS / this.definition.fury);
         }
 
-        return;
-      case 'waiting':
-      case 'defeated':
         return;
     }
   }
@@ -159,16 +147,26 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     this.hitPoints -= 1;
     this.host.onHitPointsChanged(this.hitPoints);
     this.host.playSound('enemyHit');
-    this.host.effects.burst('poof', this.x, this.y - 30, 18);
+    this.host.effects.burst('poof', centerX(this.body), this.body.y + 10, 18);
     this.host.effects.shake('forte');
 
     if (this.hitPoints <= 0) {
-      this.defeat();
+      this.enter('defeated', now, BOSS_DEFEAT_MS);
+      this.body.vx = 0;
+      this.body.hasGravity = false;
+      this.body.vy = 0;
+      this.host.effects.burst('confetti', centerX(this.body), this.body.y, 60);
       return;
     }
 
     this.enter('hurt', now, HURT_MS);
-    this.setFrame(BOSS_FRAMES.hurt);
+  }
+
+  private finishDefeat(now: number): void {
+    if (!this.isGone && now >= this.modeUntil) {
+      this.isGone = true;
+      this.host.onDefeated(centerX(this.body));
+    }
   }
 
   private startNextAttack(now: number): void {
@@ -177,109 +175,71 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     this.attackIndex += 1;
 
     switch (attack) {
-      case 'leap': {
+      case 'leap':
         this.enter('leap', now, 3000);
         this.wasAirborne = false;
-        this.arcadeBody.setVelocityY(-LEAP_VELOCITY * Math.sqrt(this.definition.fury));
-        this.arcadeBody.setVelocityX(this.direction * 240 * this.definition.fury);
-        this.setFrame(BOSS_FRAMES.idle);
+        this.body.vy = -LEAP_VELOCITY * Math.sqrt(this.definition.fury);
+        this.body.vx = this.direction * 240 * this.definition.fury;
         return;
-      }
       case 'charge':
         this.enter('windup', now, WINDUP_MS);
-        this.setFrame(BOSS_FRAMES.squash);
         return;
       case 'summon':
         this.enter('summon', now, 900);
-        this.setFrame(BOSS_FRAMES.squash);
         this.host.playSound('boss');
-        this.host.spawnMinion(this.x - 90, this.y - 20);
-        this.host.spawnMinion(this.x + 90, this.y - 20);
-        this.scene.time.delayedCall(260, () => {
-          if (this.mode === 'summon') {
-            this.setFrame(BOSS_FRAMES.idle);
-          }
-        });
+        this.host.spawnMinion(centerX(this.body) - 90, this.body.y + 20);
+        this.host.spawnMinion(centerX(this.body) + 90, this.body.y + 20);
         return;
     }
   }
 
   private handleLeapLanding(now: number): void {
-    const isGrounded = this.arcadeBody.blocked.down;
-
-    if (!isGrounded) {
+    if (!this.body.blockedDown) {
       this.wasAirborne = true;
       return;
     }
 
     if (this.wasAirborne || now >= this.modeUntil) {
-      this.arcadeBody.setVelocityX(0);
+      this.body.vx = 0;
       this.becomeTired(now);
     }
   }
 
   private handleCharge(now: number): void {
+    const x = centerX(this.body);
     const hitWall =
-      (this.direction < 0 && (this.arcadeBody.blocked.left || this.x <= this.arenaLeft + BODY_WIDTH / 2)) ||
-      (this.direction > 0 && (this.arcadeBody.blocked.right || this.x >= this.arenaRight - BODY_WIDTH / 2));
+      (this.direction < 0 && (this.body.blockedLeft || x <= this.arenaLeft + BODY_WIDTH / 2)) ||
+      (this.direction > 0 && (this.body.blockedRight || x >= this.arenaRight - BODY_WIDTH / 2));
 
     if (hitWall || now >= this.modeUntil) {
-      this.arcadeBody.setVelocityX(0);
+      this.body.vx = 0;
       this.becomeTired(now);
     }
   }
 
   private becomeTired(now: number): void {
     this.enter('tired', now, TIRED_MS);
-    this.setFrame(BOSS_FRAMES.tired);
     this.host.playSound('boss');
     this.host.effects.shake('forte');
-    this.host.effects.burst('dust', this.x, this.arcadeBody.bottom, 16);
-  }
-
-  private defeat(): void {
-    this.mode = 'defeated';
-    this.arcadeBody.enable = false;
-    this.setFrame(BOSS_FRAMES.hurt);
-    this.host.effects.burst('confetti', this.x, this.y - 40, 60);
-
-    this.scene.tweens.add({
-      targets: this,
-      scale: 0.1,
-      alpha: 0,
-      angle: 360,
-      duration: 1100,
-      ease: 'Back.easeIn',
-      onComplete: () => {
-        this.host.onDefeated(this.x);
-        this.destroy();
-      },
-    });
-  }
-
-  private faceTowards(playerX: number): void {
-    this.direction = playerX < this.x ? -1 : 1;
-    this.setFlipX(this.direction > 0);
+    this.host.effects.burst('dust', centerX(this.body), bottom(this.body), 16);
   }
 
   private keepInsideArena(): void {
-    const half = BODY_WIDTH / 2;
+    const minimum = this.arenaLeft;
+    const maximum = this.arenaRight - BODY_WIDTH;
 
-    if (this.x < this.arenaLeft + half) {
-      this.setX(this.arenaLeft + half);
-      this.arcadeBody.setVelocityX(Math.max(0, this.arcadeBody.velocity.x));
-    } else if (this.x > this.arenaRight - half) {
-      this.setX(this.arenaRight - half);
-      this.arcadeBody.setVelocityX(Math.min(0, this.arcadeBody.velocity.x));
+    if (this.body.x < minimum) {
+      this.body.x = minimum;
+      this.body.vx = Math.max(0, this.body.vx);
+    } else if (this.body.x > maximum) {
+      this.body.x = maximum;
+      this.body.vx = Math.min(0, this.body.vx);
     }
   }
 
   private enter(mode: BossMode, now: number, durationMs: number): void {
     this.mode = mode;
+    this.modeStartedAt = now;
     this.modeUntil = now + durationMs;
-
-    if (mode === 'idle') {
-      this.setFrame(BOSS_FRAMES.idle);
-    }
   }
 }

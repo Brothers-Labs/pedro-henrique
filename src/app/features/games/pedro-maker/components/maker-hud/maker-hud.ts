@@ -28,8 +28,12 @@ export class MakerHud {
   readonly subtitle = input('');
   readonly boss = input<BossHudState | null>(null);
   readonly powerUps = input<readonly ActivePowerUp[]>([]);
+  /** Tela cheia disponível neste navegador (o iPhone, por exemplo, não deixa). */
+  readonly canFullscreen = input(false);
+  readonly isFullscreen = input(false);
 
   readonly pauseRequested = output<void>();
+  readonly fullscreenToggled = output<void>();
 
   protected readonly hearts = computed(() => {
     const { hearts, maxHearts } = this.hud();
