@@ -58,11 +58,11 @@ export class PedroModel {
 
   constructor(palette: CharacterPalette) {
     this.root.name = 'pedro';
-    this.body.add(this.mesh(upperBody(palette)));
-    this.leftArm = this.limb(arm(palette.shirt), -0.33, SHOULDER_Y);
-    this.rightArm = this.limb(arm(palette.shirt), 0.33, SHOULDER_Y);
-    this.leftLeg = this.limb(leg(), -0.12, HIP_Y);
-    this.rightLeg = this.limb(leg(), 0.12, HIP_Y);
+    this.body.add(this.mesh(pedroUpperBody(palette)));
+    this.leftArm = this.limb(pedroArm(palette.shirt), -0.33, SHOULDER_Y);
+    this.rightArm = this.limb(pedroArm(palette.shirt), 0.33, SHOULDER_Y);
+    this.leftLeg = this.limb(pedroLeg(), -0.12, HIP_Y);
+    this.rightLeg = this.limb(pedroLeg(), 0.12, HIP_Y);
     this.wings = this.buildWings();
     this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings);
 
@@ -229,7 +229,8 @@ export class PedroModel {
   }
 }
 
-function upperBody(palette: CharacterPalette): readonly VoxelBox[] {
+/** Tronco, cabeça, boné e mochila: também é o piloto sentado do Pedro Kart. */
+export function pedroUpperBody(palette: CharacterPalette): readonly VoxelBox[] {
   const cap = palette.cap;
   const parts: VoxelBox[] = [
     // Tronco e cinto.
@@ -285,10 +286,10 @@ function backpack(palette: CharacterPalette): readonly VoxelBox[] {
   }
 }
 
-function arm(shirt: string): readonly VoxelBox[] {
+export function pedroArm(shirt: string): readonly VoxelBox[] {
   return [box(0, -0.12, 0, 0.14, 0.26, 0.16, shirt), box(0, -0.32, 0, 0.13, 0.16, 0.14, SKIN)];
 }
 
-function leg(): readonly VoxelBox[] {
+function pedroLeg(): readonly VoxelBox[] {
   return [box(0, -0.19, 0, 0.18, 0.38, 0.2, JEANS), box(0, -0.38, 0.03, 0.2, 0.08, 0.27, SHOE)];
 }

@@ -1,0 +1,163 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: block;
+  overflow: hidden;
+  background: #111122;
+  touch-action: none;
+  user-select: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+.minimap {
+  position: absolute;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: 7rem;
+  width: 10rem;
+  height: 7.5rem;
+  border: 3px solid maker.$ink;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 35%);
+  pointer-events: none;
+
+  @include from($breakpoint-md) {
+    bottom: 1rem;
+    width: 12.5rem;
+    height: 9.4rem;
+  }
+}
+
+.hud {
+  position: absolute;
+  inset: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) auto max(0.75rem, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-areas:
+    'position lap time pause'
+    'item . . .';
+  align-items: start;
+  gap: 0.5rem 0.75rem;
+  pointer-events: none;
+}
+
+.hud__position {
+  @include maker.title-text(clamp(2.4rem, 1.8rem + 3vw, 3.8rem));
+
+  grid-area: position;
+  color: #ffcf3f;
+
+  small {
+    font-size: 0.5em;
+  }
+}
+
+.hud__lap,
+.hud__time {
+  @include maker.pill;
+
+  font-size: var(--text-lg);
+}
+
+.hud__lap {
+  grid-area: lap;
+  justify-self: center;
+}
+
+.hud__time {
+  grid-area: time;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__item {
+  grid-area: item;
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid maker.$ink;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 75%);
+  font-size: 2.2rem;
+}
+
+.hud__pause {
+  @include touch-target(3rem);
+
+  grid-area: pause;
+  border: 3px solid maker.$ink;
+  border-radius: 50%;
+  background: #ffffff;
+  color: maker.$ink;
+  font-size: 1.3rem;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.countdown {
+  @include maker.title-text(clamp(5rem, 3rem + 10vw, 9rem));
+
+  position: absolute;
+  inset: 30% 0 auto;
+  color: #ffcf3f;
+  text-align: center;
+  pointer-events: none;
+}
+
+.toast {
+  @include maker.pill;
+
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--text-xl);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.keys {
+  @include maker.pill;
+
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(17 17 34 / 55%);
+}
+
+.overlay__panel {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(100%, 18rem);
+  padding: 1.25rem;
+  color: maker.$ink;
+  font-weight: 800;
+  text-align: center;
+}
+
+.overlay__title {
+  font-size: var(--text-2xl);
+}
+
+.overlay__button {
+  @include maker.game-button;
+}

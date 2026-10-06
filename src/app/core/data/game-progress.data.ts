@@ -130,6 +130,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-kart',
+    label: 'Pedro Kart',
+    emoji: '🏎️',
+    color: 'orange',
+    /** Cada corrida terminada conta como um desafio; chegar no pódio conta como acerto. */
+    tagline: 'Corridas de kart com o Pedro Maker e pistas que você mesmo cria.',
+    unit: 'corrida',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));

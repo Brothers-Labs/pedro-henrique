@@ -1,0 +1,153 @@
+@let current = draft();
+
+<app-kart-page-frame
+  [heading]="isEditing() ? 'Editar pista' : 'Pedro Kart Maker'"
+  emoji="🛠️"
+  [backLink]="isEditing() ? '/jogos/pedro-kart/pistas' : '/jogos/pedro-kart'"
+>
+  @switch (status()) {
+    @case ('pronto') {
+      <div class="maker">
+        <section class="maker__board" aria-labelledby="mapa-titulo">
+          <h2 id="mapa-titulo" class="maker__hint">
+            @switch (tool()) {
+              @case ('pista') {
+                Arraste o dedo pela grade para desenhar a pista. Volte o dedo para apagar.
+              }
+              @case ('turbo') {
+                Toque numa casa da pista para pôr ou tirar um turbo 💨.
+              }
+              @case ('caixa') {
+                Toque numa casa da pista para pôr ou tirar caixas surpresa 🎁.
+              }
+            }
+          </h2>
+
+          <div class="tools" role="radiogroup" aria-label="Ferramenta">
+            @for (option of tools; track option.id) {
+              <button
+                type="button"
+                class="tools__button"
+                role="radio"
+                [attr.aria-checked]="tool() === option.id"
+                [class.tools__button--active]="tool() === option.id"
+                (click)="chooseTool(option.id)"
+              >
+                <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+              </button>
+            }
+            <button type="button" class="tools__button" [disabled]="!canUndo()" (click)="undo()">
+              <span aria-hidden="true">↩️</span> Desfazer
+            </button>
+            <button type="button" class="tools__button" [disabled]="current.path.length === 0" (click)="clear()">
+              <span aria-hidden="true">🧹</span> Limpar
+            </button>
+          </div>
+
+          <app-track-grid [draft]="current" (cellPointer)="onCellPointer($event)" />
+
+          <p class="maker__status" [class.maker__status--ready]="isRaceable()" role="status">
+            @if (problemMessage(); as message) {
+              {{ message }}
+            } @else {
+              <span aria-hidden="true">✅</span> A volta fechou! A pista está pronta para correr.
+            }
+          </p>
+        </section>
+
+        <section class="maker__settings" aria-labelledby="ajustes-titulo">
+          <h2 id="ajustes-titulo" class="maker__title">Ajustes da pista</h2>
+
+          <label class="field">
+            <span class="field__label">Nome</span>
+            <input
+              class="field__input"
+              type="text"
+              [attr.maxlength]="grid.maximumNameLength"
+              placeholder="Minha pista"
+              [value]="current.name"
+              (change)="rename($event)"
+            />
+          </label>
+
+          <fieldset class="field">
+            <legend class="field__label">Cenário</legend>
+            <div class="themes">
+              @for (theme of themes; track theme.id) {
+                <button
+                  type="button"
+                  class="themes__button"
+                  [style.background]="theme.ground"
+                  [attr.aria-pressed]="current.theme === theme.id"
+                  [class.themes__button--active]="current.theme === theme.id"
+                  (click)="chooseTheme(theme.id)"
+                >
+                  <span aria-hidden="true">{{ theme.emoji }}</span> {{ theme.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <span class="field__label" id="voltas-titulo">Voltas</span>
+            <div class="laps" role="group" aria-labelledby="voltas-titulo">
+              <button
+                type="button"
+                class="laps__button"
+                aria-label="Menos uma volta"
+                [disabled]="current.laps <= grid.minimumLaps"
+                (click)="changeLaps(-1)"
+              >
+                −
+              </button>
+              <output class="laps__value" aria-live="polite">{{ current.laps }}</output>
+              <button
+                type="button"
+                class="laps__button"
+                aria-label="Mais uma volta"
+                [disabled]="current.laps >= grid.maximumLaps"
+                (click)="changeLaps(1)"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div class="maker__actions">
+            <button
+              type="button"
+              class="maker__save"
+              data-tone="orange"
+              [disabled]="!isRaceable() || saveState() === 'salvando'"
+              (click)="save(true)"
+            >
+              <span aria-hidden="true">🏁</span> Salvar e correr
+            </button>
+            <button
+              type="button"
+              class="maker__save"
+              data-tone="green"
+              [disabled]="!isRaceable() || saveState() === 'salvando'"
+              (click)="save(false)"
+            >
+              <span aria-hidden="true">💾</span> Salvar
+            </button>
+          </div>
+
+          @if (saveState() === 'erro') {
+            <p class="maker__error" role="alert">Não deu para salvar a pista agora. Tente de novo.</p>
+          }
+        </section>
+      </div>
+    }
+    @case ('nao-encontrada') {
+      <p class="maker__message">Essa pista não existe mais. Que tal desenhar uma nova?</p>
+    }
+    @case ('erro') {
+      <p class="maker__message">Não deu para abrir essa pista agora. Tente de novo daqui a pouco.</p>
+    }
+    @default {
+      <p class="maker__message">Abrindo a pista…</p>
+    }
+  }
+</app-kart-page-frame>

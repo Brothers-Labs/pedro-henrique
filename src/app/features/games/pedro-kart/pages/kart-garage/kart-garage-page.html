@@ -1,0 +1,68 @@
+@let body = selectedBody();
+
+<app-kart-page-frame heading="Garagem" emoji="🎨">
+  <div class="garage">
+    <section class="garage__preview" aria-labelledby="kart-escolhido">
+      <h2 id="kart-escolhido" class="garage__name">
+        <span aria-hidden="true">{{ body.emoji }}</span> {{ body.label }}
+      </h2>
+      <app-kart-showroom class="garage__showroom" [setup]="setup()" [label]="showroomLabel()" />
+      <p class="garage__description">{{ body.description }}</p>
+
+      <dl class="stats">
+        @for (stat of stats(); track stat.label) {
+          <div class="stats__row">
+            <dt><span aria-hidden="true">{{ stat.emoji }}</span> {{ stat.label }}</dt>
+            <dd [attr.aria-label]="stat.value + ' de ' + statDots.length">
+              @for (dot of statDots; track dot) {
+                <span class="stats__dot" [class.stats__dot--full]="dot <= stat.value" aria-hidden="true"></span>
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <section class="garage__choices">
+      <fieldset class="choice">
+        <legend class="choice__title">Modelo</legend>
+        <div class="choice__grid">
+          @for (option of bodies; track option.id) {
+            <button
+              type="button"
+              class="choice__body"
+              [attr.aria-pressed]="setup().body === option.id"
+              [class.choice__body--active]="setup().body === option.id"
+              (click)="chooseBody(option.id)"
+            >
+              <span class="choice__emoji" aria-hidden="true">{{ option.emoji }}</span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="choice">
+        <legend class="choice__title">Cor</legend>
+        <div class="choice__colors">
+          @for (color of colors; track color.id) {
+            <button
+              type="button"
+              class="choice__color"
+              [style.background]="color.hex"
+              [attr.aria-pressed]="setup().color === color.id"
+              [attr.aria-label]="color.label"
+              [attr.title]="color.label"
+              [class.choice__color--active]="setup().color === color.id"
+              (click)="chooseColor(color.id)"
+            ></button>
+          }
+        </div>
+      </fieldset>
+
+      <a class="garage__race" data-tone="orange" routerLink="../pistas">
+        <span aria-hidden="true">🏁</span> Escolher pista
+      </a>
+    </section>
+  </div>
+</app-kart-page-frame>

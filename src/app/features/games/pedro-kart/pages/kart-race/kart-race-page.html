@@ -1,0 +1,73 @@
+@switch (status()) {
+  @case ('pronta') {
+    @if (track(); as current) {
+      @if (finished(); as race) {
+        <app-kart-page-frame backLink="/jogos/pedro-kart/pistas" backLabel="Pistas">
+          <section class="result" aria-labelledby="resultado-titulo">
+            <p class="result__placement" aria-hidden="true">{{ formatPlacement(race.result.placement) }}</p>
+            <h1 id="resultado-titulo" class="result__title">{{ finishMessage(race.result.placement) }}</h1>
+            <p class="result__track">{{ current.name }}</p>
+
+            <p class="result__stars" [attr.aria-label]="race.outcome.stars + ' de 3 estrelas'">
+              @for (slot of starSlots; track slot) {
+                <span aria-hidden="true" [class.result__star--empty]="slot > race.outcome.stars">⭐</span>
+              }
+            </p>
+
+            <dl class="result__numbers">
+              <div>
+                <dt>Colocação</dt>
+                <dd>{{ formatPlacement(race.result.placement) }} de {{ race.result.racers }}</dd>
+              </div>
+              <div>
+                <dt>Tempo</dt>
+                <dd>{{ formatTime(race.result.timeMs) }}</dd>
+              </div>
+              @if (race.result.bestLapMs !== null) {
+                <div>
+                  <dt>Melhor volta</dt>
+                  <dd>{{ formatTime(race.result.bestLapMs) }}</dd>
+                </div>
+              }
+            </dl>
+
+            @if (race.outcome.isNewBestTime) {
+              <p class="result__record"><span aria-hidden="true">🏆</span> Novo recorde nesta pista!</p>
+            }
+
+            <div class="result__actions">
+              <button type="button" class="result__button" data-tone="orange" (click)="raceAgain()">
+                <span aria-hidden="true">🔁</span> Correr de novo
+              </button>
+              <a class="result__button" data-tone="blue" routerLink="/jogos/pedro-kart/pistas">
+                <span aria-hidden="true">🏁</span> Outra pista
+              </a>
+              <a class="result__button" data-tone="green" routerLink="/jogos/pedro-kart/garagem">
+                <span aria-hidden="true">🎨</span> Garagem
+              </a>
+            </div>
+          </section>
+        </app-kart-page-frame>
+      } @else {
+        @for (key of runKeys(); track key) {
+          <app-kart-race-host [track]="current" (finished)="onFinished($event)" (exited)="leave()" />
+        }
+      }
+    }
+  }
+  @case ('nao-encontrada') {
+    <app-kart-page-frame backLink="/jogos/pedro-kart/pistas" backLabel="Pistas" heading="Pista não encontrada" emoji="🔎">
+      <p class="message">Essa pista não existe mais. Que tal escolher outra ou criar uma nova?</p>
+    </app-kart-page-frame>
+  }
+  @case ('erro') {
+    <app-kart-page-frame backLink="/jogos/pedro-kart/pistas" backLabel="Pistas" heading="Ops!" emoji="😕">
+      <p class="message">Não deu para abrir essa pista agora. Tente de novo daqui a pouco.</p>
+    </app-kart-page-frame>
+  }
+  @default {
+    <app-kart-page-frame backLink="/jogos/pedro-kart/pistas" backLabel="Pistas">
+      <p class="message">Preparando a corrida… <span aria-hidden="true">🏎️</span></p>
+    </app-kart-page-frame>
+  }
+}

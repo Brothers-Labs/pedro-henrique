@@ -15,7 +15,8 @@ export type GameId =
   | 'ingles'
   | 'matematica'
   | 'qi'
-  | 'pedro-maker';
+  | 'pedro-maker'
+  | 'pedro-kart';
 
 /**
  * Nome da unidade de desafio de cada jogo.
@@ -23,7 +24,7 @@ export type GameId =
  * Existe porque "10 perguntas" não descreve o jogo da velha nem a trilha dos
  * feijões. Cada jogo diz na própria ficha o que conta como um desafio.
  */
-export type ChallengeUnit = 'desafio' | 'pergunta' | 'conta' | 'rodada' | 'partida' | 'fase';
+export type ChallengeUnit = 'desafio' | 'pergunta' | 'conta' | 'rodada' | 'partida' | 'fase' | 'corrida';
 
 /** Ficha de um jogo: o que o catálogo sabe sobre ele sem carregá-lo. */
 export interface GameDefinition {
