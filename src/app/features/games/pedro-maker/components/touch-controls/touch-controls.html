@@ -1,15 +1,20 @@
 <div
   class="pad"
   role="group"
-  aria-label="Andar para os lados"
+  aria-label="Andar para os lados. Na ponta, correr."
+  [class.pad--running]="isRunning()"
   (pointerdown)="pressPad($event)"
   (pointermove)="steer($event)"
   (pointerup)="releasePad()"
   (pointercancel)="releasePad()"
   (lostpointercapture)="releasePad()"
 >
-  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'left'" aria-hidden="true">◀</span>
-  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'right'" aria-hidden="true">▶</span>
+  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'left'" aria-hidden="true">
+    {{ direction() === 'left' && isRunning() ? '⏪' : '◀' }}
+  </span>
+  <span class="pad__arrow" [class.pad__arrow--active]="direction() === 'right'" aria-hidden="true">
+    {{ direction() === 'right' && isRunning() ? '⏩' : '▶' }}
+  </span>
 </div>
 
 <div class="actions">

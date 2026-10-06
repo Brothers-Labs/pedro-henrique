@@ -16,23 +16,43 @@ import {
 import { THEME_PALETTES } from '../../art/palettes';
 import { paintObjectIcon } from '../../art/texture-catalog';
 import type { LevelObject } from '../../models/level.model';
-import type { EditorLevel } from '../editor-state';
+import type { EditorLevel, GridCell } from '../editor-state';
 
 /** Lado de uma célula no zoom de 100%. */
 export const EDITOR_CELL = 32;
 
-export type EditorTool = 'selecionar' | 'mover' | 'pincel' | 'apagar';
+export const MIN_EDITOR_ZOOM = 0.4;
+export const MAX_EDITOR_ZOOM = 2;
 
-export interface GridCell {
-  readonly x: number;
-  readonly y: number;
-}
+export type EditorTool = 'pincel' | 'retangulo' | 'apagar' | 'selecionar' | 'conta-gotas' | 'mover';
 
-export type CellPointerPhase = 'down' | 'move' | 'up';
+/** `cancel` avisa que o traço foi abandonado: entrou um segundo dedo para dar zoom. */
+export type CellPointerPhase = 'down' | 'move' | 'up' | 'cancel';
 
 export interface CellPointerEvent {
   readonly phase: CellPointerPhase;
   readonly cell: GridCell;
+}
+
+/** Área retangular marcada na grade (prévia do retângulo). */
+export interface GridArea {
+  readonly from: GridCell;
+  readonly to: GridCell;
+}
+
+/** Trecho da fase que aparece na tela, em colunas. */
+export interface GridViewport {
+  readonly firstColumn: number;
+  readonly visibleColumns: number;
+}
+
+interface PinchStart {
+  readonly distance: number;
+  readonly zoom: number;
+  readonly middleX: number;
+  readonly middleY: number;
+  readonly scrollLeft: number;
+  readonly scrollTop: number;
 }
 
 /**
@@ -42,8 +62,10 @@ export interface CellPointerEvent {
  * espaçador do tamanho da fase inteira. Assim uma fase de 400 colunas custa o
  * mesmo que uma de 30.
  *
- * O canvas não conhece regra de edição: ele só diz em que célula o ponteiro
- * está e em que fase do toque. Quem decide o que acontece é a página.
+ * No celular, um dedo desenha e dois dedos navegam: pinça aproxima e afasta,
+ * arrastar com os dois rola a fase — com qualquer ferramenta, sem trocar de
+ * botão. O canvas não conhece regra de edição: diz em que célula o dedo está
+ * e em que fase do toque; quem decide o que acontece é a página.
  */
 @Component({
   selector: 'app-editor-canvas',
@@ -57,18 +79,27 @@ export class EditorCanvas {
   readonly tool = input<EditorTool>('pincel');
   readonly selected = input<GridCell | null>(null);
   readonly ghost = input<GridCell | null>(null);
+  readonly area = input<GridArea | null>(null);
 
   readonly cellPointer = output<CellPointerEvent>();
+  /** Zoom pedido pela pinça ou pela roda do mouse; a página decide se aceita. */
+  readonly zoomRequest = output<number>();
+  readonly viewportChange = output<GridViewport>();
 
   private readonly zone = inject(NgZone);
   private readonly viewport = viewChild.required<ElementRef<HTMLDivElement>>('viewport');
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly icons = new Map<string, HTMLCanvasElement>();
+  private readonly pointers = new Map<number, { x: number; y: number }>();
   private resizeObserver: ResizeObserver | null = null;
   private frame: number | null = null;
   private hover: GridCell | null = null;
-  private isPointerDown = false;
+  private isDrawing = false;
   private panOrigin: { readonly x: number; readonly y: number; readonly left: number; readonly top: number } | null = null;
+  private pinch: PinchStart | null = null;
+  /** Ponto da fase que deve ficar embaixo dos dedos depois de um zoom. */
+  private zoomFocus: { readonly cellX: number; readonly cellY: number; readonly screenX: number; readonly screenY: number } | null = null;
+  private lastViewport: GridViewport | null = null;
 
   protected readonly cellSize = computed(() => Math.round(EDITOR_CELL * this.zoom()));
   protected readonly contentWidth = computed(() => this.level().width * this.cellSize());
@@ -82,11 +113,12 @@ export class EditorCanvas {
     });
 
     effect(() => {
-      // Qualquer mudança de fase, zoom ou seleção pede um novo desenho.
+      // Qualquer mudança de fase, zoom, seleção ou área pede um novo desenho.
       this.level();
       this.cellSize();
       this.selected();
       this.ghost();
+      this.area();
       this.scheduleDraw();
     });
 
@@ -116,6 +148,13 @@ export class EditorCanvas {
     return x >= 0 && y >= 0 && x < level.width && y < level.height ? { x, y } : null;
   }
 
+  /** Centraliza a tela numa coluna: é o toque no mapinha da fase. */
+  scrollToColumn(column: number): void {
+    const viewport = this.viewport().nativeElement;
+
+    viewport.scrollLeft = column * this.cellSize() - viewport.clientWidth / 2;
+  }
+
   protected onScroll(): void {
     this.scheduleDraw();
   }
@@ -124,17 +163,39 @@ export class EditorCanvas {
     const viewport = this.viewport().nativeElement;
 
     viewport.setPointerCapture(event.pointerId);
-    this.isPointerDown = true;
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (this.pointers.size === 2) {
+      this.startPinch();
+      return;
+    }
+
+    if (this.pointers.size > 2) {
+      return;
+    }
 
     if (this.tool() === 'mover') {
       this.panOrigin = { x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
       return;
     }
 
+    this.isDrawing = true;
     this.emit('down', event);
   }
 
   protected onPointerMove(event: PointerEvent): void {
+    const tracked = this.pointers.get(event.pointerId);
+
+    if (tracked) {
+      tracked.x = event.clientX;
+      tracked.y = event.clientY;
+    }
+
+    if (this.pinch) {
+      this.updatePinch();
+      return;
+    }
+
     if (this.panOrigin) {
       const viewport = this.viewport().nativeElement;
       viewport.scrollLeft = this.panOrigin.left - (event.clientX - this.panOrigin.x);
@@ -149,24 +210,29 @@ export class EditorCanvas {
       this.scheduleDraw();
     }
 
-    if (this.isPointerDown) {
+    if (this.isDrawing) {
       this.emit('move', event);
     }
   }
 
   protected onPointerUp(event: PointerEvent): void {
-    if (!this.isPointerDown) {
+    this.pointers.delete(event.pointerId);
+
+    if (this.pinch) {
+      // O gesto só termina quando os dois dedos saem; até lá, nada de desenhar.
+      if (this.pointers.size === 0) {
+        this.pinch = null;
+      }
+
       return;
     }
 
-    this.isPointerDown = false;
+    this.panOrigin = null;
 
-    if (this.panOrigin) {
-      this.panOrigin = null;
-      return;
+    if (this.isDrawing) {
+      this.isDrawing = false;
+      this.emit('up', event);
     }
-
-    this.emit('up', event);
   }
 
   protected onPointerLeave(): void {
@@ -174,6 +240,81 @@ export class EditorCanvas {
       this.hover = null;
       this.scheduleDraw();
     }
+  }
+
+  /** Ctrl + roda do mouse (ou pinça no touchpad) aproxima em volta do ponteiro. */
+  protected onWheel(event: WheelEvent): void {
+    if (!event.ctrlKey) {
+      return;
+    }
+
+    event.preventDefault();
+    this.requestZoom(this.zoom() * Math.exp(-event.deltaY * 0.0025), event.clientX, event.clientY);
+  }
+
+  private startPinch(): void {
+    const [first, second] = [...this.pointers.values()];
+
+    if (!first || !second) {
+      return;
+    }
+
+    if (this.isDrawing) {
+      this.isDrawing = false;
+      this.cellPointer.emit({ phase: 'cancel', cell: this.hover ?? { x: 0, y: 0 } });
+    }
+
+    const viewport = this.viewport().nativeElement;
+
+    this.panOrigin = null;
+    this.pinch = {
+      distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+      zoom: this.zoom(),
+      middleX: (first.x + second.x) / 2,
+      middleY: (first.y + second.y) / 2,
+      scrollLeft: viewport.scrollLeft,
+      scrollTop: viewport.scrollTop,
+    };
+  }
+
+  private updatePinch(): void {
+    const pinch = this.pinch;
+    const [first, second] = [...this.pointers.values()];
+
+    if (!pinch || !first || !second) {
+      return;
+    }
+
+    const viewport = this.viewport().nativeElement;
+    const middleX = (first.x + second.x) / 2;
+    const middleY = (first.y + second.y) / 2;
+    const distance = Math.hypot(second.x - first.x, second.y - first.y);
+
+    viewport.scrollLeft = pinch.scrollLeft - (middleX - pinch.middleX);
+    viewport.scrollTop = pinch.scrollTop - (middleY - pinch.middleY);
+    this.requestZoom((pinch.zoom * distance) / pinch.distance, middleX, middleY);
+  }
+
+  private requestZoom(zoom: number, clientX: number, clientY: number): void {
+    const clamped = Math.min(MAX_EDITOR_ZOOM, Math.max(MIN_EDITOR_ZOOM, zoom));
+
+    if (Math.abs(clamped - this.zoom()) < 0.01) {
+      return;
+    }
+
+    const viewport = this.viewport().nativeElement;
+    const bounds = viewport.getBoundingClientRect();
+    const size = this.cellSize();
+    const screenX = clientX - bounds.left;
+    const screenY = clientY - bounds.top;
+
+    this.zoomFocus = {
+      cellX: (screenX + viewport.scrollLeft) / size,
+      cellY: (screenY + viewport.scrollTop) / size,
+      screenX,
+      screenY,
+    };
+    this.zoomRequest.emit(clamped);
   }
 
   private emit(phase: CellPointerPhase, event: PointerEvent): void {
@@ -210,6 +351,8 @@ export class EditorCanvas {
       return;
     }
 
+    this.keepZoomFocus(viewport);
+
     const ratio = Math.min(2, window.devicePixelRatio || 1);
     const width = viewport.clientWidth;
     const height = viewport.clientHeight;
@@ -237,8 +380,38 @@ export class EditorCanvas {
       }
     }
 
+    this.drawArea(context, this.area(), size);
     this.highlight(context, this.selected(), size, '#ffcf3f');
     this.highlight(context, this.ghost() ?? this.hover, size, 'rgba(255, 255, 255, 0.9)');
+    this.reportViewport(viewport.scrollLeft / size, width / size);
+  }
+
+  /** Depois de um zoom, rola para que o ponto sob os dedos continue sob os dedos. */
+  private keepZoomFocus(viewport: HTMLDivElement): void {
+    const focus = this.zoomFocus;
+
+    if (!focus) {
+      return;
+    }
+
+    const size = this.cellSize();
+
+    this.zoomFocus = null;
+    viewport.scrollLeft = focus.cellX * size - focus.screenX;
+    viewport.scrollTop = focus.cellY * size - focus.screenY;
+  }
+
+  private reportViewport(firstColumn: number, visibleColumns: number): void {
+    const previous = this.lastViewport;
+
+    if (previous && Math.abs(previous.firstColumn - firstColumn) < 0.25 && Math.abs(previous.visibleColumns - visibleColumns) < 0.25) {
+      return;
+    }
+
+    const next = { firstColumn, visibleColumns };
+
+    this.lastViewport = next;
+    this.zone.run(() => this.viewportChange.emit(next));
   }
 
   private drawBackground(context: CanvasRenderingContext2D, level: EditorLevel, size: number, first: number, last: number): void {
@@ -283,6 +456,28 @@ export class EditorCanvas {
     }
 
     context.drawImage(icon, x, y, size, size);
+
+    if (object.type === 'door' && object.properties?.pair) {
+      this.drawBadge(context, object.properties.pair, x, y, size);
+    }
+  }
+
+  /** Letra da porta no canto: mostra qual porta leva a qual. */
+  private drawBadge(context: CanvasRenderingContext2D, text: string, x: number, y: number, size: number): void {
+    const radius = Math.max(7, size * 0.24);
+
+    context.fillStyle = '#ffcf3f';
+    context.strokeStyle = '#2a2350';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(x + size - radius, y + radius, radius, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.fillStyle = '#2a2350';
+    context.font = `800 ${Math.round(radius * 1.3)}px "Baloo 2", sans-serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, x + size - radius, y + radius + 1);
   }
 
   /** Linha tracejada mostrando até onde a plataforma móvel vai. */
@@ -300,6 +495,26 @@ export class EditorCanvas {
     context.moveTo(startX, startY);
     context.lineTo(isVertical ? startX : startX + range, isVertical ? startY - range : startY);
     context.stroke();
+    context.restore();
+  }
+
+  private drawArea(context: CanvasRenderingContext2D, area: GridArea | null, size: number): void {
+    if (!area) {
+      return;
+    }
+
+    const left = Math.min(area.from.x, area.to.x) * size;
+    const top = Math.min(area.from.y, area.to.y) * size;
+    const width = (Math.abs(area.to.x - area.from.x) + 1) * size;
+    const height = (Math.abs(area.to.y - area.from.y) + 1) * size;
+
+    context.fillStyle = 'rgba(255, 207, 63, 0.25)';
+    context.fillRect(left, top, width, height);
+    context.save();
+    context.setLineDash([8, 6]);
+    context.strokeStyle = '#ffcf3f';
+    context.lineWidth = 3;
+    context.strokeRect(left + 1.5, top + 1.5, width - 3, height - 3);
     context.restore();
   }
 

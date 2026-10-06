@@ -1,24 +1,9 @@
 import type { CharacterPalette } from '../config/character.config';
-import { circle, ellipse, eye, fillAndOutline, lighten, OUTLINE, paintStrip, roundedRect, star } from './canvas';
+import { circle, ellipse, eye, fillAndOutline, lighten, OUTLINE, roundedRect, star } from './canvas';
 
-/** Quadro do Pedro: largo o bastante para braços e pernas em movimento. */
+/** Área do retrato: larga o bastante para os braços e as pernas do Pedro. */
 export const PEDRO_FRAME_WIDTH = 64;
 export const PEDRO_FRAME_HEIGHT = 72;
-
-/** Linha dos pés dentro do quadro; a caixa de colisão se alinha a ela. */
-export const PEDRO_FEET_Y = 70;
-
-/** Índice de cada pose na tira de quadros. */
-export const PEDRO_FRAMES = {
-  idle: [0, 1],
-  run: [2, 3, 4, 5],
-  jump: 6,
-  fall: 7,
-  hit: 8,
-  win: 9,
-} as const;
-
-const FRAME_COUNT = 10;
 
 const SKIN = '#ffd2a6';
 /** Pele do lado de trás, um tom abaixo, para dar profundidade aos membros. */
@@ -29,108 +14,48 @@ const SNEAKER = '#ffffff';
 const SOLE = '#2a2350';
 
 type Point = readonly [number, number];
-type Eyes = 'open' | 'happy' | 'squeeze';
-type Mouth = 'smile' | 'open' | 'o';
 
-interface Pose {
-  readonly bob: number;
-  readonly backFoot: Point;
-  readonly frontFoot: Point;
-  readonly backHand: Point;
-  readonly frontHand: Point;
-  readonly eyes: Eyes;
-  readonly mouth: Mouth;
-}
+/** Mãos e pés do Pedro parado. */
+const BACK_FOOT: Point = [28, 70];
+const FRONT_FOOT: Point = [40, 70];
+const BACK_HAND: Point = [24, 55];
+const FRONT_HAND: Point = [45, 55];
+const SHOULDER_Y = 43;
+const HIP_Y = 58;
 
-const RUN_FEET: readonly (readonly [Point, Point])[] = [
-  [[24, 68], [44, 69]],
-  [[32, 64], [36, 70]],
-  [[44, 69], [24, 68]],
-  [[36, 70], [32, 64]],
-];
-
-const RUN_HANDS: readonly (readonly [Point, Point])[] = [
-  [[44, 50], [22, 52]],
-  [[36, 54], [32, 54]],
-  [[22, 52], [46, 50]],
-  [[32, 54], [36, 54]],
-];
-
-function poseFor(frame: number): Pose {
-  const standing = { backFoot: [28, 70], frontFoot: [40, 70], backHand: [24, 55], frontHand: [45, 55] } as const;
-
-  if (frame <= 1) {
-    return { ...standing, bob: frame, eyes: 'open', mouth: 'smile' };
-  }
-
-  if (frame <= 5) {
-    const step = frame - 2;
-    const [backFoot, frontFoot] = RUN_FEET[step];
-    const [backHand, frontHand] = RUN_HANDS[step];
-
-    return { bob: step % 2 === 1 ? -2 : 0, backFoot, frontFoot, backHand, frontHand, eyes: 'open', mouth: 'smile' };
-  }
-
-  switch (frame) {
-    case PEDRO_FRAMES.jump:
-      return { bob: -1, backFoot: [26, 62], frontFoot: [44, 65], backHand: [22, 33], frontHand: [50, 31], eyes: 'open', mouth: 'open' };
-    case PEDRO_FRAMES.fall:
-      return { bob: 0, backFoot: [26, 70], frontFoot: [42, 67], backHand: [15, 41], frontHand: [53, 41], eyes: 'open', mouth: 'o' };
-    case PEDRO_FRAMES.hit:
-      return { bob: -1, backFoot: [30, 70], frontFoot: [38, 70], backHand: [19, 46], frontHand: [49, 46], eyes: 'squeeze', mouth: 'o' };
-    default:
-      return { bob: -1, backFoot: [30, 70], frontFoot: [38, 70], backHand: [22, 24], frontHand: [48, 22], eyes: 'happy', mouth: 'open' };
-  }
-}
-
-/** Todos os quadros do Pedro com as cores escolhidas em "Meu personagem". */
-export function paintPedroStrip(palette: CharacterPalette): HTMLCanvasElement {
-  return paintStrip(PEDRO_FRAME_WIDTH, PEDRO_FRAME_HEIGHT, FRAME_COUNT, (context, frame) =>
-    paintPedro(context, palette, poseFor(frame)),
-  );
-}
-
-/** Um quadro só, parado e sorrindo — para vitrines fora do jogo. */
+/** O Pedro parado e sorrindo, com as cores escolhidas em "Meu personagem". */
 export function paintPedroPortrait(context: CanvasRenderingContext2D, palette: CharacterPalette): void {
-  paintPedro(context, palette, poseFor(0));
-}
-
-function paintPedro(context: CanvasRenderingContext2D, palette: CharacterPalette, pose: Pose): void {
-  const lift = pose.bob;
-  const shoulderY = 43 + lift;
-  const hipY = 58 + lift;
-
   context.lineCap = 'round';
   context.lineJoin = 'round';
 
-  paintBackpack(context, palette, lift);
+  paintBackpack(context, palette);
 
-  limb(context, [27, shoulderY], pose.backHand, SKIN_SHADE);
-  hand(context, pose.backHand, SKIN_SHADE);
+  limb(context, [27, SHOULDER_Y], BACK_HAND, SKIN_SHADE);
+  hand(context, BACK_HAND, SKIN_SHADE);
 
-  limb(context, [29, hipY], pose.backFoot, SKIN_SHADE);
-  sneaker(context, pose.backFoot);
-  limb(context, [39, hipY], pose.frontFoot, SKIN);
-  sneaker(context, pose.frontFoot);
+  limb(context, [29, HIP_Y], BACK_FOOT, SKIN_SHADE);
+  sneaker(context, BACK_FOOT);
+  limb(context, [39, HIP_Y], FRONT_FOOT, SKIN);
+  sneaker(context, FRONT_FOOT);
 
   // Bermuda e camiseta.
-  roundedRect(context, 23, 53 + lift, 22, 8, 3);
+  roundedRect(context, 23, 53, 22, 8, 3);
   fillAndOutline(context, SHORTS);
-  roundedRect(context, 23, 37 + lift, 22, 19, 7);
+  roundedRect(context, 23, 37, 22, 19, 7);
   fillAndOutline(context, palette.shirt);
   context.fillStyle = lighten(palette.shirt, 0.35);
-  roundedRect(context, 26, 40 + lift, 5, 10, 2.5);
+  roundedRect(context, 26, 40, 5, 10, 2.5);
   context.fill();
 
-  limb(context, [41, shoulderY], pose.frontHand, SKIN);
-  hand(context, pose.frontHand, SKIN);
+  limb(context, [41, SHOULDER_Y], FRONT_HAND, SKIN);
+  hand(context, FRONT_HAND, SKIN);
 
-  paintHead(context, palette, lift, pose);
+  paintHead(context, palette);
 }
 
-function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette, lift: number, pose: Pose): void {
+function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette): void {
   const centerX = 34;
-  const centerY = 24 + lift;
+  const centerY = 24;
 
   // Cabelo que escapa do boné na nuca.
   context.fillStyle = HAIR;
@@ -147,8 +72,9 @@ function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette,
   ellipse(context, centerX + 9, centerY + 7, 3.5, 2.2);
   context.fill();
 
-  paintEyes(context, centerX, centerY, pose.eyes);
-  paintMouth(context, centerX + 8, centerY + 9, pose.mouth);
+  eye(context, centerX + 3, centerY + 1, 4.2, 0.3);
+  eye(context, centerX + 11, centerY + 1, 4.2, 0.3);
+  paintSmile(context, centerX + 8, centerY + 9);
 
   // Boné: copa, aba virada para a frente e a estrela do Pedro.
   context.beginPath();
@@ -167,58 +93,16 @@ function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette,
   fillAndOutline(context, lighten(palette.cap, 0.3), 2);
 }
 
-function paintEyes(context: CanvasRenderingContext2D, x: number, y: number, eyes: Eyes): void {
-  context.strokeStyle = OUTLINE;
-  context.lineWidth = 2.5;
-
-  if (eyes === 'open') {
-    eye(context, x + 3, y + 1, 4.2, 0.3);
-    eye(context, x + 11, y + 1, 4.2, 0.3);
-    return;
-  }
-
-  for (const eyeX of [x + 3, x + 11]) {
-    context.beginPath();
-
-    if (eyes === 'happy') {
-      context.arc(eyeX, y + 3, 3.5, Math.PI * 1.1, Math.PI * 1.9);
-    } else {
-      context.moveTo(eyeX - 3, y - 2);
-      context.lineTo(eyeX + 2, y + 1);
-      context.lineTo(eyeX - 3, y + 4);
-    }
-
-    context.stroke();
-  }
-}
-
-function paintMouth(context: CanvasRenderingContext2D, x: number, y: number, mouth: Mouth): void {
+function paintSmile(context: CanvasRenderingContext2D, x: number, y: number): void {
   context.strokeStyle = OUTLINE;
   context.lineWidth = 2;
-
-  if (mouth === 'smile') {
-    context.beginPath();
-    context.arc(x, y - 3, 4, Math.PI * 0.2, Math.PI * 0.8);
-    context.stroke();
-    return;
-  }
-
-  context.fillStyle = '#c2344f';
-
-  if (mouth === 'o') {
-    ellipse(context, x, y, 2.4, 3);
-  } else {
-    context.beginPath();
-    context.arc(x, y - 2, 4.5, 0, Math.PI);
-    context.closePath();
-  }
-
-  context.fill();
+  context.beginPath();
+  context.arc(x, y - 3, 4, Math.PI * 0.2, Math.PI * 0.8);
   context.stroke();
 }
 
-function paintBackpack(context: CanvasRenderingContext2D, palette: CharacterPalette, lift: number): void {
-  const top = 38 + lift;
+function paintBackpack(context: CanvasRenderingContext2D, palette: CharacterPalette): void {
+  const top = 38;
 
   switch (palette.backpackStyle) {
     case 'dino': {

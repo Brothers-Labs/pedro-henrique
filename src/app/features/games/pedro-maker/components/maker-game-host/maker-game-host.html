@@ -37,7 +37,10 @@
       [subtitle]="blueprint().name"
       [boss]="boss()"
       [powerUps]="powerUps()"
+      [canFullscreen]="canFullscreen"
+      [isFullscreen]="isFullscreen()"
       (pauseRequested)="pause()"
+      (fullscreenToggled)="toggleFullscreen()"
     />
 
     @if (showsTouchControls() && phase() === 'playing') {

@@ -1,16 +1,22 @@
 import { analyzeReachability } from '../levels/level-reachability';
 import { findStructuralProblems } from '../levels/level-validation';
+import { findEditorPiece } from '../config/object-catalog';
 import {
+  cellsInRect,
+  cellsOnLine,
   commit,
   createHistory,
   createStarterLevel,
   moveObject,
   objectAt,
+  placeMany,
   placeObject,
   redo,
+  removeMany,
   removeObjectAt,
   resizeLevel,
   undo,
+  updatePropertiesAt,
   type EditorLevel,
 } from './editor-state';
 
@@ -85,6 +91,60 @@ describe('Estado do editor de fases', () => {
     const branched = commit(undo(edited), placeObject(starter, 'heart', 8, 4, nextId()));
 
     expect(branched.future).toEqual([]);
+  });
+
+  it('liga duas células com um traço sem buracos', () => {
+    expect(cellsOnLine({ x: 0, y: 0 }, { x: 3, y: 0 })).toEqual([
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 2, y: 0 },
+      { x: 3, y: 0 },
+    ]);
+
+    const diagonal = cellsOnLine({ x: 5, y: 5 }, { x: 1, y: 2 });
+
+    expect(diagonal[0]).toEqual({ x: 5, y: 5 });
+    expect(diagonal.at(-1)).toEqual({ x: 1, y: 2 });
+    expect(diagonal.length).toBe(5);
+  });
+
+  it('enche o retângulo entre dois cantos, em qualquer direção', () => {
+    expect(cellsInRect({ x: 3, y: 2 }, { x: 1, y: 3 }).length).toBe(6);
+  });
+
+  it('coloca e apaga várias peças de uma vez', () => {
+    const filled = placeMany(starter, 'brick', cellsInRect({ x: 10, y: 5 }, { x: 13, y: 6 }), nextId);
+
+    expect(filled.objects.length).toBe(starter.objects.length + 8);
+    expect(objectAt(filled, 13, 6)?.type).toBe('brick');
+    expect(placeMany(filled, 'brick', [{ x: 10, y: 5 }], nextId)).toBe(filled);
+
+    const cleared = removeMany(filled, cellsInRect({ x: 10, y: 5 }, { x: 13, y: 6 }));
+
+    expect(cleared.objects.length).toBe(starter.objects.length);
+    expect(removeMany(cleared, [{ x: 30, y: 2 }])).toBe(cleared);
+  });
+
+  it('num traço de peça única, fica só a última célula', () => {
+    const moved = placeMany(starter, 'portal', cellsOnLine({ x: 20, y: 11 }, { x: 25, y: 11 }), nextId);
+
+    expect(moved.objects.filter((object) => object.type === 'portal').length).toBe(1);
+    expect(objectAt(moved, 25, 11)?.type).toBe('portal');
+  });
+
+  it('muda as propriedades da peça sem trocar de lugar', () => {
+    const withSign = placeObject(starter, 'sign', 6, 11, nextId(), { text: 'Oi' });
+    const renamed = updatePropertiesAt(withSign, 6, 11, { text: 'Tchau' });
+
+    expect(objectAt(renamed, 6, 11)?.properties?.text).toBe('Tchau');
+    expect(updatePropertiesAt(renamed, 6, 11, { text: 'Tchau' })).toBe(renamed);
+    expect(updatePropertiesAt(renamed, 40, 2, { text: 'x' })).toBe(renamed);
+  });
+
+  it('reconhece a peça da paleta pelo tipo e pelas propriedades', () => {
+    expect(findEditorPiece({ type: 'door', properties: { pair: 'B' } })?.id).toBe('door-b');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'heart' } })?.id).toBe('surprise-heart');
+    expect(findEditorPiece({ type: 'ground' })?.id).toBe('ground');
   });
 
   it('corta o que sobra ao diminuir a fase e respeita os limites de largura', () => {

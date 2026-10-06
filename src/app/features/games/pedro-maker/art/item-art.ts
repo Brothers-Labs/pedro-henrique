@@ -1,54 +1,29 @@
 import type { PowerUpKind } from '../models/level.model';
-import { circle, darken, ellipse, fillAndOutline, lighten, OUTLINE, paint, paintStrip, roundedRect, shine, star } from './canvas';
+import { circle, darken, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
 
 export const COIN_SIZE = 32;
-export const COIN_FRAMES = 4;
 export const CRYSTAL_WIDTH = 32;
 export const CRYSTAL_HEIGHT = 40;
 export const HEART_SIZE = 32;
 export const POWER_UP_SIZE = 40;
-export const CHEST_WIDTH = 72;
-export const CHEST_HEIGHT = 60;
 
 const GOLD = '#ffc629';
 
-/** Moeda girando: de frente, em três quartos, de lado e em três quartos. */
-export function paintCoinStrip(): HTMLCanvasElement {
-  const widths = [1, 0.6, 0.18, 0.6];
-
-  return paintStrip(COIN_SIZE, COIN_SIZE, COIN_FRAMES, (context, frame) => {
-    const scale = widths[frame] ?? 1;
-
-    context.save();
-    context.translate(16, 16);
-    context.scale(scale, 1);
-    paintCoinFace(context, scale > 0.5);
-    context.restore();
-  });
-}
-
+/** Moeda de frente, com a estrela no centro. */
 export function paintCoinIcon(context: CanvasRenderingContext2D): void {
   context.save();
   context.translate(16, 16);
-  paintCoinFace(context, true);
-  context.restore();
-}
-
-function paintCoinFace(context: CanvasRenderingContext2D, showsStar: boolean): void {
   circle(context, 0, 0, 13);
   fillAndOutline(context, GOLD, 3);
   circle(context, 0, 0, 8.5);
   context.strokeStyle = darken(GOLD, 0.25);
   context.lineWidth = 2;
   context.stroke();
-
-  if (showsStar) {
-    context.fillStyle = lighten(GOLD, 0.55);
-    star(context, 0, 0.5, 6, 2.6);
-    context.fill();
-  }
-
+  context.fillStyle = lighten(GOLD, 0.55);
+  star(context, 0, 0.5, 6, 2.6);
+  context.fill();
   shine(context, -5, -6, 3, 2);
+  context.restore();
 }
 
 export function paintCrystal(context: CanvasRenderingContext2D): void {
@@ -203,71 +178,4 @@ function paintWing(context: CanvasRenderingContext2D, color: string): void {
   context.moveTo(13, 24);
   context.quadraticCurveTo(15, 14, 26, 11);
   context.stroke();
-}
-
-/** Baú de recompensa do chefão: fechado e aberto, com brilho saindo. */
-export function paintChestStrip(): HTMLCanvasElement {
-  return paintStrip(CHEST_WIDTH, CHEST_HEIGHT, 2, (context, frame) => {
-    const wood = '#b86b35';
-    const isOpen = frame === 1;
-
-    if (isOpen) {
-      context.fillStyle = 'rgba(255, 230, 120, 0.8)';
-      ellipse(context, 36, 26, 26, 14);
-      context.fill();
-    }
-
-    roundedRect(context, 8, 28, 56, 28, 5);
-    fillAndOutline(context, wood, 3);
-
-    if (isOpen) {
-      roundedRect(context, 10, 6, 52, 16, 6);
-    } else {
-      roundedRect(context, 8, 14, 56, 18, 8);
-    }
-
-    fillAndOutline(context, lighten(wood, 0.15), 3);
-
-    context.fillStyle = GOLD;
-    context.strokeStyle = OUTLINE;
-    context.lineWidth = 2;
-    roundedRect(context, 30, isOpen ? 28 : 26, 12, 12, 3);
-    context.fill();
-    context.stroke();
-
-    for (const bandX of [16, 52]) {
-      context.fillStyle = darken(GOLD, 0.1);
-      context.fillRect(bandX, 28, 4, 28);
-    }
-  });
-}
-
-/** Faísca redonda, estrela e losango: as três formas de partícula do jogo. */
-export function paintParticleDot(): HTMLCanvasElement {
-  return paint(12, 12, (context) => {
-    context.fillStyle = '#ffffff';
-    circle(context, 6, 6, 5);
-    context.fill();
-  });
-}
-
-export function paintParticleStar(): HTMLCanvasElement {
-  return paint(18, 18, (context) => {
-    context.fillStyle = '#ffffff';
-    star(context, 9, 9.5, 8.5, 3.6);
-    context.fill();
-  });
-}
-
-export function paintParticleSpark(): HTMLCanvasElement {
-  return paint(12, 16, (context) => {
-    context.fillStyle = '#ffffff';
-    context.beginPath();
-    context.moveTo(6, 0);
-    context.lineTo(12, 8);
-    context.lineTo(6, 16);
-    context.lineTo(0, 8);
-    context.closePath();
-    context.fill();
-  });
 }

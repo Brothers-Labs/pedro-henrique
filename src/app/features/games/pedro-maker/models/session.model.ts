@@ -7,7 +7,7 @@ import type { DifficultyRules } from './settings.model';
  *
  * O motor não conhece serviço, rota nem signal: recebe uma configuração,
  * escreve eventos em uma função e obedece a meia dúzia de comandos. É o que
- * mantém o Phaser trocável e a tela testável sem ele.
+ * mantém o motor 3D trocável e a tela testável sem ele.
  */
 
 export type MakerSoundCue =
@@ -69,6 +69,8 @@ export type GameSessionListener = (event: GameSessionEvent) => void;
 export interface VirtualInputState {
   left: boolean;
   right: boolean;
+  /** Direcional empurrado até a ponta: o Pedro corre, como segurar Shift no teclado. */
+  run: boolean;
   jump: boolean;
   action: boolean;
 }

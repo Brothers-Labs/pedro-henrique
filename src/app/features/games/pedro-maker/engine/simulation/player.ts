@@ -1,24 +1,29 @@
-import * as Phaser from 'phaser';
-
-import { PEDRO_FEET_Y, PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, PEDRO_FRAMES } from '../../art/pedro-art';
-import { TEXTURES } from '../../art/texture-catalog';
 import { PLAYER_PHYSICS, POWER_UP_DURATION_MS } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
-import { ANIMATIONS } from '../animations';
-import { DEPTH, type Effects } from '../effects';
-import type { InputSnapshot } from '../player-input';
+import type { InputSnapshot } from '../input/input-snapshot';
+import { bottom, centerX, createBody, type PhysicsBody, placeFeet } from './physics-body';
+import type { VisualEventQueue } from './visual-events';
 
 export type PlayerMode = 'IDLE' | 'RUN' | 'JUMP' | 'FALL' | 'HIT' | 'DEAD' | 'WIN';
 
-/** O que o jogador precisa da cena, sem conhecer a cena inteira. */
+/** O que o jogador precisa da partida, sem conhecer a partida inteira. */
 export interface PlayerHost {
-  readonly effects: Effects;
+  readonly effects: VisualEventQueue;
   playSound(cue: MakerSoundCue): void;
   onPowerUpEnded(kind: PowerUpKind): void;
 }
 
-/** Duração do quadro de "ai!" depois de um toque. */
+/** Viagem até o centro do portal, desenhada pela tela a partir destes pontos. */
+export interface Celebration {
+  readonly startedAt: number;
+  readonly fromX: number;
+  readonly fromY: number;
+  readonly toX: number;
+  readonly toY: number;
+}
+
+/** Duração do "ai!" depois de um toque. */
 const HIT_POSE_MS = 320;
 
 /** Velocidade de queda a partir da qual o pouso levanta poeira. */
@@ -31,17 +36,22 @@ const RUN_DUST_SPEED = 200;
 /**
  * O Pedro em movimento.
  *
- * A física é a do Arcade do Phaser; o que mora aqui é a sensação: aceleração
- * e freio suaves, gelo escorregadio, pulo que perdoa o botão apertado um
- * pouquinho cedo ou tarde, pulo curto ao soltar o botão, pulo duplo com a Asa
- * e a piscada de invencibilidade depois de um toque.
+ * Aqui mora a sensação do controle: aceleração e freio suaves, gelo
+ * escorregadio, pulo que perdoa o botão apertado um pouquinho cedo ou tarde,
+ * pulo curto ao soltar o botão, pulo duplo com a Asa e a piscada de
+ * invencibilidade depois de um toque.
  *
- * Todo tempo aqui é o "tempo de jogo" que a cena passa a cada quadro, e não o
- * relógio do navegador — assim a pausa não consome power-up nem invencibilidade.
+ * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
+ * não consome power-up nem invencibilidade.
  */
-export class Player extends Phaser.Physics.Arcade.Sprite {
+export class Player {
+  readonly body: PhysicsBody = createBody(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight, true, PLAYER_PHYSICS.maxFallSpeed);
+
   mode: PlayerMode = 'IDLE';
+  /** 1 olhando para a direita, -1 para a esquerda. */
+  facing: 1 | -1 = 1;
   hasShield = false;
+  celebration: Celebration | null = null;
 
   private readonly timedPowerUps = new Map<PowerUpKind, number>();
   private lastGroundedAt = Number.NEGATIVE_INFINITY;
@@ -55,33 +65,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private lastRunDustAt = 0;
 
   constructor(
-    scene: Phaser.Scene,
     feetX: number,
     feetY: number,
     private readonly host: PlayerHost,
   ) {
-    super(scene, feetX, feetY, TEXTURES.pedro, PEDRO_FRAMES.idle[0]);
-
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-
-    const offsetX = (PEDRO_FRAME_WIDTH - PLAYER_PHYSICS.bodyWidth) / 2;
-    const offsetY = PEDRO_FEET_Y - PLAYER_PHYSICS.bodyHeight;
-
-    this.arcadeBody.setSize(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight);
-    this.arcadeBody.setOffset(offsetX, offsetY);
-    this.arcadeBody.setMaxVelocityY(PLAYER_PHYSICS.maxFallSpeed);
-    this.arcadeBody.setCollideWorldBounds(true);
-    this.setDepth(DEPTH.player);
-    this.placeFeetAt(feetX, feetY);
-  }
-
-  get arcadeBody(): Phaser.Physics.Arcade.Body {
-    return this.body as Phaser.Physics.Arcade.Body;
+    placeFeet(this.body, feetX, feetY);
   }
 
   get isGrounded(): boolean {
-    return this.arcadeBody.blocked.down || this.arcadeBody.touching.down;
+    return this.body.blockedDown;
   }
 
   get isActive(): boolean {
@@ -96,17 +88,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return kind === 'shield' ? this.hasShield : this.timedPowerUps.has(kind);
   }
 
-  /** Coloca os pés do Pedro exatamente sobre um ponto do mundo. */
   placeFeetAt(feetX: number, feetY: number): void {
-    const centerY = feetY - (PEDRO_FEET_Y - PEDRO_FRAME_HEIGHT / 2);
-
-    this.setPosition(feetX, centerY);
-    this.arcadeBody.reset(feetX, centerY);
+    placeFeet(this.body, feetX, feetY);
   }
 
-  step(now: number, deltaMs: number, input: InputSnapshot, isOnIce: boolean): void {
+  /** Decide a velocidade deste passo; a física move o corpo logo depois. */
+  control(now: number, deltaMs: number, input: InputSnapshot, isOnIce: boolean): void {
     this.expirePowerUps(now);
-    this.updateInvincibilityBlink(now);
 
     if (!this.isActive) {
       return;
@@ -126,7 +114,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.updateMode(now, grounded);
 
     this.wasGrounded = grounded;
-    this.previousFallSpeed = this.arcadeBody.velocity.y;
+    this.previousFallSpeed = this.body.vy;
   }
 
   /**
@@ -136,7 +124,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * estiver apertado, e um quiquinho se não estiver.
    */
   bounce(velocity: number, canBeCut: boolean): void {
-    this.arcadeBody.setVelocityY(-velocity);
+    this.body.vy = -velocity;
+    this.body.riding = null;
     this.isJumpCut = !canBeCut;
     this.hasUsedDoubleJump = false;
   }
@@ -155,52 +144,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.hasShield = false;
   }
 
-  /** Invencível por um tempo, piscando: a janela para se recompor depois de um toque. */
   makeInvincible(now: number, durationMs: number): void {
     this.invincibleUntil = now + durationMs;
   }
 
   showHitPose(now: number, knockbackDirection: number): void {
     this.hitPoseUntil = now + HIT_POSE_MS;
-    this.arcadeBody.setVelocity(knockbackDirection * 220, -380);
+    this.body.vx = knockbackDirection * 220;
+    this.body.vy = -380;
+    this.body.riding = null;
     this.mode = 'HIT';
-    this.anims.stop();
-    this.setFrame(PEDRO_FRAMES.hit);
   }
 
   defeat(): void {
     this.mode = 'DEAD';
-    this.anims.stop();
-    this.setFrame(PEDRO_FRAMES.hit);
-    this.arcadeBody.setVelocity(0, 0);
-    this.setAlpha(1);
+    this.body.vx = 0;
+    this.body.vy = 0;
   }
 
-  celebrate(): void {
+  /** Vitória: o Pedro para e viaja girando até o centro do portal. */
+  celebrate(now: number, portalX: number, portalY: number): void {
     this.mode = 'WIN';
-    this.anims.stop();
-    this.setFrame(PEDRO_FRAMES.win);
-    this.arcadeBody.setVelocity(0, 0);
-    this.arcadeBody.setAllowGravity(false);
-    this.setAlpha(1);
+    this.body.vx = 0;
+    this.body.vy = 0;
+    this.celebration = {
+      startedAt: now,
+      fromX: centerX(this.body),
+      fromY: bottom(this.body),
+      toX: portalX,
+      toY: portalY,
+    };
   }
 
   /** Volta ao jogo depois de um checkpoint: parado, visível e com gravidade. */
   revive(now: number, invincibilityMs: number): void {
     this.mode = 'IDLE';
-    this.arcadeBody.setAllowGravity(true);
-    this.arcadeBody.setVelocity(0, 0);
-    this.setAlpha(1);
-    this.setScale(1);
+    this.celebration = null;
+    this.body.vx = 0;
+    this.body.vy = 0;
+    this.wasGrounded = false;
+    this.previousFallSpeed = 0;
     this.makeInvincible(now, invincibilityMs);
-    this.play(ANIMATIONS.pedroIdle, true);
   }
 
   private moveHorizontally(seconds: number, input: InputSnapshot, grounded: boolean, isOnIce: boolean): void {
     const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     const turbo = this.timedPowerUps.has('turbo') ? PLAYER_PHYSICS.turboMultiplier : 1;
     const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * turbo;
-    const velocity = this.arcadeBody.velocity.x;
 
     let rate: number;
 
@@ -212,10 +202,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       rate = PLAYER_PHYSICS.airAcceleration * 0.4;
     }
 
-    this.arcadeBody.setVelocityX(approach(velocity, direction * topSpeed, rate * seconds));
+    this.body.vx = approach(this.body.vx, direction * topSpeed, rate * seconds);
 
     if (direction !== 0) {
-      this.setFlipX(direction < 0);
+      this.facing = direction > 0 ? 1 : -1;
     }
   }
 
@@ -226,12 +216,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const hasBufferedJump = now - this.lastJumpPressedAt <= PLAYER_PHYSICS.jumpBufferMs;
     const canGroundJump = grounded || now - this.lastGroundedAt <= PLAYER_PHYSICS.coyoteTimeMs;
-    const velocityY = this.arcadeBody.velocity.y;
+    const velocityY = this.body.vy;
 
     if (hasBufferedJump && canGroundJump && velocityY >= -1) {
       this.jump(this.jumpVelocity());
       this.lastGroundedAt = Number.NEGATIVE_INFINITY;
-      this.host.effects.burst('dust', this.x, this.arcadeBody.bottom, 6);
+      this.host.effects.burst('dust', centerX(this.body), bottom(this.body), 6);
 
       return;
     }
@@ -239,20 +229,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (input.jumpPressed && !canGroundJump && this.timedPowerUps.has('wings') && !this.hasUsedDoubleJump) {
       this.hasUsedDoubleJump = true;
       this.jump(this.jumpVelocity() * 0.92);
-      this.host.effects.burst('poof', this.x, this.arcadeBody.bottom, 8);
+      this.host.effects.burst('poof', centerX(this.body), bottom(this.body), 8);
 
       return;
     }
 
     // Soltar o botão enquanto sobe corta o pulo: é o pulinho curto.
     if (!input.jumpHeld && !this.isJumpCut && velocityY < 0) {
-      this.arcadeBody.setVelocityY(velocityY * PLAYER_PHYSICS.jumpCutMultiplier);
+      this.body.vy = velocityY * PLAYER_PHYSICS.jumpCutMultiplier;
       this.isJumpCut = true;
     }
   }
 
   private jump(velocity: number): void {
-    this.arcadeBody.setVelocityY(-velocity);
+    this.body.vy = -velocity;
+    this.body.riding = null;
     this.lastJumpPressedAt = Number.NEGATIVE_INFINITY;
     this.isJumpCut = false;
     this.host.playSound('jump');
@@ -266,17 +257,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private handleLanding(grounded: boolean): void {
     if (grounded && !this.wasGrounded && this.previousFallSpeed > DUST_LANDING_SPEED) {
-      this.host.effects.burst('dust', this.x, this.arcadeBody.bottom, 8);
+      this.host.effects.burst('dust', centerX(this.body), bottom(this.body), 8);
     }
   }
 
   private kickUpDust(now: number, grounded: boolean): void {
-    if (!grounded || Math.abs(this.arcadeBody.velocity.x) < RUN_DUST_SPEED || now - this.lastRunDustAt < RUN_DUST_INTERVAL_MS) {
+    if (!grounded || Math.abs(this.body.vx) < RUN_DUST_SPEED || now - this.lastRunDustAt < RUN_DUST_INTERVAL_MS) {
       return;
     }
 
     this.lastRunDustAt = now;
-    this.host.effects.burst('dust', this.x - Math.sign(this.arcadeBody.velocity.x) * 10, this.arcadeBody.bottom, 2);
+    this.host.effects.burst('dust', centerX(this.body) - Math.sign(this.body.vx) * 10, bottom(this.body), 2);
   }
 
   private updateMode(now: number, grounded: boolean): void {
@@ -284,35 +275,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    const { x: velocityX, y: velocityY } = this.arcadeBody.velocity;
-
     if (!grounded) {
-      this.mode = velocityY < 0 ? 'JUMP' : 'FALL';
-      this.anims.stop();
-      this.setFrame(velocityY < 0 ? PEDRO_FRAMES.jump : PEDRO_FRAMES.fall);
-
-      return;
+      this.mode = this.body.vy < 0 ? 'JUMP' : 'FALL';
+    } else {
+      this.mode = Math.abs(this.body.vx) > 20 ? 'RUN' : 'IDLE';
     }
-
-    if (Math.abs(velocityX) > 20) {
-      this.mode = 'RUN';
-      this.play(ANIMATIONS.pedroRun, true);
-      this.anims.timeScale = Math.max(0.6, Math.abs(velocityX) / PLAYER_PHYSICS.walkSpeed);
-
-      return;
-    }
-
-    this.mode = 'IDLE';
-    this.anims.timeScale = 1;
-    this.play(ANIMATIONS.pedroIdle, true);
-  }
-
-  private updateInvincibilityBlink(now: number): void {
-    if (this.mode === 'DEAD' || this.mode === 'WIN') {
-      return;
-    }
-
-    this.setAlpha(this.isInvincible(now) && Math.floor(now / 90) % 2 === 0 ? 0.35 : 1);
   }
 
   private expirePowerUps(now: number): void {

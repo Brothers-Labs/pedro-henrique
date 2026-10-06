@@ -30,7 +30,7 @@ function start(blueprint: LevelBlueprint): RunningGame {
   document.body.appendChild(parent);
 
   const events: GameSessionEvent[] = [];
-  const input: VirtualInputState = { left: false, right: false, jump: false, action: false };
+  const input: VirtualInputState = { left: false, right: false, run: false, jump: false, action: false };
   const session = launchMakerGame({
     parent,
     blueprint,
@@ -79,7 +79,7 @@ function lastHud(events: readonly GameSessionEvent[]): HudState | null {
   return null;
 }
 
-describe('Motor do Pedro Maker (Phaser de verdade)', () => {
+describe('Motor 3D do Pedro Maker (WebGL de verdade)', () => {
   it(
     'monta a 1-1, anda, coleta moedas, pausa sem contar tempo e destrói o canvas',
     async () => {
@@ -120,9 +120,9 @@ describe('Motor do Pedro Maker (Phaser de verdade)', () => {
         stop(game);
       }
 
-      // O Phaser conclui a destruição no quadro seguinte, levando o canvas junto.
-      await waitFor(() => game.parent.querySelector('canvas') === null, 2000);
+      // Destruir leva junto o canvas e a camada de textos por cima dele.
       expect(game.parent.querySelector('canvas')).toBeNull();
+      expect(game.parent.childElementCount).toBe(0);
     },
     BOOT_TIMEOUT_MS * 3,
   );

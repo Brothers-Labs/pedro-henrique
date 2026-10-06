@@ -27,10 +27,16 @@ export type SurpriseContent = 'coins' | 'heart' | 'crystal' | 'power-up';
 
 export type PlatformAxis = 'horizontal' | 'vertical';
 
-/** Terreno sólido desenhado pelo mapa de blocos. */
-export type TerrainType = 'ground' | 'stone' | 'ice';
+/**
+ * Terreno sólido, montado bloco a bloco como num mundo de cubos.
+ *
+ * O cano é terreno também: bloqueia por todos os lados e, empilhado, vira o
+ * cano verde clássico — a boca aparece sozinha no bloco de cima.
+ */
+export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
 
-export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'lava';
+/** A nuvem é uma plataforma de mão única: segura quem cai de cima. */
+export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava';
 
 export type ItemType = 'coin' | 'crystal' | 'heart' | 'power-up';
 

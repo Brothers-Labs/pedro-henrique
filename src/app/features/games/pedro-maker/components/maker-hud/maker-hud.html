@@ -26,7 +26,18 @@
         }
       </span>
     }
-    <button type="button" class="hud__pause" aria-label="Pausar" (click)="pauseRequested.emit()">
+    @if (canFullscreen()) {
+      <button
+        type="button"
+        class="hud__button"
+        [attr.aria-label]="isFullscreen() ? 'Sair da tela cheia' : 'Tela cheia'"
+        [attr.aria-pressed]="isFullscreen()"
+        (click)="fullscreenToggled.emit()"
+      >
+        <span aria-hidden="true">{{ isFullscreen() ? '🗗' : '⛶' }}</span>
+      </button>
+    }
+    <button type="button" class="hud__button" aria-label="Pausar" (click)="pauseRequested.emit()">
       <span aria-hidden="true">⏸</span>
     </button>
   </div>

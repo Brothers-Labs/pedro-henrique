@@ -2,70 +2,94 @@
 
 <div class="editor">
   <header class="toolbar">
-    <h1 class="toolbar__title"><span aria-hidden="true">🛠️</span> Criar minha fase</h1>
+    <div class="toolbar__scroll">
+      <h1 class="toolbar__title"><span aria-hidden="true">🛠️</span> Criar minha fase</h1>
 
-    <label class="toolbar__field">
-      <span class="visually-hidden">Nome da fase</span>
-      <input
-        class="toolbar__input"
-        type="text"
-        maxlength="40"
-        [value]="current.name"
-        (change)="rename($event)"
-        placeholder="Nome da fase"
-      />
-    </label>
+      <label class="toolbar__field">
+        <span class="visually-hidden">Nome da fase</span>
+        <input
+          class="toolbar__input"
+          type="text"
+          maxlength="40"
+          [value]="current.name"
+          (change)="rename($event)"
+          placeholder="Nome da fase"
+        />
+      </label>
 
-    <label class="toolbar__field">
-      <span class="visually-hidden">Tema da fase</span>
-      <select class="toolbar__input" [value]="current.theme" (change)="changeTheme($event)">
-        @for (theme of themes; track theme.id) {
-          <option [value]="theme.id" [selected]="theme.id === current.theme">{{ theme.emoji }} {{ theme.label }}</option>
-        }
-      </select>
-    </label>
+      <label class="toolbar__field">
+        <span class="visually-hidden">Tema da fase</span>
+        <select class="toolbar__input" [value]="current.theme" (change)="changeTheme($event)">
+          @for (theme of themes; track theme.id) {
+            <option [value]="theme.id" [selected]="theme.id === current.theme">{{ theme.emoji }} {{ theme.label }}</option>
+          }
+        </select>
+      </label>
 
-    <div class="toolbar__group" role="group" aria-label="Ferramentas">
-      @for (option of tools; track option.id) {
-        <button
-          type="button"
-          class="tool"
-          [class.tool--active]="tool() === option.id"
-          [attr.aria-pressed]="tool() === option.id"
-          (click)="chooseTool(option.id)"
-        >
-          <span aria-hidden="true">{{ option.emoji }}</span>
-          <span class="tool__label">{{ option.label }}</span>
-        </button>
-      }
-    </div>
+      <div class="toolbar__group" role="group" aria-label="Histórico">
+        <button type="button" class="tool" [disabled]="!canUndo()" (click)="undo()" aria-label="Desfazer">↶</button>
+        <button type="button" class="tool" [disabled]="!canRedo()" (click)="redo()" aria-label="Refazer">↷</button>
+      </div>
 
-    <div class="toolbar__group" role="group" aria-label="Histórico e tamanho">
-      <button type="button" class="tool" [disabled]="!canUndo()" (click)="undo()" aria-label="Desfazer">↶</button>
-      <button type="button" class="tool" [disabled]="!canRedo()" (click)="redo()" aria-label="Refazer">↷</button>
-      <button type="button" class="tool" (click)="changeZoom(-1)" aria-label="Diminuir zoom">−</button>
-      <span class="toolbar__value" aria-live="polite">{{ zoom() * 100 }}%</span>
-      <button type="button" class="tool" (click)="changeZoom(1)" aria-label="Aumentar zoom">+</button>
-      <button type="button" class="tool" (click)="changeWidth(-1)" aria-label="Fase mais curta">⇤</button>
-      <span class="toolbar__value">{{ current.width }} col.</span>
-      <button type="button" class="tool" (click)="changeWidth(1)" aria-label="Fase mais longa">⇥</button>
-    </div>
+      <div class="toolbar__group" role="group" aria-label="Zoom">
+        <button type="button" class="tool" (click)="changeZoom(-1)" aria-label="Diminuir zoom">−</button>
+        <span class="toolbar__value" aria-live="polite">{{ zoomPercent() }}%</span>
+        <button type="button" class="tool" (click)="changeZoom(1)" aria-label="Aumentar zoom">+</button>
+      </div>
 
-    <div class="toolbar__group toolbar__group--main">
+      <div class="toolbar__group" role="group" aria-label="Tamanho da fase">
+        <button type="button" class="tool" (click)="changeWidth(-1)" aria-label="Fase mais curta">⇤</button>
+        <span class="toolbar__value">{{ current.width }} col.</span>
+        <button type="button" class="tool" (click)="changeWidth(1)" aria-label="Fase mais longa">⇥</button>
+      </div>
+
       <button type="button" class="main-button" data-tone="purple" (click)="surprise()">
-        <span aria-hidden="true">🎲</span> Fase surpresa
+        <span aria-hidden="true">🎲</span> <span class="main-button__label">Fase surpresa</span>
       </button>
+    </div>
+
+    <div class="toolbar__main">
       <button type="button" class="main-button" data-tone="green" (click)="test()">
-        <span aria-hidden="true">▶</span> Testar
+        <span aria-hidden="true">▶</span> <span class="main-button__label">Testar</span>
       </button>
       <button type="button" class="main-button" data-tone="blue" [disabled]="isSaving()" (click)="save()">
-        <span aria-hidden="true">💾</span> Salvar
+        <span aria-hidden="true">💾</span> <span class="main-button__label">Salvar</span>
       </button>
-      <button type="button" class="main-button" data-tone="gray" (click)="exit()">
-        <span aria-hidden="true">✕</span> Sair
+      <button type="button" class="main-button" data-tone="gray" (click)="exit()" aria-label="Sair do editor">
+        <span aria-hidden="true">✕</span>
       </button>
     </div>
   </header>
+
+  <div class="tools" role="toolbar" aria-label="Ferramentas">
+    @for (option of tools; track option.id) {
+      <button
+        type="button"
+        class="tool"
+        [class.tool--active]="tool() === option.id"
+        [attr.aria-pressed]="tool() === option.id"
+        (click)="chooseTool(option.id)"
+      >
+        <span aria-hidden="true">{{ option.emoji }}</span>
+        <span class="tool__label">{{ option.label }}</span>
+      </button>
+    }
+  </div>
+
+  <app-editor-minimap class="map" [level]="current" [viewport]="viewport()" (jump)="jumpToColumn($event)" />
+
+  <app-editor-canvas
+    class="grid"
+    [level]="current"
+    [zoom]="zoom()"
+    [tool]="tool()"
+    [selected]="selected()"
+    [ghost]="ghost()"
+    [area]="area()"
+    (cellPointer)="onCellPointer($event)"
+    (zoomRequest)="onZoomRequest($event)"
+    (viewportChange)="onViewportChange($event)"
+  />
 
   <aside class="palette" aria-label="Peças">
     <div class="palette__categories" role="tablist" aria-label="Categorias de peças">
@@ -102,27 +126,127 @@
       }
     </div>
 
-    @if (selectedObject()) {
-      <div class="selection">
-        <span>Selecionado: <strong>{{ selectedLabel() }}</strong></span>
-        <button type="button" class="tool" (click)="removeSelected()">🗑️ Apagar</button>
-      </div>
+    @if (selectedObject(); as object) {
+      <section class="selection" aria-label="Peça selecionada">
+        <div class="selection__header">
+          <span>Selecionado: <strong>{{ selectedLabel() }}</strong></span>
+          <button type="button" class="tool" (click)="removeSelected()">🗑️ Apagar</button>
+        </div>
+
+        @switch (object.type) {
+          @case ('sign') {
+            <label class="selection__field">
+              Texto da placa
+              <input
+                class="toolbar__input"
+                type="text"
+                maxlength="80"
+                [value]="object.properties?.text ?? ''"
+                (change)="setSignText($event)"
+              />
+            </label>
+          }
+          @case ('moving-platform') {
+            <div class="selection__row" role="group" aria-label="Direção da plataforma">
+              <button
+                type="button"
+                class="tool"
+                [class.tool--active]="object.properties?.axis !== 'vertical'"
+                (click)="setAxis('horizontal')"
+              >
+                ↔ Lados
+              </button>
+              <button
+                type="button"
+                class="tool"
+                [class.tool--active]="object.properties?.axis === 'vertical'"
+                (click)="setAxis('vertical')"
+              >
+                ↕ Sobe e desce
+              </button>
+            </div>
+            <div class="selection__row" role="group" aria-label="Distância da plataforma">
+              <button
+                type="button"
+                class="tool"
+                [disabled]="(object.properties?.range ?? 3) <= rangeLimits.min"
+                (click)="changeRange(-1)"
+                aria-label="Andar menos"
+              >
+                −
+              </button>
+              <span class="toolbar__value">{{ object.properties?.range ?? 3 }} blocos</span>
+              <button
+                type="button"
+                class="tool"
+                [disabled]="(object.properties?.range ?? 3) >= rangeLimits.max"
+                (click)="changeRange(1)"
+                aria-label="Andar mais"
+              >
+                +
+              </button>
+            </div>
+          }
+          @case ('surprise') {
+            <label class="selection__field">
+              O que sai do bloco
+              <select class="toolbar__input" (change)="setContents($event)">
+                @for (option of surpriseOptions; track option.id) {
+                  <option [value]="option.id" [selected]="(object.properties?.contents ?? 'coins') === option.id">
+                    {{ option.label }}
+                  </option>
+                }
+              </select>
+            </label>
+            @if (object.properties?.contents === 'power-up') {
+              <label class="selection__field">
+                Qual poder
+                <select class="toolbar__input" (change)="setPowerUp($event)">
+                  @for (option of powerUpOptions; track option.id) {
+                    <option [value]="option.id" [selected]="object.properties?.powerUp === option.id">
+                      {{ option.emoji }} {{ option.label }}
+                    </option>
+                  }
+                </select>
+              </label>
+            }
+          }
+          @case ('power-up') {
+            <label class="selection__field">
+              Qual poder
+              <select class="toolbar__input" (change)="setPowerUp($event)">
+                @for (option of powerUpOptions; track option.id) {
+                  <option [value]="option.id" [selected]="object.properties?.powerUp === option.id">
+                    {{ option.emoji }} {{ option.label }}
+                  </option>
+                }
+              </select>
+            </label>
+          }
+          @case ('door') {
+            <div class="selection__row" role="group" aria-label="Par da porta">
+              <span>Leva à porta:</span>
+              @for (pair of doorPairs; track pair) {
+                <button
+                  type="button"
+                  class="tool"
+                  [class.tool--active]="object.properties?.pair === pair"
+                  [attr.aria-pressed]="object.properties?.pair === pair"
+                  (click)="setPair(pair)"
+                >
+                  {{ pair }}
+                </button>
+              }
+            </div>
+          }
+        }
+      </section>
     }
 
     <p class="palette__help">
-      Toque numa peça e depois na grade — ou arraste a peça direto para a grade.
+      Um dedo coloca a peça; dois dedos aproximam e rolam a fase. Arraste uma peça da paleta direto para a grade.
     </p>
   </aside>
-
-  <app-editor-canvas
-    class="grid"
-    [level]="current"
-    [zoom]="zoom()"
-    [tool]="tool()"
-    [selected]="selected()"
-    [ghost]="ghost()"
-    (cellPointer)="onCellPointer($event)"
-  />
 
   @if (problems().length > 0) {
     <div class="problems" role="alert">

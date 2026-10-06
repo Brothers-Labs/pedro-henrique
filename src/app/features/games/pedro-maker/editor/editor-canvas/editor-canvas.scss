@@ -26,7 +26,7 @@
   overflow: auto;
   overscroll-behavior: contain;
 
-  /* O dedo desenha na grade; rolar a fase é com as barras ou com a ferramenta Mover. */
+  /* Um dedo desenha na grade; dois dedos (ou a ferramenta Mover) rolam e aproximam. */
   touch-action: none;
   cursor: crosshair;
 
@@ -40,6 +40,10 @@
 
   &[data-tool='selecionar'] {
     cursor: pointer;
+  }
+
+  &[data-tool='conta-gotas'] {
+    cursor: copy;
   }
 }
 

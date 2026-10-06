@@ -25,11 +25,20 @@ export interface EditorHistory {
   readonly future: readonly EditorLevel[];
 }
 
+/** Uma célula da grade: coluna e linha, com a linha zero no topo. */
+export interface GridCell {
+  readonly x: number;
+  readonly y: number;
+}
+
 /** Passos guardados para desfazer; o suficiente sem pesar na memória. */
 const HISTORY_LIMIT = 100;
 
 export const DEFAULT_EDITOR_WIDTH = 60;
 const STARTER_SURFACE = 12;
+
+/** Passo da chave numérica de célula: maior que a largura máxima de uma fase. */
+const CELL_KEY_STRIDE = 1024;
 
 /** Fase nova: chão, o Pedro no começo e o portal no fim — já dá para testar. */
 export function createStarterLevel(name: string, theme: LevelTheme, sequence: () => string): EditorLevel {
@@ -132,6 +141,131 @@ export function removeObjectAt(level: EditorLevel, x: number, y: number): Editor
   const remaining = level.objects.filter((object) => !(object.x === x && object.y === y));
 
   return remaining.length === level.objects.length ? level : { ...level, objects: remaining };
+}
+
+/**
+ * Coloca a mesma peça em várias células de uma vez: o retângulo cheio e o
+ * traço rápido do dedo.
+ *
+ * Feito numa passada só — uma fase de 400 colunas tem milhares de objetos, e
+ * colocar célula por célula refaria a lista inteira a cada uma.
+ */
+export function placeMany(
+  level: EditorLevel,
+  type: LevelObjectType,
+  cells: readonly GridCell[],
+  nextId: () => string,
+  properties?: LevelObjectProperties,
+): EditorLevel {
+  const inside = cells.filter((cell) => isInside(level, cell.x, cell.y));
+  const last = inside.at(-1);
+
+  if (!last) {
+    return level;
+  }
+
+  // Início e portal são únicos: num traço, vale a última célula.
+  if (OBJECT_BEHAVIOR[type].isUnique) {
+    return placeObject(level, type, last.x, last.y, nextId(), properties);
+  }
+
+  const targets = new Set(inside.map((cell) => cellKey(cell.x, cell.y)));
+  const unchanged = level.objects.filter(
+    (object) => targets.has(cellKey(object.x, object.y)) && object.type === type && sameProperties(object.properties, properties),
+  );
+
+  if (unchanged.length === targets.size) {
+    return level;
+  }
+
+  const kept = level.objects.filter((object) => !targets.has(cellKey(object.x, object.y)));
+  const added = [...targets].map((key) => {
+    const { x, y } = cellFromKey(key);
+
+    return { id: nextId(), type, x, y, ...(properties ? { properties } : {}) };
+  });
+
+  return { ...level, objects: [...kept, ...added] };
+}
+
+/** Apaga tudo o que estiver nas células pedidas. */
+export function removeMany(level: EditorLevel, cells: readonly GridCell[]): EditorLevel {
+  const targets = new Set(cells.map((cell) => cellKey(cell.x, cell.y)));
+  const remaining = level.objects.filter((object) => !targets.has(cellKey(object.x, object.y)));
+
+  return remaining.length === level.objects.length ? level : { ...level, objects: remaining };
+}
+
+/** Troca as propriedades da peça de uma célula: texto da placa, alcance da plataforma. */
+export function updatePropertiesAt(level: EditorLevel, x: number, y: number, properties: LevelObjectProperties): EditorLevel {
+  const current = objectAt(level, x, y);
+
+  if (!current || sameProperties(current.properties, properties)) {
+    return level;
+  }
+
+  const updated = { ...current, properties };
+
+  return { ...level, objects: level.objects.map((object) => (object === current ? updated : object)) };
+}
+
+/**
+ * Células no caminho reto entre duas, com as pontas incluídas.
+ *
+ * O dedo corre mais rápido que a tela avisa: sem isso, um risco ligeiro
+ * deixaria buracos entre uma célula e outra.
+ */
+export function cellsOnLine(from: GridCell, to: GridCell): GridCell[] {
+  const cells: GridCell[] = [];
+  const stepX = Math.sign(to.x - from.x);
+  const stepY = Math.sign(to.y - from.y);
+  const distanceX = Math.abs(to.x - from.x);
+  const distanceY = Math.abs(to.y - from.y);
+  let x = from.x;
+  let y = from.y;
+  let error = distanceX - distanceY;
+
+  for (;;) {
+    cells.push({ x, y });
+
+    if (x === to.x && y === to.y) {
+      return cells;
+    }
+
+    const doubled = error * 2;
+
+    if (doubled > -distanceY) {
+      error -= distanceY;
+      x += stepX;
+    }
+
+    if (doubled < distanceX) {
+      error += distanceX;
+      y += stepY;
+    }
+  }
+}
+
+/** Todas as células do retângulo entre dois cantos, com os cantos incluídos. */
+export function cellsInRect(from: GridCell, to: GridCell): GridCell[] {
+  const cells: GridCell[] = [];
+
+  for (let y = Math.min(from.y, to.y); y <= Math.max(from.y, to.y); y += 1) {
+    for (let x = Math.min(from.x, to.x); x <= Math.max(from.x, to.x); x += 1) {
+      cells.push({ x, y });
+    }
+  }
+
+  return cells;
+}
+
+/** Chave numérica de uma célula; cabe folgado na largura máxima da fase. */
+function cellKey(x: number, y: number): number {
+  return y * CELL_KEY_STRIDE + x;
+}
+
+function cellFromKey(key: number): GridCell {
+  return { x: key % CELL_KEY_STRIDE, y: Math.floor(key / CELL_KEY_STRIDE) };
 }
 
 /** Move uma peça para outra célula, substituindo o que estiver no destino. */
