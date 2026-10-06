@@ -1,0 +1,158 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+.maker {
+  display: grid;
+  // Sem o `minmax(0, …)`, a grade de 14 casas empurra a coluna além da tela do celular.
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+
+  @include from($breakpoint-lg) {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.maker__board,
+.maker__settings,
+.maker__message {
+  @include maker.panel;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  color: maker.$ink;
+}
+
+.maker__hint,
+.maker__title {
+  font-size: var(--text-md);
+}
+
+.maker__title {
+  font-size: var(--text-lg);
+}
+
+.maker__message {
+  font-weight: 800;
+  text-align: center;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tools__button,
+.themes__button,
+.laps__button {
+  @include maker.pill;
+  @include touch-target(2.9rem);
+
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.tools__button--active,
+.themes__button--active {
+  background: #ffcf3f;
+}
+
+.maker__status {
+  padding: 0.6rem 0.9rem;
+  border: 3px dashed maker.$ink;
+  border-radius: 0.9rem;
+  font-weight: 800;
+
+  &--ready {
+    border-style: solid;
+    background: #d3f9d8;
+  }
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.field__label {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.field__input {
+  @include touch-target(3rem);
+
+  padding: 0.5rem 0.75rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  font: inherit;
+  font-weight: 700;
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.themes__button {
+  text-shadow: 0 1px 0 rgb(255 255 255 / 70%);
+}
+
+.themes__button--active {
+  box-shadow: 0 0 0 3px #ffcf3f;
+}
+
+.laps {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.laps__button {
+  justify-content: center;
+  width: 3rem;
+  font-size: var(--text-xl);
+}
+
+.laps__value {
+  min-width: 2ch;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  text-align: center;
+}
+
+.maker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.maker__save {
+  @include maker.game-button;
+}
+
+.maker__error {
+  font-weight: 800;
+  color: #d13f4b;
+}

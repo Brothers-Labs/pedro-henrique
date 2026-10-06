@@ -8,6 +8,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   type Object3D,
+  PlaneGeometry,
   Points,
   PointsMaterial,
 } from 'three';
@@ -35,7 +36,33 @@ const CLOUD_SPEED = 0.35;
 const STAR_COUNT = 320;
 
 /**
- * O mundo em volta da fase: morros, árvores ao longe, nuvens e estrelas.
+ * O mar da praia: começa logo atrás das dunas e vai até a neblina do
+ * horizonte apagar. A altura fica abaixo do topo das dunas, que viram a
+ * beira da praia.
+ */
+const SEA = {
+  level: 1,
+  nearZ: -5.5,
+  farZ: -80,
+  /** Tamanho de cada pedaço da superfície: ondas de cubo, sem pesar no celular. */
+  cell: 3,
+  waveHeight: 0.22,
+  foamCount: 70,
+} as const;
+
+/** Matriz de rascunho da espuma: reaproveitada a cada quadro, sem lixo para o coletor. */
+const foamMatrix = new Matrix4();
+
+/** Superfície do mar e o que boia nela, animados a cada quadro. */
+interface SeaSurface {
+  readonly geometry: BufferGeometry;
+  readonly foam: InstancedMesh;
+  readonly foamSpots: readonly { readonly x: number; readonly z: number }[];
+}
+
+/**
+ * O mundo em volta da fase: morros, árvores ao longe, nuvens, estrelas e,
+ * na praia, o mar.
  *
  * Tudo é gerado a partir do nome da fase — a mesma fase tem sempre a mesma
  * paisagem — e montado em poucas malhas grandes, porque o fundo não se mexe
@@ -46,6 +73,8 @@ export class SceneryView {
 
   private readonly clouds: Object3D[] = [];
   private readonly cloudSpan: number;
+  private readonly sea: SeaSurface | null = null;
+  private seaClock = 0;
 
   constructor(
     private readonly grid: TileGrid,
@@ -58,28 +87,32 @@ export class SceneryView {
     const random = new SeededRandom(seed);
     const material = new MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
 
-    this.root.add(
-      this.buildHills(random, material, {
-        z: -5.5,
-        depth: 2,
-        step: 1,
-        baseHeight: 3.5,
-        variation: 5,
-        margin: 12,
-        color: palette.mid,
-        treeChance: 0.07,
-      }),
-      this.buildHills(random, material, {
-        z: -14,
-        depth: 4,
-        step: 2,
-        baseHeight: 6,
-        variation: 8,
-        margin: 24,
-        color: palette.far,
-        treeChance: 0,
-      }),
-    );
+    if (palette.sea) {
+      this.sea = this.buildBeach(random, material, palette.sea);
+    } else {
+      this.root.add(
+        this.buildHills(random, material, {
+          z: -5.5,
+          depth: 2,
+          step: 1,
+          baseHeight: 3.5,
+          variation: 5,
+          margin: 12,
+          color: palette.mid,
+          treeChance: 0.07,
+        }),
+        this.buildHills(random, material, {
+          z: -14,
+          depth: 4,
+          step: 2,
+          baseHeight: 6,
+          variation: 8,
+          margin: 24,
+          color: palette.far,
+          treeChance: 0,
+        }),
+      );
+    }
 
     this.addTufts(random);
 
@@ -100,10 +133,93 @@ export class SceneryView {
         cloud.position.x -= this.cloudSpan;
       }
     }
+
+    if (this.sea) {
+      this.seaClock += deltaSeconds;
+      this.moveWaves(this.sea, this.seaClock);
+    }
   }
 
   dispose(): void {
     disposeTree(this.root);
+  }
+
+  /**
+   * A praia: dunas baixas de areia na frente, o mar atrás e ilhas lá longe.
+   *
+   * As ilhas são morros que mal passam da água; o que fica abaixo do mar
+   * simplesmente some embaixo dele.
+   */
+  private buildBeach(random: SeededRandom, material: MeshStandardMaterial, seaColor: string): SeaSurface {
+    const dunes = this.buildHills(random, material, {
+      z: -4.5,
+      depth: 2,
+      step: 1,
+      baseHeight: 1.5,
+      variation: 1.5,
+      margin: 12,
+      color: this.palette.mid,
+      treeChance: 0,
+    });
+    const islands = this.buildHills(random, material, {
+      z: -42,
+      depth: 6,
+      step: 2,
+      baseHeight: -2,
+      variation: 9,
+      margin: 40,
+      color: this.palette.far,
+      treeChance: 0,
+    });
+
+    const width = this.grid.width + 120;
+    const depth = SEA.nearZ - SEA.farZ;
+    const geometry = new PlaneGeometry(width, depth, Math.ceil(width / SEA.cell), Math.ceil(depth / SEA.cell));
+
+    // A rotação vai para dentro da geometria: assim a onda mexe direto na altura (y).
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(this.grid.width / 2, SEA.level, (SEA.nearZ + SEA.farZ) / 2);
+
+    const water = new Mesh(
+      geometry,
+      new MeshStandardMaterial({ color: seaColor, roughness: 0.35, metalness: 0.05, flatShading: true }),
+    );
+    water.receiveShadow = true;
+
+    const foamSpots = Array.from({ length: SEA.foamCount }, () => ({
+      x: -40 + random.next() * width,
+      z: SEA.nearZ - 2 - random.next() * 30,
+    }));
+    const foam = new InstancedMesh(
+      buildBoxesGeometry([box(0, 0, 0, 1.4, 0.12, 0.5, '#ffffff'), box(0.5, 0.05, 0.1, 0.6, 0.1, 0.4, lighten(seaColor, 0.7))]),
+      material,
+      foamSpots.length,
+    );
+
+    this.root.add(dunes, islands, water, foam);
+
+    const sea: SeaSurface = { geometry, foam, foamSpots };
+    this.moveWaves(sea, 0);
+
+    return sea;
+  }
+
+  /** Ondas que andam devagar para a praia, e a espuma subindo e descendo junto. */
+  private moveWaves(sea: SeaSurface, seconds: number): void {
+    const positions = sea.geometry.getAttribute('position');
+
+    for (let index = 0; index < positions.count; index += 1) {
+      positions.setY(index, SEA.level + waveHeight(positions.getX(index), positions.getZ(index), seconds));
+    }
+
+    positions.needsUpdate = true;
+
+    sea.foamSpots.forEach((spot, index) => {
+      foamMatrix.makeTranslation(spot.x, SEA.level + 0.08 + waveHeight(spot.x, spot.z, seconds), spot.z);
+      sea.foam.setMatrixAt(index, foamMatrix);
+    });
+
+    sea.foam.instanceMatrix.needsUpdate = true;
   }
 
   /** Morros de cubos em colunas, com a altura variando suave de uma para a outra. */
@@ -211,6 +327,10 @@ export class SceneryView {
     // Estrela não some na neblina: ela está além de tudo.
     this.root.add(new Points(geometry, new PointsMaterial({ color: '#ffffff', size: 0.28, fog: false })));
   }
+}
+
+function waveHeight(x: number, z: number, seconds: number): number {
+  return SEA.waveHeight * (Math.sin(x * 0.35 + seconds * 1.1) + Math.sin(z * 0.55 + seconds * 1.6) * 0.8);
 }
 
 function instances(

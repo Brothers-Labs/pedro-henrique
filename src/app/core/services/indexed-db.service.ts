@@ -3,16 +3,18 @@ import { Injectable } from '@angular/core';
 export const VIDEO_STORE = 'videos';
 export const DRAWING_STORE = 'drawings';
 export const MAKER_LEVEL_STORE = 'maker-levels';
+export const KART_TRACK_STORE = 'kart-tracks';
 
 const DATABASE_NAME = 'pedro-henrique-site';
 
 /**
  * Versão 2 acrescentou a prancheta de desenho ao banco dos vídeos; a versão 3,
- * as fases criadas no editor do Pedro Maker.
+ * as fases criadas no editor do Pedro Maker; a versão 4, as pistas do Pedro
+ * Kart Maker.
  */
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
-const STORES: readonly string[] = [VIDEO_STORE, DRAWING_STORE, MAKER_LEVEL_STORE];
+const STORES: readonly string[] = [VIDEO_STORE, DRAWING_STORE, MAKER_LEVEL_STORE, KART_TRACK_STORE];
 
 /**
  * Wrapper mínimo e tipado sobre a IndexedDB nativa.

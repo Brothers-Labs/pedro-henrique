@@ -25,6 +25,7 @@ navegador.
 - [Movimento (GSAP)](#movimento-gsap)
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
 - [Pedro Maker](#pedro-maker)
+- [Pedro Kart](#pedro-kart)
 - [Design system](#design-system)
 - [Acessibilidade](#acessibilidade)
 - [Como editar o conteúdo](#como-editar-o-conteúdo)
@@ -70,7 +71,7 @@ navegador.
 | Persistência | IndexedDB (vídeos) e `localStorage` (recados, frases favoritas, idioma, modo calmo) |
 | Voz | Web Speech API (`speechSynthesis`), nativa do navegador |
 | Movimento | GSAP 3.15.0 (core, sem plugins), carregado só no chunk da home |
-| Jogo de plataforma | Phaser 3.90 (física Arcade), carregado só quando uma fase do Pedro Maker abre |
+| Jogos em 3D | Three.js 0.186, carregado só quando uma fase do Pedro Maker ou uma corrida do Pedro Kart abre |
 | Testes | Karma + Jasmine |
 
 Requisitos: **Node.js 20.19+, 22.12+ ou 24+** e npm.
@@ -421,6 +422,35 @@ Decisões que valem saber antes de mexer:
   de comandos), cria o jogo fora da zona do Angular e o destrói ao sair da tela.
 - **Nada de dinheiro de verdade**: as moedas são do jogo e só compram visual para o Pedro. Cada fase
   vencida também conta como desafio na jornada de jogos do site, e é assim que o mascote ganha XP.
+
+### Pedro Kart
+
+Corrida de kart em 3D em `/jogos/pedro-kart`, com o Pedro do Pedro Maker ao volante (mesmo boné,
+camiseta e mochila escolhidos lá). Tem 5 pistas oficiais em cenários diferentes (parque, praia,
+montanha gelada, vale dos dinossauros e espaço), uma garagem com 4 modelos de kart e 8 cores, e o
+**Pedro Kart Maker** para desenhar pistas novas com o dedo. Todo o código fica em
+`src/app/features/games/pedro-kart/`.
+
+| Pasta | O que tem |
+| --- | --- |
+| `models/`, `config/` | Tipos de pista, kart e sessão; catálogo da garagem, adversários, dificuldades e cenários |
+| `tracks/` | As 5 pistas oficiais, as regras que validam um circuito e a lógica pura do editor |
+| `simulation/` | A corrida sem desenho: linha central da pista, física do kart, adversários, itens e voltas |
+| `engine/` | O único código que conhece o Three.js: palco, pista, karts, câmera, mapinha e vitrine da garagem |
+| `services/` | Garagem e recordes (`localStorage`) e pistas criadas (IndexedDB, coleção `kart-tracks`) |
+| `components/`, `pages/` | Telas Angular: menu, escolha de pista, garagem, corrida, resultado e editor |
+
+Decisões que valem saber antes de mexer:
+
+- **Uma pista é um caminho fechado de casas numa grade** (`TrackDefinition`): as oficiais e as criadas
+  no editor usam o mesmo formato, e a linha central suave é gerada a partir dele.
+- **A simulação não sabe nada de tela**: os testes correm uma corrida inteira em cada pista oficial
+  e garantem que ela termina com resultado.
+- **O kart acelera sozinho**: a criança só vira, freia e usa o item. Nada de segurar botão a corrida
+  inteira.
+- **Reaproveita o Pedro Maker**: o relógio de passo fixo, o controle de qualidade gráfica, as peças do
+  boneco do Pedro e os sons. Cada corrida terminada conta como desafio na jornada de jogos, e chegar
+  ao pódio conta como acerto.
 
 ---
 

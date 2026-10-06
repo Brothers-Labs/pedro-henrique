@@ -5,7 +5,7 @@ import { PlayerInput } from './input/player-input';
 import { LevelView } from './render/level-view';
 import { FrameBudgetMonitor, initialQualityTier, QUALITY } from './render/quality';
 import { Stage } from './render/stage';
-import { GameSimulation } from './simulation/game-simulation';
+import { GameSimulation, STEP_MS } from './simulation/game-simulation';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
 const BUILD_FAILED_MESSAGE = 'Não foi possível montar esta fase.';
@@ -49,7 +49,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       stage.applyQuality(lower);
       view.applyQuality(QUALITY[lower]);
     }
-  });
+  }, STEP_MS);
 
   const fail = (message: string, error: unknown): void => {
     console.error(`Pedro Maker: ${message}`, error);

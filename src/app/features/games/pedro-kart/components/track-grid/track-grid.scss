@@ -1,0 +1,53 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  display: block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+  gap: 2px;
+  padding: 4px;
+  border: 4px solid maker.$ink;
+  border-radius: 1rem;
+  background: var(--ground);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.grid__cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px dashed rgb(42 35 80 / 25%);
+  border-radius: 0.35rem;
+  background: rgb(255 255 255 / 18%);
+  color: #ffffff;
+  font-size: clamp(0.7rem, 0.4rem + 1.4vw, 1.3rem);
+  font-weight: 800;
+  line-height: 1;
+  cursor: crosshair;
+
+  &--road {
+    border: 2px solid rgb(255 255 255 / 75%);
+    background: var(--road);
+  }
+
+  &--start {
+    background: #ffffff;
+  }
+
+  &--end {
+    outline: 3px solid #ffcf3f;
+    outline-offset: -3px;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#ffcf3f);
+  }
+}

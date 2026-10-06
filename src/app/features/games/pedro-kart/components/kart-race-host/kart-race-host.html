@@ -1,0 +1,67 @@
+@let panel = hud();
+
+<div #stage class="stage"></div>
+
+<canvas #minimap class="minimap" width="200" height="150" aria-hidden="true"></canvas>
+
+@if (panel) {
+  <div class="hud" aria-live="polite">
+    <p class="hud__position" [attr.aria-label]="'Você está em ' + formatPlacement(panel.position) + ' lugar de ' + panel.racers">
+      {{ formatPlacement(panel.position) }}<small>/{{ panel.racers }}</small>
+    </p>
+    <p class="hud__lap">Volta {{ panel.lap }}/{{ panel.totalLaps }}</p>
+    <p class="hud__time" aria-hidden="true">{{ formatTime(panel.elapsedMs) }}</p>
+    <div class="hud__item" [attr.aria-label]="panel.item ? 'Item: ' + itemLabels[panel.item].label : 'Sem item'">
+      @if (panel.item; as item) {
+        <span aria-hidden="true">{{ itemLabels[item].emoji }}</span>
+      }
+    </div>
+    <button type="button" class="hud__pause" aria-label="Pausar a corrida" (click)="pause()">⏸</button>
+  </div>
+}
+
+@if (countdown(); as value) {
+  <p class="countdown" aria-live="assertive">{{ value }}</p>
+}
+
+@if (toast(); as message) {
+  <p class="toast" role="status">{{ message }}</p>
+}
+
+@if (isTouch && phase() === 'correndo') {
+  <app-kart-touch-controls [state]="driveState" />
+}
+
+@switch (phase()) {
+  @case ('carregando') {
+    <div class="overlay">
+      <p class="overlay__panel">Montando a pista… <span aria-hidden="true">🏗️</span></p>
+    </div>
+  }
+  @case ('pausado') {
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pausa-titulo">
+      <div class="overlay__panel">
+        <h2 id="pausa-titulo" class="overlay__title">Pausa</h2>
+        <button type="button" class="overlay__button" data-tone="green" (click)="resume()">
+          <span aria-hidden="true">▶</span> Continuar
+        </button>
+        <button type="button" class="overlay__button" data-tone="gray" (click)="exit()">
+          <span aria-hidden="true">🚪</span> Sair da corrida
+        </button>
+      </div>
+    </div>
+  }
+  @case ('erro') {
+    <div class="overlay" role="alertdialog" aria-labelledby="erro-titulo">
+      <div class="overlay__panel">
+        <h2 id="erro-titulo" class="overlay__title">Ops!</h2>
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="overlay__button" data-tone="blue" (click)="exit()">Voltar</button>
+      </div>
+    </div>
+  }
+}
+
+@if (!isTouch && phase() === 'correndo' && countdown()) {
+  <p class="keys">← → para virar · ↓ freia · Espaço usa o item · Esc pausa</p>
+}

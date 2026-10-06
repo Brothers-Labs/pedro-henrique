@@ -1,0 +1,103 @@
+<app-kart-page-frame heading="Escolha a pista" emoji="🏁">
+  <section class="difficulty" aria-labelledby="dificuldade-titulo">
+    <h2 id="dificuldade-titulo" class="difficulty__title">Adversários</h2>
+    <div class="difficulty__options" role="radiogroup" aria-labelledby="dificuldade-titulo">
+      @for (option of difficulties; track option.id) {
+        <button
+          type="button"
+          class="difficulty__option"
+          role="radio"
+          [attr.aria-checked]="difficulty() === option.id"
+          [class.difficulty__option--active]="difficulty() === option.id"
+          (click)="chooseDifficulty(option.id)"
+        >
+          <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="pistas-oficiais">
+    <h2 id="pistas-oficiais" class="group__title">Pistas do Pedro Kart</h2>
+    <ul class="tracks">
+      @for (track of officialTracks; track track.id; let position = $index) {
+        <li class="track">
+          <app-track-thumbnail [path]="track.path" [theme]="track.theme" [name]="track.name" />
+          <div class="track__body">
+            <h3 class="track__name">{{ position + 1 }}. {{ track.name }}</h3>
+            <p class="track__meta">{{ themeLabel(track) }} · {{ track.laps }} voltas</p>
+            @if (recordLabel(track); as record) {
+              <p class="track__record"><span aria-hidden="true">🏆</span> {{ record }}</p>
+            }
+          </div>
+          <a class="track__race" data-tone="orange" [routerLink]="['..', 'corrida', track.id]">
+            <span aria-hidden="true">▶</span> Correr
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="group" aria-labelledby="minhas-pistas">
+    <div class="group__header">
+      <h2 id="minhas-pistas" class="group__title">Minhas pistas</h2>
+      <a class="group__create" data-tone="green" routerLink="../criar">
+        <span aria-hidden="true">🛠️</span> Criar pista
+      </a>
+    </div>
+
+    @switch (status()) {
+      @case ('error') {
+        <p class="group__message">
+          Não deu para abrir as suas pistas agora.
+          <button type="button" class="group__retry" (click)="retryLoading()">Tentar de novo</button>
+        </p>
+      }
+      @case ('ready') {
+        @if (isEmpty()) {
+          <p class="group__message">
+            Você ainda não criou nenhuma pista. Abra o Pedro Kart Maker e desenhe a sua!
+          </p>
+        } @else {
+          <ul class="tracks">
+            @for (track of customTracks(); track track.id) {
+              <li class="track">
+                <app-track-thumbnail [path]="track.path" [theme]="track.theme" [name]="track.name" />
+                <div class="track__body">
+                  <h3 class="track__name">{{ track.name }}</h3>
+                  <p class="track__meta">{{ themeLabel(track) }} · {{ track.laps }} {{ track.laps === 1 ? 'volta' : 'voltas' }}</p>
+                  @if (recordLabel(track); as record) {
+                    <p class="track__record"><span aria-hidden="true">🏆</span> {{ record }}</p>
+                  }
+                </div>
+
+                @if (pendingDeletion() === track.id) {
+                  <div class="track__confirm" role="group" [attr.aria-label]="'Apagar a pista ' + track.name + '?'">
+                    <span>Apagar mesmo?</span>
+                    <button type="button" class="track__small" data-tone="red" (click)="confirmDeletion(track.id)">Sim, apagar</button>
+                    <button type="button" class="track__small" data-tone="gray" (click)="cancelDeletion()">Não</button>
+                  </div>
+                } @else {
+                  <div class="track__actions">
+                    <a class="track__race" data-tone="orange" [routerLink]="['..', 'corrida', track.id]">
+                      <span aria-hidden="true">▶</span> Correr
+                    </a>
+                    <a class="track__small" data-tone="blue" [routerLink]="['..', 'criar', track.id]">
+                      <span aria-hidden="true">✏️</span> Editar
+                    </a>
+                    <button type="button" class="track__small" data-tone="gray" (click)="askToDelete(track.id)">
+                      <span aria-hidden="true">🗑️</span> Apagar
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+      @default {
+        <p class="group__message">Abrindo as suas pistas…</p>
+      }
+    }
+  </section>
+</app-kart-page-frame>

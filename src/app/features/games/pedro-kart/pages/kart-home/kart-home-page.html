@@ -1,0 +1,48 @@
+@let current = kart();
+@let stats = progress();
+
+<app-kart-page-frame backLink="/jogos" backLabel="Jogos">
+  <div class="home">
+    <section class="home__intro" aria-labelledby="pedro-kart-titulo">
+      <h1 id="pedro-kart-titulo" class="logo">
+        <span class="logo__top">PEDRO</span>
+        <span class="logo__bottom">KART</span>
+        <span class="logo__ribbon">Corrida do Pedro Maker</span>
+      </h1>
+      <p class="home__tagline">Acelere, faça a curva e cruze a linha de chegada!</p>
+
+      <nav class="menu" aria-label="Menu do Pedro Kart">
+        @for (entry of menu; track entry.route) {
+          <a class="menu__button" [attr.data-tone]="entry.tone" [routerLink]="entry.route">
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </a>
+        }
+      </nav>
+    </section>
+
+    <section class="home__scene" aria-label="O Pedro no kart dele">
+      <span class="scene__flag" aria-hidden="true">🏁</span>
+      <div class="scene__driver">
+        <app-pedro-figure class="scene__pedro" [look]="look()" />
+        <span class="scene__kart" [style.--kart-color]="current.color.hex" aria-hidden="true">
+          {{ current.body.emoji }}
+        </span>
+      </div>
+      <span class="scene__road" aria-hidden="true"></span>
+      <p class="scene__caption">
+        Kart {{ current.body.label }} {{ current.color.label.toLowerCase() }}
+      </p>
+    </section>
+
+    <section class="cards" aria-label="Suas corridas">
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🏎️</span> Corridas</h2>
+        <p class="card__value">{{ stats.races }}</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🥇</span> Vitórias</h2>
+        <p class="card__value">{{ stats.wins }}</p>
+      </article>
+    </section>
+  </div>
+</app-kart-page-frame>

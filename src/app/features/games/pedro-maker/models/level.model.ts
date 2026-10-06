@@ -17,7 +17,8 @@ export type LevelTheme =
   | 'gelo'
   | 'vulcao'
   | 'estrelas'
-  | 'castelo';
+  | 'castelo'
+  | 'praia';
 
 export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost';
 

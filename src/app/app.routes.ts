@@ -63,6 +63,15 @@ export const routes: Routes = [
       import('./features/games/pedro-maker/pedro-maker.routes').then((m) => m.PEDRO_MAKER_ROUTES),
   },
   {
+    path: 'jogos/pedro-kart',
+    data: {
+      description:
+        'Pedro Kart: corridas de kart com o Pedro Maker em cinco pistas, garagem de karts coloridos e o Pedro Kart Maker para criar as próprias pistas.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-kart/pedro-kart.routes').then((m) => m.PEDRO_KART_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

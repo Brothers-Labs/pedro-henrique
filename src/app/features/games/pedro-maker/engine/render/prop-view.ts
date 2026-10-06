@@ -94,6 +94,18 @@ export class PropView {
     this.swirlTexture.dispose();
   }
 
+  /** A "árvore" de cada tema: cacto no deserto, coqueiro na praia. */
+  private treeModel(): readonly VoxelBox[] {
+    switch (this.theme) {
+      case 'deserto':
+        return cactus(this.palette);
+      case 'praia':
+        return palm(this.palette);
+      default:
+        return tree(this.palette);
+    }
+  }
+
   /** Enfeites, placas e portas: nada disso se mexe, então vira uma malha só. */
   private buildStatic(objects: readonly LevelObject[]): void {
     const parts: VoxelBox[] = [];
@@ -109,7 +121,7 @@ export class PropView {
 
       switch (object.type) {
         case 'tree':
-          at(x, y, DECOR_Z, this.theme === 'deserto' ? cactus(this.palette) : tree(this.palette));
+          at(x, y, DECOR_Z, this.treeModel());
           break;
         case 'bush':
           at(x, y, DECOR_Z, bush(this.palette));
@@ -232,6 +244,21 @@ function tree(palette: ThemePalette): readonly VoxelBox[] {
     box(0, 2.0, 0, 1.7, 1.1, 1.4, palette.foliage),
     box(0, 2.8, 0, 1.1, 0.6, 1.0, lighten(palette.foliage, 0.1)),
     box(0.55, 1.6, 0.45, 0.5, 0.4, 0.5, darken(palette.foliage, 0.12)),
+  ];
+}
+
+/** Coqueiro da praia: tronco inclinado em degraus e folhas abertas em cruz. */
+function palm(palette: ThemePalette): readonly VoxelBox[] {
+  const leaf = palette.foliage;
+
+  return [
+    box(0, 0.6, 0, 0.3, 1.2, 0.3, palette.trunk),
+    box(0.12, 1.6, 0, 0.28, 0.9, 0.28, darken(palette.trunk, 0.1)),
+    box(0.24, 2.4, 0, 0.26, 0.8, 0.26, palette.trunk),
+    box(0.24, 2.9, 0, 2.2, 0.16, 0.5, leaf),
+    box(0.24, 2.9, 0, 0.5, 0.16, 1.6, darken(leaf, 0.1)),
+    box(0.24, 3.05, 0, 0.8, 0.2, 0.8, lighten(leaf, 0.12)),
+    box(0.4, 2.7, 0.2, 0.22, 0.22, 0.22, '#7a4b2a'),
   ];
 }
 

@@ -67,6 +67,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'blue',
   },
   {
+    id: 'pedro-kart',
+    label: 'Pedro Kart',
+    route: '/jogos/pedro-kart',
+    emoji: '🏎️',
+    description: 'Minhas corridas de kart: escolho o kart e a cor, corro em cinco pistas e crio as minhas.',
+    color: 'orange',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',
