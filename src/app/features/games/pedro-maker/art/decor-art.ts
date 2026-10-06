@@ -13,7 +13,8 @@ export const ROCK_HEIGHT = 32;
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
  * floresta e na neve, cacto no deserto, cristal na caverna, rocha em chamas
- * no vulcão, cogumelo mágico nas estrelas e tocha no castelo.
+ * no vulcão, cogumelo mágico nas estrelas, tocha no castelo e coqueiro na
+ * praia.
  */
 export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, palette: ThemePalette): void {
   switch (theme) {
@@ -38,6 +39,9 @@ export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, 
       return;
     case 'vale':
       paintRoundTree(context, palette);
+      return;
+    case 'praia':
+      paintPalm(context, palette);
       return;
   }
 }
@@ -83,6 +87,33 @@ function paintPine(context: CanvasRenderingContext2D, palette: ThemePalette, has
       context.closePath();
       context.fill();
     }
+  }
+}
+
+function paintPalm(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  // Tronco levemente curvo, feito de gomos, até o topo das folhas.
+  for (const [x, y] of [[40, 120], [43, 100], [46, 80], [49, 60]] as const) {
+    roundedRect(context, x, y, 14, 22, 4);
+    fillAndOutline(context, palette.trunk);
+  }
+
+  context.lineCap = 'round';
+
+  for (const [endX, endY] of [[10, 58], [86, 58], [20, 34], [78, 34], [56, 22]] as const) {
+    context.beginPath();
+    context.moveTo(56, 50);
+    context.quadraticCurveTo((56 + endX) / 2, endY - 18, endX, endY);
+    context.lineWidth = 14;
+    context.strokeStyle = OUTLINE;
+    context.stroke();
+    context.lineWidth = 9;
+    context.strokeStyle = palette.foliage;
+    context.stroke();
+  }
+
+  for (const [x, y] of [[50, 56], [62, 58]] as const) {
+    circle(context, x, y, 6);
+    fillAndOutline(context, '#7a4b2a', 2);
   }
 }
 

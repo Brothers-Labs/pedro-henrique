@@ -81,6 +81,7 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   vulcao: 55,
   estrelas: 65,
   castelo: 53,
+  praia: 61,
 };
 
 const MUSIC_TEMPO_BPM = 112;

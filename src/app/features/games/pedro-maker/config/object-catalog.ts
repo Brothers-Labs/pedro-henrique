@@ -208,6 +208,7 @@ export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string;
   vulcao: { label: 'Vulcão', emoji: '🌋' },
   estrelas: { label: 'Estrelas', emoji: '🌌' },
   castelo: { label: 'Castelo', emoji: '🏰' },
+  praia: { label: 'Praia', emoji: '🏖️' },
 };
 
 /** Temas que o Pedro pode escolher para as próprias fases. */
@@ -219,4 +220,5 @@ export const EDITOR_THEMES: readonly LevelTheme[] = [
   'gelo',
   'vulcao',
   'estrelas',
+  'praia',
 ];

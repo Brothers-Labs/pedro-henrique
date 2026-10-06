@@ -19,6 +19,8 @@ export interface ThemePalette {
   /** Temas escuros ganham estrelas no céu e luz ao redor do Pedro. */
   readonly isDark: boolean;
   readonly hasClouds: boolean;
+  /** Cor do mar no fundo do cenário; `null` nos temas sem mar. */
+  readonly sea: string | null;
 }
 
 export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
@@ -39,6 +41,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ff6fae',
     isDark: false,
     hasClouds: true,
+    sea: null,
   },
   floresta: {
     skyTop: '#86d5c6',
@@ -57,6 +60,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ffd23f',
     isDark: false,
     hasClouds: true,
+    sea: null,
   },
   caverna: {
     skyTop: '#140f2b',
@@ -75,6 +79,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#7ff3ff',
     isDark: true,
     hasClouds: false,
+    sea: null,
   },
   deserto: {
     skyTop: '#ffc27a',
@@ -93,6 +98,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ff7a5c',
     isDark: false,
     hasClouds: true,
+    sea: null,
   },
   gelo: {
     skyTop: '#94d3ff',
@@ -111,6 +117,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#7fd4ff',
     isDark: false,
     hasClouds: true,
+    sea: null,
   },
   vulcao: {
     skyTop: '#2e1428',
@@ -129,6 +136,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ffc23f',
     isDark: false,
     hasClouds: false,
+    sea: null,
   },
   estrelas: {
     skyTop: '#120c33',
@@ -147,6 +155,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ffe066',
     isDark: false,
     hasClouds: false,
+    sea: null,
   },
   castelo: {
     skyTop: '#241c46',
@@ -165,5 +174,26 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     flower: '#ff6f6f',
     isDark: false,
     hasClouds: false,
+    sea: null,
+  },
+  praia: {
+    skyTop: '#4fb3ff',
+    skyBottom: '#e3f6ff',
+    // Na praia, a camada de longe são as ilhas no meio do mar.
+    far: '#4f9e6a',
+    mid: '#f0d58c',
+    near: '#e6c46f',
+    surface: '#f7dc8f',
+    surfaceLight: '#fff0bf',
+    soil: '#e3bb6a',
+    soilDark: '#c99a4c',
+    stone: '#d9c4a0',
+    foliage: '#36a852',
+    foliageDark: '#24803c',
+    trunk: '#9a6b3f',
+    flower: '#ff6b6b',
+    isDark: false,
+    hasClouds: true,
+    sea: '#2b9fe0',
   },
 };

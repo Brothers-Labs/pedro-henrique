@@ -63,7 +63,7 @@ export const TRACK_THEMES: readonly TrackThemeDefinition[] = [
     sun: '#fff1d6',
     isDark: false,
     scenery: ['coqueiro', 'guarda-sol'],
-    music: 'deserto',
+    music: 'praia',
   },
   {
     id: 'gelo',
