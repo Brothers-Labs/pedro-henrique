@@ -9,8 +9,8 @@
 
 $breakpoint-sm: 30rem; // 480px — celular grande
 $breakpoint-md: 48rem; // 768px — tablet
-$breakpoint-lg: 64rem; // 1024px — notebook, onde o menu horizontal reaparece
-$breakpoint-xl: 80rem; // 1280px — monitor
+$breakpoint-lg: 64rem; // 1024px — notebook
+$breakpoint-xl: 80rem; // 1280px — monitor, onde o menu lateral fica fixo
 
 @mixin from($breakpoint) {
   @media (min-width: $breakpoint) {

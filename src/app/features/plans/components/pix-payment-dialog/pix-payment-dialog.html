@@ -1,0 +1,232 @@
+<dialog #dialog class="pix" aria-labelledby="pix-title" (close)="handleNativeClose()">
+  @if (selectedPlan(); as plan) {
+    <div class="pix__panel" [attr.data-color]="plan.color">
+      <header class="pix__header">
+        <div class="pix__heading">
+          <p class="pix__eyebrow">Pagamento via Pix</p>
+          <h2 id="pix-title" class="pix__title">
+            <span aria-hidden="true">{{ plan.emoji }}</span>
+            Plano {{ plan.name }}
+          </h2>
+        </div>
+
+        <button type="button" class="pix__close" aria-label="Fechar o pagamento" (click)="close()">
+          <span aria-hidden="true">✕</span>
+        </button>
+      </header>
+
+      <div class="pix__body">
+        @if (submittedTo(); as email) {
+          <div class="result" role="status">
+            <p class="result__emoji" aria-hidden="true">🎉</p>
+            <h3 class="result__title">Comprovante enviado!</h3>
+            <p class="result__text">
+              Assim que o Pix de <strong>{{ plan.monthlyPriceInCents | price }}</strong> do plano
+              {{ plan.name }} for conferido, avisamos em <strong>{{ email }}</strong> e o plano é
+              liberado.
+            </p>
+            <button type="button" class="button button--primary" (click)="close()">Fechar</button>
+          </div>
+        } @else {
+          <form class="pix__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <fieldset class="plans-picker" [disabled]="isSubmitting()">
+              <legend class="pix__label">Plano escolhido</legend>
+
+              <div class="plans-picker__options">
+                @for (option of plans; track option.id) {
+                  <label class="plans-picker__option" [attr.data-color]="option.color">
+                    <input
+                      type="radio"
+                      name="pix-plan"
+                      [value]="option.id"
+                      [checked]="option.id === plan.id"
+                      (change)="selectPlan(option.id)"
+                    />
+                    <span class="plans-picker__name">{{ option.name }}</span>
+                    <span class="plans-picker__price">{{ option.monthlyPriceInCents | price }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <div class="pix__amount">
+              <span class="pix__amount-label">Valor a pagar</span>
+              <strong class="pix__amount-value">{{ plan.monthlyPriceInCents | price }}</strong>
+              <span class="pix__amount-period">por mês</span>
+            </div>
+
+            <ol class="steps">
+              <li class="steps__item">
+                <h3 class="steps__title">Copie a chave Pix</h3>
+
+                @if (pix.key; as key) {
+                  <div class="pix-key">
+                    <input
+                      #keyInput
+                      class="pix-key__value"
+                      type="text"
+                      [value]="key"
+                      readonly
+                      aria-label="Chave Pix"
+                    />
+                    <button
+                      type="button"
+                      class="button button--small pix-key__copy"
+                      [class.pix-key__copy--done]="copyStatus() === 'copied'"
+                      (click)="copyKey()"
+                    >
+                      <span aria-hidden="true">{{ copyStatus() === 'copied' ? '✅' : '📋' }}</span>
+                      {{ copyStatus() === 'copied' ? 'Copiada!' : 'Copiar chave Pix' }}
+                    </button>
+                  </div>
+                  @if (pix.receiverName) {
+                    <p class="steps__hint">Favorecido: <strong>{{ pix.receiverName }}</strong></p>
+                  }
+                  <p class="steps__hint" aria-live="polite">
+                    @if (copyStatus() === 'failed') {
+                      Não deu para copiar sozinho. A chave ficou selecionada: toque e segure para
+                      copiar.
+                    }
+                  </p>
+                } @else {
+                  <p class="alert alert--info" role="note">
+                    <span class="alert__icon" aria-hidden="true">🛠️</span>
+                    A chave Pix ainda está sendo configurada. Volte em breve para concluir o
+                    pagamento.
+                  </p>
+                }
+              </li>
+
+              <li class="steps__item">
+                <h3 class="steps__title">Pague no app do seu banco</h3>
+                <p class="steps__hint">
+                  Escolha Pix → "Pagar com chave", cole a chave e pague exatamente
+                  <strong>{{ plan.monthlyPriceInCents | price }}</strong>.
+                </p>
+              </li>
+
+              <li class="steps__item">
+                <h3 class="steps__title">Anexe o comprovante</h3>
+
+                <fieldset class="steps__fields" [disabled]="isSubmitting()">
+                  <legend class="visually-hidden">Comprovante e contato</legend>
+
+                  @if (receipt(); as file) {
+                    <div class="receipt">
+                      <span class="receipt__icon" aria-hidden="true">
+                        {{ file.type === 'application/pdf' ? '📄' : '🖼️' }}
+                      </span>
+                      <span class="receipt__text">
+                        <span class="receipt__name">{{ file.name }}</span>
+                        <span class="receipt__size">{{ file.size | fileSize }}</span>
+                      </span>
+                      <button
+                        type="button"
+                        class="receipt__remove"
+                        [attr.aria-label]="'Remover o comprovante ' + file.name"
+                        (click)="removeReceipt()"
+                      >
+                        <span aria-hidden="true">✕</span>
+                      </button>
+                    </div>
+                  } @else {
+                    <label
+                      class="dropzone"
+                      [class.dropzone--active]="isDraggingReceipt()"
+                      [class.dropzone--invalid]="receiptError()"
+                      (dragover)="handleReceiptDragOver($event)"
+                      (dragleave)="handleReceiptDragLeave()"
+                      (drop)="handleReceiptDrop($event)"
+                    >
+                      <input
+                        class="visually-hidden"
+                        type="file"
+                        [accept]="receiptAccept"
+                        [attr.aria-invalid]="receiptError() !== null"
+                        [attr.aria-describedby]="receiptError() ? 'pix-receipt-error' : 'pix-receipt-hint'"
+                        (change)="handleReceiptInput($event)"
+                      />
+                      <span class="dropzone__icon" aria-hidden="true">📎</span>
+                      <span class="dropzone__title">Anexar comprovante</span>
+                      <span id="pix-receipt-hint" class="dropzone__hint">
+                        Print ou PDF do Pix, até 5 MB
+                      </span>
+                    </label>
+                  }
+
+                  @if (receiptError(); as problem) {
+                    <p id="pix-receipt-error" class="field__error">{{ problem }}</p>
+                  }
+
+                  <div class="field">
+                    <label class="field__label" for="pix-email">E-mail para o aviso</label>
+                    <input
+                      id="pix-email"
+                      class="field__control"
+                      [class.field__control--invalid]="hasVisibleError(form.controls.email)"
+                      type="email"
+                      inputmode="email"
+                      formControlName="email"
+                      autocomplete="email"
+                      autocapitalize="off"
+                      spellcheck="false"
+                      placeholder="voce@exemplo.com"
+                      [attr.maxlength]="maxEmailLength"
+                      [attr.aria-invalid]="hasVisibleError(form.controls.email)"
+                      [attr.aria-describedby]="
+                        hasVisibleError(form.controls.email) ? 'pix-email-error' : 'pix-email-hint'
+                      "
+                    />
+                    @if (hasVisibleError(form.controls.email)) {
+                      <p id="pix-email-error" class="field__error">
+                        @if (form.controls.email.hasError('required')) {
+                          Digite o e-mail para avisarmos quando o plano for liberado.
+                        } @else {
+                          Este e-mail parece incompleto. Confira se tem o &#64; e o domínio.
+                        }
+                      </p>
+                    } @else {
+                      <p id="pix-email-hint" class="field__hint">
+                        Avisamos aqui quando o pagamento for conferido.
+                      </p>
+                    }
+                  </div>
+                </fieldset>
+              </li>
+            </ol>
+
+            @if (!isApiConfigured) {
+              <p class="alert alert--info" role="note">
+                <span class="alert__icon" aria-hidden="true">🛠️</span>
+                O envio do comprovante ainda está sendo preparado. Você já pode conhecer a tela,
+                mas a confirmação ainda não funciona.
+              </p>
+            }
+
+            @if (errorMessage(); as message) {
+              <p class="alert alert--error" role="alert">
+                <span class="alert__icon" aria-hidden="true">⚠️</span>
+                {{ message }}
+              </p>
+            }
+
+            <button
+              type="submit"
+              class="button button--primary submit"
+              [disabled]="isSubmitting()"
+              [attr.aria-busy]="isSubmitting()"
+            >
+              @if (isSubmitting()) {
+                <span class="spinner" aria-hidden="true"></span>
+                Enviando o comprovante…
+              } @else {
+                <span aria-hidden="true">✅</span>
+                Confirmar pagamento
+              }
+            </button>
+          </form>
+        }
+      </div>
+    </div>
+  }
+</dialog>

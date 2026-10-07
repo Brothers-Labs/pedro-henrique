@@ -35,18 +35,4 @@
       @include visually-hidden;
     }
   }
-
-  /**
-   * Dentro do menu do celular o rótulo volta: ali sobra espaço e o botão
-   * aparece sozinho, sem o contexto do cabeçalho para explicá-lo.
-   */
-  :host-context(.sheet__footer) &__label {
-    position: static;
-    width: auto;
-    height: auto;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-    white-space: nowrap;
-  }
 }

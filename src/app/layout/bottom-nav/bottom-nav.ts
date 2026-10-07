@@ -1,31 +1,29 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { PRIMARY_SECTIONS } from '../../core/data/site-sections.data';
-import { NavSheet } from '../nav-sheet/nav-sheet';
+import { SideNavService } from '../../core/services/side-nav.service';
+import { SIDE_NAV_ID } from '../side-nav/side-nav';
 
 /**
  * Barra de navegação do celular, fixa na base da tela.
  *
- * Substitui o menu retrátil no toque em vez de conviver com ele: para uma
- * criança de sete anos, um destino que está sempre visível vale mais do que um
- * destino escondido atrás de um ícone. Os quatro lugares mais usados ficam na
- * barra e o restante do site abre na folha "Mais".
+ * Convive com o menu lateral de propósito: para uma criança de sete anos, um
+ * destino que está sempre visível vale mais do que um destino escondido atrás
+ * de um ícone. Os quatro lugares mais usados ficam na barra, e o botão "Mais"
+ * abre o menu lateral com o site inteiro.
  *
- * A partir do desktop a barra some e o cabeçalho volta a ser o menu.
+ * A partir do desktop a barra some e o menu lateral fica fixo na tela.
  */
 @Component({
   selector: 'app-bottom-nav',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, NavSheet],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './bottom-nav.html',
   styleUrl: './bottom-nav.scss',
 })
 export class BottomNav {
   protected readonly destinations = PRIMARY_SECTIONS;
-  protected readonly isMenuOpen = signal(false);
-
-  protected openMenu(): void {
-    this.isMenuOpen.set(true);
-  }
+  protected readonly sideNav = inject(SideNavService);
+  protected readonly sideNavId = SIDE_NAV_ID;
 }

@@ -1,0 +1,25 @@
+@use '../../auth';
+
+.form {
+  @include auth.form;
+}
+
+.alert {
+  @include auth.alert;
+}
+
+.text-link {
+  @include auth.text-link;
+}
+
+.submit {
+  @include auth.submit;
+}
+
+.spinner {
+  @include auth.spinner;
+}
+
+.switch-prompt {
+  @include auth.switch-prompt;
+}

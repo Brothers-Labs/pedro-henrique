@@ -1,0 +1,105 @@
+<div class="plans container">
+  <app-page-intro
+    emoji="💎"
+    title="Planos"
+    subtitle="Escolha como quer aproveitar o site do Pedro. Todos os planos são mensais e o pagamento é por Pix."
+    color="yellow"
+  />
+
+  <ul class="plans__grid">
+    @for (card of cards; track card.plan.id) {
+      <li
+        class="plan"
+        [class.plan--recommended]="card.plan.isRecommended"
+        [attr.data-color]="card.plan.color"
+      >
+        <article class="plan__card" [attr.aria-labelledby]="'plano-' + card.plan.id">
+          @if (card.plan.isRecommended) {
+            <p class="plan__badge">Recomendado</p>
+          }
+
+          <header class="plan__header">
+            <span class="plan__emoji" aria-hidden="true">{{ card.plan.emoji }}</span>
+            <h2 class="plan__name" [id]="'plano-' + card.plan.id">{{ card.plan.name }}</h2>
+            <p class="plan__tagline">{{ card.plan.tagline }}</p>
+          </header>
+
+          <p class="plan__price">
+            <strong class="plan__price-value">{{ card.plan.monthlyPriceInCents | price }}</strong>
+            <span class="plan__price-period">/mês</span>
+          </p>
+
+          <button
+            type="button"
+            class="button plan__cta"
+            [class.button--primary]="card.plan.isRecommended"
+            (click)="startCheckout(card.plan.id)"
+          >
+            <span aria-hidden="true">💠</span>
+            Assinar o {{ card.plan.name }}
+          </button>
+
+          @if (card.plan.notice) {
+            <p class="plan__notice">
+              <span aria-hidden="true">⚠️</span>
+              {{ card.plan.notice }}
+            </p>
+          }
+
+          <ul class="plan__features">
+            @for (feature of card.features; track feature.id) {
+              <li class="plan__feature" [class.plan__feature--excluded]="!feature.isIncluded">
+                <span class="plan__check" aria-hidden="true">{{ feature.isIncluded ? '✓' : '✕' }}</span>
+                <span>
+                  <span class="visually-hidden">{{ feature.isIncluded ? 'Inclui:' : 'Não inclui:' }}</span>
+                  {{ feature.label }}
+                </span>
+              </li>
+            }
+          </ul>
+
+          <details class="plan__sections">
+            <summary class="plan__sections-summary">
+              Ver as {{ sections.length }} áreas do menu incluídas
+            </summary>
+
+            <ul class="plan__sections-list">
+              @for (section of sections; track section.id) {
+                <li class="plan__section">
+                  <span class="plan__section-emoji" aria-hidden="true">{{ section.emoji }}</span>
+                  <span>
+                    <strong class="plan__section-name">{{ section.label }}</strong>
+                    <span class="plan__section-description">{{ section.description }}</span>
+                  </span>
+                </li>
+              }
+            </ul>
+          </details>
+        </article>
+      </li>
+    }
+  </ul>
+
+  <section class="how" aria-labelledby="como-pagar">
+    <h2 class="how__title" id="como-pagar">Como funciona o pagamento</h2>
+    <ol class="how__steps">
+      <li class="how__step">
+        <span class="how__emoji" aria-hidden="true">💠</span>
+        <strong>Escolha o plano</strong>
+        <span>Toque em "Assinar" no plano que combina com você.</span>
+      </li>
+      <li class="how__step">
+        <span class="how__emoji" aria-hidden="true">📋</span>
+        <strong>Pague por Pix</strong>
+        <span>Copie a chave e pague o valor do plano no app do seu banco.</span>
+      </li>
+      <li class="how__step">
+        <span class="how__emoji" aria-hidden="true">📎</span>
+        <strong>Envie o comprovante</strong>
+        <span>Anexe o comprovante e avisamos por e-mail quando o plano for liberado.</span>
+      </li>
+    </ol>
+  </section>
+</div>
+
+<app-pix-payment-dialog [(planId)]="checkoutPlanId" />

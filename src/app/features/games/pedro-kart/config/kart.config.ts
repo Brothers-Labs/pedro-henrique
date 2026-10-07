@@ -6,6 +6,7 @@ import type {
   KartSetup,
   RaceDifficulty,
 } from '../models/kart.model';
+import type { RaceTuning } from '../simulation/race-tuning';
 
 /**
  * Catálogo da garagem.
@@ -85,15 +86,61 @@ export interface DifficultyOption {
   readonly id: RaceDifficulty;
   readonly label: string;
   readonly emoji: string;
-  /** Fração da velocidade máxima que os adversários usam. */
-  readonly rivalPace: number;
+  readonly tuning: RaceTuning;
 }
 
-/** Fácil vem primeiro e é o padrão: a primeira corrida tem que dar vontade de correr de novo. */
+/**
+ * Fácil vem primeiro e é o padrão: a primeira corrida tem que dar vontade de
+ * correr de novo.
+ *
+ * - Fácil: adversários bem mais lentos e sem cascas, volante que ajuda na
+ *   curva, grama e muro que quase não seguram. Dá para ganhar errando.
+ * - Normal: adversários rápidos e um pouco de ajuda no volante.
+ * - Difícil: corrida de verdade, sem ajuda nenhuma.
+ */
 export const DIFFICULTIES: readonly DifficultyOption[] = [
-  { id: 'facil', label: 'Fácil', emoji: '🐢', rivalPace: 0.78 },
-  { id: 'normal', label: 'Normal', emoji: '🐇', rivalPace: 0.9 },
-  { id: 'dificil', label: 'Difícil', emoji: '🐆', rivalPace: 0.99 },
+  {
+    id: 'facil',
+    label: 'Fácil',
+    emoji: '🐢',
+    tuning: {
+      rivalPace: 0.68,
+      steeringAssist: 0.8,
+      grassSpeedFactor: 0.8,
+      wallSpeedKeep: 0.85,
+      rivalsDropPeels: false,
+      rivalLeadLimit: 15,
+      rivalLeadPace: 0.75,
+    },
+  },
+  {
+    id: 'normal',
+    label: 'Normal',
+    emoji: '🐇',
+    tuning: {
+      rivalPace: 0.86,
+      steeringAssist: 0.4,
+      grassSpeedFactor: 0.65,
+      wallSpeedKeep: 0.7,
+      rivalsDropPeels: true,
+      rivalLeadLimit: 30,
+      rivalLeadPace: 0.85,
+    },
+  },
+  {
+    id: 'dificil',
+    label: 'Difícil',
+    emoji: '🐆',
+    tuning: {
+      rivalPace: 0.99,
+      steeringAssist: 0,
+      grassSpeedFactor: 0.5,
+      wallSpeedKeep: 0.55,
+      rivalsDropPeels: true,
+      rivalLeadLimit: 40,
+      rivalLeadPace: 0.88,
+    },
+  },
 ];
 
 const BODIES_BY_ID = new Map(KART_BODIES.map((body) => [body.id, body]));

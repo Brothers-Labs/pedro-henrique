@@ -1,9 +1,9 @@
 @use 'mixins' as *;
 
 /**
- * No celular o cabeçalho é só identidade: retrato, nome e o interruptor
- * sensorial. Quem navega é a barra inferior, que fica ao alcance do polegar.
- * A partir do notebook o menu horizontal volta para o meio da barra.
+ * O cabeçalho é identidade e controles: o botão do menu lateral, o retrato com
+ * o nome e o interruptor sensorial. Quem navega é o menu lateral — e, no
+ * celular, também a barra inferior, ao alcance do polegar.
  */
 .header {
   position: sticky;
@@ -16,13 +16,89 @@
   /* Ilha dinâmica e notch: o conteúdo começa abaixo deles. */
   padding-top: var(--safe-top);
 
+  /**
+   * Sem a faixa central do `container`: o cabeçalho acompanha o menu lateral,
+   * que mora colado na borda esquerda da tela.
+   */
   &__inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-3);
     min-height: var(--header-height);
     padding-block: var(--space-2);
+    padding-inline:
+      calc(var(--page-gutter) + var(--safe-left))
+      calc(var(--page-gutter) + var(--safe-right));
+
+    /** No desktop o botão fica centralizado sobre o trilho recolhido do menu (5rem). */
+    @include from($breakpoint-xl) {
+      padding-left: calc((5rem - var(--touch-target)) / 2);
+    }
+  }
+}
+
+/** Ícone de três traços que vira um "X" enquanto a gaveta está aberta. */
+.menu-button {
+  @include touch-target;
+
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+
+  @include hover {
+    background: var(--color-yellow-soft);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &__lines {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 1.25rem;
+    height: 0.875rem;
+
+    span {
+      display: block;
+      height: 3px;
+      border-radius: var(--radius-pill);
+      background: currentcolor;
+      transform-origin: center;
+      transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease;
+    }
+  }
+
+  &--open &__lines span {
+    &:nth-child(1) {
+      transform: translateY(5.5px) rotate(45deg);
+    }
+
+    &:nth-child(2) {
+      opacity: 0;
+    }
+
+    &:nth-child(3) {
+      transform: translateY(-5.5px) rotate(-45deg);
+    }
+  }
+
+  @include reduced-motion {
+    &,
+    &__lines span {
+      transition: none;
+    }
+
+    &:active {
+      transform: none;
+    }
   }
 }
 
@@ -31,14 +107,11 @@
   align-items: center;
   gap: var(--space-3);
 
-  /* No celular o nome cede espaço ao que estiver ao lado; no desktop, nunca. */
+  /* O nome cede espaço aos botões quando a tela é estreita, e empurra o resto para a direita. */
   min-width: 0;
+  margin-right: auto;
   text-decoration: none;
   color: inherit;
-
-  @include from($breakpoint-xl) {
-    flex: 0 0 auto;
-  }
 
   &__badge {
     flex: 0 0 auto;
@@ -93,74 +166,5 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-}
-
-.nav {
-  display: none;
-
-  @include from($breakpoint-xl) {
-    display: block;
-  }
-
-  &__list {
-    display: flex;
-
-    /**
-     * Oito destinos em uma linha só. O `wrap` é a rede de segurança: se algum
-     * dia não couberem, o menu quebra em duas linhas em vez de empurrar o
-     * cabeçalho para fora da tela.
-     */
-    flex-wrap: wrap;
-    gap: var(--space-1);
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  /**
-   * Destino em duas linhas: emoji em cima, nome embaixo.
-   *
-   * São dez destinos para a faixa de 1180px do conteúdo. Lado a lado eles não
-   * cabem em uma linha só, e um deles sempre cairia sozinho para a segunda —
-   * empilhados, cada um ocupa a largura do próprio nome e todos cabem.
-   *
-   * É também o mesmo desenho da barra inferior do celular, então o site diz a
-   * mesma coisa do mesmo jeito nos dois tamanhos de tela.
-   */
-  &__link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-
-    padding: var(--space-1) var(--space-2);
-    font-size: var(--text-xs);
-    line-height: 1.2;
-    border: 2px solid transparent;
-    border-radius: var(--radius-pill);
-    color: var(--text-strong);
-    font-family: var(--font-display);
-    font-weight: 700;
-    text-decoration: none;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast);
-
-    @include hover {
-      background: var(--tone-soft);
-      border-color: var(--border-strong);
-    }
-
-    /** No monitor bem largo sobra espaço para o destino respirar. */
-    @include from(100rem) {
-      padding: var(--space-2) var(--space-3);
-      font-size: var(--text-sm);
-    }
-
-    // Tons pastel garantem contraste com o texto escuro em qualquer cor do tema.
-    &--active {
-      background: var(--tone-soft);
-      border-color: var(--border-strong);
-      box-shadow: inset 0 -4px 0 var(--tone);
-    }
   }
 }

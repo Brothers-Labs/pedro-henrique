@@ -11,6 +11,21 @@
   padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
 }
 
+/** Menu lateral (fixo só no desktop) ao lado da coluna de conteúdo e rodapé. */
+.shell {
+  display: flex;
+  flex: 1;
+
+  &__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+
+    /* Sem isto, um canvas ou uma tabela larga faz a coluna passar da largura da tela. */
+    min-width: 0;
+  }
+}
+
 .main {
   flex: 1;
 

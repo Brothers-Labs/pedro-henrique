@@ -21,6 +21,9 @@ navegador.
 - [Seções do site](#seções-do-site)
 - [Prancha de falar](#prancha-de-falar)
 - [Mascote](#mascote)
+- [Menu lateral](#menu-lateral)
+- [Contas (front-end)](#contas-front-end)
+- [Planos e pagamento](#planos-e-pagamento)
 - [Modo calmo](#modo-calmo)
 - [Movimento (GSAP)](#movimento-gsap)
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
@@ -126,7 +129,7 @@ src/
    │  ├─ components/          section-heading, page-intro, empty-state, celebration-effects
    │  ├─ directives/          reveal.directive (entrada em CSS) e motion-scene.directive (GSAP)
    │  └─ pipes/               duration, fileSize
-   ├─ layout/                 site-header (menu responsivo), calm-mode-toggle e site-footer
+   ├─ layout/                 site-header, side-nav (menu lateral), side-nav-menu, bottom-nav, calm-mode-toggle e site-footer
    └─ features/
       ├─ home/                Página + 8 componentes de seção
       ├─ communication/       Prancha de falar + phrase-bar + language-switch
@@ -136,6 +139,8 @@ src/
       ├─ games/               Abas + os sete jogos, HUD, conquistas e comemorações
       ├─ pet/                 Mascote: escolha, casa, avatar em SVG, acessórios, conquistas, coleção
       ├─ videos/              Página + video-upload-form + video-card
+      ├─ auth/                Entrar, criar conta, recuperar e redefinir senha (só front-end)
+      ├─ plans/               Página de planos e modal de pagamento por Pix
       └─ not-found/           Página 404
 ```
 
@@ -278,6 +283,65 @@ Tudo mora em `core/data/pet.data.ts`; nenhuma tela precisa ser tocada.
 No aparelho, em `localStorage`, na chave `pedro-henrique:pet:v1`. Não há conta nem servidor. O
 que for lido é sempre reconciliado: valor fora da faixa é aparado, id desconhecido é descartado e
 o resto da aventura continua de pé. **Não existe migration de banco** — o site não tem banco.
+
+---
+
+## Menu lateral
+
+Um único menu com o site inteiro, agrupado em **Começar**, **Criar**, **Brincar** e **Memórias**,
+mais a área de **Conta**. Os grupos vêm de `NAVIGATION_GROUPS` em `core/data/site-sections.data.ts`
+— um teste garante que nenhuma seção nova fique fora do menu.
+
+- **Celular e tablet (< 1280px):** gaveta que entra pela esquerda, aberta pelo botão de menu do
+  cabeçalho ou pelo "Mais" da barra inferior. É um `<dialog>` nativo (foco preso, `Esc`, página
+  travada atrás) e fecha com toque fora, deslize para a esquerda ou ao escolher um destino. A barra
+  inferior continua: os quatro destinos do dia a dia do Pedro seguem a um toque.
+- **Desktop (≥ 1280px):** trilho fixo ao lado do conteúdo, que recolhe até ficar só com os ícones.
+  A escolha fica guardada no aparelho. Recolhido, os nomes continuam lidos pelo leitor de tela.
+
+O estado vive em `SideNavService`, compartilhado pelo cabeçalho, pela barra inferior e pelo menu.
+
+---
+
+## Contas (front-end)
+
+Telas prontas para conversar com uma API que ainda não existe:
+
+| Rota | Tela |
+| --- | --- |
+| `/entrar` | Login com "lembrar de mim", mostrar senha e link de recuperação |
+| `/cadastro` | Nome, e-mail, senha com medidor de força e confirmação |
+| `/recuperar-senha` | Pede o link por e-mail (resposta neutra, sem revelar quem tem conta) |
+| `/redefinir-senha?token=…` | Senha nova a partir do link do e-mail |
+
+Para ligar, coloque o endereço em `apiUrl` nos arquivos de `src/environments/`. O contrato
+completo — endpoints, formatos, status e cuidados de segurança — está em
+[`docs/auth-api.md`](docs/auth-api.md). Sem `apiUrl`, as telas funcionam e avisam que o envio
+ainda não está disponível.
+
+Destaques de segurança: o destino de volta depois do login (`?voltar=`) só aceita caminhos
+internos, nada que vem da API entra no app sem validação, e as mensagens de erro são do site —
+nunca o texto cru do servidor.
+
+---
+
+## Planos e pagamento
+
+A página `/planos` (link **Planos** no menu lateral) mostra três assinaturas mensais:
+
+| Plano | Preço | O que inclui |
+| --- | --- | --- |
+| Essencial | R$ 9,99 | Todas as áreas do menu, sem conta e sem salvar nada: os jogos recomeçam do zero |
+| Completo | R$ 19,99 | Tudo, com login e perfil, progresso dos jogos e criações guardados |
+| Premium | R$ 29,99 | Tudo do Completo + jogos extras, lições extras, trilha completa de avanços e efeitos |
+
+Cada cartão lista as áreas do menu a partir de `SITE_SECTIONS`, então uma seção nova aparece nos
+planos sozinha. O botão **Assinar** abre o pagamento por Pix já com o plano escolhido: copiar a
+chave, pagar no banco, anexar o comprovante e confirmar.
+
+Para ligar, preencha `pix.key` nos arquivos de `src/environments/` e siga
+[`docs/payments-api.md`](docs/payments-api.md). Por enquanto a página só **apresenta** os planos:
+as regras de cada um (como não salvar nada no Essencial) ainda não mudam o comportamento do site.
 
 ---
 
@@ -448,6 +512,19 @@ Decisões que valem saber antes de mexer:
   e garantem que ela termina com resultado.
 - **O kart acelera sozinho**: a criança só vira, freia e usa o item. Nada de segurar botão a corrida
   inteira.
+- **Dificuldade é mais do que velocidade** (`RaceTuning`, em `config/kart.config.ts`): cada nível
+  ajusta o ritmo dos adversários e o quanto o jogo perdoa o erro do Pedro.
+
+  | | Fácil | Normal | Difícil |
+  | --- | --- | --- | --- |
+  | Ritmo dos adversários | 68% | 86% | 99% |
+  | Volante solto acompanha a curva | Forte | Leve | Não |
+  | Velocidade mantida na grama | 80% | 65% | 50% |
+  | Velocidade mantida na batida no muro | 85% | 70% | 55% |
+  | Adversários jogam casca | Não | Sim | Sim |
+
+  Os testes garantem que, no Fácil, o kart completa todas as pistas mesmo com o volante solto e que
+  quem pilota direito vence. Raspar no muro não freia: a perda vale só no momento da batida.
 - **Reaproveita o Pedro Maker**: o relógio de passo fixo, o controle de qualidade gráfica, as peças do
   boneco do Pedro e os sons. Cada corrida terminada conta como desafio na jornada de jogos, e chegar
   ao pódio conta como acerto.
@@ -514,7 +591,9 @@ Nenhuma alteração de texto exige mexer em componente:
 | Perguntas do quiz | `core/data/quiz.data.ts` |
 | Cartões, grupos e frases prontas da prancha de falar (pt-BR e en-US) | `core/data/communication.data.ts` |
 | Textos da tela da prancha nos dois idiomas | `core/data/communication-texts.data.ts` |
-| Itens do menu e cartões de exploração | `core/data/site-sections.data.ts` |
+| Itens e grupos do menu, barra inferior e cartões de exploração | `core/data/site-sections.data.ts` |
+| Endereço da API e chave Pix | `src/environments/environment*.ts` |
+| Preços e recursos dos planos | `core/data/plans.data.ts` |
 | Cores do site | `styles/_tokens.scss` + `core/theme/theme-colors.ts` |
 
 > A idade exibida no cabeçalho e no hero é **calculada** a partir de `birthDate`. Não existe número

@@ -1,5 +1,22 @@
 <header class="header">
-  <div class="header__inner container">
+  <div class="header__inner">
+    <button
+      type="button"
+      class="menu-button"
+      [class.menu-button--open]="sideNav.isDrawerOpen()"
+      [attr.aria-expanded]="sideNav.isExpanded()"
+      [attr.aria-controls]="sideNavId"
+      [attr.aria-haspopup]="sideNav.isDocked() ? null : 'dialog'"
+      (click)="sideNav.toggle()"
+    >
+      <span class="menu-button__lines" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <span class="visually-hidden">{{ menuButtonLabel() }}</span>
+    </button>
+
     <a class="brand" routerLink="/">
       <span class="brand__badge">
         <!-- Decorativa: o nome do Pedro Henrique já é o texto deste link. -->
@@ -18,26 +35,6 @@
         <small class="brand__role">{{ age }} anos de aventuras</small>
       </span>
     </a>
-
-    <nav id="menu-principal" class="nav" aria-label="Menu principal">
-      <ul class="nav__list">
-        @for (section of sections; track section.id) {
-          <li>
-            <a
-              class="nav__link"
-              [attr.data-color]="section.color"
-              [routerLink]="section.route"
-              routerLinkActive="nav__link--active"
-              [routerLinkActiveOptions]="{ exact: section.route === '/' }"
-              ariaCurrentWhenActive="page"
-            >
-              <span aria-hidden="true">{{ section.emoji }}</span>
-              {{ section.label }}
-            </a>
-          </li>
-        }
-      </ul>
-    </nav>
 
     <app-calm-mode-toggle />
   </div>

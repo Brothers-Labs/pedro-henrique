@@ -1,0 +1,67 @@
+@if (sideNav.isDocked()) {
+  <nav
+    [id]="navId"
+    class="rail"
+    [class.rail--collapsed]="sideNav.isCollapsed()"
+    aria-label="Menu principal"
+  >
+    <div class="rail__scroll">
+      <app-side-nav-menu [isCollapsed]="sideNav.isCollapsed()" />
+    </div>
+
+    <div class="rail__footer">
+      <button
+        type="button"
+        class="rail__toggle"
+        [attr.aria-expanded]="!sideNav.isCollapsed()"
+        [attr.aria-controls]="navId"
+        [attr.title]="sideNav.isCollapsed() ? 'Expandir o menu' : null"
+        (click)="sideNav.toggle()"
+      >
+        <span class="rail__toggle-icon" aria-hidden="true">«</span>
+        <span class="rail__toggle-label">
+          {{ sideNav.isCollapsed() ? 'Expandir o menu' : 'Recolher o menu' }}
+        </span>
+      </button>
+    </div>
+  </nav>
+} @else {
+  <dialog
+    #drawer
+    [id]="navId"
+    class="drawer"
+    aria-label="Menu do site"
+    (close)="closeDrawer()"
+    (click)="handleBackdropClick($event)"
+  >
+    <nav
+      class="drawer__panel"
+      aria-label="Menu principal"
+      (touchstart)="startSwipe($event)"
+      (touchend)="finishSwipe($event)"
+    >
+      <div class="drawer__bar">
+        <a class="drawer__brand" routerLink="/" (click)="closeDrawer()">
+          <span class="drawer__badge" aria-hidden="true">
+            <img
+              [src]="profile.photo.src"
+              [width]="profile.photo.width"
+              [height]="profile.photo.height"
+              alt=""
+              decoding="async"
+            />
+          </span>
+          <span class="drawer__brand-name">{{ profile.firstName }}</span>
+        </a>
+
+        <button type="button" class="drawer__close" aria-label="Fechar o menu" (click)="closeDrawer()">
+          <span aria-hidden="true">✕</span>
+        </button>
+      </div>
+
+      <div class="drawer__scroll">
+        <app-side-nav-menu (navigated)="closeDrawer()" />
+      </div>
+    </nav>
+  </dialog>
+}

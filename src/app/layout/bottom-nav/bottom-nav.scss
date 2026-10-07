@@ -2,8 +2,8 @@
 
 :host {
   /**
-   * A barra sai de cena exatamente onde o menu horizontal do cabeçalho entra —
-   * os dois nunca aparecem juntos.
+   * A barra sai de cena exatamente onde o menu lateral passa a ficar fixo na
+   * tela (`SideNavService`).
    */
   @include from($breakpoint-xl) {
     display: none;

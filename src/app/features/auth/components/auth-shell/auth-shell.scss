@@ -1,0 +1,153 @@
+@use 'mixins' as *;
+
+:host {
+  display: block;
+  padding-block: var(--space-6) var(--space-8);
+}
+
+.auth {
+  &__card {
+    @include card-surface;
+
+    display: grid;
+    max-width: 28rem;
+    margin-inline: auto;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop), var(--shadow-md);
+
+    @include from($breakpoint-lg) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      max-width: 60rem;
+    }
+  }
+
+  /** Vitrine decorativa: só no notebook, onde sobra largura ao lado do formulário. */
+  &__showcase {
+    position: relative;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-6);
+    overflow: hidden;
+    border-right: 3px solid var(--border-strong);
+    background:
+      radial-gradient(circle at 20% 15%, rgb(255 255 255 / 35%) 0, transparent 40%),
+      linear-gradient(155deg, var(--tone) 0%, var(--color-purple) 100%);
+    color: var(--text-on-color);
+    text-align: center;
+
+    @include from($breakpoint-lg) {
+      display: flex;
+    }
+  }
+
+  &__portrait {
+    display: block;
+    width: 8.5rem;
+    height: 8.5rem;
+    overflow: hidden;
+    border: 4px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow-soft);
+    box-shadow: 0 8px 0 var(--border-strong);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 22%;
+    }
+  }
+
+  &__showcase-title {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 800;
+    line-height: 1.1;
+    text-shadow: 0 2px 0 rgb(42 35 80 / 35%);
+  }
+
+  &__showcase-text {
+    max-width: 20rem;
+    font-weight: 600;
+    color: rgb(255 255 255 / 92%);
+  }
+
+  &__sticker {
+    position: absolute;
+    font-size: 2rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 0 rgb(42 35 80 / 30%));
+    animation: float-soft 5s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+
+    &--rocket {
+      top: 8%;
+      left: 10%;
+    }
+
+    &--star {
+      top: 12%;
+      right: 12%;
+      animation-delay: -1.2s;
+    }
+
+    &--palette {
+      bottom: 10%;
+      left: 14%;
+      animation-delay: -2.4s;
+    }
+
+    &--game {
+      right: 10%;
+      bottom: 14%;
+      animation-delay: -3.6s;
+    }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+    padding: var(--space-6) var(--space-5);
+
+    @include from($breakpoint-sm) {
+      padding: var(--space-7) var(--space-6);
+    }
+  }
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  &__emoji {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-bottom: var(--space-1);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--tone-soft);
+    box-shadow: var(--shadow-sm);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  &__title {
+    font-size: var(--text-2xl);
+  }
+
+  &__subtitle {
+    color: var(--text-soft);
+  }
+}

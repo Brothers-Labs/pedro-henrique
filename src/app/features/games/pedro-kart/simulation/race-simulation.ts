@@ -13,6 +13,7 @@ import {
   type Circuit,
 } from './circuit';
 import { clamp, handlingFor, IDLE_DRIVE, Kart, KART_PHYSICS, type DriveInput, type KartItem } from './kart';
+import type { RaceTuning } from './race-tuning';
 import { RivalDriver } from './rival-driver';
 
 /** Passo fixo da física: sessenta vezes por segundo em qualquer tela. */
@@ -43,14 +44,20 @@ const GRID_ROW_GAP = 5;
 /** O Pedro larga no meio do pelotão: dá para ultrapassar, sem ficar sozinho no fim. */
 const PLAYER_GRID_SLOT = 3;
 
+/** A ajuda no volante segura o kart nesta faixa: no asfalto, com folga até a grama. */
+const ASSIST_LANE_LIMIT = ROAD_HALF_WIDTH - 1.5;
+
+/** Quem ficou muito para trás do Pedro ganha um fôlego para voltar ao pelotão. */
+const RIVAL_TRAILING_GAP = 60;
+const RIVAL_TRAILING_PACE = 1.1;
+
 export type RacePhase = 'contagem' | 'correndo' | 'terminou';
 
 export interface RaceSetup {
   readonly track: TrackDefinition;
   readonly playerSetup: KartSetup;
   readonly playerName: string;
-  /** Fração da velocidade máxima que os adversários usam. */
-  readonly rivalPace: number;
+  readonly tuning: RaceTuning;
   readonly seed?: number;
 }
 
@@ -124,7 +131,13 @@ export class RaceSimulation {
   constructor(private readonly setup: RaceSetup) {
     this.circuit = buildCircuit(setup.track);
     this.random = new SeededRandom(setup.seed ?? Date.now());
-    this.player = new Kart(PLAYER_KART_ID, setup.playerName, handlingFor(kartBody(setup.playerSetup.body).stats), true);
+    this.player = new Kart(
+      PLAYER_KART_ID,
+      setup.playerName,
+      handlingFor(kartBody(setup.playerSetup.body).stats),
+      true,
+      setup.tuning,
+    );
 
     const rivals = RIVALS.map(
       (rival) => new Kart(rival.id, rival.name, handlingFor(kartBody(rival.setup.body).stats), false),
@@ -134,7 +147,10 @@ export class RaceSimulation {
     karts.splice(PLAYER_GRID_SLOT, 0, this.player);
     this.karts = karts;
     this.drivers = new Map(
-      rivals.map((kart, index) => [kart.id, new RivalDriver(this.circuit, laneFor(index), this.random)]),
+      rivals.map((kart, index) => [
+        kart.id,
+        new RivalDriver(this.circuit, laneFor(index), this.random, setup.tuning.rivalsDropPeels),
+      ]),
     );
     this.autopilot = new RivalDriver(this.circuit, 0, this.random);
     this.itemBoxes = this.createItemBoxes();
@@ -229,7 +245,7 @@ export class RaceSimulation {
 
   private inputFor(kart: Kart, playerInput: DriveInput): DriveInput {
     if (kart.isPlayer && !kart.hasFinished) {
-      return playerInput;
+      return this.assistSteering(kart, playerInput);
     }
 
     const driver = kart.isPlayer ? this.autopilot : this.drivers.get(kart.id);
@@ -237,12 +253,32 @@ export class RaceSimulation {
     return driver ? driver.decide(kart, this.karts) : IDLE_DRIVE;
   }
 
+  /**
+   * Volante solto: o kart do Pedro acompanha a curva sozinho, na faixa em que
+   * já está. Assim que ele aperta para um lado, quem dirige é ele.
+   *
+   * De ré a ajuda se desliga: ela mira a pista à frente, e virar o volante
+   * para lá com o kart andando para trás o faria dar meia-volta.
+   */
+  private assistSteering(kart: Kart, input: DriveInput): DriveInput {
+    const assist = this.setup.tuning.steeringAssist;
+    const isDrivingForward = kart.speed > 0 && !input.brake;
+
+    if (assist <= 0 || input.steer !== 0 || kart.isSpinning || !isDrivingForward) {
+      return input;
+    }
+
+    const lane = clamp(kart.lateral, -ASSIST_LANE_LIMIT, ASSIST_LANE_LIMIT);
+
+    return { ...input, steer: this.autopilot.steerToward(kart, lane) * assist };
+  }
+
   private paceFor(kart: Kart): number {
     if (kart.isPlayer) {
       return kart.hasFinished ? 0.7 : 1;
     }
 
-    return this.setup.rivalPace * rubberBand(signedRaceGap(this, kart));
+    return this.setup.tuning.rivalPace * rubberBand(signedRaceGap(this, kart), this.setup.tuning);
   }
 
   private driveKart(kart: Kart, input: DriveInput): void {
@@ -268,7 +304,11 @@ export class RaceSimulation {
       const center = pointAt(this.circuit, location.along);
       const lateral = Math.sign(location.lateral) * WALL_DISTANCE;
 
-      kart.bounceInside(center.x - center.tangentZ * lateral, center.z + center.tangentX * lateral);
+      kart.bounceInside(
+        center.x - center.tangentZ * lateral,
+        center.z + center.tangentX * lateral,
+        !kart.isTouchingWall,
+      );
       location = { ...location, lateral };
 
       // Raspar no muro dura vários passos; o aviso sai só no momento da batida.
@@ -542,16 +582,20 @@ function signedRaceGap(race: RaceSimulation, kart: Kart): number {
 /**
  * Elástico de corrida.
  *
- * Quem dispara na frente tira um pouco o pé, e quem fica muito para trás
- * ganha um fôlego: o Pedro quase sempre tem alguém por perto para ultrapassar.
+ * Quem dispara na frente tira o pé — mais cedo e mais forte nas dificuldades
+ * leves —, e quem fica muito para trás ganha um fôlego: o Pedro quase sempre
+ * tem alguém por perto para ultrapassar.
  */
-export function rubberBand(gapToPlayer: number): number {
-  if (gapToPlayer > 40) {
-    return 0.88;
+export function rubberBand(
+  gapToPlayer: number,
+  tuning: Pick<RaceTuning, 'rivalLeadLimit' | 'rivalLeadPace'>,
+): number {
+  if (gapToPlayer > tuning.rivalLeadLimit) {
+    return tuning.rivalLeadPace;
   }
 
-  if (gapToPlayer < -60) {
-    return 1.1;
+  if (gapToPlayer < -RIVAL_TRAILING_GAP) {
+    return RIVAL_TRAILING_PACE;
   }
 
   return 1;

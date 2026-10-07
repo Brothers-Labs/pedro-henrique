@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { guestOnlyGuard } from './core/guards/guest-only.guard';
+
 /**
  * Todas as páginas são carregadas sob demanda: a home fica leve e cada seção
  * entra em um chunk próprio.
@@ -94,6 +96,49 @@ export const routes: Routes = [
     title: 'Vídeos',
     data: { description: 'Vídeos do Pedro Henrique em cards, com descrição e data de gravação.' },
     loadComponent: () => import('./features/videos/videos-page').then((m) => m.VideosPage),
+  },
+  {
+    path: 'planos',
+    title: 'Planos',
+    data: {
+      description:
+        'Os planos do site do Pedro Henrique: Essencial, Completo e Premium, com pagamento por Pix.',
+    },
+    loadComponent: () => import('./features/plans/plans-page').then((m) => m.PlansPage),
+  },
+  {
+    path: 'entrar',
+    title: 'Entrar',
+    data: { description: 'Entre na sua conta do site do Pedro Henrique.' },
+    canActivate: [guestOnlyGuard],
+    loadComponent: () => import('./features/auth/pages/login/login-page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'cadastro',
+    title: 'Criar conta',
+    data: { description: 'Crie a sua conta no site do Pedro Henrique.' },
+    canActivate: [guestOnlyGuard],
+    loadComponent: () =>
+      import('./features/auth/pages/register/register-page').then((m) => m.RegisterPage),
+  },
+  {
+    path: 'recuperar-senha',
+    title: 'Recuperar senha',
+    data: { description: 'Receba por e-mail um link para criar uma senha nova.' },
+    canActivate: [guestOnlyGuard],
+    loadComponent: () =>
+      import('./features/auth/pages/forgot-password/forgot-password-page').then(
+        (m) => m.ForgotPasswordPage,
+      ),
+  },
+  {
+    path: 'redefinir-senha',
+    title: 'Criar senha nova',
+    data: { description: 'Escolha uma senha nova para a sua conta.' },
+    loadComponent: () =>
+      import('./features/auth/pages/reset-password/reset-password-page').then(
+        (m) => m.ResetPasswordPage,
+      ),
   },
   {
     path: '**',
