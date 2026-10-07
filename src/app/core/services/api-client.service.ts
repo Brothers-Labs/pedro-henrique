@@ -43,6 +43,8 @@ export interface ApiRequest {
 
   /** Caminho a partir do endereço base, começando com `/`. */
   readonly path: string;
+
+  /** Objeto enviado como JSON, ou `FormData` para envio de arquivos (multipart). */
   readonly body?: unknown;
   readonly accessToken?: string;
 }
@@ -67,8 +69,8 @@ export class ApiClient {
 
     const response = await this.send(`${this.baseUrl}${path}`, {
       method,
-      headers: buildHeaders(body !== undefined, accessToken),
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: buildHeaders(isJsonBody(body), accessToken),
+      body: serializeBody(body),
 
       // Permite que a API mantenha a sessão num cookie `HttpOnly`, a forma mais
       // segura de guardar credenciais no navegador.
@@ -126,10 +128,23 @@ export function normalizeBaseUrl(raw: string | null): string | null {
   return trimmed.replace(/\/+$/, '');
 }
 
-function buildHeaders(hasBody: boolean, accessToken: string | undefined): Record<string, string> {
+/** `FormData` fica de fora: o navegador escreve o `Content-Type` com o separador do multipart. */
+function isJsonBody(body: unknown): boolean {
+  return body !== undefined && !(body instanceof FormData);
+}
+
+function serializeBody(body: unknown): BodyInit | undefined {
+  if (body === undefined || body instanceof FormData) {
+    return body;
+  }
+
+  return JSON.stringify(body);
+}
+
+function buildHeaders(hasJsonBody: boolean, accessToken: string | undefined): Record<string, string> {
   return {
     Accept: 'application/json',
-    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(hasJsonBody ? { 'Content-Type': 'application/json' } : {}),
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   };
 }

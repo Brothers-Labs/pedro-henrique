@@ -61,6 +61,20 @@ describe('ApiClient', () => {
     });
   });
 
+  it('envia arquivos como multipart, deixando o Content-Type para o navegador', async () => {
+    const client = createClient('https://api.exemplo.com');
+    const fetchSpy = spyOn(window, 'fetch').and.resolveTo(new Response(null, { status: 204 }));
+    const form = new FormData();
+    form.append('receipt', new Blob(['x'], { type: 'image/png' }), 'comprovante.png');
+
+    await client.request({ method: 'POST', path: '/payments/pix', body: form });
+
+    const [, init] = fetchSpy.calls.mostRecent().args;
+
+    expect(init?.body).toBe(form);
+    expect(init?.headers).toEqual({ Accept: 'application/json' });
+  });
+
   it('devolve nulo para resposta sem corpo', async () => {
     const client = createClient('https://api.exemplo.com');
     spyOn(window, 'fetch').and.resolveTo(new Response(null, { status: 204 }));

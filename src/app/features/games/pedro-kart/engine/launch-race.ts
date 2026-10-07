@@ -28,7 +28,7 @@ export function launchKartRace(options: RaceLaunchOptions): RaceSession {
     track: options.track,
     playerSetup: options.kart,
     playerName: options.playerName,
-    rivalPace: options.rivalPace,
+    tuning: options.tuning,
   });
 
   let stage: KartStage;

@@ -20,9 +20,18 @@ export interface KartHandling {
   readonly turnRate: number;
 }
 
-export const KART_PHYSICS = {
+/** O quanto o kart perde quando erra: na grama e na batida contra o muro. */
+export interface KartForgiveness {
   /** Fora do asfalto, a grama segura o kart nesta fração da velocidade máxima. */
-  grassSpeedFactor: 0.5,
+  readonly grassSpeedFactor: number;
+  /** Batida no muro: o kart perde parte da velocidade, mas nunca para de vez. */
+  readonly wallSpeedKeep: number;
+}
+
+/** O que vale para os adversários, que quase nunca erram. */
+export const STANDARD_FORGIVENESS: KartForgiveness = { grassSpeedFactor: 0.5, wallSpeedKeep: 0.55 };
+
+export const KART_PHYSICS = {
   brakeDeceleration: 34,
   coastDeceleration: 6,
   reverseSpeed: 8,
@@ -31,8 +40,6 @@ export const KART_PHYSICS = {
   starSpeedFactor: 1.2,
   starSeconds: 5,
   spinSeconds: 0.9,
-  /** Batida no muro: o kart perde parte da velocidade, mas nunca para de vez. */
-  wallSpeedKeep: 0.55,
   radius: 1.3,
 } as const;
 
@@ -86,6 +93,7 @@ export class Kart {
     readonly name: string,
     readonly handling: KartHandling,
     readonly isPlayer: boolean,
+    readonly forgiveness: KartForgiveness = STANDARD_FORGIVENESS,
   ) {}
 
   get hasFinished(): boolean {
@@ -152,11 +160,20 @@ export class Kart {
     this.advance(seconds);
   }
 
-  /** Bateu no muro: volta para dentro e perde velocidade. */
-  bounceInside(x: number, z: number): void {
+  /**
+   * Encostou no muro: volta para dentro e, só no momento da batida, perde
+   * velocidade.
+   *
+   * Raspar no muro dura vários passos seguidos. Cobrar a perda a cada passo
+   * paralisava o kart em meio segundo — o muro tem que segurar, não frear.
+   */
+  bounceInside(x: number, z: number, isNewImpact: boolean): void {
     this.x = x;
     this.z = z;
-    this.speed *= KART_PHYSICS.wallSpeedKeep;
+
+    if (isNewImpact) {
+      this.speed *= this.forgiveness.wallSpeedKeep;
+    }
   }
 
   startBoost(): void {
@@ -184,7 +201,7 @@ export class Kart {
     let target = this.handling.maxSpeed * paceFactor;
 
     if (this.isOnGrass && !this.hasStar) {
-      target *= KART_PHYSICS.grassSpeedFactor;
+      target *= this.forgiveness.grassSpeedFactor;
     }
 
     if (this.boostSeconds > 0) {

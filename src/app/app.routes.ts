@@ -98,6 +98,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/videos/videos-page').then((m) => m.VideosPage),
   },
   {
+    path: 'planos',
+    title: 'Planos',
+    data: {
+      description:
+        'Os planos do site do Pedro Henrique: Essencial, Completo e Premium, com pagamento por Pix.',
+    },
+    loadComponent: () => import('./features/plans/plans-page').then((m) => m.PlansPage),
+  },
+  {
     path: 'entrar',
     title: 'Entrar',
     data: { description: 'Entre na sua conta do site do Pedro Henrique.' },

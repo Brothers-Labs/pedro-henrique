@@ -23,22 +23,28 @@ export class RivalDriver {
     private readonly circuit: Circuit,
     private readonly lane: number,
     private readonly random: SeededRandom,
+    private readonly canDropPeels = true,
   ) {}
 
   decide(kart: Kart, everyone: readonly Kart[]): DriveInput {
-    const lookahead = BASE_LOOKAHEAD + Math.max(0, kart.speed) * LOOKAHEAD_PER_SPEED;
-    const target = pointAt(this.circuit, kart.along + lookahead);
-    const targetX = target.x - target.tangentZ * this.lane;
-    const targetZ = target.z + target.tangentX * this.lane;
-    const desiredHeading = Math.atan2(targetX - kart.x, targetZ - kart.z);
-    const turn = wrapAngle(desiredHeading - kart.heading);
-
     return {
-      // O volante para a direita diminui o ângulo; por isso o sinal invertido.
-      steer: clamp(-turn * STEER_GAIN, -1, 1),
+      steer: this.steerToward(kart, this.lane),
       brake: false,
       useItem: this.wantsToUseItem(kart, everyone),
     };
+  }
+
+  /** Volante, de -1 a 1, que leva o kart para a faixa pedida acompanhando a curva. */
+  steerToward(kart: Kart, lane: number): number {
+    const lookahead = BASE_LOOKAHEAD + Math.max(0, kart.speed) * LOOKAHEAD_PER_SPEED;
+    const target = pointAt(this.circuit, kart.along + lookahead);
+    const targetX = target.x - target.tangentZ * lane;
+    const targetZ = target.z + target.tangentX * lane;
+    const desiredHeading = Math.atan2(targetX - kart.x, targetZ - kart.z);
+    const turn = wrapAngle(desiredHeading - kart.heading);
+
+    // O volante para a direita diminui o ângulo; por isso o sinal invertido.
+    return clamp(-turn * STEER_GAIN, -1, 1);
   }
 
   private wantsToUseItem(kart: Kart, everyone: readonly Kart[]): boolean {
@@ -49,7 +55,9 @@ export class RivalDriver {
       case 'estrela':
         return this.random.chance(BOOST_ITEM_CHANCE);
       case 'casca':
-        return everyone.some((other) => {
+        // Sem permissão para cascas, o adversário guarda a que pegou: ela ocupa
+        // o lugar de um turbo ou de uma estrela, e isso também o deixa mais lento.
+        return this.canDropPeels && everyone.some((other) => {
           const gap = signedGap(this.circuit, other.along, kart.along);
 
           return other !== kart && gap > 0 && gap < PEEL_TARGET_GAP;

@@ -1,5 +1,6 @@
 import type { CharacterPalette } from '../../pedro-maker/config/character.config';
 import type { RaceEvent, RaceHud } from '../simulation/race-simulation';
+import type { RaceTuning } from '../simulation/race-tuning';
 import type { KartSetup } from './kart.model';
 import type { TrackDefinition } from './track.model';
 
@@ -26,7 +27,7 @@ export interface RaceLaunchOptions {
   readonly kart: KartSetup;
   readonly driver: CharacterPalette;
   readonly playerName: string;
-  readonly rivalPace: number;
+  readonly tuning: RaceTuning;
   readonly input: VirtualDriveState;
   /** Canvas do mapinha, posto pela tela; sem ele, a corrida segue sem mapa. */
   readonly minimap: HTMLCanvasElement | null;

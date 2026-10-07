@@ -28,6 +28,23 @@
   <section class="menu__group menu__group--account" aria-labelledby="menu-grupo-conta">
     <h2 class="menu__heading" id="menu-grupo-conta">Conta</h2>
 
+    <ul class="menu__list">
+      <li>
+        <a
+          class="menu__link"
+          data-color="yellow"
+          routerLink="/planos"
+          routerLinkActive="menu__link--active"
+          ariaCurrentWhenActive="page"
+          [attr.title]="isCollapsed() ? 'Planos' : null"
+          (click)="select()"
+        >
+          <span class="menu__icon" aria-hidden="true">💎</span>
+          <span class="menu__label">Planos</span>
+        </a>
+      </li>
+    </ul>
+
     @if (currentUser(); as user) {
       <div class="menu__user" [attr.title]="isCollapsed() ? user.name : null">
         <span class="menu__avatar" aria-hidden="true">{{ userInitial() }}</span>

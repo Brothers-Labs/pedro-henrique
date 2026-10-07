@@ -159,7 +159,7 @@ export class KartRaceHost {
           kart: this.kartProgress.setup(),
           driver: paletteFor(this.look()),
           playerName: PROFILE.firstName,
-          rivalPace: difficultyOption(this.kartProgress.difficulty()).rivalPace,
+          tuning: difficultyOption(this.kartProgress.difficulty()).tuning,
           input: this.driveState,
           minimap: this.minimap().nativeElement,
           listener: (event) => this.zone.run(() => this.onSessionEvent(event)),
