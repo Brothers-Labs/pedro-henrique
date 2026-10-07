@@ -1,0 +1,97 @@
+<app-auth-shell
+  emoji="👋"
+  title="Entrar"
+  subtitle="Que bom te ver de novo! Entre com o seu e-mail e a sua senha."
+  color="pink"
+>
+  @if (!isApiConfigured) {
+    <p class="alert alert--info" role="note">
+      <span class="alert__icon" aria-hidden="true">🛠️</span>
+      O acesso às contas ainda está sendo preparado. Você já pode conhecer a tela, mas o envio
+      ainda não funciona.
+    </p>
+  }
+
+  <form #formElement class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <fieldset [disabled]="submission.isSubmitting()">
+      <legend class="visually-hidden">Dados de acesso</legend>
+
+      <div class="field">
+        <label class="field__label" for="login-email">E-mail</label>
+        <input
+          id="login-email"
+          class="field__control"
+          [class.field__control--invalid]="hasVisibleError(form.controls.email)"
+          type="email"
+          inputmode="email"
+          formControlName="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="voce@exemplo.com"
+          [attr.maxlength]="maxEmailLength"
+          [attr.aria-invalid]="hasVisibleError(form.controls.email)"
+          [attr.aria-describedby]="hasVisibleError(form.controls.email) ? 'login-email-error' : null"
+        />
+        @if (hasVisibleError(form.controls.email)) {
+          <p id="login-email-error" class="field__error">
+            @if (form.controls.email.hasError('required')) {
+              Digite o seu e-mail.
+            } @else {
+              Este e-mail parece incompleto. Confira se tem o &#64; e o domínio.
+            }
+          </p>
+        }
+      </div>
+
+      <app-password-field
+        fieldId="login-password"
+        autocomplete="current-password"
+        [control]="form.controls.password"
+        [isInvalid]="hasVisibleError(form.controls.password)"
+        [describedBy]="hasVisibleError(form.controls.password) ? 'login-password-error' : null"
+      >
+        @if (hasVisibleError(form.controls.password)) {
+          <p id="login-password-error" class="field__error">Digite a sua senha.</p>
+        }
+      </app-password-field>
+
+      <div class="form__options">
+        <label class="checkbox">
+          <input type="checkbox" formControlName="rememberMe" />
+          Lembrar de mim
+        </label>
+
+        <a class="text-link" routerLink="/recuperar-senha" [queryParams]="recoveryQueryParams()">
+          Esqueci minha senha
+        </a>
+      </div>
+    </fieldset>
+
+    @if (submission.errorMessage(); as errorMessage) {
+      <p class="alert alert--error" role="alert">
+        <span class="alert__icon" aria-hidden="true">⚠️</span>
+        {{ errorMessage }}
+      </p>
+    }
+
+    <button
+      type="submit"
+      class="button button--primary submit"
+      [disabled]="submission.isSubmitting()"
+      [attr.aria-busy]="submission.isSubmitting()"
+    >
+      @if (submission.isSubmitting()) {
+        <span class="spinner" aria-hidden="true"></span>
+        Entrando…
+      } @else {
+        Entrar
+      }
+    </button>
+  </form>
+
+  <p class="switch-prompt">
+    Ainda não tem conta?
+    <a class="text-link" routerLink="/cadastro" [queryParams]="registerQueryParams">Criar conta</a>
+  </p>
+</app-auth-shell>

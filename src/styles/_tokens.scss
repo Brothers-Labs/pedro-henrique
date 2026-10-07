@@ -112,10 +112,10 @@
 }
 
 /**
- * A troca acontece em 1280px, e não antes, porque é a partir daí que os sete
- * destinos cabem em uma linha só do cabeçalho. Abaixo disso o aparelho quase
- * sempre é um tablet, onde a barra inferior é a melhor navegação de qualquer
- * forma.
+ * A troca acontece em 1280px, e não antes, porque é a partir daí que o menu
+ * lateral fica fixo ao lado do conteúdo sem espremer a página. Abaixo disso o
+ * aparelho quase sempre é um tablet, onde a barra inferior — com o menu lateral
+ * em gaveta — é a melhor navegação de qualquer forma.
  */
 @media (min-width: 80rem) {
   :root {

@@ -2,10 +2,16 @@
 
 <app-site-header />
 
-<main id="conteudo" class="main" tabindex="-1">
-  <router-outlet />
-</main>
+<div class="shell">
+  <app-side-nav />
 
-<app-site-footer />
+  <div class="shell__content">
+    <main id="conteudo" class="main" tabindex="-1">
+      <router-outlet />
+    </main>
+
+    <app-site-footer />
+  </div>
+</div>
 
 <app-bottom-nav />

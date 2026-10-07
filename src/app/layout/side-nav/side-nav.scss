@@ -1,0 +1,250 @@
+@use 'mixins' as *;
+
+/**
+ * O componente não ocupa caixa própria: no desktop quem entra no layout é o
+ * trilho, e no toque a gaveta vive na camada superior do `<dialog>`.
+ */
+:host {
+  display: contents;
+}
+
+$rail-width: 16.5rem;
+$rail-collapsed-width: 5rem;
+$easing-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+/* Desktop: trilho fixo ao lado do conteúdo -------------------------------- */
+.rail {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 40;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-self: flex-start;
+  width: $rail-width;
+  height: calc(100dvh - var(--header-height));
+  border-right: 3px solid var(--border-strong);
+  background: rgb(255 250 243 / 88%);
+  backdrop-filter: blur(10px);
+  transition: width 260ms $easing-out;
+
+  &--collapsed {
+    width: $rail-collapsed-width;
+  }
+
+  &__scroll {
+    flex: 1;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    padding: var(--space-5) var(--space-3);
+    scrollbar-width: thin;
+  }
+
+  &__footer {
+    padding: var(--space-3);
+    border-top: 2px solid var(--border-soft);
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-soft);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+
+    @include hover {
+      background: var(--surface-muted);
+      color: var(--text-strong);
+    }
+  }
+
+  &__toggle-icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    font-size: 1.4rem;
+    line-height: 1;
+    transition: transform 260ms $easing-out;
+  }
+
+  &__toggle-label {
+    white-space: nowrap;
+  }
+
+  &--collapsed &__toggle {
+    justify-content: center;
+    padding-inline: var(--space-1);
+  }
+
+  &--collapsed &__toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  &--collapsed &__toggle-label {
+    @include visually-hidden;
+  }
+
+  @include reduced-motion {
+    &,
+    &__toggle-icon {
+      transition: none;
+    }
+  }
+}
+
+/* Toque: gaveta que entra pela esquerda ----------------------------------- */
+.drawer {
+  /* Sem o reset, o `<dialog>` nasce centralizado e com borda do navegador. */
+  inset: 0 auto 0 0;
+  width: min(20rem, 86vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+
+  /**
+   * Entrada e saída animadas só com `transform`. Os navegadores que ainda não
+   * entendem `@starting-style` simplesmente abrem e fecham sem animação.
+   */
+  transform: translateX(-105%);
+  transition:
+    transform 280ms $easing-out,
+    overlay 280ms allow-discrete,
+    display 280ms allow-discrete;
+
+  &[open] {
+    transform: translateX(0);
+
+    @starting-style {
+      transform: translateX(-105%);
+    }
+  }
+
+  &::backdrop {
+    background: rgb(42 35 80 / 0%);
+    backdrop-filter: blur(0);
+    transition:
+      background-color 280ms ease,
+      backdrop-filter 280ms ease,
+      overlay 280ms allow-discrete,
+      display 280ms allow-discrete;
+  }
+
+  &[open]::backdrop {
+    background: rgb(42 35 80 / 55%);
+    backdrop-filter: blur(2px);
+
+    @starting-style {
+      background: rgb(42 35 80 / 0%);
+      backdrop-filter: blur(0);
+    }
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-right: 3px solid var(--border-strong);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    background: var(--surface-page);
+    box-shadow: var(--shadow-lg);
+
+    /* Notch em paisagem e barra de gestos: o conteúdo começa depois deles. */
+    padding: var(--safe-top) 0 var(--safe-bottom) var(--safe-left);
+    touch-action: pan-y;
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    border-bottom: 2px solid var(--border-soft);
+  }
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    color: var(--text-strong);
+    text-decoration: none;
+  }
+
+  &__badge {
+    flex: 0 0 auto;
+    width: 2.75rem;
+    height: 2.75rem;
+    overflow: hidden;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-pink-soft);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 22%;
+    }
+  }
+
+  &__brand-name {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__close {
+    @include touch-target;
+
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow);
+    color: var(--text-strong);
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+
+    &:active {
+      transform: scale(0.92);
+    }
+  }
+
+  &__scroll {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4) var(--space-3) var(--space-5);
+  }
+
+  @include reduced-motion {
+    &,
+    &::backdrop {
+      transition: none;
+    }
+
+    &__close:active {
+      transform: none;
+    }
+  }
+}

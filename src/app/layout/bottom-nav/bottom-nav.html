@@ -21,10 +21,11 @@
         type="button"
         class="bottom-nav__target"
         data-color="yellow"
-        [class.bottom-nav__target--active]="isMenuOpen()"
-        [attr.aria-expanded]="isMenuOpen()"
+        [class.bottom-nav__target--active]="sideNav.isDrawerOpen()"
+        [attr.aria-expanded]="sideNav.isDrawerOpen()"
+        [attr.aria-controls]="sideNavId"
         aria-haspopup="dialog"
-        (click)="openMenu()"
+        (click)="sideNav.openDrawer()"
       >
         <span class="bottom-nav__icon" aria-hidden="true">✨</span>
         <span class="bottom-nav__label">Mais</span>
@@ -32,5 +33,3 @@
     </li>
   </ul>
 </nav>
-
-<app-nav-sheet [(isOpen)]="isMenuOpen" />

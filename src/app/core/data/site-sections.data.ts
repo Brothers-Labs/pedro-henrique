@@ -1,4 +1,4 @@
-import type { SiteSection } from '../models/site-section.model';
+import type { NavigationGroup, SiteSection } from '../models/site-section.model';
 
 /** Fonte única do menu de navegação e dos cartões da seção "Explore". */
 export const SITE_SECTIONS: readonly SiteSection[] = [
@@ -102,21 +102,36 @@ export const EXPLORABLE_SECTIONS: readonly SiteSection[] = SITE_SECTIONS.filter(
  *
  * São os quatro lugares que o Pedro Henrique usa no dia a dia: a prancha de
  * falar, a prancheta de desenho e os jogos. O resto do site — inclusive a
- * galeria de fotos — continua a um toque de distância, no menu "Mais".
+ * galeria de fotos — continua a um toque de distância, no menu lateral que o
+ * botão "Mais" abre.
  */
-export const PRIMARY_SECTIONS: readonly SiteSection[] = [
-  'inicio',
-  'falar',
-  'desenhos',
-  'jogos',
-].map(
-  (id) => {
-    const section = SITE_SECTIONS.find((candidate) => candidate.id === id);
-
-    if (!section) {
-      throw new Error(`Seção "${id}" não existe em SITE_SECTIONS.`);
-    }
-
-    return section;
-  },
+export const PRIMARY_SECTIONS: readonly SiteSection[] = ['inicio', 'falar', 'desenhos', 'jogos'].map(
+  findSection,
 );
+
+/**
+ * Menu lateral: todas as seções, agrupadas pelo que se faz em cada uma.
+ *
+ * Cada seção aparece em exatamente um grupo; o teste de
+ * `site-sections.data.spec.ts` impede que uma seção nova fique de fora.
+ */
+export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
+  { id: 'comecar', label: 'Começar', sections: ['inicio', 'falar'].map(findSection) },
+  { id: 'criar', label: 'Criar', sections: ['desenhos', 'ideias'].map(findSection) },
+  {
+    id: 'brincar',
+    label: 'Brincar',
+    sections: ['jogos', 'pedro-maker', 'pedro-kart', 'mascote'].map(findSection),
+  },
+  { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
+];
+
+function findSection(id: string): SiteSection {
+  const section = SITE_SECTIONS.find((candidate) => candidate.id === id);
+
+  if (!section) {
+    throw new Error(`Seção "${id}" não existe em SITE_SECTIONS.`);
+  }
+
+  return section;
+}

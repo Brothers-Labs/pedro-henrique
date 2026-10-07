@@ -1,0 +1,139 @@
+<app-auth-shell
+  emoji="✨"
+  title="Criar conta"
+  subtitle="Leva menos de um minuto. Depois é só entrar com o seu e-mail e a sua senha."
+  color="mint"
+>
+  @if (!isApiConfigured) {
+    <p class="alert alert--info" role="note">
+      <span class="alert__icon" aria-hidden="true">🛠️</span>
+      O cadastro ainda está sendo preparado. Você já pode conhecer a tela, mas o envio ainda não
+      funciona.
+    </p>
+  }
+
+  <form #formElement class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <fieldset [disabled]="submission.isSubmitting()">
+      <legend class="visually-hidden">Dados da nova conta</legend>
+
+      <div class="field">
+        <label class="field__label" for="register-name">Nome</label>
+        <input
+          id="register-name"
+          class="field__control"
+          [class.field__control--invalid]="hasVisibleError(form.controls.name)"
+          type="text"
+          formControlName="name"
+          autocomplete="name"
+          autocapitalize="words"
+          placeholder="Como você se chama?"
+          [attr.maxlength]="maxNameLength"
+          [attr.aria-invalid]="hasVisibleError(form.controls.name)"
+          [attr.aria-describedby]="hasVisibleError(form.controls.name) ? 'register-name-error' : null"
+        />
+        @if (hasVisibleError(form.controls.name)) {
+          <p id="register-name-error" class="field__error">Digite o seu nome.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-email">E-mail</label>
+        <input
+          id="register-email"
+          class="field__control"
+          [class.field__control--invalid]="hasVisibleError(form.controls.email)"
+          type="email"
+          inputmode="email"
+          formControlName="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="voce@exemplo.com"
+          [attr.maxlength]="maxEmailLength"
+          [attr.aria-invalid]="hasVisibleError(form.controls.email)"
+          [attr.aria-describedby]="hasVisibleError(form.controls.email) ? 'register-email-error' : null"
+        />
+        @if (hasVisibleError(form.controls.email)) {
+          <p id="register-email-error" class="field__error">
+            @if (form.controls.email.hasError('required')) {
+              Digite o seu e-mail.
+            } @else {
+              Este e-mail parece incompleto. Confira se tem o &#64; e o domínio.
+            }
+          </p>
+        }
+      </div>
+
+      <app-password-field
+        fieldId="register-password"
+        autocomplete="new-password"
+        [control]="form.controls.password"
+        [isInvalid]="hasVisibleError(form.controls.password)"
+        [describedBy]="
+          hasVisibleError(form.controls.password)
+            ? 'register-password-hint register-password-error'
+            : 'register-password-hint'
+        "
+      >
+        <app-password-strength-meter [password]="typedPassword()" />
+        <p id="register-password-hint" class="field__hint">
+          Use {{ minPasswordLength }} caracteres ou mais, com letras e números.
+        </p>
+        @if (hasVisibleError(form.controls.password)) {
+          <p id="register-password-error" class="field__error">
+            @if (form.controls.password.hasError('required')) {
+              Crie uma senha.
+            } @else {
+              A senha precisa ter {{ minPasswordLength }} caracteres ou mais, com letras e números.
+            }
+          </p>
+        }
+      </app-password-field>
+
+      <app-password-field
+        fieldId="register-confirm-password"
+        label="Confirme a senha"
+        autocomplete="new-password"
+        [control]="form.controls.confirmPassword"
+        [isInvalid]="isConfirmationInvalid()"
+        [describedBy]="isConfirmationInvalid() ? 'register-confirm-password-error' : null"
+      >
+        @if (isConfirmationInvalid()) {
+          <p id="register-confirm-password-error" class="field__error">
+            @if (form.controls.confirmPassword.hasError('required')) {
+              Repita a senha para confirmar.
+            } @else {
+              As senhas não são iguais.
+            }
+          </p>
+        }
+      </app-password-field>
+    </fieldset>
+
+    @if (submission.errorMessage(); as errorMessage) {
+      <p class="alert alert--error" role="alert">
+        <span class="alert__icon" aria-hidden="true">⚠️</span>
+        {{ errorMessage }}
+      </p>
+    }
+
+    <button
+      type="submit"
+      class="button button--primary submit"
+      [disabled]="submission.isSubmitting()"
+      [attr.aria-busy]="submission.isSubmitting()"
+    >
+      @if (submission.isSubmitting()) {
+        <span class="spinner" aria-hidden="true"></span>
+        Criando a conta…
+      } @else {
+        Criar conta
+      }
+    </button>
+  </form>
+
+  <p class="switch-prompt">
+    Já tem conta?
+    <a class="text-link" routerLink="/entrar" [queryParams]="loginQueryParams">Entrar</a>
+  </p>
+</app-auth-shell>
