@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { PLAN_CAPABILITIES, PLANS } from '../../core/data/plans.data';
 import { SITE_SECTIONS } from '../../core/data/site-sections.data';
 import type { Plan, PlanCapabilityId, PlanId } from '../../core/models/plan.model';
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { PageIntro } from '../../shared/components/page-intro/page-intro';
 import { PixPaymentDialog } from './components/pix-payment-dialog/pix-payment-dialog';
 import { PricePipe } from './price.pipe';
@@ -34,6 +35,8 @@ interface PlanCard {
   styleUrl: './plans-page.scss',
 })
 export class PlansPage {
+  private readonly analytics = inject(AnalyticsService);
+
   protected readonly sections = SITE_SECTIONS;
   protected readonly cards: readonly PlanCard[] = PLANS.map((plan) => ({
     plan,
@@ -49,5 +52,6 @@ export class PlansPage {
 
   protected startCheckout(planId: PlanId): void {
     this.checkoutPlanId.set(planId);
+    this.analytics.track({ name: 'checkout_started', properties: { planId } });
   }
 }

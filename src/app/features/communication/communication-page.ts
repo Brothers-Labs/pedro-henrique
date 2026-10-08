@@ -6,6 +6,7 @@ import {
   COMMUNICATION_QUICK_PHRASES,
   findCardsByCategory,
 } from '../../core/data/communication.data';
+import type { PhraseSource } from '../../core/models/analytics-event.model';
 import type {
   CommunicationCard,
   CommunicationCategoryId,
@@ -13,7 +14,9 @@ import type {
   SavedPhrase,
 } from '../../core/models/communication.model';
 import type { AppLanguage } from '../../core/models/language.model';
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { CalmModeService } from '../../core/services/calm-mode.service';
+import { ConnectivityService } from '../../core/services/connectivity.service';
 import { LanguageService } from '../../core/services/language.service';
 import { PhraseBookService } from '../../core/services/phrase-book.service';
 import {
@@ -50,6 +53,8 @@ export class CommunicationPage {
   private readonly calmMode = inject(CalmModeService);
   private readonly languageService = inject(LanguageService);
   private readonly phraseBook = inject(PhraseBookService);
+  private readonly analytics = inject(AnalyticsService);
+  private readonly connectivity = inject(ConnectivityService);
 
   protected readonly language = this.languageService.current;
   protected readonly categories = COMMUNICATION_CATEGORIES;
@@ -133,11 +138,11 @@ export class CommunicationPage {
   }
 
   protected speakPhrase(): void {
-    this.say(this.phraseText());
+    this.sayPhrase(this.phraseText(), 'board');
   }
 
   protected speakQuickPhrase(phrase: QuickPhrase): void {
-    this.say(phrase.text[this.language()]);
+    this.sayPhrase(phrase.text[this.language()], 'quick');
   }
 
   protected savePhrase(): void {
@@ -145,11 +150,34 @@ export class CommunicationPage {
   }
 
   protected speakSavedPhrase(phrase: SavedPhrase): void {
-    this.say(phrase.text);
+    this.sayPhrase(phrase.text, 'saved');
   }
 
   protected removeSavedPhrase(phrase: SavedPhrase): void {
     this.phraseBook.remove(phrase.id);
+  }
+
+  /**
+   * Fala uma frase inteira e conta que ela foi dita — só o tamanho, nunca o
+   * conteúdo. O toque em cada cartão solto fala, mas não entra na conta.
+   */
+  private sayPhrase(text: string, source: PhraseSource): void {
+    const wordCount = countWords(text);
+
+    if (wordCount === 0) {
+      return;
+    }
+
+    this.say(text);
+    this.analytics.track({
+      name: 'phrase_spoken',
+      properties: {
+        language: this.language(),
+        source,
+        wordCount,
+        isOnline: this.connectivity.isOnline(),
+      },
+    });
   }
 
   private say(text: string): void {
@@ -158,4 +186,8 @@ export class CommunicationPage {
       rate: this.calmMode.isEnabled() ? CALM_SPEECH_RATE : DEFAULT_SPEECH_RATE,
     });
   }
+}
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
 }

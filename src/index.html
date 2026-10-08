@@ -16,8 +16,30 @@
   <meta property="og:description"
     content="Galeria, história, família, ideias, jogos e vídeos do Pedro Henrique.">
   <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Pedro">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!--
+    O modo calmo precisa valer antes da primeira pintura: as páginas chegam
+    prontas do build e, sem isto, quem precisa de menos movimento veria as
+    animações começarem até o Angular assumir. Espelha o CalmModeService.
+  -->
+  <script>
+    try {
+      var calmPreference = localStorage.getItem('pedro-henrique:calm-mode');
+      var prefersCalm = calmPreference === 'on' ||
+        (calmPreference === null && matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if (prefersCalm) document.documentElement.setAttribute('data-calm', 'on');
+    } catch (error) {
+      // Storage bloqueado: o CalmModeService decide assim que o app iniciar.
+    }
+  </script>
   <!-- O retrato do header aparece em todas as páginas: vale antecipar o download. -->
   <link rel="preload" as="image" type="image/jpeg" href="img/pedroheaderperfl.jpe" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">

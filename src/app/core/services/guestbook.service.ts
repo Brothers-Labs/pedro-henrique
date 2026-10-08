@@ -1,7 +1,8 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
 import type { GuestbookDraft, GuestbookMessage } from '../models/guestbook-message.model';
 import { createId, normalizeText } from '../utils/format';
+import { AnalyticsService } from './analytics.service';
 
 const STORAGE_KEY = 'pedro-henrique:guestbook';
 
@@ -40,6 +41,7 @@ const SEED_MESSAGES: readonly GuestbookMessage[] = [
  */
 @Injectable({ providedIn: 'root' })
 export class GuestbookService {
+  private readonly analytics = inject(AnalyticsService);
   private readonly messagesState = signal<readonly GuestbookMessage[]>(this.readFromStorage());
 
   readonly messages = computed(() =>
@@ -67,6 +69,7 @@ export class GuestbookService {
 
     this.messagesState.update((messages) => [created, ...messages]);
     this.writeToStorage();
+    this.analytics.track({ name: 'guestbook_message_posted' });
 
     return created;
   }

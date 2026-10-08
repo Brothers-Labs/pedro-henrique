@@ -1,0 +1,70 @@
+@use 'mixins' as *;
+
+:host {
+  display: block;
+}
+
+.status {
+  display: grid;
+  gap: var(--space-2);
+  padding-inline:
+    calc(var(--page-gutter) + var(--safe-left))
+    calc(var(--page-gutter) + var(--safe-right));
+
+  &__banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-strong);
+    font-size: var(--text-sm);
+    font-weight: 700;
+
+    &--offline {
+      background: var(--color-blue-soft);
+    }
+
+    &--update {
+      background: var(--color-yellow-soft);
+    }
+  }
+
+  &__icon {
+    flex: 0 0 auto;
+    font-size: var(--text-lg);
+    line-height: 1;
+  }
+
+  &__text {
+    flex: 1 1 16rem;
+    margin: 0;
+  }
+
+  &__action {
+    @include touch-target;
+
+    flex: 0 0 auto;
+    padding-inline: var(--space-4);
+    border: 3px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-pink);
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+
+    @include hover {
+      filter: brightness(1.05);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}

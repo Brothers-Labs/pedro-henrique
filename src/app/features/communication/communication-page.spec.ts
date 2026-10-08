@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { SpeechService } from '../../core/services/speech.service';
 import { CommunicationPage } from './communication-page';
 
@@ -150,6 +151,27 @@ describe('CommunicationPage', () => {
     clickAction('Falar');
 
     expect(speech.speak).toHaveBeenCalledWith('Sim.', jasmine.objectContaining({ language: 'pt-BR' }));
+  });
+
+  it('conta a frase falada pelo tamanho, sem enviar o que foi dito', () => {
+    const track = spyOn(TestBed.inject(AnalyticsService), 'track');
+    clickCard(0);
+
+    clickAction('Falar');
+
+    expect(track).toHaveBeenCalledOnceWith({
+      name: 'phrase_spoken',
+      properties: { language: 'pt-BR', source: 'board', wordCount: 1, isOnline: jasmine.any(Boolean) },
+    });
+    expect(JSON.stringify(track.calls.allArgs())).not.toContain('Sim');
+  });
+
+  it('não conta o toque em cada cartão solto', () => {
+    const track = spyOn(TestBed.inject(AnalyticsService), 'track');
+
+    clickCard(0);
+
+    expect(track).not.toHaveBeenCalled();
   });
 
   it('fala a frase pronta com um toque só', () => {

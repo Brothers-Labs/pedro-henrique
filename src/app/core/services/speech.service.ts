@@ -60,21 +60,10 @@ export class SpeechService {
     // sempre a que a criança quis dizer.
     this.synthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(content);
-    utterance.lang = options.language;
-    utterance.rate = options.rate ?? DEFAULT_SPEECH_RATE;
-
-    const voice = findVoice(this.voicesState(), options.language);
-
-    if (voice) {
-      utterance.voice = voice;
-    }
-
-    utterance.addEventListener('start', () => this.speakingState.set(true));
-    utterance.addEventListener('end', () => this.speakingState.set(false));
-    utterance.addEventListener('error', () => this.speakingState.set(false));
-
-    this.synthesis.speak(utterance);
+    // Sem internet, só uma voz instalada no aparelho consegue falar: as vozes
+    // "online" do navegador ficam mudas.
+    const voice = findVoice(this.voicesState(), options.language, !isOnline());
+    this.speakWith(content, options, voice);
   }
 
   stop(): void {
@@ -92,7 +81,39 @@ export class SpeechService {
   isVoiceMissingFor(language: AppLanguage): boolean {
     const voices = this.voicesState();
 
-    return voices.length > 0 && findVoice(voices, language) === null;
+    return voices.length > 0 && findVoice(voices, language, false) === null;
+  }
+
+  private speakWith(content: string, options: SpeakOptions, voice: SpeechSynthesisVoice | null): void {
+    const synthesis = this.synthesis;
+
+    if (!synthesis) {
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.lang = options.language;
+    utterance.rate = options.rate ?? DEFAULT_SPEECH_RATE;
+
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    utterance.addEventListener('start', () => this.speakingState.set(true));
+    utterance.addEventListener('end', () => this.speakingState.set(false));
+    utterance.addEventListener('error', (event) => {
+      this.speakingState.set(false);
+
+      // Internet "conectada" mas sem sinal: o aparelho jura que está online e a
+      // voz remota falha. A prancha não pode ficar muda — repete com uma voz
+      // local, ou com a padrão do aparelho se não houver nenhuma no idioma.
+      if (event.error === 'network' && voice && !voice.localService) {
+        const localVoice = matchVoice(localVoices(this.voicesState()), options.language);
+        this.speakWith(content, options, localVoice);
+      }
+    });
+
+    synthesis.speak(utterance);
   }
 
   /** Arrow function para manter a mesma referência no add/removeEventListener. */
@@ -102,13 +123,29 @@ export class SpeechService {
 }
 
 /**
+ * Voz para um idioma, preferindo as instaladas no aparelho quando pedido.
+ *
+ * Se nenhuma voz local fala o idioma, devolve a melhor voz qualquer: mais vale
+ * tentar a remota do que calar de antemão.
+ */
+export function findVoice(
+  voices: readonly SpeechSynthesisVoice[],
+  language: AppLanguage,
+  shouldPreferLocal: boolean,
+): SpeechSynthesisVoice | null {
+  const localVoice = shouldPreferLocal ? matchVoice(localVoices(voices), language) : null;
+
+  return localVoice ?? matchVoice(voices, language);
+}
+
+/**
  * Melhor voz disponível para um idioma.
  *
  * A variante exata vem primeiro; depois qualquer voz da mesma língua, porque
  * um inglês britânico lendo inglês americano é muito melhor do que a voz
  * padrão do aparelho lendo inglês com sotaque português.
  */
-function findVoice(
+function matchVoice(
   voices: readonly SpeechSynthesisVoice[],
   language: AppLanguage,
 ): SpeechSynthesisVoice | null {
@@ -120,6 +157,14 @@ function findVoice(
     voices.find((voice) => normalizeLanguageTag(voice.lang).startsWith(prefix)) ??
     null
   );
+}
+
+function localVoices(voices: readonly SpeechSynthesisVoice[]): readonly SpeechSynthesisVoice[] {
+  return voices.filter((voice) => voice.localService);
+}
+
+function isOnline(): boolean {
+  return typeof navigator === 'undefined' || navigator.onLine;
 }
 
 /** Alguns sistemas reportam `pt_BR` em vez de `pt-BR`. */
