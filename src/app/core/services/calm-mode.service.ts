@@ -1,4 +1,7 @@
-import { effect, Injectable, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { effect, inject, Injectable, signal } from '@angular/core';
+
+import { AnalyticsService } from './analytics.service';
 
 const STORAGE_KEY = 'pedro-henrique:calm-mode';
 const DOCUMENT_ATTRIBUTE = 'data-calm';
@@ -37,6 +40,8 @@ export function parseCalmPreference(raw: string | null): boolean | null {
  */
 @Injectable({ providedIn: 'root' })
 export class CalmModeService {
+  private readonly document = inject(DOCUMENT);
+  private readonly analytics = inject(AnalyticsService);
   private readonly enabledState = signal(resolveInitialPreference());
 
   readonly isEnabled = this.enabledState.asReadonly();
@@ -52,10 +57,11 @@ export class CalmModeService {
   setEnabled(isEnabled: boolean): void {
     this.enabledState.set(isEnabled);
     this.persist(isEnabled);
+    this.analytics.track({ name: 'calm_mode_changed', properties: { isEnabled } });
   }
 
   private publishToDocument(isEnabled: boolean): void {
-    const root = document.documentElement;
+    const root = this.document.documentElement;
 
     if (isEnabled) {
       root.setAttribute(DOCUMENT_ATTRIBUTE, ENABLED_VALUE);

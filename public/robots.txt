@@ -1,2 +1,8 @@
 User-agent: *
 Allow: /
+
+# Telas de conta: não há o que indexar, e o link de redefinir senha carrega um token.
+Disallow: /entrar
+Disallow: /cadastro
+Disallow: /recuperar-senha
+Disallow: /redefinir-senha

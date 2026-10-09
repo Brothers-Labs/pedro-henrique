@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/pedro-henrique/browser",
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/((?!_vercel/)[^.]*)",
+      "destination": "/index.csr.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(ngsw-worker.js|ngsw.json|safety-worker.js|worker-basic.min.js|manifest.webmanifest)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
+}

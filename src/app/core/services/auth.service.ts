@@ -8,6 +8,7 @@ import type {
   PasswordResetRequest,
   RegistrationData,
 } from '../models/auth.model';
+import { AnalyticsService } from './analytics.service';
 import { ApiClient, ApiError } from './api-client.service';
 import {
   clearStoredSession,
@@ -29,6 +30,7 @@ const MAX_TIMER_DELAY_MS = 2_147_483_647;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiClient);
+  private readonly analytics = inject(AnalyticsService);
   private readonly sessionState = signal<AuthSession | null>(readStoredSession());
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -49,7 +51,10 @@ export class AuthService {
       body: { email: normalizeEmail(email), password },
     });
 
-    return this.startSession(response, rememberMe);
+    const user = this.startSession(response, rememberMe);
+    this.analytics.track({ name: 'login_completed' });
+
+    return user;
   }
 
   async register({ name, email, password }: RegistrationData): Promise<AuthUser> {
@@ -59,7 +64,10 @@ export class AuthService {
       body: { name: name.trim(), email: normalizeEmail(email), password },
     });
 
-    return this.startSession(response, false);
+    const user = this.startSession(response, false);
+    this.analytics.track({ name: 'sign_up_completed' });
+
+    return user;
   }
 
   async requestPasswordReset({ email }: PasswordResetRequest): Promise<void> {

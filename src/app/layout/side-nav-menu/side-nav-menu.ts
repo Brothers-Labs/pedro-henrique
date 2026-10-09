@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter, map } from 'rxjs';
 
 import { NAVIGATION_GROUPS } from '../../core/data/site-sections.data';
+import { AppInstallService } from '../../core/services/app-install.service';
 import { AuthService } from '../../core/services/auth.service';
 import { redirectQueryParams } from '../../core/utils/safe-redirect';
 
@@ -32,9 +33,11 @@ export class SideNavMenu {
 
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly appInstall = inject(AppInstallService);
 
   protected readonly groups = NAVIGATION_GROUPS;
   protected readonly currentUser = this.auth.currentUser;
+  protected readonly canInstall = this.appInstall.canInstall;
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -57,6 +60,11 @@ export class SideNavMenu {
   );
 
   protected select(): void {
+    this.navigated.emit();
+  }
+
+  protected async install(): Promise<void> {
+    await this.appInstall.install();
     this.navigated.emit();
   }
 

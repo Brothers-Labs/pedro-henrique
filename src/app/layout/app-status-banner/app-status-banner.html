@@ -1,0 +1,20 @@
+<!-- A região existe sempre: leitores de tela só anunciam o que muda dentro de uma região que já estava na página. -->
+<div class="status" aria-live="polite">
+  @if (!isOnline()) {
+    <p class="status__banner status__banner--offline">
+      <span class="status__icon" aria-hidden="true">📴</span>
+      <span class="status__text">
+        Sem internet agora. A prancha de falar e os jogos continuam funcionando; só fotos e vídeos
+        que ainda não foram abertos podem não aparecer.
+      </span>
+    </p>
+  }
+
+  @if (isUpdateReady()) {
+    <div class="status__banner status__banner--update">
+      <span class="status__icon" aria-hidden="true">✨</span>
+      <p class="status__text">Tem novidade no site! Atualize quando terminar o que está fazendo.</p>
+      <button type="button" class="status__action" (click)="applyUpdate()">Atualizar</button>
+    </div>
+  }
+</div>

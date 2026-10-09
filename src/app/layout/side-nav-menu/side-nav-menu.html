@@ -43,6 +43,20 @@
           <span class="menu__label">Planos</span>
         </a>
       </li>
+      @if (canInstall()) {
+        <li>
+          <button
+            type="button"
+            class="menu__link"
+            data-color="blue"
+            [attr.title]="isCollapsed() ? 'Instalar o app' : null"
+            (click)="install()"
+          >
+            <span class="menu__icon" aria-hidden="true">📲</span>
+            <span class="menu__label">Instalar o app</span>
+          </button>
+        </li>
+      }
     </ul>
 
     @if (currentUser(); as user) {

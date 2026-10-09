@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import type { PixSettings } from '../../../environments/environment.model';
 import { findPlan } from '../../core/data/plans.data';
 import type { PlanId } from '../../core/models/plan.model';
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { ApiClient } from '../../core/services/api-client.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -35,6 +36,7 @@ export interface PixReceiptSubmission {
 export class PixPaymentService {
   private readonly api = inject(ApiClient);
   private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
 
   readonly settings = inject(PIX_SETTINGS);
   readonly isApiConfigured = this.api.isConfigured;
@@ -56,6 +58,8 @@ export class PixPaymentService {
       // Quem já tem conta tem o pagamento ligado a ela; quem não tem é achado pelo e-mail.
       accessToken: this.auth.session()?.accessToken,
     });
+
+    this.analytics.track({ name: 'pix_receipt_sent', properties: { planId: plan.id } });
   }
 }
 
