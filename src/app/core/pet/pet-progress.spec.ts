@@ -9,6 +9,7 @@ import {
   createPet,
   equipAccessory,
   evolutionPreview,
+  grantRewardAccessory,
   levelPercentage,
   renamePet,
   sanitizePetName,
@@ -144,6 +145,28 @@ describe('addXp', () => {
 
     expect(accessoryStateOf(pet, 'bone')).toBe('disponivel');
     expect(accessoryStateOf(pet, 'coroa')).toBe('bloqueado');
+  });
+
+  it('nunca libera pelo nível um acessório que é prêmio', () => {
+    const pet = raiseTo(newPet(), 30);
+
+    expect(accessoryStateOf(pet, 'coroa')).toBe('disponivel');
+    expect(accessoryStateOf(pet, 'mochila')).toBe('bloqueado');
+  });
+
+  it('entrega o acessório de prêmio uma vez só, com memória na linha do tempo', () => {
+    const once = grantRewardAccessory(newPet(), 'mochila', NOW);
+    const twice = grantRewardAccessory(once, 'mochila', NOW);
+
+    expect(accessoryStateOf(once, 'mochila')).toBe('disponivel');
+    expect(twice).toBe(once);
+    expect(once.timeline.filter((event) => event.type === 'acessorio').length).toBe(1);
+  });
+
+  it('não entrega como prêmio um acessório que vem pelo nível', () => {
+    const pet = newPet();
+
+    expect(grantRewardAccessory(pet, 'coroa', NOW)).toBe(pet);
   });
 
   it('guarda apenas os níveis redondos na linha do tempo', () => {

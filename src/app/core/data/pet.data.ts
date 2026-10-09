@@ -59,6 +59,8 @@ export const PET_XP: Readonly<Record<PetXpSource, number>> = {
   'nivel-de-jogo': 50,
   'meta-diaria': 40,
   conquista: 100,
+  // A Aventura decide quanto vale cada fase; o valor aqui é só o piso.
+  aventura: 10,
 };
 
 /**
@@ -186,8 +188,9 @@ export const PET_TYPES: readonly PetType[] = [
 /**
  * Acessórios.
  *
- * O nível de desbloqueio é a única regra: nada aqui se compra, e nenhum deles
- * muda o desempenho — são enfeite, e enfeite existe para ser escolhido.
+ * A maioria chega com o nível do mascote; alguns são prêmio de uma conquista
+ * da Aventura. Nada aqui se compra, e nenhum deles muda o desempenho — são
+ * enfeite, e enfeite existe para ser escolhido.
  */
 export const PET_ACCESSORIES: readonly PetAccessory[] = [
   {
@@ -195,7 +198,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Boné',
     emoji: '🧢',
     description: 'Para o sol das aventuras.',
-    unlockLevel: 3,
+    unlock: { kind: 'level', level: 3 },
     anchor: { x: 50, y: 13, scale: 0.36, rotation: -8 },
   },
   {
@@ -203,7 +206,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Óculos',
     emoji: '👓',
     description: 'Para enxergar cada detalhe.',
-    unlockLevel: 5,
+    unlock: { kind: 'level', level: 5 },
     anchor: { x: 50, y: 33, scale: 0.34, rotation: 0 },
   },
   {
@@ -211,7 +214,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Gravata',
     emoji: '🎀',
     description: 'Para os dias de festa.',
-    unlockLevel: 8,
+    unlock: { kind: 'level', level: 8 },
     anchor: { x: 50, y: 62, scale: 0.24, rotation: 0 },
   },
   {
@@ -219,7 +222,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Fone',
     emoji: '🎧',
     description: 'Música enquanto a gente estuda.',
-    unlockLevel: 10,
+    unlock: { kind: 'level', level: 10 },
     anchor: { x: 50, y: 24, scale: 0.44, rotation: 0 },
   },
   {
@@ -227,7 +230,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Capa',
     emoji: '🦸',
     description: 'Capa de herói de verdade.',
-    unlockLevel: 15,
+    unlock: { kind: 'level', level: 15 },
     anchor: { x: 21, y: 60, scale: 0.32, rotation: -12 },
   },
   {
@@ -235,7 +238,7 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Medalha',
     emoji: '⭐',
     description: 'A medalha de quem não desiste.',
-    unlockLevel: 20,
+    unlock: { kind: 'level', level: 20 },
     anchor: { x: 50, y: 57, scale: 0.22, rotation: 0 },
   },
   {
@@ -243,8 +246,16 @@ export const PET_ACCESSORIES: readonly PetAccessory[] = [
     label: 'Coroa',
     emoji: '👑',
     description: 'A coroa dos lendários.',
-    unlockLevel: 25,
+    unlock: { kind: 'level', level: 25 },
     anchor: { x: 50, y: 6, scale: 0.34, rotation: 0 },
+  },
+  {
+    id: 'mochila',
+    label: 'Mochila',
+    emoji: '🎒',
+    description: 'A mochila de quem salvou a Vila da Matemática.',
+    unlock: { kind: 'reward', hint: 'Prêmio da Aventura' },
+    anchor: { x: 76, y: 58, scale: 0.28, rotation: 10 },
   },
 ];
 

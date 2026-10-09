@@ -1,0 +1,96 @@
+@use 'mixins' as *;
+
+.result {
+  @include card-surface(var(--tone-soft));
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+
+  &__emoji {
+    font-size: clamp(2.5rem, 2rem + 3vw, 3.5rem);
+    line-height: 1;
+  }
+
+  &__title {
+    font-size: var(--text-2xl);
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__message,
+  &__note,
+  &__best {
+    max-width: 34rem;
+    color: var(--text-body);
+  }
+
+  &__best {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+  }
+
+  &__score {
+    font-size: var(--text-lg);
+
+    strong {
+      font-family: var(--font-display);
+    }
+  }
+
+  &__gains,
+  &__rewards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    max-width: 30rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__gains li {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--text-strong);
+  }
+
+  &__rewards li {
+    @include card-surface;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  &__detail {
+    flex-basis: 100%;
+    color: var(--text-body);
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    max-width: 22rem;
+  }
+}

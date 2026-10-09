@@ -171,6 +171,41 @@ export function applyChallenge(
   };
 }
 
+export interface BonusApplication {
+  readonly player: PlayerProgress;
+  readonly unlockedAchievements: readonly Achievement[];
+}
+
+/**
+ * Soma pontos de bônus a um jogo, sem contar como desafio.
+ *
+ * É a porta para recompensas que nascem fora das perguntas, como concluir uma
+ * fase da Aventura. Não mexe em nível, sequência nem estrelas do jogo — só nos
+ * pontos — e por isso também pode fechar conquistas de pontuação.
+ */
+export function applyBonusPoints(player: PlayerProgress, gameId: GameId, points: number): BonusApplication {
+  const amount = Math.max(0, Math.trunc(points));
+
+  if (amount === 0) {
+    return { player, unlockedAchievements: [] };
+  }
+
+  const current = player.games[gameId];
+  const withGame: PlayerProgress = {
+    ...player,
+    games: { ...player.games, [gameId]: { ...current, score: current.score + amount } },
+  };
+  const unlocked = findNewAchievements(withGame);
+
+  return {
+    player: {
+      ...withGame,
+      unlockedAchievements: [...withGame.unlockedAchievements, ...unlocked.map((achievement) => achievement.id)],
+    },
+    unlockedAchievements: unlocked,
+  };
+}
+
 /** Percentual do nível atual, pronto para a barra de progresso. */
 export function levelPercentage(progress: GameProgress, definition: GameDefinition): number {
   if (definition.challengesPerLevel <= 0) {

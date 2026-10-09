@@ -3,6 +3,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { ACHIEVEMENTS, GAME_IDS, gameDefinition } from '../data/game-progress.data';
 import { GameEventBus } from '../events/game-event-bus';
 import {
+  applyBonusPoints,
   applyChallenge,
   createGameProgress,
   createPlayerProgress,
@@ -80,14 +81,28 @@ export class GameProgressService {
 
     this.state.set(player);
     this.persist();
-
-    if (outcome.unlockedAchievements.length > 0) {
-      this.pending.update((queue) => [...queue, ...outcome.unlockedAchievements]);
-    }
-
     this.announce(outcome);
+    this.queueAchievements(outcome.unlockedAchievements);
 
     return outcome;
+  }
+
+  /**
+   * Soma pontos de bônus a um jogo, fora de um desafio.
+   *
+   * Quem chama é responsável por conceder cada bônus uma vez só: a Aventura,
+   * por exemplo, guarda o que já pagou antes de chamar aqui.
+   */
+  awardBonusPoints(gameId: GameId, points: number): void {
+    const { player, unlockedAchievements } = applyBonusPoints(this.state(), gameId, points);
+
+    if (player === this.state()) {
+      return;
+    }
+
+    this.state.set(player);
+    this.persist();
+    this.queueAchievements(unlockedAchievements);
   }
 
   /** Publica o que aconteceu, já com o estado novo gravado no aparelho. */
@@ -107,8 +122,17 @@ export class GameProgressService {
         wasPerfect: outcome.wasPerfectLevel,
       });
     }
+  }
 
-    for (const achievement of outcome.unlockedAchievements) {
+  /** Enfileira as conquistas para a comemoração e as anuncia a quem escuta. */
+  private queueAchievements(achievements: readonly Achievement[]): void {
+    if (achievements.length === 0) {
+      return;
+    }
+
+    this.pending.update((queue) => [...queue, ...achievements]);
+
+    for (const achievement of achievements) {
       this.events.emit({ type: 'ACHIEVEMENT_UNLOCKED', achievementId: achievement.id });
     }
   }

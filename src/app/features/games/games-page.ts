@@ -5,6 +5,7 @@ import { PROFILE } from '../../core/data/profile.data';
 import type { GameId } from '../../core/models/game-progress.model';
 import { GameProgressService } from '../../core/services/game-progress.service';
 import { PageIntro } from '../../shared/components/page-intro/page-intro';
+import { AdventureCard } from '../adventure/components/adventure-card/adventure-card';
 import { BeansGame } from './beans-game/beans-game';
 import { EnglishGame } from './english-game/english-game';
 import { IqGame } from './iq-game/iq-game';
@@ -40,6 +41,7 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     PageIntro,
+    AdventureCard,
     AchievementToast,
     PetSummaryCard,
     PetCompanion,

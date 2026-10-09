@@ -1,0 +1,86 @@
+@use 'mixins' as *;
+
+.intro {
+  @include card-surface(var(--tone-soft));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  box-shadow: var(--shadow-pop);
+
+  &__eyebrow {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-body);
+  }
+
+  &__icon {
+    font-size: clamp(3rem, 2.4rem + 3vw, 4.5rem);
+    line-height: 1;
+  }
+
+  &__title {
+    font-size: var(--text-2xl);
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__guardian {
+    @include card-surface;
+
+    max-width: 32rem;
+    padding: var(--space-3) var(--space-4);
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+
+    footer {
+      margin-top: var(--space-1);
+      font-size: var(--text-sm);
+      color: var(--text-soft);
+    }
+  }
+
+  &__story,
+  &__objective {
+    max-width: 36rem;
+    font-size: var(--text-md);
+    color: var(--text-body);
+  }
+
+  &__objective {
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__best {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-4);
+    margin: 0;
+
+    dt {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-soft);
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 800;
+    }
+  }
+
+  &__start {
+    max-width: 22rem;
+  }
+}

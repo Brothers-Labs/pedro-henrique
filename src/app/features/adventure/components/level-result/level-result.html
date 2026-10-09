@@ -1,0 +1,91 @@
+@let result = completion();
+
+<article class="result" [attr.data-color]="world().color">
+  <app-celebration-effects [isActive]="isMotionAllowed()" />
+
+  <span class="result__emoji" aria-hidden="true">{{ isMotionAllowed() ? '🎉' : '✨' }}</span>
+  <h2 class="result__title" tabindex="-1" data-autofocus>{{ headline() }}</h2>
+  <p class="result__message">{{ completionMessage() }}</p>
+
+  <app-star-rating [stars]="result.stars" size="large" />
+
+  <p class="result__score">
+    <strong>{{ correct() }} / {{ total() }}</strong> respostas corretas
+  </p>
+
+  <ul class="result__gains">
+    <li><span aria-hidden="true">⭐</span> +{{ gains().points }} pontos para {{ childName }}</li>
+    @if (pet(); as current) {
+      <li><span aria-hidden="true">🐾</span> +{{ gains().petXp }} XP para {{ current.name }}</li>
+    }
+  </ul>
+
+  @if (isNewRecord()) {
+    <p class="result__note"><span aria-hidden="true">🏅</span> Novo recorde de estrelas nesta fase!</p>
+  }
+
+  @if (!result.isFirstCompletion && record(); as best) {
+    <p class="result__best">
+      Melhor resultado: <app-star-rating [stars]="best.bestStars" size="small" />
+      · {{ best.bestScore }} / {{ total() }} · {{ best.attempts }} jogadas
+    </p>
+  }
+
+  @if (hasSpecialRewards()) {
+    <ul class="result__rewards">
+      @if (result.reachedCheckpoint) {
+        <li><span aria-hidden="true">🚩</span> <strong>Checkpoint!</strong> Você chegou ao checkpoint e o progresso está salvo.</li>
+      }
+      @if (result.openedChest) {
+        <li><span aria-hidden="true">🎁</span> <strong>Baú da aventura aberto!</strong></li>
+      }
+      @if (curiosityText(); as curiosity) {
+        <li>
+          <span aria-hidden="true">📖</span> <strong>Nova curiosidade: {{ curiosity.title }}</strong>
+          <span class="result__detail">{{ curiosity.text }}</span>
+        </li>
+      }
+      @if (result.completedWorld; as finished) {
+        <li><span aria-hidden="true">{{ finished.medal.emoji }}</span> <strong>{{ finished.medal.label }}</strong></li>
+      }
+      @if (accessory(); as gift) {
+        <li>
+          <span aria-hidden="true">{{ gift.emoji }}</span>
+          <strong>Novo acessório:</strong> {{ gift.label }}
+          @if (!pet()) {
+            <span class="result__detail">Ele fica guardado até você adotar um mascote.</span>
+          }
+        </li>
+      }
+      @if (result.unlockedWorld; as opened) {
+        <li>
+          <span aria-hidden="true">{{ opened.emoji }}</span>
+          <strong>Novo mundo no mapa: {{ opened.name }}</strong>
+          @if (opened.levels.length === 0) {
+            <span class="result__detail">Uma nova aventura está chegando...</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (isPlainReplay()) {
+    <p class="result__note">Você já tinha esses prêmios. Jogar de novo é ótimo para treinar!</p>
+  }
+
+  <app-map-companion [line]="companionLine()" size="pequeno" mood="comemorando" />
+
+  <div class="result__actions">
+    @if (nextLevel(); as next) {
+      <a class="button button--primary button--block" [routerLink]="['/aventura', world().id, next.id]">
+        Próxima fase <span aria-hidden="true">→</span>
+      </a>
+    }
+    <button type="button" class="button button--secondary button--block" (click)="returnedToMap.emit()">
+      <span aria-hidden="true">🗺️</span> Voltar ao mapa
+    </button>
+    <button type="button" class="button button--ghost button--block" (click)="replayed.emit()">
+      <span aria-hidden="true">🔁</span> Jogar novamente
+    </button>
+  </div>
+</article>

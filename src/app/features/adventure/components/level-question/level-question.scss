@@ -1,0 +1,107 @@
+@use 'mixins' as *;
+@use 'games' as *;
+
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* Pedras do caminho: uma por pergunta, preenchidas conforme a criança avança. */
+  &__steps {
+    display: flex;
+    gap: var(--space-1);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__step {
+    flex: 1;
+    height: 0.85rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+
+    &[data-step='feita'] {
+      background: var(--color-mint);
+    }
+
+    &[data-step='atual'] {
+      background: var(--color-yellow);
+    }
+  }
+
+  &__count {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-body);
+  }
+
+  &__card {
+    @include challenge-card;
+  }
+
+  &__prompt {
+    @include challenge-prompt;
+  }
+
+  &__statement {
+    font-size: var(--text-3xl);
+    text-align: center;
+
+    &--story {
+      font-size: var(--text-lg);
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__options {
+    @include answer-grid(7rem);
+  }
+
+  &__option {
+    @include answer-button;
+
+    /* Depois do mixin, para vencer o tamanho padrão das alternativas. */
+    & {
+      font-size: var(--text-xl);
+    }
+  }
+
+  &__feedback {
+    @include feedback-box;
+  }
+
+  &__feedback-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__hint,
+  &__companion {
+    font-size: var(--text-sm);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+  }
+}

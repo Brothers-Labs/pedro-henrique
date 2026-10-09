@@ -1,0 +1,229 @@
+@use 'mixins' as *;
+
+@keyframes trail-drift {
+  from {
+    transform: translateX(-6%);
+  }
+
+  to {
+    transform: translateX(6%);
+  }
+}
+
+@keyframes trail-current {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 85%), var(--shadow-sm);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgb(255 255 255 / 0%), var(--shadow-sm);
+  }
+}
+
+:host {
+  display: block;
+}
+
+.trail {
+  position: relative;
+  width: 100%;
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 20% 30%, rgb(255 255 255 / 35%) 0 6%, transparent 7%),
+    radial-gradient(circle at 75% 70%, rgb(255 255 255 / 25%) 0 8%, transparent 9%),
+    linear-gradient(to bottom, var(--sky) 0, var(--ground) 9rem);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+
+  &__drawing {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__river {
+    fill: none;
+    stroke: #7cc7f2;
+    stroke-width: 70;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+
+  &__road-border,
+  &__road-future,
+  &__road-walked {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__road-border {
+    stroke: var(--border-strong);
+    stroke-width: 22px;
+  }
+
+  &__road-future {
+    stroke: var(--surface-card);
+    stroke-width: 14px;
+  }
+
+  &__road-walked {
+    stroke: var(--trail);
+    stroke-width: 14px;
+  }
+
+  &__decoration,
+  &__cloud {
+    position: absolute;
+    font-size: clamp(1.5rem, 1rem + 2vw, 2.4rem);
+    line-height: 1;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    user-select: none;
+  }
+
+  &__cloud {
+    top: 1.2rem;
+    transform: none;
+    opacity: 0.9;
+    animation: trail-drift 9s ease-in-out infinite alternate;
+
+    &--one {
+      left: 12%;
+    }
+
+    &--two {
+      right: 14%;
+      animation-duration: 12s;
+    }
+  }
+
+  &__nodes {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__companion {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+
+    &--moving {
+      transition:
+        left 900ms ease-in-out,
+        top 900ms ease-in-out;
+    }
+
+    &[data-side='right'] {
+      transform: translate(2rem, -70%);
+    }
+
+    &[data-side='left'] {
+      transform: translate(calc(-100% - 2rem), -70%);
+    }
+  }
+
+  @include reduced-motion {
+    &__cloud {
+      animation: none;
+    }
+
+    &__companion--moving {
+      transition: none;
+    }
+  }
+}
+
+.node {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 8rem;
+  margin-left: -4rem;
+  text-align: center;
+  transform: translateY(-1.75rem);
+
+  &__marker {
+    position: relative;
+    display: grid;
+    width: 3.5rem;
+    height: 3.5rem;
+    place-items: center;
+    border: 3px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-card);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-strong);
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &--guardian {
+    transform: translateY(-2.25rem);
+  }
+
+  &--guardian &__marker {
+    width: 4.5rem;
+    height: 4.5rem;
+    font-size: 2.1rem;
+    background: var(--color-yellow-soft);
+  }
+
+  &[data-status='locked'] &__marker {
+    border-style: dashed;
+    background: var(--surface-muted);
+    font-size: 1.2rem;
+  }
+
+  &[data-status='completed'] &__marker {
+    background: var(--color-mint-soft);
+  }
+
+  &[data-status='perfect'] &__marker {
+    background: var(--color-yellow);
+  }
+
+  &[data-status='current'] &__marker,
+  &[data-status='available'] &__marker {
+    background: var(--color-pink-soft);
+    animation: trail-current 1.8s ease-in-out infinite;
+
+    @include reduced-motion {
+      animation: none;
+    }
+  }
+
+  &__flag {
+    position: absolute;
+    top: -0.9rem;
+    right: 1.6rem;
+    font-size: 1.3rem;
+  }
+
+  &__label {
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 88%);
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--text-strong);
+  }
+}

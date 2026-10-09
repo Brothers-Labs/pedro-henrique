@@ -30,6 +30,7 @@ import {
   createPet,
   dayKey,
   equipAccessory,
+  grantRewardAccessory,
   PET_SCHEMA_VERSION,
   renamePet,
   stageFor,
@@ -148,6 +149,11 @@ export class PetService {
    */
   addXp(amount: number, source: PetXpSource): void {
     this.grant([{ amount, source }]);
+  }
+
+  /** Entrega um acessório de prêmio. Sem mascote, ou já entregue, não faz nada. */
+  grantAccessory(id: PetAccessoryId): void {
+    this.updatePet((pet) => grantRewardAccessory(pet, id, new Date()));
   }
 
   dismissCelebration(): void {

@@ -1,0 +1,100 @@
+@use 'mixins' as *;
+
+.card {
+  @include card-surface(var(--tone-soft));
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-pop);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+  }
+
+  &__world {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  &__stars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__action {
+    margin-top: auto;
+  }
+}
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--space-3);
+
+  &__mode {
+    @include card-surface(var(--tone-soft));
+
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    margin: 0;
+    color: var(--text-body);
+    text-decoration: none;
+  }
+
+  a.modes__mode {
+    box-shadow: var(--shadow-pop);
+    transition: transform var(--transition-fast);
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    @include hover {
+      transform: translateY(-2px);
+    }
+
+    @include reduced-motion {
+      transition: none;
+    }
+  }
+
+  &__emoji {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  &__name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--text-strong);
+  }
+
+  &__badge {
+    padding: 0.05rem 0.5rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    font-size: var(--text-xs);
+  }
+
+  &__text {
+    display: block;
+    font-size: var(--text-sm);
+  }
+}

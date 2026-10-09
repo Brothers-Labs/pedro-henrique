@@ -1,0 +1,92 @@
+@let current = view();
+@let scenery = current.world.scenery;
+
+<div
+  class="trail"
+  [style.aspect-ratio]="aspectRatio()"
+  [style.--sky]="scenery.sky"
+  [style.--ground]="scenery.ground"
+  [style.--trail]="scenery.trail"
+>
+  <span class="trail__cloud trail__cloud--one" aria-hidden="true">☁️</span>
+  <span class="trail__cloud trail__cloud--two" aria-hidden="true">☁️</span>
+
+  <svg
+    class="trail__drawing"
+    [attr.viewBox]="'0 0 ' + layout().width + ' ' + layout().height"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    @if (scenery.hasRiver) {
+      <path class="trail__river" [attr.d]="riverPath()" />
+    }
+    <path class="trail__road-border" [attr.d]="fullPath()" />
+    <path class="trail__road-future" [attr.d]="fullPath()" />
+    <path class="trail__road-walked" [attr.d]="walkedPath()" />
+  </svg>
+
+  @for (decoration of decorations(); track $index) {
+    <span
+      class="trail__decoration"
+      aria-hidden="true"
+      [style.left.%]="decoration.left"
+      [style.top.%]="decoration.top"
+      >{{ decoration.emoji }}</span
+    >
+  }
+
+  <ol class="trail__nodes" [attr.aria-label]="'Fases da ' + current.world.name">
+    @for (node of nodes(); track node.view.level.id) {
+      <li
+        class="node"
+        [attr.data-status]="node.view.status"
+        [class.node--guardian]="!!node.view.level.guardian"
+        [style.left.%]="node.left"
+        [style.top.%]="node.top"
+      >
+        @if (node.view.status === 'locked') {
+          <button
+            type="button"
+            class="node__marker"
+            [attr.aria-label]="node.ariaLabel"
+            (click)="tapLocked(node.view)"
+          >
+            <span aria-hidden="true">{{ node.marker }}</span>
+          </button>
+        } @else {
+          <a
+            class="node__marker"
+            [routerLink]="['/aventura', current.world.id, node.view.level.id]"
+            [attr.aria-label]="node.ariaLabel"
+            [attr.aria-current]="node.view.status === 'current' ? 'step' : null"
+          >
+            <span aria-hidden="true">{{ node.marker }}</span>
+          </a>
+        }
+
+        @if (node.view.level.isCheckpoint) {
+          <span class="node__flag" aria-hidden="true">🚩</span>
+        }
+
+        <span class="node__label" aria-hidden="true">{{ node.view.order }}. {{ node.view.level.skill }}</span>
+
+        @if (node.view.record; as record) {
+          <app-star-rating [stars]="record.bestStars" size="small" />
+        }
+      </li>
+    }
+  </ol>
+
+  @if (showCompanion() && companion(); as position) {
+    <div
+      class="trail__companion"
+      [class.trail__companion--moving]="isMeasured()"
+      [attr.data-side]="position.side"
+      [style.left.%]="position.left"
+      [style.top.%]="position.top"
+    >
+      <app-map-companion size="pequeno" mood="feliz" />
+    </div>
+  }
+</div>

@@ -41,6 +41,15 @@ export type AnalyticsEvent =
       readonly name: 'achievement_unlocked';
       readonly properties: { readonly achievementId: AchievementId };
     }
+  | {
+      readonly name: 'adventure_level_completed';
+      readonly properties: {
+        readonly worldId: string;
+        readonly levelId: string;
+        readonly stars: number;
+        readonly isFirstCompletion: boolean;
+      };
+    }
   | { readonly name: 'checkout_started'; readonly properties: { readonly planId: PlanId } }
   | { readonly name: 'pix_receipt_sent'; readonly properties: { readonly planId: PlanId } }
   | { readonly name: 'sign_up_completed' }

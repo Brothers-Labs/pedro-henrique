@@ -1,0 +1,75 @@
+<dialog #dialog class="details" aria-labelledby="mundo-titulo" (close)="close()">
+  @if (view(); as current) {
+    <div class="details__panel" [attr.data-color]="current.world.color">
+      <span class="details__emoji" aria-hidden="true">{{ current.world.emoji }}</span>
+      <h2 id="mundo-titulo" class="details__title">{{ current.world.name }}</h2>
+      <p class="details__tagline">{{ current.world.tagline }}</p>
+
+      @switch (current.status) {
+        @case ('locked') {
+          <p class="details__note">
+            <span aria-hidden="true">🔒</span>
+            @if (requirement(); as required) {
+              Termine a {{ required }} para abrir este mundo.
+            } @else {
+              Este mundo ainda está trancado.
+            }
+          </p>
+        }
+        @case ('coming-soon') {
+          <p class="details__note">
+            <span aria-hidden="true">⏳</span>
+            {{ comingSoonLine }}
+          </p>
+        }
+        @default {
+          <p class="details__progress">
+            <strong>{{ current.completedLevels }} / {{ current.levels.length }}</strong> fases
+          </p>
+
+          <div
+            class="details__bar"
+            role="progressbar"
+            [attr.aria-valuenow]="percentage()"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-label]="'Progresso do mundo: ' + percentage() + '%'"
+          >
+            <span class="details__fill" [style.width.%]="percentage()"></span>
+          </div>
+
+          <p class="details__stars">
+            <app-star-rating [stars]="current.stars" [max]="current.maxStars" size="small" />
+            <span>{{ current.stars }} / {{ current.maxStars }} estrelas</span>
+          </p>
+
+          <p class="details__reward">
+            Recompensa final:
+            <strong><span aria-hidden="true">{{ current.world.medal.emoji }}</span> {{ current.world.medal.label }}</strong>
+          </p>
+
+          <div class="details__actions">
+            @if (current.companionLevel; as level) {
+              <a
+                class="button button--primary button--block"
+                [routerLink]="['/aventura', current.world.id, level.level.id]"
+                (click)="close()"
+              >
+                <span aria-hidden="true">🚀</span>
+                {{ current.status === 'completed' ? 'Jogar o desafio final' : 'Continuar' }}
+              </a>
+            }
+            <button type="button" class="button button--secondary button--block" (click)="show(current)">
+              <span aria-hidden="true">🗺️</span>
+              Ver no mapa
+            </button>
+          </div>
+        }
+      }
+
+      <button type="button" class="button button--ghost button--small details__close" (click)="close()">
+        Fechar
+      </button>
+    </div>
+  }
+</dialog>

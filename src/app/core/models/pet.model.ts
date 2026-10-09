@@ -19,7 +19,8 @@ export type PetAccessoryId =
   | 'fone'
   | 'capa'
   | 'medalha'
-  | 'coroa';
+  | 'coroa'
+  | 'mochila';
 
 export type PetAchievementId =
   | 'primeiro-passo'
@@ -40,7 +41,8 @@ export type PetXpSource =
   | 'dez-atividades'
   | 'nivel-de-jogo'
   | 'meta-diaria'
-  | 'conquista';
+  | 'conquista'
+  | 'aventura';
 
 /** Fala do mascote conforme a personalidade do tipo escolhido. */
 export interface PetVoice {
@@ -80,12 +82,23 @@ export interface PetAccessoryAnchor {
   readonly rotation: number;
 }
 
+/**
+ * Como um acessório é liberado.
+ *
+ * `level`: chega sozinho quando o mascote alcança o nível.
+ * `reward`: é presente de uma conquista fora do mascote (um mundo da Aventura,
+ * por exemplo); `hint` diz à criança o que fazer para ganhá-lo.
+ */
+export type PetAccessoryUnlock =
+  | { readonly kind: 'level'; readonly level: number }
+  | { readonly kind: 'reward'; readonly hint: string };
+
 export interface PetAccessory {
   readonly id: PetAccessoryId;
   readonly label: string;
   readonly emoji: string;
   readonly description: string;
-  readonly unlockLevel: number;
+  readonly unlock: PetAccessoryUnlock;
   readonly anchor: PetAccessoryAnchor;
 }
 

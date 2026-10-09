@@ -1,0 +1,62 @@
+<div class="adventure container">
+  <app-page-intro
+    emoji="🗺️"
+    title="Minha Aventura"
+    subtitle="Explore, aprenda e descubra novos mundos!"
+    color="yellow"
+  />
+
+  <app-adventure-header />
+
+  <app-world-strip [worlds]="worlds()" [selectedId]="shownWorldIdOrNull()" (selected)="openDetails($event)" />
+
+  <section class="adventure__companion" aria-label="Conversa com o mascote">
+    <app-map-companion [line]="companionLine()" size="pequeno" />
+    @if (!hasPet()) {
+      <a class="button button--secondary button--small" routerLink="/mascote">
+        <span aria-hidden="true">🥚</span>
+        Adotar um mascote para viajar comigo
+      </a>
+    }
+  </section>
+
+  @if (shownWorld(); as world) {
+    <section class="adventure__world" [attr.aria-labelledby]="'trilha-' + world.world.id">
+      <header class="adventure__world-header">
+        <h2 [id]="'trilha-' + world.world.id" class="adventure__world-title">
+          <span aria-hidden="true">{{ world.world.emoji }}</span>
+          {{ world.world.name }}
+        </h2>
+        @if (world.levels.length > 0) {
+          <p class="adventure__world-progress">
+            {{ world.completedLevels }} / {{ world.levels.length }} fases ·
+            <span aria-hidden="true">⭐</span> {{ world.stars }} / {{ world.maxStars }}
+          </p>
+        }
+      </header>
+
+      @if (world.levels.length > 0) {
+        <app-world-trail
+          [view]="world"
+          [showCompanion]="isCompanionHere()"
+          [arrivedFromLevelId]="arrivalLevelId()"
+          (lockedTapped)="explainLocked($event)"
+        />
+      } @else {
+        <p class="adventure__soon">
+          <span aria-hidden="true">⏳</span>
+          Uma nova aventura está chegando...
+        </p>
+      }
+    </section>
+  }
+
+  <app-adventure-diary />
+
+  <p class="adventure__free-play">
+    Quer jogar sem seguir a trilha?
+    <a routerLink="/jogos">Abra os jogos livres</a>.
+  </p>
+</div>
+
+<app-world-details [view]="detailsView()" (closed)="closeDetails()" (shown)="showWorld($event)" />
