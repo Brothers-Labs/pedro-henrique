@@ -8,7 +8,8 @@ import type { LevelBlueprint, LevelObject } from '../models/level.model';
  * Em vez de regras do tipo "buraco de no máximo quatro células", ele simula os
  * pulos de verdade — com a mesma gravidade do jogo e um impulso um pouco menor
  * que o real — a partir de cada chão alcançado. Paredes, tetos, molas,
- * plataformas de mão única e lava entram na conta como no jogo.
+ * plataformas de mão única, lava e água entram na conta como no jogo. Na água
+ * o Pedro nada para qualquer lado e salta para fora pela superfície.
  *
  * É conservador de propósito: aprova só o que uma criança consegue fazer sem
  * precisar de um pulo perfeito. Inimigos e power-ups ficam fora da conta.
@@ -20,6 +21,7 @@ const Surface = {
   OneWay: 2,
   Hazard: 3,
   Spring: 4,
+  Water: 5,
 } as const;
 
 type Surface = (typeof Surface)[keyof typeof Surface];
@@ -107,6 +109,9 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
       case 'hazard':
         mark(object.x, object.y, Surface.Hazard);
         break;
+      case 'water':
+        mark(object.x, object.y, Surface.Water);
+        break;
       case 'none':
         break;
     }
@@ -150,8 +155,9 @@ function surfaceAt(grid: Grid, x: number, y: number): Surface {
   return grid.surfaces[y * grid.width + x] as Surface;
 }
 
+/** A água conta como apoio: quem cai nela boia e pode nadar de volta para cima. */
 function isSupport(surface: Surface): boolean {
-  return surface === Surface.Solid || surface === Surface.OneWay || surface === Surface.Spring;
+  return surface === Surface.Solid || surface === Surface.OneWay || surface === Surface.Spring || surface === Surface.Water;
 }
 
 function isStandable(grid: Grid, x: number, y: number): boolean {
@@ -162,7 +168,7 @@ function isStandable(grid: Grid, x: number, y: number): boolean {
     body !== Surface.Solid &&
     body !== Surface.Hazard &&
     head !== Surface.Solid &&
-    isSupport(surfaceAt(grid, x, y + 1))
+    (body === Surface.Water || isSupport(surfaceAt(grid, x, y + 1)))
   );
 }
 
@@ -231,6 +237,18 @@ function movesFrom(grid: Grid, touched: Uint8Array, x: number, y: number): Cell[
   const speed = VALIDATION_PHYSICS.horizontalSpeed;
   const isOnSpring = surfaceAt(grid, x, y + 1) === Surface.Spring;
   const launch = isOnSpring ? VALIDATION_PHYSICS.springVelocity : VALIDATION_PHYSICS.jumpVelocity;
+  const isSwimming = surfaceAt(grid, x, y) === Surface.Water || surfaceAt(grid, x, y + 1) === Surface.Water;
+  // Com a cabeça debaixo d'água não há salto: só braçadas, uma célula por vez.
+  const isUnderwater = surfaceAt(grid, x, y - 1) === Surface.Water;
+
+  if (isSwimming) {
+    for (const row of [y - 1, y + 1]) {
+      if (isStandable(grid, x, row)) {
+        touch(grid, touched, x, row);
+        landings.push({ x, y: row });
+      }
+    }
+  }
 
   for (const direction of [-1, 1]) {
     const neighbor = x + direction;
@@ -238,7 +256,7 @@ function movesFrom(grid: Grid, touched: Uint8Array, x: number, y: number): Cell[
     if (isStandable(grid, neighbor, y)) {
       touch(grid, touched, neighbor, y);
       landings.push({ x: neighbor, y });
-    } else if (isOpen(grid, neighbor, y)) {
+    } else if (!isUnderwater && isOpen(grid, neighbor, y)) {
       // Andar para fora da borda e cair, devagar ou correndo. A queda começa
       // com o corpo inteiro já na célula vizinha, fora do chão de origem.
       const edgeX = centerX + direction * (TILE_SIZE / 2 + VALIDATION_PHYSICS.halfBodyWidth + 1);
@@ -248,12 +266,18 @@ function movesFrom(grid: Grid, touched: Uint8Array, x: number, y: number): Cell[
       }
     }
 
+    if (isUnderwater) {
+      continue;
+    }
+
     for (const fraction of [0.3, 0.6, 1]) {
       landings.push(...simulate(grid, touched, centerX, feetY, direction * speed * fraction, -launch));
     }
   }
 
-  landings.push(...simulate(grid, touched, centerX, feetY, 0, -launch));
+  if (!isUnderwater) {
+    landings.push(...simulate(grid, touched, centerX, feetY, 0, -launch));
+  }
 
   return landings;
 }

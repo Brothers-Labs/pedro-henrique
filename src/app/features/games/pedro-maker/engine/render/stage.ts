@@ -42,6 +42,7 @@ const SUN_COLORS: Readonly<Partial<Record<LevelTheme, string>>> = {
   estrelas: '#c9b8ff',
   castelo: '#d9d4ff',
   praia: '#fff1d6',
+  classico: '#fffaf0',
 };
 
 /**

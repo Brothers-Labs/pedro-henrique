@@ -1,4 +1,4 @@
-import { PLAYER_PHYSICS, POWER_UP_DURATION_MS } from '../../config/physics.config';
+import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SWIM_PHYSICS } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { InputSnapshot } from '../input/input-snapshot';
@@ -13,6 +13,17 @@ export interface PlayerHost {
   playSound(cue: MakerSoundCue): void;
   onPowerUpEnded(kind: PowerUpKind): void;
 }
+
+/** O que há em volta do Pedro neste passo, medido pela partida. */
+export interface PlayerSurroundings {
+  readonly isOnIce: boolean;
+  readonly isInWater: boolean;
+  /** Dentro da água, mas com a cabeça para fora: a braçada vira salto. */
+  readonly isAtWaterSurface: boolean;
+}
+
+/** Poderes que duram até proteger de um toque, em vez de acabar com o tempo. */
+const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(['shield', 'mushroom', 'fire-flower']);
 
 /** Viagem até o centro do portal, desenhada pela tela a partir destes pontos. */
 export interface Celebration {
@@ -38,8 +49,8 @@ const RUN_DUST_SPEED = 200;
  *
  * Aqui mora a sensação do controle: aceleração e freio suaves, gelo
  * escorregadio, pulo que perdoa o botão apertado um pouquinho cedo ou tarde,
- * pulo curto ao soltar o botão, pulo duplo com a Asa e a piscada de
- * invencibilidade depois de um toque.
+ * pulo curto ao soltar o botão, pulo duplo com a Asa, braçadas na água e a
+ * piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
@@ -50,10 +61,11 @@ export class Player {
   mode: PlayerMode = 'IDLE';
   /** 1 olhando para a direita, -1 para a esquerda. */
   facing: 1 | -1 = 1;
-  hasShield = false;
+  isInWater = false;
   celebration: Celebration | null = null;
 
   private readonly timedPowerUps = new Map<PowerUpKind, number>();
+  private readonly protections = new Set<PowerUpKind>();
   private lastGroundedAt = Number.NEGATIVE_INFINITY;
   private lastJumpPressedAt = Number.NEGATIVE_INFINITY;
   private isJumpCut = true;
@@ -80,12 +92,21 @@ export class Player {
     return this.mode !== 'DEAD' && this.mode !== 'WIN';
   }
 
+  get hasShield(): boolean {
+    return this.protections.has('shield');
+  }
+
+  /** Com o Super Cogumelo (ou a Flor de Fogo, que também faz crescer) o Pedro fica grande. */
+  get isBig(): boolean {
+    return this.protections.has('mushroom');
+  }
+
   isInvincible(now: number): boolean {
     return now < this.invincibleUntil;
   }
 
   hasPowerUp(kind: PowerUpKind): boolean {
-    return kind === 'shield' ? this.hasShield : this.timedPowerUps.has(kind);
+    return PROTECTIVE_POWER_UPS.has(kind) ? this.protections.has(kind) : this.timedPowerUps.has(kind);
   }
 
   placeFeetAt(feetX: number, feetY: number): void {
@@ -93,7 +114,7 @@ export class Player {
   }
 
   /** Decide a velocidade deste passo; a física move o corpo logo depois. */
-  control(now: number, deltaMs: number, input: InputSnapshot, isOnIce: boolean): void {
+  control(now: number, deltaMs: number, input: InputSnapshot, surroundings: PlayerSurroundings): void {
     this.expirePowerUps(now);
 
     if (!this.isActive) {
@@ -107,10 +128,17 @@ export class Player {
       this.hasUsedDoubleJump = false;
     }
 
+    this.handleWater(surroundings.isInWater);
     this.handleLanding(grounded);
-    this.moveHorizontally(deltaMs / 1000, input, grounded, isOnIce);
+    this.moveHorizontally(deltaMs / 1000, input, grounded, surroundings.isOnIce);
     this.kickUpDust(now, grounded);
-    this.handleJump(now, input, grounded);
+
+    if (this.isInWater) {
+      this.handleSwim(input, surroundings.isAtWaterSurface);
+    } else {
+      this.handleJump(now, input, grounded);
+    }
+
     this.updateMode(now, grounded);
 
     this.wasGrounded = grounded;
@@ -131,17 +159,26 @@ export class Player {
   }
 
   grantPowerUp(kind: PowerUpKind, now: number): void {
-    if (kind === 'shield') {
-      this.hasShield = true;
+    if (!PROTECTIVE_POWER_UPS.has(kind)) {
+      this.timedPowerUps.set(kind, now + POWER_UP_DURATION_MS[kind]);
       return;
     }
 
-    this.timedPowerUps.set(kind, now + POWER_UP_DURATION_MS[kind]);
+    this.protections.add(kind);
+
+    if (kind === 'fire-flower') {
+      this.protections.add('mushroom');
+    }
+  }
+
+  /** Tira um poder de proteção, gasto num toque. */
+  losePowerUp(kind: PowerUpKind): void {
+    this.protections.delete(kind);
   }
 
   clearPowerUps(): void {
     this.timedPowerUps.clear();
-    this.hasShield = false;
+    this.protections.clear();
   }
 
   makeInvincible(now: number, durationMs: number): void {
@@ -187,10 +224,35 @@ export class Player {
     this.makeInvincible(now, invincibilityMs);
   }
 
+  /** Dentro da água a gravidade quase some e a queda fica lenta; ao entrar ou sair, espirra. */
+  private handleWater(isInWater: boolean): void {
+    if (isInWater !== this.isInWater) {
+      this.host.effects.burst('bubble', centerX(this.body), isInWater ? bottom(this.body) : this.body.y, 10);
+    }
+
+    this.isInWater = isInWater;
+    this.body.gravityScale = isInWater ? SWIM_PHYSICS.gravityScale : 1;
+    this.body.maxFallSpeed = isInWater ? SWIM_PHYSICS.maxSinkSpeed : PLAYER_PHYSICS.maxFallSpeed;
+  }
+
+  /** Cada apertada de pulo é uma braçada; com a cabeça para fora, um salto para sair da água. */
+  private handleSwim(input: InputSnapshot, isAtSurface: boolean): void {
+    if (!input.jumpPressed) {
+      return;
+    }
+
+    const velocity = isAtSurface ? this.jumpVelocity() * SWIM_PHYSICS.leapMultiplier : SWIM_PHYSICS.strokeVelocity;
+
+    this.jump(velocity);
+    this.isJumpCut = true;
+    this.host.effects.burst('bubble', centerX(this.body), this.body.y, 4);
+  }
+
   private moveHorizontally(seconds: number, input: InputSnapshot, grounded: boolean, isOnIce: boolean): void {
     const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     const turbo = this.timedPowerUps.has('turbo') ? PLAYER_PHYSICS.turboMultiplier : 1;
-    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * turbo;
+    const swim = this.isInWater ? SWIM_PHYSICS.speedMultiplier : 1;
+    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * turbo * swim;
 
     let rate: number;
 

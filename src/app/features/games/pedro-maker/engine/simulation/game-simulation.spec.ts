@@ -1,8 +1,8 @@
 import { DIFFICULTY_RULES } from '../../config/rules.config';
-import { PLAYER_PHYSICS, TILE_SIZE } from '../../config/physics.config';
+import { PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
-import type { LevelBlueprint } from '../../models/level.model';
+import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { GameSimulation, STEP_MS } from './game-simulation';
@@ -50,6 +50,19 @@ function jump(harness: Harness, holdSeconds: number, input: Partial<InputSnapsho
 
 function lastHud(events: readonly GameSessionEvent[]): HudState | undefined {
   return events.filter((event) => event.type === 'hud').at(-1)?.hud;
+}
+
+/** Fase plana com um poder logo à frente do início: dois passos e o Pedro pega. */
+function levelWithPowerUp(powerUp: PowerUpKind): LevelBuilder {
+  return flatLevel().add('power-up', 3, SURFACE - 1, { powerUp });
+}
+
+/** Encosta o Pedro de lado no primeiro inimigo da fase. */
+function bumpIntoFirstEnemy(harness: Harness): void {
+  const enemy = harness.simulation.enemies[0];
+
+  harness.simulation.player.placeFeetAt(enemy.body.x - 10, bottom(enemy.body));
+  run(harness, 0.2, { right: true });
 }
 
 describe('Simulação do Pedro Maker', () => {
@@ -229,6 +242,95 @@ describe('Simulação do Pedro Maker', () => {
 
     expect(harness.events.filter((event) => event.type === 'completed').length).toBe(1);
     expect(harness.simulation.isFinished).toBeTrue();
+  });
+
+  it('cresce com o Super Cogumelo e encolhe no toque, sem perder coração', () => {
+    const harness = start(levelWithPowerUp('mushroom').add('spiky', 14, SURFACE - 1).build(META));
+    run(harness, 0.4, { right: true });
+
+    expect(harness.simulation.player.isBig).toBeTrue();
+
+    bumpIntoFirstEnemy(harness);
+
+    expect(harness.simulation.player.isBig).toBeFalse();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+    expect(harness.events).toContain({ type: 'power-up-ended', kind: 'mushroom' });
+  });
+
+  it('derruba o inimigo só de encostar com a Super Estrela', () => {
+    const harness = start(levelWithPowerUp('star').add('spiky', 14, SURFACE - 1).build(META));
+    run(harness, 0.4, { right: true });
+
+    bumpIntoFirstEnemy(harness);
+
+    expect(harness.simulation.enemies[0]?.isDefeated ?? true).toBeTrue();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  it('enche os corações com o Cogumelo Vida', () => {
+    const harness = start(flatLevel().add('spiky', 14, SURFACE - 1).add('power-up', 25, SURFACE - 1, { powerUp: 'one-up' }).build(META));
+    run(harness, 0.2);
+
+    bumpIntoFirstEnemy(harness);
+
+    expect(lastHud(harness.events)?.hearts).toBe(2);
+
+    harness.simulation.player.placeFeetAt(25.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+    expect(harness.simulation.player.hasPowerUp('one-up')).toBeFalse();
+  });
+
+  it('lança bolas de fogo com a Flor de Fogo e derruba o slime', () => {
+    const harness = start(levelWithPowerUp('fire-flower').add('slime', 12, SURFACE - 1).build(META));
+    run(harness, 0.4, { right: true });
+
+    expect(harness.simulation.player.isBig).toBeTrue();
+
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 1.5);
+
+    expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'fireball')).toBeTrue();
+    expect(harness.simulation.enemies.length).toBe(0);
+  });
+
+  it('não lança fogo sem a Flor de Fogo', () => {
+    const harness = start(flatLevel().build(META));
+    run(harness, 0.2);
+
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+
+    expect(harness.simulation.fireballs.fireballs.length).toBe(0);
+  });
+
+  it('sorteia um poder clássico no Lucky Block', () => {
+    const harness = start(flatLevel().add('surprise', 2, SURFACE - 3, { contents: 'lucky' }).build(META));
+    run(harness, 0.2);
+
+    jump(harness, 0.4);
+
+    const prize = harness.simulation.collectibles.items.find((item) => item.kind === 'power-up');
+
+    expect(harness.simulation.blocks.blockAt(2, SURFACE - 3)?.isUsed).toBeTrue();
+    expect(CLASSIC_POWER_UPS).toContain(prize?.powerUp as (typeof CLASSIC_POWER_UPS)[number]);
+  });
+
+  it('nada na água: afunda devagar e sobe com braçadas', () => {
+    const harness = start(flatLevel().fill('water', 6, 12, SURFACE - 6, SURFACE - 1).build(META));
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(9.5 * TILE_SIZE, (SURFACE - 2) * TILE_SIZE);
+    run(harness, 0.5);
+
+    expect(player.isInWater).toBeTrue();
+    expect(player.body.vy).toBeLessThanOrEqual(SWIM_PHYSICS.maxSinkSpeed);
+
+    const before = bottom(player.body);
+
+    jump(harness, 0.25);
+
+    expect(bottom(player.body)).toBeLessThan(before);
   });
 
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {

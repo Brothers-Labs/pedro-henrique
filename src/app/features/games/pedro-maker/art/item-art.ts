@@ -73,6 +73,10 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   turbo: '#ffd23f',
   magnet: '#ff6a6a',
   wings: '#f4f1ff',
+  mushroom: '#e8343a',
+  'fire-flower': '#ff7a1f',
+  star: '#ffd23f',
+  'one-up': '#2fb84a',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -97,6 +101,16 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'wings':
       paintWing(context, color);
+      break;
+    case 'mushroom':
+    case 'one-up':
+      paintMushroom(context, color);
+      break;
+    case 'fire-flower':
+      paintFireFlower(context, color);
+      break;
+    case 'star':
+      paintPowerStar(context, color);
       break;
   }
 
@@ -161,6 +175,66 @@ function paintMagnet(context: CanvasRenderingContext2D, color: string): void {
   context.fillStyle = '#e8eef7';
   context.fillRect(8.5, 26, 5, 5);
   context.fillRect(26.5, 26, 5, 5);
+}
+
+/** Cogumelo de chapéu pintado e carinha no pé: vermelho cresce, verde dá vida. */
+function paintMushroom(context: CanvasRenderingContext2D, color: string): void {
+  roundedRect(context, 14, 19, 12, 13, 4);
+  fillAndOutline(context, '#fff1d6', 2.5);
+  context.fillStyle = OUTLINE;
+  context.fillRect(17, 23, 2, 4);
+  context.fillRect(21, 23, 2, 4);
+
+  context.beginPath();
+  context.moveTo(7, 21);
+  context.quadraticCurveTo(7, 6, 20, 6);
+  context.quadraticCurveTo(33, 6, 33, 21);
+  context.closePath();
+  fillAndOutline(context, color, 2.5);
+
+  context.fillStyle = '#ffffff';
+
+  for (const [x, y, radius] of [[20, 11, 3.5], [12, 16, 2.5], [28, 16, 2.5]] as const) {
+    circle(context, x, y, radius);
+    context.fill();
+  }
+}
+
+/** Flor de fogo: pétalas em anéis quentes sobre um caule com folhas. */
+function paintFireFlower(context: CanvasRenderingContext2D, color: string): void {
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 5;
+  context.beginPath();
+  context.moveTo(20, 20);
+  context.lineTo(20, 33);
+  context.stroke();
+  context.strokeStyle = '#2fb84a';
+  context.lineWidth = 2.5;
+  context.stroke();
+
+  for (const side of [-1, 1] as const) {
+    context.beginPath();
+    context.ellipse(20 + side * 5, 29, 5, 2.5, side * -0.4, 0, Math.PI * 2);
+    fillAndOutline(context, '#2fb84a', 2);
+  }
+
+  circle(context, 20, 15, 10);
+  fillAndOutline(context, color, 2.5);
+  circle(context, 20, 15, 6.5);
+  context.fillStyle = '#ffd23f';
+  context.fill();
+  circle(context, 20, 15, 3.5);
+  context.fillStyle = '#ffffff';
+  context.fill();
+}
+
+/** Estrela de cinco pontas com olhinhos: a invencibilidade. */
+function paintPowerStar(context: CanvasRenderingContext2D, color: string): void {
+  star(context, 20, 21, 15, 7);
+  fillAndOutline(context, color, 2.5);
+  context.fillStyle = OUTLINE;
+  context.fillRect(16, 17, 2.5, 5);
+  context.fillRect(21.5, 17, 2.5, 5);
 }
 
 function paintWing(context: CanvasRenderingContext2D, color: string): void {

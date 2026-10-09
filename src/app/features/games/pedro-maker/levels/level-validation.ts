@@ -1,9 +1,11 @@
 import { OBJECT_BEHAVIOR } from '../config/object-catalog';
-import type {
-  LevelBlueprint,
-  LevelObject,
-  LevelObjectProperties,
-  LevelObjectType,
+import {
+  type LevelBlueprint,
+  type LevelObject,
+  type LevelObjectProperties,
+  type LevelObjectType,
+  POWER_UP_KINDS,
+  SURPRISE_CONTENTS,
 } from '../models/level.model';
 
 export const LEVEL_LIMITS = {
@@ -102,8 +104,8 @@ function sanitizeProperties(value: unknown): LevelObjectProperties | null {
   }
 
   const source = value as Record<string, unknown>;
-  const contents = pickOne(source['contents'], ['coins', 'heart', 'crystal', 'power-up'] as const);
-  const powerUp = pickOne(source['powerUp'], ['super-jump', 'shield', 'turbo', 'magnet', 'wings'] as const);
+  const contents = pickOne(source['contents'], SURPRISE_CONTENTS);
+  const powerUp = pickOne(source['powerUp'], POWER_UP_KINDS);
   const axis = pickOne(source['axis'], ['horizontal', 'vertical'] as const);
   const range = typeof source['range'] === 'number' && Number.isFinite(source['range'])
     ? Math.min(12, Math.max(1, Math.trunc(source['range'])))

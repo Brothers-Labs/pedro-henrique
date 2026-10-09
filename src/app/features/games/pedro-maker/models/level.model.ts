@@ -18,13 +18,38 @@ export type LevelTheme =
   | 'vulcao'
   | 'estrelas'
   | 'castelo'
-  | 'praia';
+  | 'praia'
+  | 'classico';
 
 export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost';
 
-export type PowerUpKind = 'super-jump' | 'shield' | 'turbo' | 'magnet' | 'wings';
+/**
+ * Poderes que o Pedro pode pegar.
+ *
+ * Os quatro últimos são os clássicos dos jogos de plataforma: cogumelo que faz
+ * crescer, flor de fogo, estrela da invencibilidade e cogumelo de vida.
+ */
+export const POWER_UP_KINDS = [
+  'super-jump',
+  'shield',
+  'turbo',
+  'magnet',
+  'wings',
+  'mushroom',
+  'fire-flower',
+  'star',
+  'one-up',
+] as const;
 
-export type SurpriseContent = 'coins' | 'heart' | 'crystal' | 'power-up';
+export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
+
+/** Os poderes clássicos, que o Lucky Block sorteia. */
+export const CLASSIC_POWER_UPS = ['mushroom', 'fire-flower', 'star', 'one-up'] as const satisfies readonly PowerUpKind[];
+
+/** `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada. */
+export const SURPRISE_CONTENTS = ['coins', 'heart', 'crystal', 'power-up', 'lucky'] as const;
+
+export type SurpriseContent = (typeof SURPRISE_CONTENTS)[number];
 
 export type PlatformAxis = 'horizontal' | 'vertical';
 
@@ -36,8 +61,11 @@ export type PlatformAxis = 'horizontal' | 'vertical';
  */
 export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
 
-/** A nuvem é uma plataforma de mão única: segura quem cai de cima. */
-export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava';
+/**
+ * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
+ * segura ninguém: quem entra nela nada.
+ */
+export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava' | 'water';
 
 export type ItemType = 'coin' | 'crystal' | 'heart' | 'power-up';
 

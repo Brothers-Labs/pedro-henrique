@@ -35,6 +35,9 @@ interface HillLayer {
 const CLOUD_SPEED = 0.35;
 const STAR_COUNT = 320;
 
+/** Altura de cada degrau dos morros redondos: curva suave, mas ainda de cubos. */
+const DOME_STEP = 0.5;
+
 /**
  * O mar da praia: começa logo atrás das dunas e vai até a neblina do
  * horizonte apagar. A altura fica abaixo do topo das dunas, que viram a
@@ -61,8 +64,8 @@ interface SeaSurface {
 }
 
 /**
- * O mundo em volta da fase: morros, árvores ao longe, nuvens, estrelas e,
- * na praia, o mar.
+ * O mundo em volta da fase: morros, árvores ao longe, nuvens, estrelas, o mar
+ * na praia e os morros redondos no tema clássico.
  *
  * Tudo é gerado a partir do nome da fase — a mesma fase tem sempre a mesma
  * paisagem — e montado em poucas malhas grandes, porque o fundo não se mexe
@@ -89,6 +92,8 @@ export class SceneryView {
 
     if (palette.sea) {
       this.sea = this.buildBeach(random, material, palette.sea);
+    } else if (palette.hasRoundHills) {
+      this.root.add(this.buildRoundHills(random, material));
     } else {
       this.root.add(
         this.buildHills(random, material, {
@@ -222,6 +227,35 @@ export class SceneryView {
     sea.foam.instanceMatrix.needsUpdate = true;
   }
 
+  /**
+   * Morros redondos em duas fileiras: os da frente mais baixos e com pintinhas
+   * escuras, os de trás maiores e mais claros, sumindo na neblina.
+   */
+  private buildRoundHills(random: SeededRandom, material: MeshStandardMaterial): Mesh {
+    const boxes: VoxelBox[] = [];
+    const rows = [
+      { z: -13, depth: 3, minRadius: 7, maxRadius: 10, color: this.palette.far, spot: null },
+      { z: -6.5, depth: 2, minRadius: 4, maxRadius: 6, color: this.palette.mid, spot: darken(this.palette.mid, 0.3) },
+    ] as const;
+
+    for (const row of rows) {
+      let x = -12 + random.next() * 6;
+
+      while (x < this.grid.width + 12) {
+        const radius = row.minRadius + random.next() * (row.maxRadius - row.minRadius);
+
+        boxes.push(...dome(random, x, row.z, radius, row.depth, row.color, row.spot));
+        x += radius * 1.6 + random.next() * 8;
+      }
+    }
+
+    const mesh = new Mesh(buildBoxesGeometry(boxes), material);
+    mesh.receiveShadow = true;
+    mesh.matrixAutoUpdate = false;
+
+    return mesh;
+  }
+
   /** Morros de cubos em colunas, com a altura variando suave de uma para a outra. */
   private buildHills(random: SeededRandom, material: MeshStandardMaterial, layer: HillLayer): Mesh {
     const boxes: VoxelBox[] = [];
@@ -327,6 +361,42 @@ export class SceneryView {
     // Estrela não some na neblina: ela está além de tudo.
     this.root.add(new Points(geometry, new PointsMaterial({ color: '#ffffff', size: 0.28, fog: false })));
   }
+}
+
+/** Meia esfera achatada em degraus, com pintinhas opcionais na face da frente. */
+function dome(
+  random: SeededRandom,
+  centerX: number,
+  z: number,
+  radius: number,
+  depth: number,
+  color: string,
+  spotColor: string | null,
+): VoxelBox[] {
+  const boxes: VoxelBox[] = [];
+
+  for (let y = 0; y < radius; y += DOME_STEP) {
+    const halfWidth = Math.sqrt(radius * radius - y * y);
+
+    boxes.push(box(centerX, y + DOME_STEP / 2, z, halfWidth * 2, DOME_STEP, depth, color));
+  }
+
+  if (!spotColor) {
+    return boxes;
+  }
+
+  const front = z + depth / 2 + 0.02;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const spotX = (random.next() - 0.5) * radius * 1.4;
+    const spotY = 1 + random.next() * radius * 0.6;
+
+    if (spotX * spotX + spotY * spotY < (radius - 1) * (radius - 1)) {
+      boxes.push(box(centerX + spotX, spotY, front, 0.35, 0.9, 0.04, spotColor));
+    }
+  }
+
+  return boxes;
 }
 
 function waveHeight(x: number, z: number, seconds: number): number {

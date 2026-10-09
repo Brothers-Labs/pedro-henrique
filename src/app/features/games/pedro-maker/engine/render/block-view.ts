@@ -14,6 +14,9 @@ const BUMP_MS = 150;
 const BUMP_HEIGHT = 0.2;
 const SPRING_SQUASH_MS = 220;
 const LAVA_TOP = 0.82;
+/** A água da superfície fica um pouco abaixo do topo da célula, e ondula. */
+const WATER_TOP = 0.86;
+const WATER_OPACITY = 0.62;
 const BLOCK_SIZE = 0.98;
 
 interface BlockMesh {
@@ -33,10 +36,14 @@ export class BlockView {
 
   private readonly bricks: BlockMesh;
   private readonly surprises: BlockMesh;
+  private readonly luckyBlocks: BlockMesh;
   private readonly usedSurprises: BlockMesh;
   private readonly springs: BlockMesh;
   private readonly crumbles: BlockMesh;
   private readonly lava: InstancedMesh | null;
+  private readonly water: InstancedMesh | null;
+  /** Para cada célula de água, se ela é a de cima (a que ondula). */
+  private readonly waterSurface: readonly boolean[];
   private readonly platforms: InstancedMesh | null;
 
   private readonly matrix = new Matrix4();
@@ -53,23 +60,29 @@ export class BlockView {
 
     const byKind = (kind: InteractiveBlock['kind']): InteractiveBlock[] => system.interactive.filter((block) => block.kind === kind);
     const surpriseBlocks = byKind('surprise');
+    const isLucky = (block: InteractiveBlock): boolean => block.contents === 'lucky';
 
     this.bricks = this.blockMesh(byKind('brick'), 'brick', BLOCK_SIZE);
-    this.surprises = this.blockMesh(surpriseBlocks, 'surprise', BLOCK_SIZE);
+    this.surprises = this.blockMesh(surpriseBlocks.filter((block) => !isLucky(block)), 'surprise', BLOCK_SIZE);
+    this.luckyBlocks = this.blockMesh(surpriseBlocks.filter(isLucky), 'lucky', BLOCK_SIZE);
     this.usedSurprises = this.blockMesh(surpriseBlocks, 'surprise-used', BLOCK_SIZE);
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
     this.crumbles = this.blockMesh(byKind('crumble'), 'crumble', BLOCK_SIZE, 0.45);
     this.lava = this.buildLava();
+    this.waterSurface = this.findWaterSurface();
+    this.water = this.buildWater();
     this.platforms = this.buildPlatforms();
   }
 
   update(now: number, alpha: number): void {
     this.updateBlocks(this.bricks, now, (block) => !block.isBroken);
     this.updateBlocks(this.surprises, now, (block) => !block.isUsed);
+    this.updateBlocks(this.luckyBlocks, now, (block) => !block.isUsed);
     this.updateBlocks(this.usedSurprises, now, (block) => block.isUsed);
     this.updateBlocks(this.springs, now, () => true);
     this.updateBlocks(this.crumbles, now, (block) => !block.isHidden);
     this.updateLava(now);
+    this.updateWater(now);
     this.updatePlatforms(alpha);
   }
 
@@ -160,6 +173,59 @@ export class BlockView {
     });
 
     lava.instanceMatrix.needsUpdate = true;
+  }
+
+  private findWaterSurface(): readonly boolean[] {
+    const cells = this.system.waterCells;
+    const keys = new Set(cells.map((cell) => `${cell.x},${cell.y}`));
+
+    return cells.map((cell) => !keys.has(`${cell.x},${cell.y - 1}`));
+  }
+
+  /** Água meio transparente: dá para ver o Pedro nadando lá dentro. */
+  private buildWater(): InstancedMesh | null {
+    const cells = this.system.waterCells;
+
+    if (cells.length === 0) {
+      return null;
+    }
+
+    const region = this.atlas.lookup('water');
+    const geometry = buildTexturedBoxGeometry(1, 1, TERRAIN_DEPTH, () => region);
+    const material = new MeshStandardMaterial({
+      map: this.atlas.texture,
+      transparent: true,
+      opacity: WATER_OPACITY,
+      depthWrite: false,
+      roughness: 0.25,
+    });
+    const mesh = new InstancedMesh(geometry, material, cells.length);
+
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 1;
+    this.root.add(mesh);
+
+    return mesh;
+  }
+
+  private updateWater(now: number): void {
+    const water = this.water;
+
+    if (!water) {
+      return;
+    }
+
+    this.system.waterCells.forEach((cell, index) => {
+      const isSurface = this.waterSurface[index] ?? false;
+      const height = isSurface ? WATER_TOP + Math.sin(now / 520 + cell.x * 0.8) * 0.05 : 1;
+
+      this.position.set(cell.x + 0.5, this.space.y((cell.y + 1) * TILE_SIZE) + height / 2, 0);
+      this.scale.set(1, height, 1);
+      this.matrix.compose(this.position, this.rotation, this.scale);
+      water.setMatrixAt(index, this.matrix);
+    });
+
+    water.instanceMatrix.needsUpdate = true;
   }
 
   private buildPlatforms(): InstancedMesh | null {

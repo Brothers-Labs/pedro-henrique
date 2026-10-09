@@ -13,8 +13,8 @@ export const ROCK_HEIGHT = 32;
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
  * floresta e na neve, cacto no deserto, cristal na caverna, rocha em chamas
- * no vulcão, cogumelo mágico nas estrelas, tocha no castelo e coqueiro na
- * praia.
+ * no vulcão, cogumelo mágico nas estrelas, tocha no castelo, coqueiro na
+ * praia e árvore redonda no clássico.
  */
 export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, palette: ThemePalette): void {
   switch (theme) {
@@ -38,6 +38,7 @@ export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, 
       paintTorch(context);
       return;
     case 'vale':
+    case 'classico':
       paintRoundTree(context, palette);
       return;
     case 'praia':

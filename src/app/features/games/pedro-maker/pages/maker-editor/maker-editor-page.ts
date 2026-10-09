@@ -94,6 +94,7 @@ const SURPRISE_OPTIONS: readonly { readonly id: SurpriseContent; readonly label:
   { id: 'heart', label: '❤️ Coração' },
   { id: 'crystal', label: '💎 Cristal' },
   { id: 'power-up', label: '⚡ Poder' },
+  { id: 'lucky', label: '🍀 Sorte (Lucky Block)' },
 ];
 
 const POWER_UP_OPTIONS = (Object.keys(POWER_UP_LABELS) as PowerUpKind[]).map((id) => ({ id, ...POWER_UP_LABELS[id] }));

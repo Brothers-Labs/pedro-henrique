@@ -47,6 +47,12 @@ describe('Validador de alcance', () => {
     expect(analyzeReachability(builder.build(META)).isPortalReachable).toBeFalse();
   });
 
+  it('atravessa nadando um lago largo demais para o pulo', () => {
+    const builder = flatLevel().clearColumns(15, 24).fill('water', 15, 24, 10, 14).add('portal', 35, 11);
+
+    expect(analyzeReachability(builder.build(META)).isPortalReachable).toBeTrue();
+  });
+
   it('atravessa portas ligadas pelo mesmo par', () => {
     const builder = flatLevel()
       .fill('stone', 20, 21, 0, 11)

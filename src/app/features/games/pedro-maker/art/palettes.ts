@@ -21,6 +21,8 @@ export interface ThemePalette {
   readonly hasClouds: boolean;
   /** Cor do mar no fundo do cenário; `null` nos temas sem mar. */
   readonly sea: string | null;
+  /** Morros redondos com pintinhas e moitas, como nos jogos de plataforma clássicos. */
+  readonly hasRoundHills: boolean;
 }
 
 export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
@@ -42,6 +44,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: true,
     sea: null,
+    hasRoundHills: false,
   },
   floresta: {
     skyTop: '#86d5c6',
@@ -61,6 +64,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: true,
     sea: null,
+    hasRoundHills: false,
   },
   caverna: {
     skyTop: '#140f2b',
@@ -80,6 +84,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: true,
     hasClouds: false,
     sea: null,
+    hasRoundHills: false,
   },
   deserto: {
     skyTop: '#ffc27a',
@@ -99,6 +104,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: true,
     sea: null,
+    hasRoundHills: false,
   },
   gelo: {
     skyTop: '#94d3ff',
@@ -118,6 +124,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: true,
     sea: null,
+    hasRoundHills: false,
   },
   vulcao: {
     skyTop: '#2e1428',
@@ -137,6 +144,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: false,
     sea: null,
+    hasRoundHills: false,
   },
   estrelas: {
     skyTop: '#120c33',
@@ -156,6 +164,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: false,
     sea: null,
+    hasRoundHills: false,
   },
   castelo: {
     skyTop: '#241c46',
@@ -175,6 +184,7 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: false,
     sea: null,
+    hasRoundHills: false,
   },
   praia: {
     skyTop: '#4fb3ff',
@@ -195,5 +205,27 @@ export const THEME_PALETTES: Readonly<Record<LevelTheme, ThemePalette>> = {
     isDark: false,
     hasClouds: true,
     sea: '#2b9fe0',
+    hasRoundHills: false,
+  },
+  classico: {
+    // O céu azul chapado e o chão de tijolinho dos jogos de plataforma de antigamente.
+    skyTop: '#5c94fc',
+    skyBottom: '#7fb0ff',
+    far: '#3fbf3f',
+    mid: '#00a800',
+    near: '#2fc22f',
+    surface: '#e4743a',
+    surfaceLight: '#ffb48a',
+    soil: '#c84c0c',
+    soilDark: '#8a2e00',
+    stone: '#b0b4c8',
+    foliage: '#3fd13f',
+    foliageDark: '#00862a',
+    trunk: '#9a5a2a',
+    flower: '#ff4f4f',
+    isDark: false,
+    hasClouds: true,
+    sea: null,
+    hasRoundHills: true,
   },
 };

@@ -13,6 +13,8 @@ export interface BlockHost {
   playSound(cue: MakerSoundCue): void;
   addCoins(amount: number, x: number, y: number): void;
   spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void;
+  /** Sorteio do Lucky Block; quem tem o dado é a partida, para a mesma fase sortear igual. */
+  pickLuckyPowerUp(): PowerUpKind;
 }
 
 export interface SpawnExtra {
@@ -84,10 +86,12 @@ export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
   readonly platforms: MovingPlatform[] = [];
   readonly hazards: Hazard[] = [];
-  /** Células de lava, para a tela desenhar. */
+  /** Células de lava e de água, para a tela desenhar. */
   readonly lavaCells: { readonly x: number; readonly y: number }[] = [];
+  readonly waterCells: { readonly x: number; readonly y: number }[] = [];
 
   private readonly byCell = new Map<number, InteractiveBlock>();
+  private readonly waterKeys = new Set<number>();
 
   constructor(
     objects: readonly LevelObject[],
@@ -107,12 +111,22 @@ export class BlockSystem {
         this.lavaCells.push({ x: object.x, y: object.y });
         // A lava queima a partir de um pouco abaixo da superfície: encostar de raspão não conta.
         this.hazards.push({ x: x + 4, y: y + 14, width: TILE_SIZE - 8, height: TILE_SIZE - 14 });
+      } else if (object.type === 'water') {
+        this.waterCells.push({ x: object.x, y: object.y });
+        this.waterKeys.add(this.key(object.x, object.y));
       }
     }
   }
 
   blockAt(cellX: number, cellY: number): InteractiveBlock | undefined {
     return this.byCell.get(this.key(cellX, cellY));
+  }
+
+  isWaterAtPoint(worldX: number, worldY: number): boolean {
+    const cellX = Math.floor(worldX / TILE_SIZE);
+    const cellY = Math.floor(worldY / TILE_SIZE);
+
+    return this.grid.contains(cellX, cellY) && this.waterKeys.has(this.key(cellX, cellY));
   }
 
   touchesHazard(body: PhysicsBody): boolean {
@@ -249,6 +263,11 @@ export class BlockSystem {
         return;
       case 'power-up':
         this.host.spawnCollectible('power-up', x, y, { powerUp: block.powerUp ?? 'super-jump' });
+        return;
+      case 'lucky':
+        this.host.spawnCollectible('power-up', x, y, { powerUp: this.host.pickLuckyPowerUp() });
+        this.host.effects.burst('sparkle', x, y + TILE_SIZE / 2, 14);
+        this.host.effects.floatingText(x, y - TILE_SIZE / 2, '🍀 SORTE!', '#ffe066');
         return;
       case 'coins':
       case undefined:
