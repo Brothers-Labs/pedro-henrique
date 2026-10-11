@@ -62,6 +62,9 @@ export interface MakerStats {
   readonly customLevelsSaved: number;
 }
 
+/** Herói que a criança controla nas fases e no kart. */
+export type HeroId = 'pedro' | 'gui';
+
 /** Visual do Pedro no jogo. Cada campo é o id de uma opção do catálogo. */
 export interface CharacterLook {
   readonly cap: string;
@@ -85,6 +88,7 @@ export interface MakerProgress {
   readonly totalXp: number;
   readonly achievements: readonly MakerAchievementId[];
   readonly stats: MakerStats;
+  readonly hero: HeroId;
   readonly look: CharacterLook;
   /** Opções de visual já compradas com moedas. */
   readonly ownedLookOptions: readonly string[];

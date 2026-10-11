@@ -1,4 +1,5 @@
-import type { CharacterLook } from '../models/progress.model';
+import type { CharacterLook, HeroId } from '../models/progress.model';
+import { heroDefinition } from './hero.config';
 
 export type LookCategory = keyof CharacterLook;
 
@@ -98,20 +99,29 @@ export function lookOption(id: string): LookOption | undefined {
   return OPTIONS_BY_ID.get(id);
 }
 
-/** Cores prontas para o pintor do personagem, com recuo para o visual padrão. */
+/** Herói e cores prontos para o pintor do personagem, com recuo para o visual padrão. */
 export interface CharacterPalette {
+  readonly hero: HeroId;
   readonly cap: string;
   readonly shirt: string;
   readonly backpack: string;
   readonly backpackStyle: BackpackStyle;
 }
 
-export function paletteFor(look: CharacterLook): CharacterPalette {
+/** Heróis de roupa fixa ignoram o visual escolhido: o Gui é sempre o Gui de boné verde. */
+export function paletteFor(look: CharacterLook, hero: HeroId): CharacterPalette {
+  const outfit = heroDefinition(hero).outfit;
+
+  if (outfit) {
+    return { hero, ...outfit };
+  }
+
   const cap = lookOption(look.cap) ?? lookOption(DEFAULT_LOOK.cap);
   const shirt = lookOption(look.shirt) ?? lookOption(DEFAULT_LOOK.shirt);
   const backpack = lookOption(look.backpack) ?? lookOption(DEFAULT_LOOK.backpack);
 
   return {
+    hero,
     cap: cap?.color ?? '#2b7fd9',
     shirt: shirt?.color ?? '#ff8a3d',
     backpack: backpack?.color ?? '#4cc26b',
