@@ -245,7 +245,7 @@ export class MakerGameHost {
           parent: this.stage().nativeElement,
           blueprint: this.blueprint(),
           rules: this.settingsService.difficultyRules(),
-          look: this.progress.look(),
+          character: this.progress.character(),
           // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.
           effectsEnabled: settings.effects && this.motion.isAllowed(),
           isTouch: this.showsTouchControls(),

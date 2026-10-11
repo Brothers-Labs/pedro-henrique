@@ -1,3 +1,4 @@
+import { heroDefinition } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
 import { SeededRandom, seedFromText } from '../../levels/seeded-random';
@@ -9,7 +10,7 @@ import {
   type LevelObjectType,
   type PowerUpKind,
 } from '../../models/level.model';
-import type { LevelRunResult } from '../../models/progress.model';
+import type { HeroId, LevelRunResult } from '../../models/progress.model';
 import type { GameSessionEvent, GameSessionListener, MakerSoundCue } from '../../models/session.model';
 import type { DifficultyRules } from '../../models/settings.model';
 import type { InputSnapshot } from '../input/input-snapshot';
@@ -46,6 +47,7 @@ function isEnemyKind(type: LevelObjectType): type is EnemyKind {
 
 export interface SimulationOptions {
   readonly blueprint: LevelBlueprint;
+  readonly hero: HeroId;
   readonly rules: DifficultyRules;
   readonly isTouch: boolean;
   readonly listener: GameSessionListener;
@@ -188,7 +190,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.respawnX = (start.x + 0.5) * TILE_SIZE;
     this.respawnY = (start.y + 1) * TILE_SIZE;
 
-    return new Player(this.respawnX, this.respawnY, this);
+    return new Player(this.respawnX, this.respawnY, this, heroDefinition(this.options.hero).abilities);
   }
 
   private createEnemies(objects: readonly LevelObject[]): void {

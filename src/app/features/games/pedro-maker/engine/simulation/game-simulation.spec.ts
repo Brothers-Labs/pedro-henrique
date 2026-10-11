@@ -1,8 +1,10 @@
+import { heroDefinition } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import { PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
 import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
+import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { GameSimulation, STEP_MS } from './game-simulation';
@@ -20,10 +22,11 @@ function flatLevel(width = 40): LevelBuilder {
   return new LevelBuilder(width, 15).ground(0, width - 1, SURFACE).add('start', 2, SURFACE - 1).add('portal', width - 3, SURFACE - 1);
 }
 
-function start(blueprint: LevelBlueprint): Harness {
+function start(blueprint: LevelBlueprint, hero: HeroId = 'pedro'): Harness {
   const events: GameSessionEvent[] = [];
   const simulation = new GameSimulation({
     blueprint,
+    hero,
     rules: DIFFICULTY_RULES.aventura,
     isTouch: false,
     listener: (event) => events.push(event),
@@ -46,6 +49,34 @@ function run(harness: Harness, seconds: number, input: Partial<InputSnapshot> = 
 function jump(harness: Harness, holdSeconds: number, input: Partial<InputSnapshot> = {}): void {
   harness.simulation.step({ ...IDLE_INPUT, ...input, jumpHeld: true, jumpPressed: true });
   run(harness, holdSeconds, { ...input, jumpHeld: true });
+}
+
+/** Altura máxima de um pulo segurado até o fim, a partir do chão. */
+function jumpApex(harness: Harness): number {
+  run(harness, 0.2);
+
+  const groundY = bottom(harness.simulation.player.body);
+  let highest = groundY;
+
+  harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true, jumpPressed: true });
+
+  for (let step = 0; step < 90; step += 1) {
+    harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
+    highest = Math.min(highest, bottom(harness.simulation.player.body));
+  }
+
+  return groundY - highest;
+}
+
+/** Distância percorrida entre soltar o direcional, já na velocidade máxima, e parar. */
+function brakingDistance(harness: Harness): number {
+  run(harness, 1, { right: true });
+
+  const releasedAt = centerX(harness.simulation.player.body);
+
+  run(harness, 1);
+
+  return centerX(harness.simulation.player.body) - releasedAt;
 }
 
 function lastHud(events: readonly GameSessionEvent[]): HudState | undefined {
@@ -79,23 +110,26 @@ describe('Simulação do Pedro Maker', () => {
   });
 
   it('pula a altura que o validador de fases espera', () => {
-    const harness = start(flatLevel().build(META));
-    run(harness, 0.2);
-
-    const groundY = bottom(harness.simulation.player.body);
-    let highest = groundY;
-
-    harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true, jumpPressed: true });
-
-    for (let step = 0; step < 90; step += 1) {
-      harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
-      highest = Math.min(highest, bottom(harness.simulation.player.body));
-    }
-
+    const apex = jumpApex(start(flatLevel().build(META)));
     const expectedApex = PLAYER_PHYSICS.jumpVelocity ** 2 / (2 * 1900);
 
-    expect(groundY - highest).toBeGreaterThan(expectedApex * 0.9);
-    expect(groundY - highest).toBeLessThan(expectedApex * 1.1);
+    expect(apex).toBeGreaterThan(expectedApex * 0.9);
+    expect(apex).toBeLessThan(expectedApex * 1.1);
+  });
+
+  it('faz o Gui pular mais alto que o Pedro', () => {
+    const pedroApex = jumpApex(start(flatLevel().build(META), 'pedro'));
+    const guiApex = jumpApex(start(flatLevel().build(META), 'gui'));
+    const expectedRatio = heroDefinition('gui').abilities.jumpMultiplier ** 2;
+
+    expect(guiApex / pedroApex).toBeCloseTo(expectedRatio, 1);
+  });
+
+  it('faz o Gui escorregar mais que o Pedro ao frear', () => {
+    const pedro = start(flatLevel().build(META), 'pedro');
+    const gui = start(flatLevel().build(META), 'gui');
+
+    expect(brakingDistance(gui)).toBeGreaterThan(brakingDistance(pedro) * 1.5);
   });
 
   it('corta o pulo quando o botão é solto cedo', () => {
