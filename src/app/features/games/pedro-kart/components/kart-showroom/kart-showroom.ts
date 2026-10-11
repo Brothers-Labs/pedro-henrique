@@ -14,7 +14,6 @@ import {
 } from '@angular/core';
 
 import { MotionPreferenceService } from '../../../../../core/services/motion-preference.service';
-import { paletteFor } from '../../../pedro-maker/config/character.config';
 import { MakerProgressService } from '../../../pedro-maker/services/maker-progress.service';
 import type { Showroom } from '../../engine/showroom';
 import type { KartSetup } from '../../models/kart.model';
@@ -59,7 +58,7 @@ export class KartShowroom {
   readonly label = input('Vitrine do kart');
 
   private readonly zone = inject(NgZone);
-  private readonly look = inject(MakerProgressService).look;
+  private readonly character = inject(MakerProgressService).character;
   private readonly motion = inject(MotionPreferenceService);
   private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
   private showroom: Showroom | null = null;
@@ -95,7 +94,7 @@ export class KartShowroom {
         launchShowroom({
           parent: this.stage().nativeElement,
           setup: this.setup(),
-          driver: paletteFor(this.look()),
+          driver: this.character(),
           isAnimated: this.motion.isAllowed(),
         }),
       );

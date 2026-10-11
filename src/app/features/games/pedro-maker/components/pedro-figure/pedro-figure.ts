@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { paintPedroIcon } from '../../art/texture-catalog';
-import { paletteFor } from '../../config/character.config';
-import type { CharacterLook } from '../../models/progress.model';
+import { paintCharacterIcon } from '../../art/texture-catalog';
+import type { CharacterPalette } from '../../config/character.config';
+import { heroDefinition } from '../../config/hero.config';
 
 /**
- * O Pedro desenhado com o visual escolhido, fora do jogo.
+ * O herói desenhado com o visual escolhido, fora do jogo.
  *
  * Usa o mesmo pintor do motor: o boné que aparece no menu é exatamente o
  * boné que aparece na fase. A imagem vira data URL uma vez por visual.
@@ -13,7 +13,7 @@ import type { CharacterLook } from '../../models/progress.model';
 @Component({
   selector: 'app-pedro-figure',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<img class="figure" [src]="source()" [alt]="label()" width="64" height="72" decoding="async" />`,
+  template: `<img class="figure" [src]="source()" [alt]="alt()" width="64" height="72" decoding="async" />`,
   styles: `
     :host {
       display: inline-block;
@@ -27,9 +27,12 @@ import type { CharacterLook } from '../../models/progress.model';
   `,
 })
 export class PedroFigure {
-  readonly look = input.required<CharacterLook>();
-  readonly label = input('O Pedro, personagem do jogo');
+  readonly character = input.required<CharacterPalette>();
+  /** Texto alternativo; vazio quando a figura é só decoração ao lado do nome. */
+  readonly label = input<string>();
 
-  /** Pintado em 3x: a vitrine do menu mostra o Pedro bem maior que no jogo. */
-  protected readonly source = computed(() => paintPedroIcon(paletteFor(this.look()), 3).toDataURL());
+  protected readonly alt = computed(() => this.label() ?? `O ${heroDefinition(this.character().hero).name}, personagem do jogo`);
+
+  /** Pintado em 3x: a vitrine do menu mostra o herói bem maior que no jogo. */
+  protected readonly source = computed(() => paintCharacterIcon(this.character(), 3).toDataURL());
 }

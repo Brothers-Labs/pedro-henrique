@@ -1,20 +1,11 @@
 import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
 
-import { darken, lighten } from '../../../art/canvas';
 import type { CharacterPalette } from '../../../config/character.config';
 import { BIG_PEDRO_SCALE } from '../../../config/physics.config';
 import type { PlayerMode } from '../../simulation/player';
 import { disposeTree } from '../dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from '../voxel-geometry';
-
-const SKIN = '#f2c29b';
-const HAIR = '#5a3a22';
-const JEANS = '#3b5bdb';
-const SHOE = '#2a2350';
-const EYE = '#2a2350';
-
-const HIP_Y = 0.42;
-const SHOULDER_Y = 0.84;
+import { characterParts } from './character-parts';
 
 /** Quanto o Pedro vira para a câmera ao olhar para os lados: dá para ver o rosto. */
 const TURN_TOWARD_CAMERA = 0.5;
@@ -41,7 +32,7 @@ export interface PedroPose {
 }
 
 /**
- * O Pedro de cubos.
+ * O herói de cubos — o Pedro ou o Gui, conforme a escolha da criança.
  *
  * Cinco peças que se mexem — tronco com cabeça, dois braços e duas pernas —,
  * cada uma uma malha só. A animação é feita em código: pernas e braços
@@ -68,13 +59,15 @@ export class PedroModel {
   private previousMode: PlayerMode = 'IDLE';
 
   constructor(palette: CharacterPalette) {
-    this.root.name = 'pedro';
-    this.body.add(this.mesh(pedroUpperBody(palette)));
-    this.leftArm = this.limb(pedroArm(palette.shirt), -0.33, SHOULDER_Y);
-    this.rightArm = this.limb(pedroArm(palette.shirt), 0.33, SHOULDER_Y);
-    this.leftLeg = this.limb(pedroLeg(), -0.12, HIP_Y);
-    this.rightLeg = this.limb(pedroLeg(), 0.12, HIP_Y);
-    this.wings = this.buildWings();
+    const parts = characterParts(palette);
+
+    this.root.name = palette.hero;
+    this.body.add(this.mesh(parts.upperBody));
+    this.leftArm = this.limb(parts.arm, -parts.shoulderX, parts.shoulderY);
+    this.rightArm = this.limb(parts.arm, parts.shoulderX, parts.shoulderY);
+    this.leftLeg = this.limb(parts.leg, -parts.hipX, parts.hipY);
+    this.rightLeg = this.limb(parts.leg, parts.hipX, parts.hipY);
+    this.wings = this.buildWings(parts.shoulderY);
     this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings);
 
     this.shield = new Mesh(
@@ -241,7 +234,8 @@ export class PedroModel {
     return mesh;
   }
 
-  private buildWings(): Group {
+  /** As asas nascem nas costas, logo abaixo dos ombros de cada herói. */
+  private buildWings(shoulderY: number): Group {
     const wings = new Group();
     const feather = '#ffffff';
     const tip = '#d9f1ff';
@@ -252,7 +246,7 @@ export class PedroModel {
         box(side * 0.5, 0.1, 0, 0.26, 0.18, 0.05, tip),
       ]);
 
-      wing.position.set(side * 0.08, 0.78, -0.26);
+      wing.position.set(side * 0.08, shoulderY - 0.06, -0.26);
       wing.rotation.y = side * -0.5;
       wings.add(wing);
     }
@@ -261,69 +255,4 @@ export class PedroModel {
 
     return wings;
   }
-}
-
-/** Tronco, cabeça, boné e mochila: também é o piloto sentado do Pedro Kart. */
-export function pedroUpperBody(palette: CharacterPalette): readonly VoxelBox[] {
-  const cap = palette.cap;
-  const parts: VoxelBox[] = [
-    // Tronco e cinto.
-    box(0, 0.64, 0, 0.52, 0.44, 0.3, palette.shirt),
-    box(0, 0.44, 0, 0.53, 0.06, 0.31, darken(palette.shirt, 0.35)),
-    box(0, 0.76, 0.152, 0.18, 0.1, 0.01, lighten(palette.shirt, 0.3)),
-    // Cabeça, cabelo e rosto.
-    box(0, 1.08, 0, 0.46, 0.44, 0.42, SKIN),
-    box(0, 1.2, -0.1, 0.48, 0.24, 0.26, HAIR),
-    box(-0.235, 1.06, -0.02, 0.03, 0.26, 0.3, HAIR),
-    box(0.235, 1.06, -0.02, 0.03, 0.26, 0.3, HAIR),
-    box(-0.1, 1.09, 0.215, 0.08, 0.1, 0.02, EYE),
-    box(0.1, 1.09, 0.215, 0.08, 0.1, 0.02, EYE),
-    box(-0.08, 1.115, 0.226, 0.03, 0.03, 0.01, '#ffffff'),
-    box(0.12, 1.115, 0.226, 0.03, 0.03, 0.01, '#ffffff'),
-    box(0, 0.97, 0.215, 0.12, 0.04, 0.02, '#c9605a'),
-    box(-0.17, 1.0, 0.212, 0.07, 0.04, 0.01, '#f59a9a'),
-    box(0.17, 1.0, 0.212, 0.07, 0.04, 0.01, '#f59a9a'),
-    // Boné com aba para a frente.
-    box(0, 1.36, 0, 0.5, 0.14, 0.46, cap),
-    box(0, 1.3, 0.3, 0.46, 0.05, 0.2, darken(cap, 0.15)),
-    box(0, 1.44, 0, 0.08, 0.03, 0.08, lighten(cap, 0.35)),
-  ];
-
-  return [...parts, ...backpack(palette)];
-}
-
-function backpack(palette: CharacterPalette): readonly VoxelBox[] {
-  const color = palette.backpack;
-
-  switch (palette.backpackStyle) {
-    case 'none':
-      return [];
-    case 'dino':
-      return [
-        box(0, 0.66, -0.24, 0.38, 0.42, 0.18, color),
-        box(0, 0.9, -0.3, 0.08, 0.08, 0.08, darken(color, 0.25)),
-        box(0, 0.76, -0.35, 0.08, 0.08, 0.08, darken(color, 0.25)),
-        box(0, 0.6, -0.35, 0.08, 0.08, 0.08, darken(color, 0.25)),
-      ];
-    case 'rocket':
-      return [
-        box(-0.1, 0.68, -0.25, 0.14, 0.44, 0.16, color),
-        box(0.1, 0.68, -0.25, 0.14, 0.44, 0.16, color),
-        box(-0.1, 0.42, -0.25, 0.1, 0.08, 0.1, '#ff8a3d'),
-        box(0.1, 0.42, -0.25, 0.1, 0.08, 0.1, '#ff8a3d'),
-      ];
-    case 'star':
-      return [
-        box(0, 0.66, -0.24, 0.36, 0.4, 0.16, color),
-        box(0, 0.68, -0.33, 0.16, 0.16, 0.02, '#fff3bf'),
-      ];
-  }
-}
-
-export function pedroArm(shirt: string): readonly VoxelBox[] {
-  return [box(0, -0.12, 0, 0.14, 0.26, 0.16, shirt), box(0, -0.32, 0, 0.13, 0.16, 0.14, SKIN)];
-}
-
-function pedroLeg(): readonly VoxelBox[] {
-  return [box(0, -0.19, 0, 0.18, 0.38, 0.2, JEANS), box(0, -0.38, 0.03, 0.2, 0.08, 0.27, SHOE)];
 }

@@ -35,7 +35,7 @@ export class MakerHomePage {
   private readonly progress = inject(MakerProgressService);
   private readonly pets = inject(PetService);
 
-  protected readonly look = this.progress.look;
+  protected readonly character = this.progress.character;
   protected readonly nextLevel = this.progress.nextLevel;
   protected readonly completedCount = this.progress.levelsCompleted;
   protected readonly totalLevels = CAMPAIGN_LEVELS.length;

@@ -13,7 +13,6 @@ import {
 } from '@angular/core';
 
 import type { MakerSoundCue } from '../../../pedro-maker/models/session.model';
-import { paletteFor } from '../../../pedro-maker/config/character.config';
 import { MakerAudioService } from '../../../pedro-maker/services/maker-audio.service';
 import { MakerProgressService } from '../../../pedro-maker/services/maker-progress.service';
 import { PROFILE } from '../../../../../core/data/profile.data';
@@ -77,7 +76,7 @@ export class KartRaceHost {
 
   private readonly zone = inject(NgZone);
   private readonly audio = inject(MakerAudioService);
-  private readonly look = inject(MakerProgressService).look;
+  private readonly character = inject(MakerProgressService).character;
   private readonly kartProgress = inject(KartProgressService);
   private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
   private readonly minimap = viewChild.required<ElementRef<HTMLCanvasElement>>('minimap');
@@ -157,7 +156,7 @@ export class KartRaceHost {
           parent: this.stage().nativeElement,
           track: this.track(),
           kart: this.kartProgress.setup(),
-          driver: paletteFor(this.look()),
+          driver: this.character(),
           playerName: PROFILE.firstName,
           tuning: difficultyOption(this.kartProgress.difficulty()).tuning,
           input: this.driveState,

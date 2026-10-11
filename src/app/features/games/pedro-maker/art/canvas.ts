@@ -133,6 +133,35 @@ export function eye(context: CanvasRenderingContext2D, x: number, y: number, siz
   context.fill();
 }
 
+export type Point = readonly [number, number];
+
+/** Braço ou perna de personagem: traço grosso com contorno. */
+export function limb(context: CanvasRenderingContext2D, from: Point, to: Point, color: string): void {
+  context.beginPath();
+  context.moveTo(from[0], from[1]);
+  context.lineTo(to[0], to[1]);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 9;
+  context.stroke();
+  context.strokeStyle = color;
+  context.lineWidth = 5;
+  context.stroke();
+}
+
+export function hand(context: CanvasRenderingContext2D, at: Point, color: string): void {
+  circle(context, at[0], at[1], 3.6);
+  fillAndOutline(context, color, 2);
+}
+
+/** Sorriso em arco, com o centro da boca em (x, y). */
+export function smile(context: CanvasRenderingContext2D, x: number, y: number): void {
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.arc(x, y - 3, 4, Math.PI * 0.2, Math.PI * 0.8);
+  context.stroke();
+}
+
 /** Mistura duas cores hexadecimais; `amount` 0 devolve a primeira. */
 export function mix(first: string, second: string, amount: number): string {
   const a = parseHex(first);

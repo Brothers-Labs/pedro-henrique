@@ -22,7 +22,7 @@ const NUMBER_FORMAT = new Intl.NumberFormat('pt-BR');
 export class MakerStatusBar {
   private readonly progress = inject(MakerProgressService);
 
-  protected readonly look = this.progress.look;
+  protected readonly character = this.progress.character;
   protected readonly adventurer = this.progress.adventurer;
   protected readonly coins = computed(() => NUMBER_FORMAT.format(this.progress.coins()));
   protected readonly crystals = this.progress.crystals;

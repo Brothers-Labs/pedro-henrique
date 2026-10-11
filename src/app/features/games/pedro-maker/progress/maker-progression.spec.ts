@@ -1,4 +1,5 @@
-import { lookOption } from '../config/character.config';
+import { lookOption, paletteFor } from '../config/character.config';
+import { heroDefinition } from '../config/hero.config';
 import { XP_RULES, xpForAdventurerLevel } from '../config/rules.config';
 import { campaignLevelById } from '../levels/campaign';
 import type { CampaignLevel } from '../models/campaign.model';
@@ -8,6 +9,7 @@ import {
   applyCustomLevelSaved,
   applyLevelResult,
   applySecretFound,
+  chooseHero,
   createMakerProgress,
   equipLook,
   isLevelUnlocked,
@@ -212,6 +214,40 @@ describe('Progressão do Pedro Maker', () => {
       const golden = lookOption('bone-dourado');
 
       expect(golden ? lookAvailability({ ...fresh, coins: 999 }, golden) : null).toBe('bloqueado');
+    });
+  });
+
+  describe('heróis', () => {
+    it('começa com o Pedro e troca para o Gui de graça', () => {
+      const withGui = chooseHero(fresh, 'gui');
+
+      expect(fresh.hero).toBe('pedro');
+      expect(withGui.hero).toBe('gui');
+      expect(withGui.coins).toBe(fresh.coins);
+      expect(withGui.look).toBe(fresh.look);
+    });
+
+    it('devolve o mesmo estado ao escolher o herói que já joga', () => {
+      expect(chooseHero(fresh, 'pedro')).toBe(fresh);
+    });
+
+    it('veste o Pedro com o visual escolhido e o Gui sempre com a roupa dele', () => {
+      const look = { cap: 'bone-roxo', shirt: 'camiseta-rosa', backpack: 'mochila-estrela' };
+      const guiOutfit = heroDefinition('gui').outfit;
+
+      if (!guiOutfit) {
+        fail('O Gui deveria ter roupa própria.');
+        return;
+      }
+
+      expect(paletteFor(look, 'pedro')).toEqual({
+        hero: 'pedro',
+        cap: '#7b52d3',
+        shirt: '#ff6fae',
+        backpack: '#ffc629',
+        backpackStyle: 'star',
+      });
+      expect(paletteFor(look, 'gui')).toEqual({ hero: 'gui', ...guiOutfit });
     });
   });
 });
