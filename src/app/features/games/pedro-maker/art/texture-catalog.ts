@@ -119,11 +119,18 @@ function drawIcon(
     case 'lava':
       paintLava(context);
       return;
+    case 'water':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'water');
+      return;
     case 'brick':
       paintBrick(context);
       return;
     case 'surprise':
-      paintSurprise(context);
+      if (object.properties?.contents === 'lucky') {
+        paintVoxelIcon(context, ICON_SIZE, palette, 'lucky');
+      } else {
+        paintSurprise(context);
+      }
       return;
     case 'spring':
       paintSpring(context);

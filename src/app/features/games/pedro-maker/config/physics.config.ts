@@ -64,9 +64,42 @@ export const POWER_UP_DURATION_MS = {
   turbo: 12000,
   magnet: 15000,
   wings: 20000,
-  /** O escudo dura até proteger de um toque. */
+  star: 10000,
+  /** Escudo, cogumelo e flor duram até proteger de um toque. */
   shield: 0,
+  mushroom: 0,
+  'fire-flower': 0,
+  /** O cogumelo de vida age na hora: enche os corações. */
+  'one-up': 0,
 } as const;
+
+/**
+ * Nadar: dentro da água a gravidade quase some, a queda é lenta e cada
+ * apertada de pulo é uma braçada. Na superfície, a braçada vira um salto para
+ * fora — é assim que se sai do mar.
+ */
+export const SWIM_PHYSICS = {
+  gravityScale: 0.22,
+  maxSinkSpeed: 150,
+  strokeVelocity: 380,
+  /** Fração do pulo normal ao sair da água pela superfície. */
+  leapMultiplier: 0.9,
+  speedMultiplier: 0.6,
+} as const;
+
+/** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */
+export const FIREBALL_PHYSICS = {
+  size: 18,
+  speed: 560,
+  bounceVelocity: 420,
+  maxFallSpeed: 700,
+  lifeMs: 1800,
+  /** Bolas no ar ao mesmo tempo: segurar o botão não vira uma metralhadora. */
+  maxAlive: 2,
+} as const;
+
+/** Tamanho do Pedro com o Super Cogumelo, só no desenho: a colisão não muda. */
+export const BIG_PEDRO_SCALE = 1.35;
 
 /** Raio de atração do ímã, em pixels. */
 export const MAGNET_RADIUS = 190;

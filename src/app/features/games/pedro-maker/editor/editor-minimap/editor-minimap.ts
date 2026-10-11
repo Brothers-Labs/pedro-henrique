@@ -22,6 +22,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   coin: '#ffc629',
   crystal: '#6fe3ff',
   lava: '#ff6a00',
+  water: '#2f9be8',
   slime: '#e8505b',
   spiky: '#e8505b',
   bat: '#e8505b',
@@ -152,6 +153,7 @@ function terrainColor(type: LevelObjectType, solid: string, oneWay: string): str
     case 'one-way':
       return oneWay;
     case 'hazard':
+    case 'water':
     case 'none':
       return null;
   }

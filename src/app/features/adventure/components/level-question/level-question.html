@@ -1,0 +1,69 @@
+@let current = question();
+
+<section class="question" aria-labelledby="pergunta-titulo">
+  <div class="question__progress">
+    <ol class="question__steps" aria-hidden="true">
+      @for (step of steps(); track $index) {
+        <li class="question__step" [attr.data-step]="step"></li>
+      }
+    </ol>
+    <p class="question__count">Pergunta {{ position() }} de {{ total() }}</p>
+  </div>
+
+  <div class="question__card">
+    <p class="question__prompt">{{ current.prompt }}</p>
+    <h2
+      id="pergunta-titulo"
+      class="question__statement"
+      [class.question__statement--story]="current.kind === 'problema'"
+      tabindex="-1"
+      data-autofocus
+    >
+      {{ current.statement }}
+    </h2>
+
+    <ul class="question__options">
+      @for (option of current.options; track option) {
+        <li>
+          <button
+            type="button"
+            class="question__option"
+            [attr.data-state]="optionState(option)"
+            [disabled]="hasAnswered()"
+            (click)="choose(option)"
+          >
+            @switch (optionState(option)) {
+              @case ('certa') { <span aria-hidden="true">✅</span> }
+              @case ('errada') { <span aria-hidden="true">❌</span> }
+            }
+            {{ option }}
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (hasAnswered()) {
+      <div class="question__feedback" [attr.data-status]="isCorrect() ? 'certo' : 'errado'" role="status">
+        <p class="question__feedback-message">
+          <span aria-hidden="true">{{ isCorrect() ? '✨' : '💪' }}</span>
+          @if (isCorrect()) {
+            {{ current.answer }}! Isso!
+          } @else {
+            A resposta certa é {{ current.answer }}.
+          }
+        </p>
+        @if (!isCorrect()) {
+          <p class="question__hint"><span aria-hidden="true">💡</span> {{ current.hint }}</p>
+        }
+        @if (companionLine(); as line) {
+          <p class="question__companion"><strong>{{ companionName() }}:</strong> {{ line }}</p>
+        }
+
+        <button type="button" class="button button--accent button--block" (click)="advanced.emit()">
+          {{ isLast() ? 'Ver resultado' : 'Próxima' }}
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    }
+  </div>
+</section>

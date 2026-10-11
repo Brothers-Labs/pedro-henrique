@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+import { AdventureCard } from '../adventure/components/adventure-card/adventure-card';
 import { AboutSection } from './sections/about-section/about-section';
 import { AchievementsSection } from './sections/achievements-section/achievements-section';
 import { BirthdaySection } from './sections/birthday-section/birthday-section';
@@ -15,9 +16,9 @@ import { PowersSection } from './sections/powers-section/powers-section';
 /**
  * Landing page: cada seção é um componente independente e autossuficiente.
  *
- * Logo abaixo da abertura entra o mascote, com a saudação do dia. É presença
- * discreta de propósito — a home continua sendo a porta do site inteiro, e não
- * a página do mascote.
+ * Logo abaixo da abertura entram o mascote, com a saudação do dia, e o ponto
+ * em que a Aventura parou. É presença discreta de propósito — a home continua
+ * sendo a porta do site inteiro, e não a página do mascote.
  */
 @Component({
   selector: 'app-home-page',
@@ -25,6 +26,7 @@ import { PowersSection } from './sections/powers-section/powers-section';
   imports: [
     HeroSection,
     PetSummaryCard,
+    AdventureCard,
     AboutSection,
     MyWaySection,
     PowersSection,

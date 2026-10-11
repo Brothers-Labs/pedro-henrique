@@ -11,6 +11,7 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   stone: '#8a8fa8',
   ice: '#9fdcff',
   lava: '#ff7a2e',
+  water: '#2f9be8',
   brick: '#d9793e',
   surprise: '#ffc629',
   platform: '#c98a4b',

@@ -1,0 +1,40 @@
+@use 'mixins' as *;
+
+.companion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  &__egg {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  &__bubble {
+    @include card-surface;
+
+    position: relative;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-body);
+
+    strong {
+      font-family: var(--font-display);
+      color: var(--text-strong);
+    }
+
+    /* Pontinha do balão apontando para o mascote. */
+    &::before {
+      position: absolute;
+      top: 50%;
+      left: -0.6rem;
+      width: 0.9rem;
+      height: 0.9rem;
+      background: inherit;
+      border-bottom: 3px solid var(--border-strong);
+      border-left: 3px solid var(--border-strong);
+      content: '';
+      transform: translateY(-50%) rotate(45deg);
+    }
+  }
+}

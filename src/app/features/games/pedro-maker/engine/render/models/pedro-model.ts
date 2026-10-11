@@ -2,6 +2,7 @@ import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry } from 'th
 
 import { darken, lighten } from '../../../art/canvas';
 import type { CharacterPalette } from '../../../config/character.config';
+import { BIG_PEDRO_SCALE } from '../../../config/physics.config';
 import type { PlayerMode } from '../../simulation/player';
 import { disposeTree } from '../dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from '../voxel-geometry';
@@ -19,6 +20,12 @@ const SHOULDER_Y = 0.84;
 const TURN_TOWARD_CAMERA = 0.5;
 const TURN_RATE = 14;
 
+/** Rapidez com que o Pedro cresce ou encolhe: dá para ver acontecendo. */
+const GROW_RATE = 8;
+const STAR_GLOW = 0.65;
+const FIRE_GLOW = 0.22;
+const FIRE_COLOR = '#ff5a1f';
+
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
   readonly mode: PlayerMode;
@@ -28,6 +35,9 @@ export interface PedroPose {
   readonly isBlinking: boolean;
   readonly hasShield: boolean;
   readonly hasWings: boolean;
+  readonly isBig: boolean;
+  readonly hasStar: boolean;
+  readonly hasFireFlower: boolean;
 }
 
 /**
@@ -51,6 +61,7 @@ export class PedroModel {
   private readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
 
   private heading = Math.PI / 2 - TURN_TOWARD_CAMERA;
+  private size = 1;
   private stride = 0;
   private squash = 0;
   private wasGrounded = true;
@@ -82,6 +93,8 @@ export class PedroModel {
     this.shield.rotation.y = now / 600;
 
     this.turn(pose, deltaSeconds);
+    this.grow(pose, deltaSeconds);
+    this.glow(pose, now);
     this.reactToGround(pose);
     this.animateLimbs(pose, deltaSeconds, now);
     this.applySquash(deltaSeconds);
@@ -111,7 +124,28 @@ export class PedroModel {
 
     this.heading = MathUtils.lerp(this.heading, target, blend);
     this.body.rotation.y = this.heading;
-    this.root.scale.setScalar(1);
+  }
+
+  private grow(pose: PedroPose, deltaSeconds: number): void {
+    const target = pose.isBig ? BIG_PEDRO_SCALE : 1;
+
+    this.size = MathUtils.lerp(this.size, target, 1 - Math.exp(-GROW_RATE * deltaSeconds));
+    this.root.scale.setScalar(this.size);
+  }
+
+  /** Estrela: o Pedro pisca em todas as cores. Flor de fogo: um brilho quente. */
+  private glow(pose: PedroPose, now: number): void {
+    const emissive = this.material.emissive;
+
+    if (pose.hasStar) {
+      emissive.setHSL((now / 400) % 1, 1, 0.5);
+      this.material.emissiveIntensity = STAR_GLOW;
+    } else if (pose.hasFireFlower) {
+      emissive.set(FIRE_COLOR);
+      this.material.emissiveIntensity = FIRE_GLOW;
+    } else {
+      this.material.emissiveIntensity = 0;
+    }
   }
 
   /** Esticar ao sair do chão e amassar ao pousar: o peso do personagem. */

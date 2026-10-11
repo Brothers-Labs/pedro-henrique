@@ -3,6 +3,7 @@ import type {
   LevelObjectProperties,
   LevelObjectType,
   LevelTheme,
+  PowerUpKind,
 } from '../models/level.model';
 
 /**
@@ -11,9 +12,10 @@ import type {
  * - `solid`: bloqueia por todos os lados;
  * - `one-way`: sustenta quem cai de cima e deixa passar por baixo;
  * - `hazard`: machuca quem encosta;
+ * - `water`: não segura nem machuca, mas quem está dentro nada;
  * - `none`: não interfere no movimento.
  */
-export type ObjectSurface = 'solid' | 'one-way' | 'hazard' | 'none';
+export type ObjectSurface = 'solid' | 'one-way' | 'hazard' | 'water' | 'none';
 
 export interface ObjectBehavior {
   readonly surface: ObjectSurface;
@@ -35,6 +37,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   platform: { surface: 'one-way', isUnique: false },
   cloud: { surface: 'one-way', isUnique: false },
   lava: { surface: 'hazard', isUnique: false },
+  water: { surface: 'water', isUnique: false },
   'moving-platform': { surface: 'none', isUnique: false },
   slime: { surface: 'none', isUnique: false },
   spiky: { surface: 'none', isUnique: false },
@@ -68,6 +71,7 @@ export type EditorCategoryId =
   | 'plataformas'
   | 'decoracao'
   | 'power-ups'
+  | 'cogumelos'
   | 'portais'
   | 'checkpoints';
 
@@ -85,6 +89,7 @@ export const EDITOR_CATEGORIES: readonly EditorCategory[] = [
   { id: 'plataformas', label: 'Plataformas', emoji: '🟰' },
   { id: 'decoracao', label: 'Decoração', emoji: '🌳' },
   { id: 'power-ups', label: 'Power-ups', emoji: '⚡' },
+  { id: 'cogumelos', label: 'Cogumelos', emoji: '🍄' },
   { id: 'portais', label: 'Portais', emoji: '🌀' },
   { id: 'checkpoints', label: 'Checkpoints', emoji: '🚩' },
 ];
@@ -110,6 +115,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'sand', category: 'terreno', type: 'sand', label: 'Areia' },
   { id: 'wood', category: 'terreno', type: 'wood', label: 'Madeira' },
   { id: 'lava', category: 'terreno', type: 'lava', label: 'Lava' },
+  { id: 'water', category: 'terreno', type: 'water', label: 'Água' },
 
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
@@ -165,6 +171,19 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'power-magnet', category: 'power-ups', type: 'power-up', label: 'Ímã', properties: { powerUp: 'magnet' } },
   { id: 'power-wings', category: 'power-ups', type: 'power-up', label: 'Asa', properties: { powerUp: 'wings' } },
 
+  { id: 'power-mushroom', category: 'cogumelos', type: 'power-up', label: 'Super Cogumelo', properties: { powerUp: 'mushroom' } },
+  { id: 'power-fire-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Fogo', properties: { powerUp: 'fire-flower' } },
+  { id: 'power-star', category: 'cogumelos', type: 'power-up', label: 'Super Estrela', properties: { powerUp: 'star' } },
+  { id: 'power-one-up', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Vida', properties: { powerUp: 'one-up' } },
+  { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
+  {
+    id: 'surprise-mushroom',
+    category: 'cogumelos',
+    type: 'surprise',
+    label: 'Surpresa 🍄',
+    properties: { contents: 'power-up', powerUp: 'mushroom' },
+  },
+
   { id: 'start', category: 'portais', type: 'start', label: 'Início' },
   { id: 'portal', category: 'portais', type: 'portal', label: 'Portal final' },
   { id: 'door-a', category: 'portais', type: 'door', label: 'Porta A', properties: { pair: 'A' } },
@@ -197,7 +216,11 @@ export const POWER_UP_LABELS = {
   turbo: { label: 'Turbo', emoji: '⚡' },
   magnet: { label: 'Ímã', emoji: '🧲' },
   wings: { label: 'Asa', emoji: '🪽' },
-} as const;
+  mushroom: { label: 'Super Cogumelo', emoji: '🍄' },
+  'fire-flower': { label: 'Flor de Fogo', emoji: '🔥' },
+  star: { label: 'Super Estrela', emoji: '⭐' },
+  'one-up': { label: 'Cogumelo Vida', emoji: '💚' },
+} as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {
   vale: { label: 'Vale', emoji: '🌳' },
@@ -209,6 +232,7 @@ export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string;
   estrelas: { label: 'Estrelas', emoji: '🌌' },
   castelo: { label: 'Castelo', emoji: '🏰' },
   praia: { label: 'Praia', emoji: '🏖️' },
+  classico: { label: 'Clássico', emoji: '🍄' },
 };
 
 /** Temas que o Pedro pode escolher para as próprias fases. */
@@ -221,4 +245,5 @@ export const EDITOR_THEMES: readonly LevelTheme[] = [
   'vulcao',
   'estrelas',
   'praia',
+  'classico',
 ];

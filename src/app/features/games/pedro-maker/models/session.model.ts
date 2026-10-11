@@ -23,7 +23,8 @@ export type MakerSoundCue =
   | 'button'
   | 'spring'
   | 'break'
-  | 'secret';
+  | 'secret'
+  | 'fireball';
 
 export interface HudState {
   readonly hearts: number;

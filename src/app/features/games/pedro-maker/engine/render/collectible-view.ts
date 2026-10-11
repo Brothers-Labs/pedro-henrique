@@ -34,6 +34,10 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   turbo: '#ffb703',
   magnet: '#ff5a5a',
   wings: '#b39cff',
+  mushroom: '#e8343a',
+  'fire-flower': '#ff7a1f',
+  star: '#ffd23f',
+  'one-up': '#2fb84a',
 };
 
 interface Fountain {
@@ -217,10 +221,25 @@ export class CollectibleView {
         return heart;
       }
       case 'power-up':
-        return this.powerUpBox(item.powerUp ?? 'super-jump');
+        return this.powerUpModel(item.powerUp ?? 'super-jump');
       case 'coin':
         return new Group();
     }
+  }
+
+  /** Os poderes clássicos têm forma própria; os outros, a caixa com o emoji. */
+  private powerUpModel(kind: PowerUpKind): Mesh {
+    const parts = classicPowerUpParts(kind);
+
+    if (!parts) {
+      return this.powerUpBox(kind);
+    }
+
+    const mesh = new Mesh(buildBoxesGeometry(parts), this.voxelMaterial);
+
+    mesh.castShadow = true;
+
+    return mesh;
   }
 
   /** Caixa colorida com o emoji do poder na frente: a criança reconhece antes de pegar. */
@@ -316,6 +335,69 @@ function heartParts(): readonly VoxelBox[] {
     box(0, -0.17, 0, 0.26, 0.1, 0.16, red),
     box(0, -0.25, 0, 0.1, 0.07, 0.16, red),
     box(-0.16, 0.13, 0.085, 0.07, 0.07, 0.01, shine),
+  ];
+}
+
+/** Cogumelos, flor e estrela de cubinhos; `null` para os poderes de caixa. */
+function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
+  switch (kind) {
+    case 'mushroom':
+      return mushroomParts(POWER_UP_COLORS.mushroom);
+    case 'one-up':
+      return mushroomParts(POWER_UP_COLORS['one-up']);
+    case 'fire-flower':
+      return fireFlowerParts();
+    case 'star':
+      return starParts();
+    default:
+      return null;
+  }
+}
+
+function mushroomParts(cap: string): readonly VoxelBox[] {
+  const stem = '#fff1d6';
+  const eye = '#2a2350';
+  const spot = '#ffffff';
+
+  return [
+    box(0, -0.13, 0, 0.3, 0.26, 0.3, stem),
+    box(-0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye),
+    box(0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye),
+    box(0, 0.08, 0, 0.6, 0.16, 0.6, cap),
+    box(0, 0.2, 0, 0.44, 0.1, 0.44, cap),
+    box(0, 0.12, 0.301, 0.16, 0.1, 0.01, spot),
+    box(-0.22, 0.06, 0.301, 0.08, 0.08, 0.01, spot),
+    box(0.22, 0.06, 0.301, 0.08, 0.08, 0.01, spot),
+    box(0, 0.251, 0, 0.14, 0.01, 0.14, spot),
+  ];
+}
+
+function fireFlowerParts(): readonly VoxelBox[] {
+  const green = '#2fb84a';
+
+  return [
+    box(0, -0.18, 0, 0.07, 0.26, 0.07, green),
+    box(-0.1, -0.2, 0, 0.14, 0.05, 0.08, green),
+    box(0.1, -0.24, 0, 0.14, 0.05, 0.08, green),
+    box(0, 0.08, 0, 0.44, 0.3, 0.12, '#ff4f1f'),
+    box(0, 0.08, 0.065, 0.3, 0.2, 0.01, '#ffd23f'),
+    box(0, 0.08, 0.075, 0.16, 0.1, 0.01, '#ffffff'),
+  ];
+}
+
+function starParts(): readonly VoxelBox[] {
+  const gold = '#ffd23f';
+  const eye = '#2a2350';
+
+  return [
+    box(0, 0, 0, 0.24, 0.24, 0.14, gold),
+    box(0, 0.19, 0, 0.1, 0.16, 0.14, gold),
+    box(-0.19, 0.05, 0, 0.18, 0.1, 0.14, gold),
+    box(0.19, 0.05, 0, 0.18, 0.1, 0.14, gold),
+    box(-0.11, -0.17, 0, 0.1, 0.16, 0.14, gold),
+    box(0.11, -0.17, 0, 0.1, 0.16, 0.14, gold),
+    box(-0.045, 0.02, 0.071, 0.03, 0.07, 0.01, eye),
+    box(0.045, 0.02, 0.071, 0.03, 0.07, 0.01, eye),
   ];
 }
 

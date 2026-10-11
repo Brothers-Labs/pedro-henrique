@@ -2,7 +2,7 @@ import {
   MATH_STORY_ITEMS,
   MATH_STORY_TEMPLATES,
 } from '../../../core/data/math-game.data';
-import { mathPlanFor } from '../../../core/games/difficulty';
+import { type MathLevelPlan, mathPlanFor } from '../../../core/games/difficulty';
 import type { MathChallenge, MathOperation } from '../../../core/models/math-game.model';
 
 /**
@@ -30,7 +30,22 @@ export function buildChallenge(
   random: RandomGenerator = Math.random,
   childName = 'Pedro',
 ): MathChallenge {
-  const plan = mathPlanFor(level);
+  return buildChallengeFromPlan(mathPlanFor(level), `math-${level}-${index + 1}`, index, random, childName);
+}
+
+/**
+ * Monta uma conta a partir de um plano pronto.
+ *
+ * É a mesma fábrica do jogo livre, aberta para quem decide a dificuldade por
+ * conta própria — como as fases da Aventura, que não seguem o nível do jogo.
+ */
+export function buildChallengeFromPlan(
+  plan: MathLevelPlan,
+  id: string,
+  index: number,
+  random: RandomGenerator = Math.random,
+  childName = 'Pedro',
+): MathChallenge {
   const operation = plan.operations[index % plan.operations.length];
   const terms = buildTerms(operation, plan.ceiling, random);
 
@@ -39,14 +54,14 @@ export function buildChallenge(
     : `${terms.first} ${symbolFor(operation)} ${terms.second}`;
 
   return {
-    id: `math-${level}-${index + 1}`,
+    id,
     operation,
     kind: plan.useWordProblems ? 'problema' : 'conta',
     statement,
     prompt: promptFor(operation, plan.useWordProblems),
     hint: hintFor(operation, terms),
     answer: terms.answer,
-    options: plan.useOptions ? buildOptions(terms.answer, random) : [],
+    options: plan.useOptions ? buildAnswerOptions(terms.answer, random) : [],
   };
 }
 
@@ -166,7 +181,7 @@ function buildStory(
 }
 
 /** Alternativas plausíveis: a resposta certa cercada de vizinhos próximos. */
-function buildOptions(answer: number, random: RandomGenerator): readonly number[] {
+export function buildAnswerOptions(answer: number, random: RandomGenerator = Math.random): readonly number[] {
   const values = new Set<number>([answer]);
 
   for (

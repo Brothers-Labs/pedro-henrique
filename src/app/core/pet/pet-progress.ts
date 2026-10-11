@@ -262,6 +262,31 @@ export function equipAccessory(pet: Pet, id: PetAccessoryId | null): Pet {
   return { ...pet, equippedAccessory: id };
 }
 
+/**
+ * Entrega um acessório de prêmio, conquistado fora do mascote.
+ *
+ * Idempotente: entregar de novo o que já está na coleção não muda nada — é o
+ * que permite à Aventura reconferir os prêmios sem medo de duplicar memória.
+ */
+export function grantRewardAccessory(pet: Pet, id: PetAccessoryId, now: Date): Pet {
+  const accessory = petAccessory(id);
+
+  if (accessory.unlock.kind !== 'reward' || pet.unlockedAccessories.includes(id)) {
+    return pet;
+  }
+
+  const moment = now.toISOString();
+
+  return {
+    ...pet,
+    unlockedAccessories: [...pet.unlockedAccessories, id],
+    timeline: appendEvents(pet.timeline, [
+      createEvent('acessorio', accessory.emoji, `${accessory.label} ganha de presente`, moment),
+    ]),
+    updatedAt: moment,
+  };
+}
+
 /** Renomeia o mascote. Um nome vazio mantém o anterior. */
 export function renamePet(pet: Pet, name: string): Pet {
   const clean = sanitizePetName(name);
@@ -388,7 +413,7 @@ function measure(pet: Pet, measured: PetAchievementMeasure): number {
 }
 
 function accessoriesUpTo(level: number): readonly PetAccessoryId[] {
-  return PET_ACCESSORIES.filter((accessory) => accessory.unlockLevel <= level).map(
+  return PET_ACCESSORIES.filter((accessory) => isUnlockedByLevel(accessory, level)).map(
     (accessory) => accessory.id,
   );
 }
@@ -396,8 +421,13 @@ function accessoriesUpTo(level: number): readonly PetAccessoryId[] {
 function newlyUnlockedAccessories(pet: Pet, level: number): readonly PetAccessory[] {
   return PET_ACCESSORIES.filter(
     (accessory) =>
-      accessory.unlockLevel <= level && !pet.unlockedAccessories.includes(accessory.id),
+      isUnlockedByLevel(accessory, level) && !pet.unlockedAccessories.includes(accessory.id),
   );
+}
+
+/** Acessórios de prêmio nunca chegam pelo nível, por mais alto que ele seja. */
+function isUnlockedByLevel(accessory: PetAccessory, level: number): boolean {
+  return accessory.unlock.kind === 'level' && accessory.unlock.level <= level;
 }
 
 function createEvent(

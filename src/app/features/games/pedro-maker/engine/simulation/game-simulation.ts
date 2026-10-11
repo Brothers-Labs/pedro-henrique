@@ -1,7 +1,14 @@
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
 import { SeededRandom, seedFromText } from '../../levels/seeded-random';
-import type { EnemyKind, LevelBlueprint, LevelObject, LevelObjectType, PowerUpKind } from '../../models/level.model';
+import {
+  CLASSIC_POWER_UPS,
+  type EnemyKind,
+  type LevelBlueprint,
+  type LevelObject,
+  type LevelObjectType,
+  type PowerUpKind,
+} from '../../models/level.model';
 import type { LevelRunResult } from '../../models/progress.model';
 import type { GameSessionEvent, GameSessionListener, MakerSoundCue } from '../../models/session.model';
 import type { DifficultyRules } from '../../models/settings.model';
@@ -10,10 +17,11 @@ import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
+import { type Fireball, FireballSystem } from './fireballs';
 import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
 import { Player, type PlayerHost } from './player';
 import { Scheduler } from './scheduler';
-import { TileGrid } from './tile-grid';
+import { cellOf, TileGrid } from './tile-grid';
 import { TriggerSystem, type TriggerHost } from './triggers';
 import { VisualEventQueue } from './visual-events';
 
@@ -63,6 +71,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly blocks: BlockSystem;
   readonly collectibles: CollectibleSystem;
   readonly triggers: TriggerSystem;
+  readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
 
@@ -131,17 +140,23 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     const player = this.player;
     const body = player.body;
-    const isOnIce = this.grid.isIceAtPoint(centerX(body), bottom(body) + 4);
+    const isInWater = this.blocks.isWaterAtPoint(centerX(body), centerY(body));
 
-    player.control(this.clockMs, STEP_MS, input, isOnIce);
+    player.control(this.clockMs, STEP_MS, input, {
+      isOnIce: this.grid.isIceAtPoint(centerX(body), bottom(body) + 4),
+      isInWater,
+      isAtWaterSurface: isInWater && !this.blocks.isWaterAtPoint(centerX(body), body.y),
+    });
     this.blocks.update(seconds);
 
     if (player.isActive) {
       stepBody(body, this.world, seconds, true);
       this.reactToPlayerCollisions();
+      this.throwFireball(input);
     }
 
     this.updateEnemies(seconds);
+    this.updateFireballs(seconds);
     this.updateBoss(seconds);
     this.collectibles.update(STEP_MS, centerX(body), centerY(body), player.hasPowerUp('magnet'));
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
@@ -271,6 +286,55 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
   }
 
+  /** Com a Flor de Fogo, o botão de ação lança fogo — menos na frente de uma porta, onde ele abre a porta. */
+  private throwFireball(input: InputSnapshot): void {
+    const player = this.player;
+
+    if (!input.actionPressed || !player.hasPowerUp('fire-flower') || this.triggers.nearDoor || !this.fireballs.canThrow) {
+      return;
+    }
+
+    const body = player.body;
+    const x = centerX(body) + player.facing * body.width;
+    const y = centerY(body) - 6;
+
+    this.playSound('fireball');
+
+    // Colado na parede, a bola nasceria dentro do bloco e o atravessaria: ela se apaga ali mesmo.
+    if (this.grid.isSolidCell(cellOf(x), cellOf(y))) {
+      this.effects.burst('fire', x, y, 6);
+      return;
+    }
+
+    this.fireballs.throw(x, y, player.facing, this.clockMs);
+  }
+
+  private updateFireballs(seconds: number): void {
+    this.fireballs.update(this.world, seconds, this.clockMs, (fireball) => this.extinguish(fireball));
+
+    for (const fireball of [...this.fireballs.fireballs]) {
+      const body = fireball.body;
+
+      if (this.blocks.isWaterAtPoint(centerX(body), centerY(body))) {
+        this.fireballs.remove(fireball);
+        this.effects.burst('bubble', centerX(body), centerY(body), 6);
+        continue;
+      }
+
+      const target = this.enemies.find((enemy) => !enemy.isDefeated && overlaps(body, enemy.body));
+
+      if (target) {
+        this.fireballs.remove(fireball);
+        this.defeatEnemy(target);
+        this.extinguish(fireball);
+      }
+    }
+  }
+
+  private extinguish(fireball: Fireball): void {
+    this.effects.burst('fire', centerX(fireball.body), centerY(fireball.body), 6);
+  }
+
   private updateBoss(seconds: number): void {
     const boss = this.boss;
 
@@ -326,16 +390,26 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const body = this.player.body;
     const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
 
+    // Com a Super Estrela, encostar já derruba qualquer inimigo.
+    if (this.player.hasPowerUp('star')) {
+      this.defeatEnemy(enemy);
+      return;
+    }
+
     if (isStomp && enemy.canBeStomped) {
-      enemy.defeat(this.clockMs);
-      this.enemiesDefeated += 1;
+      this.defeatEnemy(enemy);
       this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
-      this.playSound('enemyHit');
-      this.effects.burst('poof', centerX(enemy.body), centerY(enemy.body), 12);
       return;
     }
 
     this.hurtPlayer(centerX(enemy.body));
+  }
+
+  private defeatEnemy(enemy: Enemy): void {
+    enemy.defeat(this.clockMs);
+    this.enemiesDefeated += 1;
+    this.playSound('enemyHit');
+    this.effects.burst('poof', centerX(enemy.body), centerY(enemy.body), 12);
   }
 
   private onBossContact(boss: Boss): void {
@@ -359,12 +433,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const player = this.player;
     const x = centerX(player.body);
 
-    if (player.isInvincible(now) || !player.isActive) {
+    if (player.isInvincible(now) || player.hasPowerUp('star') || !player.isActive) {
       return;
     }
 
     if (player.hasShield) {
-      player.hasShield = false;
+      player.losePowerUp('shield');
       player.makeInvincible(now, 1000);
       this.effects.burst('sparkle', x, centerY(player.body), 16);
       this.effects.floatingText(x, player.body.y - 30, '🛡️ PROTEGIDO!');
@@ -374,12 +448,39 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return;
     }
 
+    const knockbackDirection = Math.sign(x - sourceX) || 1;
+
+    if (player.isBig) {
+      this.shrinkPlayer(knockbackDirection);
+      return;
+    }
+
     this.loseHeart();
 
     if (!this.isDefeated) {
-      player.showHitPose(now, Math.sign(x - sourceX) || 1);
+      player.showHitPose(now, knockbackDirection);
       player.makeInvincible(now, this.options.rules.invincibilityMs);
     }
+  }
+
+  /** Grande, o Pedro não perde coração: perde o cogumelo (e a flor) e volta ao tamanho normal. */
+  private shrinkPlayer(knockbackDirection: number): void {
+    const now = this.clockMs;
+    const player = this.player;
+    const body = player.body;
+
+    for (const kind of ['fire-flower', 'mushroom'] as const) {
+      if (player.hasPowerUp(kind)) {
+        player.losePowerUp(kind);
+        this.emit({ type: 'power-up-ended', kind });
+      }
+    }
+
+    player.showHitPose(now, knockbackDirection);
+    player.makeInvincible(now, this.options.rules.invincibilityMs);
+    this.playSound('damage');
+    this.effects.burst('poof', centerX(body), centerY(body), 14);
+    this.effects.floatingText(centerX(body), body.y - 30, '🍄 ENCOLHEU!');
   }
 
   private loseHeart(): void {
@@ -415,6 +516,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void {
     this.collectibles.spawn(kind, x, y, extra, this.clockMs);
+  }
+
+  pickLuckyPowerUp(): PowerUpKind {
+    return this.random.pick(CLASSIC_POWER_UPS);
   }
 
   onCollected(item: Collectible): void {
@@ -522,13 +627,26 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   /* Auxiliares ------------------------------------------------------------------------ */
 
   private activatePowerUp(kind: PowerUpKind, x: number, y: number): void {
-    this.player.grantPowerUp(kind, this.clockMs);
     this.playSound('powerup');
     this.effects.burst('sparkle', x, y, 16);
+
+    // O cogumelo de vida não fica com o Pedro: enche os corações na hora.
+    if (kind === 'one-up') {
+      this.hearts = this.options.rules.hearts;
+      this.effects.floatingText(x, y - 30, '💚 VIDA CHEIA!', '#8ce99a');
+      return;
+    }
+
+    this.player.grantPowerUp(kind, this.clockMs);
 
     const { emoji, label } = POWER_UP_LABELS[kind];
     this.effects.floatingText(x, y - 30, `${emoji} ${label.toUpperCase()}!`, '#ffffff');
     this.emit({ type: 'power-up', kind, durationMs: POWER_UP_DURATION_MS[kind] });
+
+    if (kind === 'fire-flower') {
+      const button = this.options.isTouch ? 'Toque em AÇÃO' : 'Aperte E';
+      this.emit({ type: 'mascot', text: `${button} para soltar bolas de fogo!` });
+    }
   }
 
   private result(): LevelRunResult {

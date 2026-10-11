@@ -1,7 +1,9 @@
 @use 'mixins' as *;
 
-/** Respiro do cartão do mascote entre a abertura e a primeira seção. */
+/** Mascote e Aventura entre a abertura e a primeira seção: lado a lado quando cabe. */
 .home-pet {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: var(--space-4);
   margin-block: var(--space-6);
 }

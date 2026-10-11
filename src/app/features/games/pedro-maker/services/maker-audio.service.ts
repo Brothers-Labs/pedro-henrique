@@ -67,6 +67,7 @@ const CUES: Readonly<Record<MakerSoundCue, Cue>> = {
   secret: {
     tones: [tone(659, 0, 0.2, 'sine'), tone(831, 0.18, 0.2, 'sine'), tone(988, 0.36, 0.2, 'sine'), tone(1319, 0.54, 0.5, 'sine')],
   },
+  fireball: { tones: [tone(440, 0, 0.09, 'square', 0.05, 990)], noise: { duration: 0.05, gain: 0.04 } },
 };
 
 /** Escala pentatônica maior: qualquer combinação dessas notas soa bem. */
@@ -82,6 +83,7 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   estrelas: 65,
   castelo: 53,
   praia: 61,
+  classico: 60,
 };
 
 const MUSIC_TEMPO_BPM = 112;

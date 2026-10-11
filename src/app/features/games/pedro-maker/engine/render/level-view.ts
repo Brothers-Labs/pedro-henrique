@@ -10,6 +10,7 @@ import type { VisualEvent } from '../simulation/visual-events';
 import { BlockView } from './block-view';
 import { CameraRig } from './camera-rig';
 import { CollectibleView } from './collectible-view';
+import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
 import { BossModel } from './models/boss-model';
 import { EnemyMaterials, EnemyModel } from './models/enemy-model';
@@ -61,6 +62,7 @@ export class LevelView {
   private scenery: SceneryView | null = null;
   private blocks: BlockView | null = null;
   private collectibles: CollectibleView | null = null;
+  private fireballs: FireballView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
   private particles: ParticleSystem | null = null;
@@ -111,7 +113,8 @@ export class LevelView {
       () => {
         this.blocks = new BlockView(simulation.blocks, this.atlas, this.space);
         this.collectibles = new CollectibleView(simulation.collectibles, this.space);
-        scene.add(this.blocks.root, this.collectibles.root);
+        this.fireballs = new FireballView(simulation.fireballs, this.space);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -175,6 +178,9 @@ export class LevelView {
         isBlinking: player.isActive && player.isInvincible(now) && Math.floor(now / 90) % 2 === 0,
         hasShield: player.hasShield,
         hasWings: player.hasPowerUp('wings'),
+        isBig: player.isBig,
+        hasStar: player.hasPowerUp('star'),
+        hasFireFlower: player.hasPowerUp('fire-flower'),
       },
       deltaSeconds,
       now,
@@ -202,6 +208,7 @@ export class LevelView {
     this.syncBoss(alpha, deltaSeconds, now);
     this.blocks?.update(now, alpha);
     this.collectibles?.update(now);
+    this.fireballs?.update(now, alpha);
     this.props?.update(now);
     this.scenery?.update(deltaSeconds);
     this.particles?.update(deltaSeconds);
@@ -227,6 +234,7 @@ export class LevelView {
     this.scenery?.dispose();
     this.blocks?.dispose();
     this.collectibles?.dispose();
+    this.fireballs?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();
     this.particles?.dispose();

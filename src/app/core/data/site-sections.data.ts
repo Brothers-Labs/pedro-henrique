@@ -51,6 +51,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'yellow',
   },
   {
+    id: 'aventura',
+    label: 'Aventura',
+    route: '/aventura',
+    emoji: '🗺️',
+    description: 'Meu mapa de aventura: atravesso mundos, venço desafios e ganho estrelas com o meu mascote.',
+    color: 'yellow',
+  },
+  {
     id: 'jogos',
     label: 'Jogos',
     route: '/jogos',
@@ -121,7 +129,7 @@ export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   {
     id: 'brincar',
     label: 'Brincar',
-    sections: ['jogos', 'pedro-maker', 'pedro-kart', 'mascote'].map(findSection),
+    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'mascote'].map(findSection),
   },
   { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
 ];

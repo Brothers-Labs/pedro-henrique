@@ -1,6 +1,7 @@
 import { GAME_CONFIG, gameDefinition } from '../data/game-progress.data';
 import type { GameId, PlayerProgress } from '../models/game-progress.model';
 import {
+  applyBonusPoints,
   applyChallenge,
   createPlayerProgress,
   levelFeedbackFor,
@@ -154,6 +155,32 @@ describe('applyChallenge', () => {
     player = answerMany(player, PER_LEVEL - 6, false);
 
     expect(player.games[GAME].bestLevelScore).toBe(6);
+  });
+});
+
+describe('applyBonusPoints', () => {
+  it('soma pontos ao jogo sem contar como desafio', () => {
+    const { player } = applyBonusPoints(createPlayerProgress(), GAME, 40);
+    const game = player.games[GAME];
+
+    expect(game.score).toBe(40);
+    expect(game.totalPlayed).toBe(0);
+    expect(game.level).toBe(1);
+    expect(game.currentStreak).toBe(0);
+  });
+
+  it('fecha conquistas de pontuação', () => {
+    const { player, unlockedAchievements } = applyBonusPoints(createPlayerProgress(), GAME, 100);
+
+    expect(unlockedAchievements.map((achievement) => achievement.id)).toEqual(['cem-pontos']);
+    expect(player.unlockedAchievements).toContain('cem-pontos');
+  });
+
+  it('ignora bônus zerado ou negativo sem criar estado novo', () => {
+    const start = createPlayerProgress();
+
+    expect(applyBonusPoints(start, GAME, 0).player).toBe(start);
+    expect(applyBonusPoints(start, GAME, -30).player).toBe(start);
   });
 });
 

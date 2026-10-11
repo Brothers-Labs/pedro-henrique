@@ -8,16 +8,18 @@ import { accessoryStateOf } from '../../../core/pet/pet-progress';
 interface AccessoryView {
   readonly accessory: PetAccessory;
   readonly state: PetAccessoryState;
+  /** O que falta para liberar: o nível, ou a dica do prêmio. */
+  readonly lockLabel: string;
 }
 
 /**
  * Acessórios do mascote.
  *
- * Um de cada vez: com sete enfeites, deixar vestir tudo junto empilharia coroa
+ * Um de cada vez: com tantos enfeites, deixar vestir tudo junto empilharia coroa
  * sobre boné sobre fone. Escolher qual usar hoje é parte da brincadeira.
  *
- * O que ainda está bloqueado continua visível, com o nível que falta — saber
- * o que vem é o que dá vontade de continuar.
+ * O que ainda está bloqueado continua visível, com o nível que falta (ou o
+ * prêmio que o libera) — saber o que vem é o que dá vontade de continuar.
  */
 @Component({
   selector: 'app-pet-accessories',
@@ -34,7 +36,7 @@ interface AccessoryView {
               @case ('bloqueado') {
                 <p class="accessory__lock">
                   <span aria-hidden="true">🔒</span>
-                  Nível {{ item.accessory.unlockLevel }}
+                  {{ item.lockLabel }}
                 </p>
               }
               @case ('equipado') {
@@ -78,6 +80,7 @@ export class PetAccessories {
     PET_ACCESSORIES.map((accessory) => ({
       accessory,
       state: accessoryStateOf(this.pet(), accessory.id),
+      lockLabel: accessory.unlock.kind === 'level' ? `Nível ${accessory.unlock.level}` : accessory.unlock.hint,
     })),
   );
 }

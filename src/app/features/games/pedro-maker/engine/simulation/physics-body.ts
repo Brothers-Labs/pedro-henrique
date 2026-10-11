@@ -32,6 +32,8 @@ export interface PhysicsBody {
   previousX: number;
   previousY: number;
   hasGravity: boolean;
+  /** Fração da gravidade que age no corpo: menos de 1 dentro da água. */
+  gravityScale: number;
   maxFallSpeed: number;
   blockedLeft: boolean;
   blockedRight: boolean;
@@ -65,6 +67,7 @@ export function createBody(width: number, height: number, hasGravity: boolean, m
     previousX: 0,
     previousY: 0,
     hasGravity,
+    gravityScale: 1,
     maxFallSpeed,
     blockedLeft: false,
     blockedRight: false,
@@ -138,7 +141,7 @@ export function stepBody(body: PhysicsBody, world: PhysicsWorld, seconds: number
   }
 
   if (body.hasGravity) {
-    body.vy = Math.min(body.vy + GRAVITY * seconds, body.maxFallSpeed);
+    body.vy = Math.min(body.vy + GRAVITY * body.gravityScale * seconds, body.maxFallSpeed);
   }
 
   moveHorizontally(body, world.grid, body.vx * seconds);

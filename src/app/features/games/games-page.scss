@@ -18,6 +18,12 @@
    * primeira tela do celular. Numa faixa só, a aba seguinte aparece cortada na
    * borda e mostra sozinha que há mais jogo para o lado.
    */
+  /** Escolha entre a trilha da Aventura e o jogar livre desta página. */
+  app-adventure-card {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
   /**
    * Painel da jornada e cartão do mascote.
    *

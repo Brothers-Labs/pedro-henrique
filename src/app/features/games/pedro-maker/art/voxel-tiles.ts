@@ -28,7 +28,9 @@ export type VoxelTile =
   | 'cloud'
   | 'platform'
   | 'spring'
-  | 'lava';
+  | 'lava'
+  | 'water'
+  | 'lucky';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -48,6 +50,8 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'platform',
   'spring',
   'lava',
+  'water',
+  'lucky',
 ];
 
 /** Blocos por linha no atlas. */
@@ -148,20 +152,7 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
     fill(set, '#ffc629');
     frame(set, '#b8741a', 0);
     rivets(set, '#b8741a');
-
-    QUESTION_MARK.forEach((line, row) => {
-      [...line].forEach((cell, column) => {
-        if (cell === '#') {
-          const x = 3 + column * 2;
-          const y = 1 + row * 2;
-
-          set(x, y, '#7a4210');
-          set(x + 1, y, '#7a4210');
-          set(x, y + 1, '#7a4210');
-          set(x + 1, y + 1, '#7a4210');
-        }
-      });
-    });
+    questionMark(set, '#7a4210', 0);
   },
   'surprise-used': ({ set, random }) => {
     speckle(set, random, '#a8835a', ['#96724c', '#b89468'], 0.25);
@@ -194,6 +185,26 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
   },
   lava: ({ set, random }) => {
     speckle(set, random, '#ff6a00', ['#ffd23f', '#ff9a1f', '#c2330a'], 0.45);
+  },
+  water: ({ set, random }) => {
+    speckle(set, random, '#2f9be8', ['#3fa9f5', '#258bd6'], 0.35);
+
+    // Riscos claros em ondinha: é o que faz o bloco parecer água, e não vidro azul.
+    for (const row of [3, 9]) {
+      for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+        if (x % 6 < 3) {
+          set(x, row + (x % 6 === 1 ? -1 : 0), '#8fd6ff');
+        }
+      }
+    }
+  },
+  lucky: ({ set }) => {
+    // Dourado com borda dupla e o "?" branco: o Lucky Block não se confunde com a surpresa comum.
+    fill(set, '#ffd84a');
+    frame(set, '#e8590c', 0);
+    frame(set, '#fff3a8', 1);
+    questionMark(set, '#d9480f', 1);
+    questionMark(set, '#ffffff', 0);
   },
 };
 
@@ -311,6 +322,25 @@ function frame(set: SetPixel, color: string, inset: number): void {
     set(inset, step, color);
     set(last, step, color);
   }
+}
+
+/** O "?" dos blocos surpresa, em pixels dobrados; `offset` desloca para desenhar a sombra. */
+function questionMark(set: SetPixel, color: string, offset: number): void {
+  QUESTION_MARK.forEach((line, row) => {
+    [...line].forEach((cell, column) => {
+      if (cell !== '#') {
+        return;
+      }
+
+      const x = 3 + column * 2 + offset;
+      const y = 1 + row * 2 + offset;
+
+      set(x, y, color);
+      set(x + 1, y, color);
+      set(x, y + 1, color);
+      set(x + 1, y + 1, color);
+    });
+  });
 }
 
 function rivets(set: SetPixel, color: string): void {

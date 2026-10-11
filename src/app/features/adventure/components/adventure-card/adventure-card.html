@@ -1,0 +1,41 @@
+@if (variant() === 'home') {
+  <article class="card" data-color="yellow" aria-labelledby="aventura-card-titulo">
+    <h3 id="aventura-card-titulo" class="card__title"><span aria-hidden="true">🗺️</span> Sua aventura</h3>
+
+    <app-map-companion [line]="greeting()" size="pequeno" />
+
+    @if (world(); as current) {
+      <p class="card__world">
+        <span aria-hidden="true">{{ current.world.emoji }}</span>
+        {{ current.world.name }} · {{ current.completedLevels }} / {{ current.levels.length }} fases
+      </p>
+      <ol class="card__stars" aria-label="Estrelas de cada fase">
+        @for (level of current.levels; track level.level.id) {
+          <li><app-star-rating [stars]="level.record?.bestStars ?? 0" size="small" /></li>
+        }
+      </ol>
+    }
+
+    <a class="button button--primary button--block card__action" routerLink="/aventura">
+      <span aria-hidden="true">🚀</span>
+      Continuar aventura
+    </a>
+  </article>
+} @else {
+  <nav class="modes" aria-label="Modos de jogar">
+    <a class="modes__mode" data-color="yellow" routerLink="/aventura">
+      <span class="modes__emoji" aria-hidden="true">🗺️</span>
+      <span>
+        <strong class="modes__name">Aventura</strong>
+        <span class="modes__text">Siga a jornada, desbloqueie mundos e evolua.</span>
+      </span>
+    </a>
+    <p class="modes__mode modes__mode--current" data-color="mint" aria-current="page">
+      <span class="modes__emoji" aria-hidden="true">🎮</span>
+      <span>
+        <strong class="modes__name">Jogos <span class="modes__badge">você está aqui</span></strong>
+        <span class="modes__text">Escolha livremente o que quer jogar.</span>
+      </span>
+    </p>
+  </nav>
+}

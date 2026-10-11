@@ -83,6 +83,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/games/games-page').then((m) => m.GamesPage),
   },
   {
+    path: 'aventura',
+    data: {
+      description:
+        'O Mapa da Aventura do Pedro Henrique: mundos, fases e desafios para aprender junto com o mascote.',
+    },
+    loadChildren: () => import('./features/adventure/adventure.routes').then((m) => m.ADVENTURE_ROUTES),
+  },
+  {
     path: 'mascote',
     title: 'Meu mascote',
     data: {
