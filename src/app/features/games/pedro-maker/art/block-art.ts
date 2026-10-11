@@ -272,6 +272,30 @@ export function paintMovingPlatform(context: CanvasRenderingContext2D): void {
 }
 
 /** Lava ondulando, com bolhas claras. */
+/** Fileira de espinhos prateados sobre uma base escura. */
+export function paintSpikes(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 2, 34, 44, 12, 3);
+  fillAndOutline(context, '#4b4470');
+
+  for (let spike = 0; spike < 3; spike += 1) {
+    const x = 8 + spike * 16;
+
+    context.beginPath();
+    context.moveTo(x - 7, 35);
+    context.lineTo(x, 6);
+    context.lineTo(x + 7, 35);
+    context.closePath();
+    fillAndOutline(context, '#d6dbe8', 2.5);
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.moveTo(x - 1, 14);
+    context.lineTo(x - 3.5, 31);
+    context.lineTo(x - 1, 31);
+    context.closePath();
+    context.fill();
+  }
+}
+
 export function paintLava(context: CanvasRenderingContext2D): void {
   const gradient = context.createLinearGradient(0, 0, 0, 48);
 

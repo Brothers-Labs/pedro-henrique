@@ -17,6 +17,7 @@ import { CHEST_DROP_MS, type Checkpoint, type TriggerSystem } from '../simulatio
 import { disposeTree } from './dispose';
 import { backOut, bounceOut } from './easing';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
+import { TERRAIN_DEPTH } from './voxel-mesher';
 import type { WorldSpace } from './world-space';
 
 /** Enfeites ficam atrás do plano do Pedro: nunca escondem a ação. */
@@ -35,7 +36,7 @@ interface CheckpointModel {
 }
 
 /**
- * Os objetos parados da fase — árvores, placas, portas — e os que reagem
+ * Os objetos parados da fase — árvores, placas, portas, espinhos — e os que reagem
  * sem física: bandeira do checkpoint, portal e o baú do chefão.
  *
  * Tudo o que não se mexe vira uma malha só; o resto tem peça própria.
@@ -131,6 +132,19 @@ export class PropView {
           break;
         case 'rock':
           at(x, y, DECOR_Z, rock(this.palette));
+          break;
+        case 'fence':
+          at(x, y, DECOR_Z, fence());
+          break;
+        case 'snowman':
+          at(x, y, DECOR_Z, snowman());
+          break;
+        case 'toadstool':
+          at(x, y, DECOR_Z + 0.3, toadstool());
+          break;
+        case 'spikes':
+          // Bloco do terreno: ocupa a célula inteira, no plano do Pedro.
+          at(x, y, 0, spikes());
           break;
         default:
           break;
@@ -297,6 +311,69 @@ function rock(palette: ThemePalette): readonly VoxelBox[] {
     box(0, 0.2, 0, 0.7, 0.4, 0.6, palette.stone),
     box(0.15, 0.45, 0, 0.36, 0.2, 0.4, lighten(palette.stone, 0.12)),
   ];
+}
+
+function fence(): readonly VoxelBox[] {
+  const wood = '#d9a066';
+  const rail = darken(wood, 0.12);
+
+  return [
+    box(-0.32, 0.36, 0, 0.16, 0.72, 0.12, wood),
+    box(0.32, 0.36, 0, 0.16, 0.72, 0.12, wood),
+    box(-0.32, 0.76, 0, 0.1, 0.08, 0.1, lighten(wood, 0.1)),
+    box(0.32, 0.76, 0, 0.1, 0.08, 0.1, lighten(wood, 0.1)),
+    box(0, 0.5, 0.08, 1.0, 0.1, 0.06, rail),
+    box(0, 0.26, 0.08, 1.0, 0.1, 0.06, rail),
+  ];
+}
+
+function snowman(): readonly VoxelBox[] {
+  const snow = '#f7fbff';
+
+  return [
+    box(0, 0.32, 0, 0.66, 0.64, 0.6, snow),
+    box(0, 0.88, 0, 0.46, 0.46, 0.42, snow),
+    box(0, 0.68, 0, 0.5, 0.08, 0.46, '#e8505b'),
+    box(0.12, 0.62, 0.24, 0.12, 0.2, 0.04, '#e8505b'),
+    box(-0.1, 0.96, 0.215, 0.06, 0.06, 0.02, '#2a2350'),
+    box(0.1, 0.96, 0.215, 0.06, 0.06, 0.02, '#2a2350'),
+    box(0, 0.86, 0.3, 0.08, 0.08, 0.18, '#ff8a3d'),
+    box(0, 0.42, 0.305, 0.07, 0.07, 0.02, '#2a2350'),
+    box(0, 0.22, 0.305, 0.07, 0.07, 0.02, '#2a2350'),
+    box(0, 1.13, 0, 0.5, 0.05, 0.46, '#2a2350'),
+    box(0, 1.28, 0, 0.3, 0.26, 0.28, '#2a2350'),
+  ];
+}
+
+function toadstool(): readonly VoxelBox[] {
+  return [
+    box(0, 0.16, 0, 0.16, 0.32, 0.16, '#fff3d6'),
+    box(0, 0.38, 0, 0.5, 0.16, 0.5, '#e8505b'),
+    box(0, 0.5, 0, 0.3, 0.1, 0.3, '#f06a73'),
+    box(-0.12, 0.47, 0.18, 0.1, 0.04, 0.1, '#ffffff'),
+    box(0.14, 0.44, -0.1, 0.08, 0.04, 0.08, '#ffffff'),
+  ];
+}
+
+/** Espinhos prateados em três fileiras, cobrindo a faixa toda do terreno. */
+function spikes(): readonly VoxelBox[] {
+  const steel = '#c9cfdd';
+  const rowSpacing = TERRAIN_DEPTH / 3;
+  const parts: VoxelBox[] = [box(0, 0.15, 0, 1, 0.3, TERRAIN_DEPTH, '#4b4470')];
+
+  for (let row = -1; row <= 1; row += 1) {
+    for (const x of [-0.32, 0, 0.32]) {
+      const z = row * rowSpacing;
+
+      parts.push(
+        box(x, 0.42, z, 0.26, 0.24, 0.26, steel),
+        box(x, 0.62, z, 0.16, 0.18, 0.16, lighten(steel, 0.1)),
+        box(x, 0.78, z, 0.07, 0.16, 0.07, '#ffffff'),
+      );
+    }
+  }
+
+  return parts;
 }
 
 function signPost(): readonly VoxelBox[] {

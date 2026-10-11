@@ -367,6 +367,66 @@ describe('Simulação do Pedro Maker', () => {
     expect(bottom(player.body)).toBeLessThan(before);
   });
 
+  it('derrota a tartaruga com um pisão', () => {
+    const harness = start(flatLevel().add('turtle', 12, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    const turtle = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(turtle.body), turtle.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    expect(turtle.isDefeated).toBeTrue();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  it('segura o Pedro em cima dos espinhos, mas tira um coração sem voltar ao início', () => {
+    const harness = start(flatLevel().row('spikes', 10, SURFACE - 1, 3).build(META));
+    const player = harness.simulation.player;
+    run(harness, 0.2);
+
+    player.placeFeetAt(11.5 * TILE_SIZE, (SURFACE - 1) * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(lastHud(harness.events)?.hearts).toBe(2);
+    expect(bottom(player.body)).toBeLessThanOrEqual((SURFACE - 1) * TILE_SIZE);
+    expect(centerX(player.body)).toBeGreaterThan(8 * TILE_SIZE);
+  });
+
+  it('esconde e mostra a planta carnívora, que só machuca fora do cano', () => {
+    const harness = start(flatLevel().add('pipe', 20, SURFACE - 1).add('piranha', 20, SURFACE - 2).build(META));
+    const piranha = harness.simulation.enemies[0];
+    const states = new Set<boolean>();
+
+    for (let step = 0; step < 360; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      states.add(piranha.isHidden);
+    }
+
+    expect(states).toEqual(new Set([true, false]));
+    expect(piranha.canBeStomped).toBeFalse();
+  });
+
+  it('deixa a planta carnívora dentro do cano com o Pedro colado nele', () => {
+    const harness = start(flatLevel().add('pipe', 20, SURFACE - 1).add('piranha', 20, SURFACE - 2).build(META));
+    const piranha = harness.simulation.enemies[0];
+
+    for (let step = 0; step < 360 && piranha.emergence > 0; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+    }
+
+    harness.simulation.player.placeFeetAt(21.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+
+    for (let step = 0; step < 360; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      expect(piranha.emergence).toBe(0);
+    }
+
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {
     const level = campaignLevelById('1-1');
 

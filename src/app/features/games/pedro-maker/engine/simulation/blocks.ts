@@ -65,6 +65,9 @@ export interface Hazard {
 export const MOVING_PLATFORM_WIDTH = TILE_SIZE * 2;
 export const MOVING_PLATFORM_HEIGHT = TILE_SIZE / 2;
 
+/** Folga além da célula dos espinhos: sólidos, só seriam tocados com uma sobreposição. */
+const SPIKE_REACH = 2;
+
 const MOVING_SPEED = 90;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
@@ -86,6 +89,8 @@ export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
   readonly platforms: MovingPlatform[] = [];
   readonly hazards: Hazard[] = [];
+  /** Espinhos machucam como inimigo, sem mandar o Pedro de volta ao checkpoint. */
+  readonly spikes: Hazard[] = [];
   /** Células de lava e de água, para a tela desenhar. */
   readonly lavaCells: { readonly x: number; readonly y: number }[] = [];
   readonly waterCells: { readonly x: number; readonly y: number }[] = [];
@@ -111,6 +116,8 @@ export class BlockSystem {
         this.lavaCells.push({ x: object.x, y: object.y });
         // A lava queima a partir de um pouco abaixo da superfície: encostar de raspão não conta.
         this.hazards.push({ x: x + 4, y: y + 14, width: TILE_SIZE - 8, height: TILE_SIZE - 14 });
+      } else if (object.type === 'spikes') {
+        this.addSpikes(object);
       } else if (object.type === 'water') {
         this.waterCells.push({ x: object.x, y: object.y });
         this.waterKeys.add(this.key(object.x, object.y));
@@ -130,13 +137,11 @@ export class BlockSystem {
   }
 
   touchesHazard(body: PhysicsBody): boolean {
-    return this.hazards.some(
-      (hazard) =>
-        body.x < hazard.x + hazard.width &&
-        body.x + body.width > hazard.x &&
-        body.y < hazard.y + hazard.height &&
-        body.y + body.height > hazard.y,
-    );
+    return this.hazards.some((hazard) => overlapsHazard(body, hazard));
+  }
+
+  spikesTouching(body: PhysicsBody): Hazard | undefined {
+    return this.spikes.find((spikes) => overlapsHazard(body, spikes));
   }
 
   /** Move as plataformas antes dos corpos, que viajam de carona nelas. */
@@ -231,6 +236,17 @@ export class BlockSystem {
     this.grid.setCollision(object.x, object.y, kind === 'crumble' ? COLLISION.oneWay : COLLISION.solid);
   }
 
+  /** Sólidos para quem pisa ou esbarra; a área de contato passa um pouco da célula. */
+  private addSpikes(object: LevelObject): void {
+    this.grid.setCollision(object.x, object.y, COLLISION.solid);
+    this.spikes.push({
+      x: object.x * TILE_SIZE - SPIKE_REACH,
+      y: object.y * TILE_SIZE - SPIKE_REACH,
+      width: TILE_SIZE + SPIKE_REACH * 2,
+      height: TILE_SIZE + SPIKE_REACH * 2,
+    });
+  }
+
   private addMovingPlatform(object: LevelObject): void {
     const axis = object.properties?.axis ?? 'horizontal';
     const range = (object.properties?.range ?? 3) * TILE_SIZE;
@@ -308,4 +324,13 @@ export class BlockSystem {
   private key(cellX: number, cellY: number): number {
     return cellY * this.grid.width + cellX;
   }
+}
+
+function overlapsHazard(body: PhysicsBody, hazard: Hazard): boolean {
+  return (
+    body.x < hazard.x + hazard.width &&
+    body.x + body.width > hazard.x &&
+    body.y < hazard.y + hazard.height &&
+    body.y + body.height > hazard.y
+  );
 }

@@ -15,6 +15,7 @@ import {
   paintPortalSwirl,
   paintSecretDoor,
   paintSign,
+  paintSpikes,
   paintSpring,
   paintSurprise,
   paintTerrainTile,
@@ -28,13 +29,21 @@ import { paint } from './canvas';
 import {
   BUSH_HEIGHT,
   BUSH_WIDTH,
+  FENCE_HEIGHT,
+  FENCE_WIDTH,
   FLOWER_SIZE,
   paintBush,
+  paintFence,
   paintFlower,
   paintRock,
+  paintSnowman,
+  paintToadstool,
   paintTree,
   ROCK_HEIGHT,
   ROCK_WIDTH,
+  SNOWMAN_HEIGHT,
+  SNOWMAN_WIDTH,
+  TOADSTOOL_SIZE,
   TREE_HEIGHT,
   TREE_WIDTH,
 } from './decor-art';
@@ -135,6 +144,9 @@ function drawIcon(
     case 'water':
       paintVoxelIcon(context, ICON_SIZE, palette, 'water');
       return;
+    case 'spikes':
+      paintSpikes(context);
+      return;
     case 'brick':
       paintBrick(context);
       return;
@@ -159,6 +171,8 @@ function drawIcon(
     case 'bat':
     case 'robot':
     case 'ghost':
+    case 'turtle':
+    case 'piranha':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -205,6 +219,15 @@ function drawIcon(
       return;
     case 'rock':
       fit(ROCK_WIDTH, ROCK_HEIGHT, (inner) => paintRock(inner, palette));
+      return;
+    case 'fence':
+      fit(FENCE_WIDTH, FENCE_HEIGHT, paintFence);
+      return;
+    case 'snowman':
+      fit(SNOWMAN_WIDTH, SNOWMAN_HEIGHT, paintSnowman);
+      return;
+    case 'toadstool':
+      fit(TOADSTOOL_SIZE, TOADSTOOL_SIZE, paintToadstool);
       return;
     case 'sign':
       paintSign(context);

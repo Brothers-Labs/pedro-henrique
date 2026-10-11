@@ -37,6 +37,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   platform: { surface: 'one-way', isUnique: false },
   cloud: { surface: 'one-way', isUnique: false },
   lava: { surface: 'hazard', isUnique: false },
+  spikes: { surface: 'hazard', isUnique: false },
   water: { surface: 'water', isUnique: false },
   'moving-platform': { surface: 'none', isUnique: false },
   slime: { surface: 'none', isUnique: false },
@@ -44,6 +45,8 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   bat: { surface: 'none', isUnique: false },
   robot: { surface: 'none', isUnique: false },
   ghost: { surface: 'none', isUnique: false },
+  turtle: { surface: 'none', isUnique: false },
+  piranha: { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   crystal: { surface: 'none', isUnique: false },
@@ -59,6 +62,9 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   flower: { surface: 'none', isUnique: false },
   rock: { surface: 'none', isUnique: false },
   sign: { surface: 'none', isUnique: false },
+  fence: { surface: 'none', isUnique: false },
+  snowman: { surface: 'none', isUnique: false },
+  toadstool: { surface: 'none', isUnique: false },
   hint: { surface: 'none', isUnique: false },
   'mascot-tip': { surface: 'none', isUnique: false },
 };
@@ -116,6 +122,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'wood', category: 'terreno', type: 'wood', label: 'Madeira' },
   { id: 'lava', category: 'terreno', type: 'lava', label: 'Lava' },
   { id: 'water', category: 'terreno', type: 'water', label: 'Água' },
+  { id: 'spikes', category: 'terreno', type: 'spikes', label: 'Espinhos' },
 
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
@@ -135,6 +142,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'bat', category: 'inimigos', type: 'bat', label: 'Morcego' },
   { id: 'robot', category: 'inimigos', type: 'robot', label: 'Robô' },
   { id: 'ghost', category: 'inimigos', type: 'ghost', label: 'Fantasminha' },
+  { id: 'turtle', category: 'inimigos', type: 'turtle', label: 'Tartaruga' },
+  { id: 'piranha', category: 'inimigos', type: 'piranha', label: 'Planta Carnívora' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
@@ -164,6 +173,9 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'flower', category: 'decoracao', type: 'flower', label: 'Flor' },
   { id: 'rock', category: 'decoracao', type: 'rock', label: 'Pedrinha' },
   { id: 'sign', category: 'decoracao', type: 'sign', label: 'Placa', properties: { text: 'Fase do Pedro!' } },
+  { id: 'fence', category: 'decoracao', type: 'fence', label: 'Cerca' },
+  { id: 'snowman', category: 'decoracao', type: 'snowman', label: 'Boneco de Neve' },
+  { id: 'toadstool', category: 'decoracao', type: 'toadstool', label: 'Cogumelinho' },
 
   { id: 'power-super-jump', category: 'power-ups', type: 'power-up', label: 'Super Pulo', properties: { powerUp: 'super-jump' } },
   { id: 'power-shield', category: 'power-ups', type: 'power-up', label: 'Escudo', properties: { powerUp: 'shield' } },

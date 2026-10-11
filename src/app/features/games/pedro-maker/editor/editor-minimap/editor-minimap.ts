@@ -23,11 +23,14 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   crystal: '#6fe3ff',
   lava: '#ff6a00',
   water: '#2f9be8',
+  spikes: '#c9cfdd',
   slime: '#e8505b',
   spiky: '#e8505b',
   bat: '#e8505b',
   robot: '#e8505b',
   ghost: '#e8505b',
+  turtle: '#e8505b',
+  piranha: '#e8505b',
   boss: '#e8505b',
 };
 

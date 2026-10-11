@@ -21,7 +21,11 @@ export type LevelTheme =
   | 'praia'
   | 'classico';
 
-export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost';
+/**
+ * A tartaruga anda devagar e pode ser pisada; a planta carnívora mora num
+ * cano, sobe e desce, e só cai com fogo ou estrela.
+ */
+export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost' | 'turtle' | 'piranha';
 
 /**
  * Poderes que o Pedro pode pegar.
@@ -63,15 +67,16 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
 
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
- * segura ninguém: quem entra nela nada.
+ * segura ninguém: quem entra nela nada. Os espinhos seguram, mas machucam
+ * quem encosta.
  */
-export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava' | 'water';
+export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava' | 'water' | 'spikes';
 
 export type ItemType = 'coin' | 'crystal' | 'heart' | 'power-up';
 
 export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'secret-door';
 
-export type DecorType = 'tree' | 'bush' | 'flower' | 'rock' | 'sign';
+export type DecorType = 'tree' | 'bush' | 'flower' | 'rock' | 'sign' | 'fence' | 'snowman' | 'toadstool';
 
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';

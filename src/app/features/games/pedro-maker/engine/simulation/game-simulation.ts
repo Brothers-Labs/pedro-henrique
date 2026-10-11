@@ -39,7 +39,7 @@ const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
 const CHEST_COINS = 10;
 
-const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost']);
+const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha']);
 
 function isEnemyKind(type: LevelObjectType): type is EnemyKind {
   return ENEMY_KINDS.has(type);
@@ -323,7 +323,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         continue;
       }
 
-      const target = this.enemies.find((enemy) => !enemy.isDefeated && overlaps(body, enemy.body));
+      // Escondido no cano ou sumido, o inimigo não está ali para ser atingido.
+      const target = this.enemies.find((enemy) => !enemy.isDefeated && !enemy.isHidden && overlaps(body, enemy.body));
 
       if (target) {
         this.fireballs.remove(fireball);
@@ -374,6 +375,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const fellOut = player.body.y > this.grid.heightPx + TILE_SIZE;
 
     if (!fellOut && !this.blocks.touchesHazard(player.body)) {
+      const spikes = this.blocks.spikesTouching(player.body);
+
+      if (spikes) {
+        this.hurtPlayer(spikes.x + spikes.width / 2);
+      }
+
       return;
     }
 
