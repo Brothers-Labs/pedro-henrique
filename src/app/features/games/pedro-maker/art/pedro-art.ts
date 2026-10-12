@@ -1,5 +1,18 @@
 import type { CharacterPalette } from '../config/character.config';
-import { circle, ellipse, eye, fillAndOutline, lighten, OUTLINE, roundedRect, star } from './canvas';
+import {
+  circle,
+  ellipse,
+  eye,
+  fillAndOutline,
+  hand,
+  lighten,
+  limb,
+  OUTLINE,
+  type Point,
+  roundedRect,
+  smile,
+  star,
+} from './canvas';
 
 /** Área do retrato: larga o bastante para os braços e as pernas do Pedro. */
 export const PEDRO_FRAME_WIDTH = 64;
@@ -12,8 +25,6 @@ const HAIR = '#5a3a22';
 const SHORTS = '#3d5fb0';
 const SNEAKER = '#ffffff';
 const SOLE = '#2a2350';
-
-type Point = readonly [number, number];
 
 /** Mãos e pés do Pedro parado. */
 const BACK_FOOT: Point = [28, 70];
@@ -74,7 +85,7 @@ function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette)
 
   eye(context, centerX + 3, centerY + 1, 4.2, 0.3);
   eye(context, centerX + 11, centerY + 1, 4.2, 0.3);
-  paintSmile(context, centerX + 8, centerY + 9);
+  smile(context, centerX + 8, centerY + 9);
 
   // Boné: copa, aba virada para a frente e a estrela do Pedro.
   context.beginPath();
@@ -91,14 +102,6 @@ function paintHead(context: CanvasRenderingContext2D, palette: CharacterPalette)
 
   circle(context, centerX, centerY - 18, 2.5);
   fillAndOutline(context, lighten(palette.cap, 0.3), 2);
-}
-
-function paintSmile(context: CanvasRenderingContext2D, x: number, y: number): void {
-  context.strokeStyle = OUTLINE;
-  context.lineWidth = 2;
-  context.beginPath();
-  context.arc(x, y - 3, 4, Math.PI * 0.2, Math.PI * 0.8);
-  context.stroke();
 }
 
 function paintBackpack(context: CanvasRenderingContext2D, palette: CharacterPalette): void {
@@ -163,24 +166,6 @@ function shine(context: CanvasRenderingContext2D, x: number, y: number): void {
   context.fillStyle = 'rgba(255, 255, 255, 0.6)';
   circle(context, x, y, 2.2);
   context.fill();
-}
-
-/** Braço ou perna: traço grosso com contorno. */
-function limb(context: CanvasRenderingContext2D, from: Point, to: Point, color: string): void {
-  context.beginPath();
-  context.moveTo(from[0], from[1]);
-  context.lineTo(to[0], to[1]);
-  context.strokeStyle = OUTLINE;
-  context.lineWidth = 9;
-  context.stroke();
-  context.strokeStyle = color;
-  context.lineWidth = 5;
-  context.stroke();
-}
-
-function hand(context: CanvasRenderingContext2D, at: Point, color: string): void {
-  circle(context, at[0], at[1], 3.6);
-  fillAndOutline(context, color, 2);
 }
 
 function sneaker(context: CanvasRenderingContext2D, at: Point): void {

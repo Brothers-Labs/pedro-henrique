@@ -19,6 +19,8 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   robot: { speed: 110, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true },
   bat: { speed: 1, bodyWidth: 26, bodyHeight: 20, flies: true, isStompable: true },
   ghost: { speed: 50, bodyWidth: 30, bodyHeight: 32, flies: true, isStompable: true },
+  turtle: { speed: 40, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true },
+  piranha: { speed: 0, bodyWidth: 26, bodyHeight: 40, flies: false, isStompable: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -32,6 +34,15 @@ const GHOST_VISIBLE_MS = 2600;
 const GHOST_FADED_MS = 1600;
 const GHOST_NOTICE_DISTANCE = 340;
 
+/** Ciclo da planta carnívora: escondida, subindo, de fora e descendo. */
+const PIRANHA_HIDDEN_MS = 1800;
+const PIRANHA_RISE_MS = 350;
+const PIRANHA_OUT_MS = 1500;
+const PIRANHA_SINK_MS = 350;
+const PIRANHA_CYCLE_MS = PIRANHA_HIDDEN_MS + PIRANHA_RISE_MS + PIRANHA_OUT_MS + PIRANHA_SINK_MS;
+/** Com o Pedro colado no cano, a planta espera: ninguém é mordido sem ver. */
+const PIRANHA_SHY_DISTANCE = TILE_SIZE * 1.5;
+
 /** Tempo da animação de derrota antes de o inimigo sair da partida. */
 export const ENEMY_DEFEAT_MS = 280;
 
@@ -41,13 +52,18 @@ export const ENEMY_DEFEAT_MS = 280;
  * Cada tipo tem um jeito de andar: o slime e o espinhudo vão e voltam sem cair
  * das beiradas, o robô patrulha um trecho com paradinhas, o morcego voa num
  * oito e o fantasminha segue o Pedro devagar, sumindo de tempos em tempos.
- * Invisível, o fantasminha não machuca — é a hora de passar por ele.
+ * Invisível, o fantasminha não machuca — é a hora de passar por ele. A
+ * tartaruga anda como o slime, só que mais devagar, e a planta carnívora não
+ * sai do lugar: sobe e desce do cano, e escondida também não machuca.
  */
 export class Enemy {
   readonly body: PhysicsBody;
   isDefeated = false;
   defeatedAt = 0;
-  isFaded = false;
+  /** Fantasma sumido ou planta dentro do cano: não machuca nem é atingido. */
+  isHidden = false;
+  /** Quanto a planta está para fora do cano, de 0 a 1; os outros estão sempre inteiros. */
+  emergence = 1;
   /** 1 olhando para a direita, -1 para a esquerda. */
   direction: 1 | -1 = -1;
 
@@ -55,6 +71,8 @@ export class Enemy {
   private readonly homeX: number;
   private readonly homeY: number;
   private pausedUntil = 0;
+  private piranhaCycleMs: number;
+  private lastStepAt: number | null = null;
 
   constructor(
     readonly id: number,
@@ -78,6 +96,12 @@ export class Enemy {
     this.body.previousY = this.body.y;
     this.homeX = centerX(this.body);
     this.homeY = centerY(this.body);
+    this.piranhaCycleMs = (phase / (Math.PI * 2)) * PIRANHA_CYCLE_MS;
+
+    if (kind === 'piranha') {
+      this.emergence = piranhaEmergence(this.piranhaCycleMs);
+      this.isHidden = this.emergence < 0.5;
+    }
   }
 
   get flies(): boolean {
@@ -86,11 +110,11 @@ export class Enemy {
 
   /** Pisar em cima derrota o inimigo? O espinhudo e o fantasma sumido, não. */
   get canBeStomped(): boolean {
-    return this.profile.isStompable && !this.isFaded;
+    return this.profile.isStompable && !this.isHidden;
   }
 
   get isHarmful(): boolean {
-    return !this.isDefeated && !this.isFaded;
+    return !this.isDefeated && !this.isHidden;
   }
 
   step(now: number, targetX: number, targetY: number): void {
@@ -101,6 +125,7 @@ export class Enemy {
     switch (this.kind) {
       case 'slime':
       case 'spiky':
+      case 'turtle':
         this.patrolLedges();
         return;
       case 'robot':
@@ -111,6 +136,9 @@ export class Enemy {
         return;
       case 'ghost':
         this.haunt(now, targetX, targetY);
+        return;
+      case 'piranha':
+        this.lurkInPipe(now, targetX);
         return;
     }
   }
@@ -184,13 +212,13 @@ export class Enemy {
   private haunt(now: number, targetX: number, targetY: number): void {
     const cycle = (now + this.phase * 1000) % (GHOST_VISIBLE_MS + GHOST_FADED_MS);
 
-    this.isFaded = cycle > GHOST_VISIBLE_MS;
+    this.isHidden = cycle > GHOST_VISIBLE_MS;
 
     const x = centerX(this.body);
     const y = centerY(this.body);
     const distance = Math.hypot(targetX - x, targetY - y);
 
-    if (this.isFaded || distance > GHOST_NOTICE_DISTANCE) {
+    if (this.isHidden || distance > GHOST_NOTICE_DISTANCE) {
       // Longe ou sumido, só flutua no lugar.
       this.body.vx = 0;
       this.body.vy = Math.sin(now / 400 + this.phase) * 20;
@@ -205,6 +233,23 @@ export class Enemy {
     this.direction = targetX > x ? 1 : -1;
   }
 
+  private lurkInPipe(now: number, targetX: number): void {
+    const elapsed = this.lastStepAt === null ? 0 : now - this.lastStepAt;
+    const x = centerX(this.body);
+    const isWaitingForPedro = this.piranhaCycleMs < PIRANHA_HIDDEN_MS && Math.abs(targetX - x) < PIRANHA_SHY_DISTANCE;
+
+    this.lastStepAt = now;
+    this.body.vx = 0;
+    this.direction = targetX > x ? 1 : -1;
+
+    if (!isWaitingForPedro) {
+      this.piranhaCycleMs = (this.piranhaCycleMs + elapsed) % PIRANHA_CYCLE_MS;
+    }
+
+    this.emergence = piranhaEmergence(this.piranhaCycleMs);
+    this.isHidden = this.emergence < 0.5;
+  }
+
   private hasGroundAhead(): boolean {
     const aheadX = centerX(this.body) + this.direction * (this.body.width / 2 + 6);
 
@@ -214,4 +259,19 @@ export class Enemy {
   private turnAround(): void {
     this.direction = this.direction === 1 ? -1 : 1;
   }
+}
+
+function piranhaEmergence(cycleMs: number): number {
+  const rising = cycleMs - PIRANHA_HIDDEN_MS;
+  const sinking = rising - PIRANHA_RISE_MS - PIRANHA_OUT_MS;
+
+  if (rising < 0) {
+    return 0;
+  }
+
+  if (rising < PIRANHA_RISE_MS) {
+    return rising / PIRANHA_RISE_MS;
+  }
+
+  return sinking < 0 ? 1 : Math.max(0, 1 - sinking / PIRANHA_SINK_MS);
 }

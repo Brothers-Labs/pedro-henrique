@@ -38,7 +38,7 @@ export class KartHomePage {
   private readonly kartProgress = inject(KartProgressService);
 
   protected readonly menu = MENU;
-  protected readonly look = inject(MakerProgressService).look;
+  protected readonly character = inject(MakerProgressService).character;
   protected readonly progress = this.kartProgress.progress;
 
   protected readonly kart = computed(() => {

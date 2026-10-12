@@ -9,6 +9,11 @@ export const BUSH_HEIGHT = 40;
 export const FLOWER_SIZE = 32;
 export const ROCK_WIDTH = 48;
 export const ROCK_HEIGHT = 32;
+export const FENCE_WIDTH = 48;
+export const FENCE_HEIGHT = 36;
+export const SNOWMAN_WIDTH = 48;
+export const SNOWMAN_HEIGHT = 80;
+export const TOADSTOOL_SIZE = 40;
 
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
@@ -291,4 +296,73 @@ export function paintRock(context: CanvasRenderingContext2D, palette: ThemePalet
   context.closePath();
   fillAndOutline(context, palette.stone);
   shine(context, 18, 15, 5, 3);
+}
+
+export function paintFence(context: CanvasRenderingContext2D): void {
+  const wood = '#d9a066';
+
+  for (const y of [12, 24]) {
+    roundedRect(context, 1, y, 46, 6, 2);
+    fillAndOutline(context, darken(wood, 0.1), 2);
+  }
+
+  for (const x of [6, 30]) {
+    context.beginPath();
+    context.moveTo(x, 36);
+    context.lineTo(x, 6);
+    context.lineTo(x + 6, 1);
+    context.lineTo(x + 12, 6);
+    context.lineTo(x + 12, 36);
+    context.closePath();
+    fillAndOutline(context, wood, 2.5);
+  }
+}
+
+export function paintSnowman(context: CanvasRenderingContext2D): void {
+  const snow = '#f7fbff';
+
+  circle(context, 24, 60, 19);
+  fillAndOutline(context, snow);
+  circle(context, 24, 30, 14);
+  fillAndOutline(context, snow);
+  shine(context, 17, 52, 5, 3);
+
+  context.fillStyle = OUTLINE;
+
+  for (const [x, y] of [[19, 26], [29, 26], [24, 52], [24, 62]] as const) {
+    circle(context, x, y, 2);
+    context.fill();
+  }
+
+  context.beginPath();
+  context.moveTo(24, 30);
+  context.lineTo(34, 32);
+  context.lineTo(24, 34);
+  context.closePath();
+  fillAndOutline(context, '#ff8a3d', 1.5);
+
+  roundedRect(context, 10, 40, 28, 6, 3);
+  fillAndOutline(context, '#e8505b', 2);
+
+  roundedRect(context, 14, 12, 20, 6, 2);
+  fillAndOutline(context, '#2a2350', 2);
+  roundedRect(context, 17, 0, 14, 13, 2);
+  fillAndOutline(context, '#2a2350', 2);
+}
+
+export function paintToadstool(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 13, 20, 14, 20, 6);
+  fillAndOutline(context, '#fff3d6');
+
+  context.beginPath();
+  context.moveTo(2, 24);
+  context.quadraticCurveTo(20, -8, 38, 24);
+  context.closePath();
+  fillAndOutline(context, '#e8505b');
+  context.fillStyle = '#ffffff';
+
+  for (const [x, y, radius] of [[12, 15, 3.5], [24, 9, 4], [30, 18, 3]] as const) {
+    circle(context, x, y, radius);
+    context.fill();
+  }
 }

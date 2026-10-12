@@ -63,11 +63,17 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       return;
     }
 
-    const nextSimulation = new GameSimulation({ blueprint, rules: options.rules, isTouch: options.isTouch, listener });
+    const nextSimulation = new GameSimulation({
+      blueprint,
+      hero: options.character.hero,
+      rules: options.rules,
+      isTouch: options.isTouch,
+      listener,
+    });
     const nextView = new LevelView(
       stage,
       nextSimulation,
-      { look: options.look, petEmoji: options.petEmoji, effectsEnabled: options.effectsEnabled, isTouch: options.isTouch },
+      { character: options.character, petEmoji: options.petEmoji, effectsEnabled: options.effectsEnabled, isTouch: options.isTouch },
       options.parent,
     );
 

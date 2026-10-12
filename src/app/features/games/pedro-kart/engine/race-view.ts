@@ -131,6 +131,7 @@ export class RaceView {
     }
 
     return new KartModel(rival.setup.body, kartColor(rival.setup.color).hex, {
+      hero: 'pedro',
       cap: rival.cap,
       shirt: rival.shirt,
       backpack: rival.shirt,

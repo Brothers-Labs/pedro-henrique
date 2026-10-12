@@ -23,7 +23,7 @@
     <section class="home__scene" aria-label="O Pedro no kart dele">
       <span class="scene__flag" aria-hidden="true">🏁</span>
       <div class="scene__driver">
-        <app-pedro-figure class="scene__pedro" [look]="look()" />
+        <app-pedro-figure class="scene__pedro" [character]="character()" />
         <span class="scene__kart" [style.--kart-color]="current.color.hex" aria-hidden="true">
           {{ current.body.emoji }}
         </span>

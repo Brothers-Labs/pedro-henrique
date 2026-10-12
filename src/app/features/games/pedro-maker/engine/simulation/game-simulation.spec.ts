@@ -1,8 +1,10 @@
+import { heroDefinition } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import { PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
 import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
+import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { GameSimulation, STEP_MS } from './game-simulation';
@@ -20,10 +22,11 @@ function flatLevel(width = 40): LevelBuilder {
   return new LevelBuilder(width, 15).ground(0, width - 1, SURFACE).add('start', 2, SURFACE - 1).add('portal', width - 3, SURFACE - 1);
 }
 
-function start(blueprint: LevelBlueprint): Harness {
+function start(blueprint: LevelBlueprint, hero: HeroId = 'pedro'): Harness {
   const events: GameSessionEvent[] = [];
   const simulation = new GameSimulation({
     blueprint,
+    hero,
     rules: DIFFICULTY_RULES.aventura,
     isTouch: false,
     listener: (event) => events.push(event),
@@ -46,6 +49,34 @@ function run(harness: Harness, seconds: number, input: Partial<InputSnapshot> = 
 function jump(harness: Harness, holdSeconds: number, input: Partial<InputSnapshot> = {}): void {
   harness.simulation.step({ ...IDLE_INPUT, ...input, jumpHeld: true, jumpPressed: true });
   run(harness, holdSeconds, { ...input, jumpHeld: true });
+}
+
+/** Altura máxima de um pulo segurado até o fim, a partir do chão. */
+function jumpApex(harness: Harness): number {
+  run(harness, 0.2);
+
+  const groundY = bottom(harness.simulation.player.body);
+  let highest = groundY;
+
+  harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true, jumpPressed: true });
+
+  for (let step = 0; step < 90; step += 1) {
+    harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
+    highest = Math.min(highest, bottom(harness.simulation.player.body));
+  }
+
+  return groundY - highest;
+}
+
+/** Distância percorrida entre soltar o direcional, já na velocidade máxima, e parar. */
+function brakingDistance(harness: Harness): number {
+  run(harness, 1, { right: true });
+
+  const releasedAt = centerX(harness.simulation.player.body);
+
+  run(harness, 1);
+
+  return centerX(harness.simulation.player.body) - releasedAt;
 }
 
 function lastHud(events: readonly GameSessionEvent[]): HudState | undefined {
@@ -79,23 +110,26 @@ describe('Simulação do Pedro Maker', () => {
   });
 
   it('pula a altura que o validador de fases espera', () => {
-    const harness = start(flatLevel().build(META));
-    run(harness, 0.2);
-
-    const groundY = bottom(harness.simulation.player.body);
-    let highest = groundY;
-
-    harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true, jumpPressed: true });
-
-    for (let step = 0; step < 90; step += 1) {
-      harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
-      highest = Math.min(highest, bottom(harness.simulation.player.body));
-    }
-
+    const apex = jumpApex(start(flatLevel().build(META)));
     const expectedApex = PLAYER_PHYSICS.jumpVelocity ** 2 / (2 * 1900);
 
-    expect(groundY - highest).toBeGreaterThan(expectedApex * 0.9);
-    expect(groundY - highest).toBeLessThan(expectedApex * 1.1);
+    expect(apex).toBeGreaterThan(expectedApex * 0.9);
+    expect(apex).toBeLessThan(expectedApex * 1.1);
+  });
+
+  it('faz o Gui pular mais alto que o Pedro', () => {
+    const pedroApex = jumpApex(start(flatLevel().build(META), 'pedro'));
+    const guiApex = jumpApex(start(flatLevel().build(META), 'gui'));
+    const expectedRatio = heroDefinition('gui').abilities.jumpMultiplier ** 2;
+
+    expect(guiApex / pedroApex).toBeCloseTo(expectedRatio, 1);
+  });
+
+  it('faz o Gui escorregar mais que o Pedro ao frear', () => {
+    const pedro = start(flatLevel().build(META), 'pedro');
+    const gui = start(flatLevel().build(META), 'gui');
+
+    expect(brakingDistance(gui)).toBeGreaterThan(brakingDistance(pedro) * 1.5);
   });
 
   it('corta o pulo quando o botão é solto cedo', () => {
@@ -331,6 +365,66 @@ describe('Simulação do Pedro Maker', () => {
     jump(harness, 0.25);
 
     expect(bottom(player.body)).toBeLessThan(before);
+  });
+
+  it('derrota a tartaruga com um pisão', () => {
+    const harness = start(flatLevel().add('turtle', 12, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    const turtle = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(turtle.body), turtle.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    expect(turtle.isDefeated).toBeTrue();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  it('segura o Pedro em cima dos espinhos, mas tira um coração sem voltar ao início', () => {
+    const harness = start(flatLevel().row('spikes', 10, SURFACE - 1, 3).build(META));
+    const player = harness.simulation.player;
+    run(harness, 0.2);
+
+    player.placeFeetAt(11.5 * TILE_SIZE, (SURFACE - 1) * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(lastHud(harness.events)?.hearts).toBe(2);
+    expect(bottom(player.body)).toBeLessThanOrEqual((SURFACE - 1) * TILE_SIZE);
+    expect(centerX(player.body)).toBeGreaterThan(8 * TILE_SIZE);
+  });
+
+  it('esconde e mostra a planta carnívora, que só machuca fora do cano', () => {
+    const harness = start(flatLevel().add('pipe', 20, SURFACE - 1).add('piranha', 20, SURFACE - 2).build(META));
+    const piranha = harness.simulation.enemies[0];
+    const states = new Set<boolean>();
+
+    for (let step = 0; step < 360; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      states.add(piranha.isHidden);
+    }
+
+    expect(states).toEqual(new Set([true, false]));
+    expect(piranha.canBeStomped).toBeFalse();
+  });
+
+  it('deixa a planta carnívora dentro do cano com o Pedro colado nele', () => {
+    const harness = start(flatLevel().add('pipe', 20, SURFACE - 1).add('piranha', 20, SURFACE - 2).build(META));
+    const piranha = harness.simulation.enemies[0];
+
+    for (let step = 0; step < 360 && piranha.emergence > 0; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+    }
+
+    harness.simulation.player.placeFeetAt(21.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+
+    for (let step = 0; step < 360; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      expect(piranha.emergence).toBe(0);
+    }
+
+    expect(lastHud(harness.events)?.hearts).toBe(3);
   });
 
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {

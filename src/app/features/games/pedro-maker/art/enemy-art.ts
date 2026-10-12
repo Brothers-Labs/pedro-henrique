@@ -17,6 +17,8 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   bat: paintBat,
   robot: paintRobot,
   ghost: paintGhost,
+  turtle: paintTurtle,
+  piranha: paintPiranha,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -185,6 +187,81 @@ function paintGhost(context: CanvasRenderingContext2D): void {
   context.fillStyle = OUTLINE;
   ellipse(context, 24, 33, 2.5, 3);
   context.fill();
+}
+
+function paintTurtle(context: CanvasRenderingContext2D): void {
+  const skin = '#f2c14e';
+  const shell = '#3fae4d';
+
+  for (const footX of [14, 30]) {
+    roundedRect(context, footX - 5, 38, 10, 8, 3);
+    fillAndOutline(context, skin, 2);
+  }
+
+  circle(context, 39, 24, 8);
+  fillAndOutline(context, skin);
+  eye(context, 41, 22, 3.4, 0.3);
+
+  context.beginPath();
+  context.moveTo(4, 40);
+  context.bezierCurveTo(4, 12, 36, 12, 36, 40);
+  context.closePath();
+  fillAndOutline(context, shell);
+  shine(context, 13, 24, 4, 2.5);
+
+  context.strokeStyle = darken(shell, 0.3);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(20, 20);
+  context.lineTo(20, 39);
+  context.moveTo(8, 31);
+  context.lineTo(33, 31);
+  context.stroke();
+
+  roundedRect(context, 2, 38, 36, 5, 2.5);
+  fillAndOutline(context, '#fff3d6', 2);
+}
+
+function paintPiranha(context: CanvasRenderingContext2D): void {
+  const leaf = '#45b95a';
+
+  context.strokeStyle = '#2f8f47';
+  context.lineWidth = 5;
+  context.beginPath();
+  context.moveTo(24, 48);
+  context.lineTo(24, 26);
+  context.stroke();
+
+  for (const side of [-1, 1]) {
+    ellipse(context, 24 + side * 9, 40, 8, 3.5);
+    fillAndOutline(context, leaf, 2);
+  }
+
+  // Cabeça vermelha de boca aberta: as duas metades e os dentinhos brancos.
+  context.beginPath();
+  context.arc(24, 18, 15, Math.PI * 0.95, Math.PI * 2.05);
+  context.closePath();
+  fillAndOutline(context, '#e8343f');
+  context.beginPath();
+  context.arc(24, 22, 13, Math.PI * 0.05, Math.PI * 0.95);
+  context.closePath();
+  fillAndOutline(context, '#e8343f');
+
+  context.fillStyle = '#ffffff';
+
+  for (const [x, y, radius] of [[17, 10, 2.6], [29, 8, 2], [32, 15, 2.2], [20, 28, 2]] as const) {
+    circle(context, x, y, radius);
+    context.fill();
+  }
+
+  for (const toothX of [15, 21, 27, 33]) {
+    context.beginPath();
+    context.moveTo(toothX - 2.5, 19);
+    context.lineTo(toothX, 22.5);
+    context.lineTo(toothX + 2.5, 19);
+    context.closePath();
+    context.fill();
+  }
 }
 
 function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {

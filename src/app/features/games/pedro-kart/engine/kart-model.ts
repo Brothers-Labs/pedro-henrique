@@ -3,7 +3,7 @@ import { Group, MathUtils, Mesh, MeshStandardMaterial } from 'three';
 import { darken, lighten } from '../../pedro-maker/art/canvas';
 import type { CharacterPalette } from '../../pedro-maker/config/character.config';
 import { disposeTree } from '../../pedro-maker/engine/render/dispose';
-import { pedroArm, pedroUpperBody } from '../../pedro-maker/engine/render/models/pedro-model';
+import { characterParts } from '../../pedro-maker/engine/render/models/character-parts';
 import { box, buildBoxesGeometry, type VoxelBox } from '../../pedro-maker/engine/render/voxel-geometry';
 import type { KartBodyId } from '../models/kart.model';
 
@@ -16,9 +16,11 @@ const WHEEL_X = 1.02;
 const FRONT_WHEEL_Z = 1.05;
 const REAR_WHEEL_Z = -1.0;
 const MAX_WHEEL_TURN = 0.45;
-const SHOULDER_Y = 0.84;
-/** O piloto senta mais baixo que em pé: as pernas ficam escondidas dentro do kart. */
-const DRIVER_SEAT_Y = 0.22;
+/**
+ * Altura do quadril do piloto sentado: as pernas ficam escondidas dentro do
+ * kart, e o herói mais alto senta com a cabeça mais para cima.
+ */
+const DRIVER_HIP_Y = 0.64;
 const DRIVER_SEAT_Z = -0.45;
 
 /** O que o modelo precisa saber do kart para se mexer. */
@@ -32,8 +34,8 @@ export interface KartPose {
 /**
  * Um kart de cubos com o piloto sentado.
  *
- * O piloto é o mesmo Pedro do Pedro Maker, com o boné, a camiseta e a
- * mochila que ele escolheu lá: é o personagem dele que corre aqui.
+ * O piloto é o mesmo herói do Pedro Maker — o Pedro com o visual escolhido
+ * lá, ou o Gui —: é o personagem da criança que corre aqui.
  */
 export class KartModel {
   readonly root = new Group();
@@ -106,16 +108,18 @@ export class KartModel {
   }
 
   private buildDriver(palette: CharacterPalette): void {
-    this.driver.position.set(0, DRIVER_SEAT_Y, DRIVER_SEAT_Z);
-    this.driver.add(this.mesh(pedroUpperBody(palette)));
+    const parts = characterParts(palette);
+
+    this.driver.position.set(0, DRIVER_HIP_Y - parts.hipY, DRIVER_SEAT_Z);
+    this.driver.add(this.mesh(parts.upperBody));
 
     // Os dois braços esticados para a frente, segurando o volante.
     for (const side of [-1, 1] as const) {
       const arm = new Group();
 
-      arm.position.set(side * 0.33, SHOULDER_Y, 0);
+      arm.position.set(side * parts.shoulderX, parts.shoulderY, 0);
       arm.rotation.set(-1.15, 0, side * -0.18);
-      arm.add(this.mesh(pedroArm(palette.shirt)));
+      arm.add(this.mesh(parts.arm));
       this.driver.add(arm);
     }
   }

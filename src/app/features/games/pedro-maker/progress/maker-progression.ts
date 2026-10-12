@@ -7,12 +7,14 @@ import {
   xpForAdventurerLevel,
 } from '../config/rules.config';
 import { DEFAULT_LOOK, type LookOption } from '../config/character.config';
+import { DEFAULT_HERO } from '../config/hero.config';
 import { BOSS_LEVEL_NUMBER, LEVELS_PER_WORLD } from '../levels/campaign';
 import type { CampaignLevel } from '../models/campaign.model';
 import type {
   AdventurerLevel,
   LevelRecord,
   LevelReward,
+  HeroId,
   LevelRunResult,
   MakerAchievement,
   MakerAchievementMeasure,
@@ -45,6 +47,7 @@ export function createMakerProgress(today: string): MakerProgress {
       fastCompletions: 0,
       customLevelsSaved: 0,
     },
+    hero: DEFAULT_HERO,
     look: DEFAULT_LOOK,
     ownedLookOptions: [],
     mission: { day: today, levelsCompleted: 0, rewardClaimed: false },
@@ -393,6 +396,11 @@ export function equipLook(progress: MakerProgress, option: LookOption): MakerPro
   }
 
   return { ...progress, look: { ...progress.look, [option.category]: option.id } };
+}
+
+/** Troca o herói. Todos são gratuitos: escolher quem joga nunca custa moeda. */
+export function chooseHero(progress: MakerProgress, hero: HeroId): MakerProgress {
+  return progress.hero === hero ? progress : { ...progress, hero };
 }
 
 /* Conquistas --------------------------------------------------------------------------- */

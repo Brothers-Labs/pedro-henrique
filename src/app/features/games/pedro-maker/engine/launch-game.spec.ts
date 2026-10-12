@@ -1,4 +1,4 @@
-import { DEFAULT_LOOK } from '../config/character.config';
+import { DEFAULT_LOOK, paletteFor } from '../config/character.config';
 import { DIFFICULTY_RULES } from '../config/rules.config';
 import { campaignLevelById } from '../levels/campaign';
 import type { LevelBlueprint } from '../models/level.model';
@@ -35,7 +35,7 @@ function start(blueprint: LevelBlueprint): RunningGame {
     parent,
     blueprint,
     rules: DIFFICULTY_RULES.aventura,
-    look: DEFAULT_LOOK,
+    character: paletteFor(DEFAULT_LOOK, 'pedro'),
     effectsEnabled: true,
     isTouch: false,
     petEmoji: '🐶',

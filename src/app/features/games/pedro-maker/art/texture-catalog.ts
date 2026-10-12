@@ -1,5 +1,5 @@
 import { TILE_SIZE } from '../config/physics.config';
-import type { CharacterPalette } from '../config/character.config';
+import { DEFAULT_LOOK, paletteFor, type CharacterPalette } from '../config/character.config';
 import type { LevelObject, LevelTheme } from '../models/level.model';
 import {
   MOVING_PLATFORM_HEIGHT,
@@ -15,6 +15,7 @@ import {
   paintPortalSwirl,
   paintSecretDoor,
   paintSign,
+  paintSpikes,
   paintSpring,
   paintSurprise,
   paintTerrainTile,
@@ -28,13 +29,21 @@ import { paint } from './canvas';
 import {
   BUSH_HEIGHT,
   BUSH_WIDTH,
+  FENCE_HEIGHT,
+  FENCE_WIDTH,
   FLOWER_SIZE,
   paintBush,
+  paintFence,
   paintFlower,
   paintRock,
+  paintSnowman,
+  paintToadstool,
   paintTree,
   ROCK_HEIGHT,
   ROCK_WIDTH,
+  SNOWMAN_HEIGHT,
+  SNOWMAN_WIDTH,
+  TOADSTOOL_SIZE,
   TREE_HEIGHT,
   TREE_WIDTH,
 } from './decor-art';
@@ -51,6 +60,7 @@ import {
   POWER_UP_SIZE,
 } from './item-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
+import { paintGuiPortrait } from './gui-art';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
 
@@ -71,12 +81,24 @@ export function paintObjectIcon(object: Pick<LevelObject, 'type' | 'properties'>
   return paint(ICON_SIZE, ICON_SIZE, (context) => drawIcon(context, object, theme, palette));
 }
 
-/** O Pedro parado, pintado em `scale` vezes o tamanho base para ficar nítido ampliado. */
-export function paintPedroIcon(character: CharacterPalette, scale = 1): HTMLCanvasElement {
+/** O herói parado, pintado em `scale` vezes o tamanho base para ficar nítido ampliado. */
+export function paintCharacterIcon(character: CharacterPalette, scale = 1): HTMLCanvasElement {
   return paint(PEDRO_FRAME_WIDTH * scale, PEDRO_FRAME_HEIGHT * scale, (context) => {
     context.scale(scale, scale);
-    paintPedroPortrait(context, character);
+    paintCharacterPortrait(context, character);
   });
+}
+
+/** Pedro e Gui dividem o mesmo quadro de retrato; cada um tem o próprio pintor. */
+function paintCharacterPortrait(context: CanvasRenderingContext2D, character: CharacterPalette): void {
+  switch (character.hero) {
+    case 'pedro':
+      paintPedroPortrait(context, character);
+      return;
+    case 'gui':
+      paintGuiPortrait(context, character);
+      return;
+  }
 }
 
 function drawIcon(
@@ -122,6 +144,9 @@ function drawIcon(
     case 'water':
       paintVoxelIcon(context, ICON_SIZE, palette, 'water');
       return;
+    case 'spikes':
+      paintSpikes(context);
+      return;
     case 'brick':
       paintBrick(context);
       return;
@@ -146,6 +171,8 @@ function drawIcon(
     case 'bat':
     case 'robot':
     case 'ghost':
+    case 'turtle':
+    case 'piranha':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -164,9 +191,7 @@ function drawIcon(
       fit(POWER_UP_SIZE, POWER_UP_SIZE, (inner) => paintPowerUp(inner, object.properties?.powerUp ?? 'super-jump'));
       return;
     case 'start':
-      fit(PEDRO_FRAME_WIDTH, PEDRO_FRAME_HEIGHT, (inner) =>
-        paintPedroPortrait(inner, { cap: '#2b7fd9', shirt: '#ff8a3d', backpack: '#4cc26b', backpackStyle: 'dino' }),
-      );
+      fit(PEDRO_FRAME_WIDTH, PEDRO_FRAME_HEIGHT, (inner) => paintPedroPortrait(inner, paletteFor(DEFAULT_LOOK, 'pedro')));
       return;
     case 'checkpoint':
       fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintCheckpoint);
@@ -194,6 +219,15 @@ function drawIcon(
       return;
     case 'rock':
       fit(ROCK_WIDTH, ROCK_HEIGHT, (inner) => paintRock(inner, palette));
+      return;
+    case 'fence':
+      fit(FENCE_WIDTH, FENCE_HEIGHT, paintFence);
+      return;
+    case 'snowman':
+      fit(SNOWMAN_WIDTH, SNOWMAN_HEIGHT, paintSnowman);
+      return;
+    case 'toadstool':
+      fit(TOADSTOOL_SIZE, TOADSTOOL_SIZE, paintToadstool);
       return;
     case 'sign':
       paintSign(context);

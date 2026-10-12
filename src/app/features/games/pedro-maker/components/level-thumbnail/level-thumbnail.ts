@@ -11,6 +11,7 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   stone: '#8a8fa8',
   ice: '#9fdcff',
   lava: '#ff7a2e',
+  spikes: '#c9cfdd',
   water: '#2f9be8',
   brick: '#d9793e',
   surprise: '#ffc629',
@@ -25,7 +26,7 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   checkpoint: '#ff4f9a',
 };
 
-const ENEMIES = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost']);
+const ENEMIES = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha']);
 
 /**
  * Miniatura de uma fase criada: a planta vista de longe.

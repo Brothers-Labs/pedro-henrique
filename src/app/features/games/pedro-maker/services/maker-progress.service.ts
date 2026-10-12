@@ -2,11 +2,13 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { dayKey } from '../../../../core/pet/pet-progress';
 import { GameProgressService } from '../../../../core/services/game-progress.service';
-import { LOOK_OPTIONS, type LookOption } from '../config/character.config';
+import { LOOK_OPTIONS, paletteFor, type LookOption } from '../config/character.config';
+import { isHeroId } from '../config/hero.config';
 import { MAKER_ACHIEVEMENTS } from '../config/rules.config';
 import { CAMPAIGN_LEVELS } from '../levels/campaign';
 import type { CampaignLevel } from '../models/campaign.model';
 import type {
+  HeroId,
   LevelRecord,
   LevelReward,
   LevelRunResult,
@@ -20,6 +22,7 @@ import {
   applyCustomLevelSaved,
   applyLevelResult,
   applySecretFound,
+  chooseHero,
   createMakerProgress,
   equipLook,
   isLevelUnlocked,
@@ -41,7 +44,7 @@ const KNOWN_LOOK_OPTIONS = new Set<string>(LOOK_OPTIONS.map((option) => option.i
 const SAVED_NOTICE_MS = 2200;
 
 /**
- * Estado do Pedro Maker: fases, estrelas, moedas, XP, conquistas e visual.
+ * Estado do Pedro Maker: fases, estrelas, moedas, XP, conquistas, herói e visual.
  *
  * Toda regra vem de `progress/maker-progression`; aqui ficam só o estado, a
  * gravação automática no aparelho e a ponte com a jornada de jogos do site —
@@ -65,7 +68,10 @@ export class MakerProgressService {
   readonly crystals = computed(() => totalCrystals(this.state()));
   readonly levelsCompleted = computed(() => levelsCompleted(this.state()));
   readonly achievements = computed(() => achievementsProgressOf(this.state()));
+  readonly hero = computed(() => this.state().hero);
   readonly look = computed(() => this.state().look);
+  /** Herói escolhido já com as cores que vai vestir: é o que telas e motores desenham. */
+  readonly character = computed(() => paletteFor(this.state().look, this.state().hero));
   readonly mission = computed(() => missionForToday(this.state(), today()));
   readonly pendingAchievement = computed<MakerAchievement | null>(() => this.pendingAchievements()[0] ?? null);
 
@@ -131,6 +137,20 @@ export class MakerProgressService {
   equip(option: LookOption): boolean {
     const before = this.state();
     const after = equipLook(before, option);
+
+    if (after === before) {
+      return false;
+    }
+
+    this.commit(after);
+
+    return true;
+  }
+
+  /** Troca o herói. Devolve falso se ele já era o escolhido. */
+  selectHero(hero: HeroId): boolean {
+    const before = this.state();
+    const after = chooseHero(before, hero);
 
     if (after === before) {
       return false;
@@ -230,6 +250,7 @@ export function reconcile(value: unknown): MakerProgress {
       fastCompletions: count(stats.fastCompletions),
       customLevelsSaved: count(stats.customLevelsSaved),
     },
+    hero: isHeroId(stored.hero) ? stored.hero : fallback.hero,
     look: {
       cap: knownLook(look.cap, fallback.look.cap),
       shirt: knownLook(look.shirt, fallback.look.shirt),

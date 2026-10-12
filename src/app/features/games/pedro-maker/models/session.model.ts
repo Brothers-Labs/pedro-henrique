@@ -1,4 +1,5 @@
-import type { CharacterLook, LevelRunResult } from './progress.model';
+import type { CharacterPalette } from '../config/character.config';
+import type { LevelRunResult } from './progress.model';
 import type { LevelBlueprint, PowerUpKind } from './level.model';
 import type { DifficultyRules } from './settings.model';
 
@@ -80,7 +81,8 @@ export interface GameLaunchOptions {
   readonly parent: HTMLElement;
   readonly blueprint: LevelBlueprint;
   readonly rules: DifficultyRules;
-  readonly look: CharacterLook;
+  /** Herói escolhido, já com as cores que veste. */
+  readonly character: CharacterPalette;
   readonly effectsEnabled: boolean;
   readonly isTouch: boolean;
   /** Emoji do mascote do site, que acompanha o Pedro na fase. */

@@ -1,3 +1,4 @@
+import type { HeroAbilities } from '../../config/hero.config';
 import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SWIM_PHYSICS } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
@@ -54,6 +55,9 @@ const RUN_DUST_SPEED = 200;
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
+ *
+ * Cada herói ajusta pulo e freio pelas próprias habilidades; a caixa de
+ * colisão é a mesma para todos, e por isso toda fase serve para qualquer um.
  */
 export class Player {
   readonly body: PhysicsBody = createBody(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight, true, PLAYER_PHYSICS.maxFallSpeed);
@@ -80,6 +84,7 @@ export class Player {
     feetX: number,
     feetY: number,
     private readonly host: PlayerHost,
+    private readonly abilities: HeroAbilities,
   ) {
     placeFeet(this.body, feetX, feetY);
   }
@@ -259,7 +264,9 @@ export class Player {
     if (direction !== 0) {
       rate = grounded ? PLAYER_PHYSICS.groundAcceleration * (isOnIce ? 0.35 : 1) : PLAYER_PHYSICS.airAcceleration;
     } else if (grounded) {
-      rate = isOnIce ? PLAYER_PHYSICS.iceDeceleration : PLAYER_PHYSICS.groundDeceleration;
+      const braking = isOnIce ? PLAYER_PHYSICS.iceDeceleration : PLAYER_PHYSICS.groundDeceleration;
+
+      rate = braking * this.abilities.brakingMultiplier;
     } else {
       rate = PLAYER_PHYSICS.airAcceleration * 0.4;
     }
@@ -314,7 +321,7 @@ export class Player {
   private jumpVelocity(): number {
     const boost = this.timedPowerUps.has('super-jump') ? PLAYER_PHYSICS.superJumpMultiplier : 1;
 
-    return PLAYER_PHYSICS.jumpVelocity * boost;
+    return PLAYER_PHYSICS.jumpVelocity * boost * this.abilities.jumpMultiplier;
   }
 
   private handleLanding(grounded: boolean): void {

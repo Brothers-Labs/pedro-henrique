@@ -1,7 +1,6 @@
 import { THEME_PALETTES } from '../../art/palettes';
-import { paletteFor } from '../../config/character.config';
+import type { CharacterPalette } from '../../config/character.config';
 import { seedFromText } from '../../levels/seeded-random';
-import type { CharacterLook } from '../../models/progress.model';
 import type { Boss } from '../simulation/boss';
 import type { Enemy } from '../simulation/enemy';
 import { STEP_MS, type GameSimulation } from '../simulation/game-simulation';
@@ -25,7 +24,7 @@ import { VoxelAtlasTexture } from './voxel-atlas-texture';
 import { WorldSpace } from './world-space';
 
 export interface LevelViewOptions {
-  readonly look: CharacterLook;
+  readonly character: CharacterPalette;
   readonly petEmoji: string | null;
   readonly effectsEnabled: boolean;
   readonly isTouch: boolean;
@@ -121,7 +120,7 @@ export class LevelView {
         scene.add(this.props.root);
       },
       () => {
-        this.pedro = new PedroModel(paletteFor(this.options.look));
+        this.pedro = new PedroModel(this.options.character);
         this.particles = new ParticleSystem(this.stage.qualitySettings.maxParticles);
         scene.add(this.pedro.root, this.particles.mesh);
         this.createLabels();
@@ -301,7 +300,8 @@ export class LevelView {
           direction: enemy.direction,
           isDefeated: enemy.isDefeated,
           defeatedAt: enemy.defeatedAt,
-          isFaded: enemy.isFaded,
+          isHidden: enemy.isHidden,
+          emergence: enemy.emergence,
           isMoving: Math.abs(enemy.body.vx) > 1,
         },
         deltaSeconds,

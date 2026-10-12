@@ -1,24 +1,57 @@
 <app-maker-page-frame heading="Meu personagem" emoji="👤">
   <div class="layout">
+    <section class="heroes" aria-labelledby="heroes-title">
+      <h2 id="heroes-title" class="heroes__title">Quem vai jogar?</h2>
+      <ul class="heroes__list">
+        @for (card of heroCards(); track card.hero.id) {
+          <li>
+            <button
+              type="button"
+              class="hero"
+              [class.hero--selected]="selectedHero().id === card.hero.id"
+              [attr.aria-pressed]="selectedHero().id === card.hero.id"
+              (click)="chooseHero(card.hero.id)"
+            >
+              <app-pedro-figure class="hero__figure" [character]="card.character" label="" />
+              <span class="hero__text">
+                <strong class="hero__name">{{ card.hero.name }}</strong>
+                <span class="hero__description">{{ card.hero.description }}</span>
+                <span class="hero__traits">
+                  @for (trait of card.hero.traits; track trait.label) {
+                    <span class="hero__trait"><span aria-hidden="true">{{ trait.emoji }}</span> {{ trait.label }}</span>
+                  }
+                </span>
+              </span>
+              @if (selectedHero().id === card.hero.id) {
+                <span class="hero__badge">Jogando</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+
     <nav class="categories" aria-label="Partes do visual">
-      @for (entry of categories; track entry.id) {
-        <button
-          type="button"
-          class="category"
-          [class.category--active]="category() === entry.id"
-          [attr.aria-pressed]="category() === entry.id"
-          (click)="chooseCategory(entry.id)"
-        >
-          <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
-        </button>
+      @if (canCustomize()) {
+        @for (entry of categories; track entry.id) {
+          <button
+            type="button"
+            class="category"
+            [class.category--active]="category() === entry.id"
+            [attr.aria-pressed]="category() === entry.id"
+            (click)="chooseCategory(entry.id)"
+          >
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </button>
+        }
       }
       <a class="category" routerLink="/mascote">
         <span aria-hidden="true">🐾</span> Mascote
       </a>
     </nav>
 
-    <section class="stage" aria-label="Prévia do Pedro">
-      <app-pedro-figure class="stage__pedro" [look]="previewLook()" />
+    <section class="stage" [attr.aria-label]="'Prévia do ' + selectedHero().name">
+      <app-pedro-figure class="stage__pedro" [character]="previewCharacter()" />
       @if (pet(); as companion) {
         <span class="stage__pet" role="img" [attr.aria-label]="'O mascote ' + companion.name">{{ companion.emoji }}</span>
       }
@@ -58,34 +91,40 @@
       }
     </section>
 
-    <ul class="options" aria-label="Opções">
-      @for (card of options(); track card.option.id) {
-        <li>
-          <button
-            type="button"
-            class="option"
-            [class.option--selected]="preview()?.id === card.option.id"
-            [class.option--equipped]="card.availability === 'equipado'"
-            [attr.aria-pressed]="preview()?.id === card.option.id"
-            (click)="tryOn(card.option)"
-          >
-            <span class="option__swatch" [style.background]="card.option.color" aria-hidden="true">
-              @if (card.availability === 'bloqueado') {
-                🔒
-              }
-            </span>
-            <span class="option__label">{{ card.option.label }}</span>
-            <span class="option__state">
-              @switch (card.availability) {
-                @case ('equipado') { Equipado }
-                @case ('disponivel') { Liberado }
-                @case ('comprar') { {{ card.option.price }} 🪙 }
-                @case ('bloqueado') { Nível {{ card.option.unlockLevel }} }
-              }
-            </span>
-          </button>
-        </li>
-      }
-    </ul>
+    @if (canCustomize()) {
+      <ul class="options" aria-label="Opções">
+        @for (card of options(); track card.option.id) {
+          <li>
+            <button
+              type="button"
+              class="option"
+              [class.option--selected]="preview()?.id === card.option.id"
+              [class.option--equipped]="card.availability === 'equipado'"
+              [attr.aria-pressed]="preview()?.id === card.option.id"
+              (click)="tryOn(card.option)"
+            >
+              <span class="option__swatch" [style.background]="card.option.color" aria-hidden="true">
+                @if (card.availability === 'bloqueado') {
+                  🔒
+                }
+              </span>
+              <span class="option__label">{{ card.option.label }}</span>
+              <span class="option__state">
+                @switch (card.availability) {
+                  @case ('equipado') { Equipado }
+                  @case ('disponivel') { Liberado }
+                  @case ('comprar') { {{ card.option.price }} 🪙 }
+                  @case ('bloqueado') { Nível {{ card.option.unlockLevel }} }
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="outfit-note">
+        O {{ selectedHero().name }} usa sempre a roupa dele. Para trocar boné, camiseta e mochila, escolha o Pedro.
+      </p>
+    }
   </div>
 </app-maker-page-frame>

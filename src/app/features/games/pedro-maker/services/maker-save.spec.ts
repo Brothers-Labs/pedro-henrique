@@ -11,7 +11,15 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
         expect(progress.levels).toEqual({});
         expect(progress.coins).toBe(0);
         expect(progress.look).toEqual(DEFAULT_LOOK);
+        expect(progress.hero).toBe('pedro');
       }
+    });
+
+    it('mantém o herói escolhido e volta ao Pedro quando o herói não existe ou falta no save antigo', () => {
+      expect(reconcile({ hero: 'gui' }).hero).toBe('gui');
+      expect(reconcile({ hero: 'mario' }).hero).toBe('pedro');
+      expect(reconcile({ hero: 7 }).hero).toBe('pedro');
+      expect(reconcile({ coins: 10 }).hero).toBe('pedro');
     });
 
     it('mantém o que é válido e descarta só o que não faz sentido', () => {
