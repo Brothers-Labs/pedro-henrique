@@ -11,16 +11,20 @@ interface EnemyProfile {
   readonly bodyHeight: number;
   readonly flies: boolean;
   readonly isStompable: boolean;
+  /** A bola de fogo se apaga nele sem derrotá-lo. */
+  readonly isFireproof: boolean;
 }
 
 const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
-  slime: { speed: 60, bodyWidth: 34, bodyHeight: 24, flies: false, isStompable: true },
-  spiky: { speed: 50, bodyWidth: 32, bodyHeight: 26, flies: false, isStompable: false },
-  robot: { speed: 110, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true },
-  bat: { speed: 1, bodyWidth: 26, bodyHeight: 20, flies: true, isStompable: true },
-  ghost: { speed: 50, bodyWidth: 30, bodyHeight: 32, flies: true, isStompable: true },
-  turtle: { speed: 40, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true },
-  piranha: { speed: 0, bodyWidth: 26, bodyHeight: 40, flies: false, isStompable: false },
+  slime: { speed: 60, bodyWidth: 34, bodyHeight: 24, flies: false, isStompable: true, isFireproof: false },
+  spiky: { speed: 50, bodyWidth: 32, bodyHeight: 26, flies: false, isStompable: false, isFireproof: false },
+  robot: { speed: 110, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true, isFireproof: false },
+  bat: { speed: 1, bodyWidth: 26, bodyHeight: 20, flies: true, isStompable: true, isFireproof: false },
+  ghost: { speed: 50, bodyWidth: 30, bodyHeight: 32, flies: true, isStompable: true, isFireproof: false },
+  turtle: { speed: 40, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true, isFireproof: false },
+  piranha: { speed: 0, bodyWidth: 26, bodyHeight: 40, flies: false, isStompable: false, isFireproof: false },
+  penguin: { speed: 95, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true, isFireproof: false },
+  'lava-bubble': { speed: 0, bodyWidth: 26, bodyHeight: 26, flies: true, isStompable: false, isFireproof: true },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -43,6 +47,13 @@ const PIRANHA_CYCLE_MS = PIRANHA_HIDDEN_MS + PIRANHA_RISE_MS + PIRANHA_OUT_MS + 
 /** Com o Pedro colado no cano, a planta espera: ninguém é mordido sem ver. */
 const PIRANHA_SHY_DISTANCE = TILE_SIZE * 1.5;
 
+/** Ciclo da bolinha de lava: espera na lava e dá um salto alto. */
+const LAVA_BUBBLE_WAIT_MS = 1100;
+const LAVA_BUBBLE_JUMP_MS = 1500;
+const LAVA_BUBBLE_HEIGHT = TILE_SIZE * 4.2;
+/** Quão rápido o corpo persegue o ponto do salto: alto para seguir a curva de perto. */
+const LAVA_BUBBLE_STEERING = 12;
+
 /** Tempo da animação de derrota antes de o inimigo sair da partida. */
 export const ENEMY_DEFEAT_MS = 280;
 
@@ -54,7 +65,9 @@ export const ENEMY_DEFEAT_MS = 280;
  * oito e o fantasminha segue o Pedro devagar, sumindo de tempos em tempos.
  * Invisível, o fantasminha não machuca — é a hora de passar por ele. A
  * tartaruga anda como o slime, só que mais devagar, e a planta carnívora não
- * sai do lugar: sobe e desce do cano, e escondida também não machuca.
+ * sai do lugar: sobe e desce do cano, e escondida também não machuca. O
+ * pinguim patrulha como o slime, mais ligeiro, e a bolinha de lava salta da
+ * lava e mergulha de volta, sem machucar enquanto está lá dentro.
  */
 export class Enemy {
   readonly body: PhysicsBody;
@@ -102,6 +115,11 @@ export class Enemy {
       this.emergence = piranhaEmergence(this.piranhaCycleMs);
       this.isHidden = this.emergence < 0.5;
     }
+
+    if (kind === 'lava-bubble') {
+      this.emergence = 0;
+      this.isHidden = true;
+    }
   }
 
   get flies(): boolean {
@@ -111,6 +129,10 @@ export class Enemy {
   /** Pisar em cima derrota o inimigo? O espinhudo e o fantasma sumido, não. */
   get canBeStomped(): boolean {
     return this.profile.isStompable && !this.isHidden;
+  }
+
+  get isFireproof(): boolean {
+    return this.profile.isFireproof;
   }
 
   get isHarmful(): boolean {
@@ -126,6 +148,7 @@ export class Enemy {
       case 'slime':
       case 'spiky':
       case 'turtle':
+      case 'penguin':
         this.patrolLedges();
         return;
       case 'robot':
@@ -139,6 +162,9 @@ export class Enemy {
         return;
       case 'piranha':
         this.lurkInPipe(now, targetX);
+        return;
+      case 'lava-bubble':
+        this.leapFromLava(now);
         return;
     }
   }
@@ -248,6 +274,18 @@ export class Enemy {
 
     this.emergence = piranhaEmergence(this.piranhaCycleMs);
     this.isHidden = this.emergence < 0.5;
+  }
+
+  private leapFromLava(now: number): void {
+    const cycle = (now + this.phase * 1000) % (LAVA_BUBBLE_WAIT_MS + LAVA_BUBBLE_JUMP_MS);
+    const progress = Math.max(0, (cycle - LAVA_BUBBLE_WAIT_MS) / LAVA_BUBBLE_JUMP_MS);
+    // Parábola de 0 a 1 e de volta a 0: sobe rápido, para no alto e desce.
+    const height = LAVA_BUBBLE_HEIGHT * 4 * progress * (1 - progress);
+
+    this.body.vx = 0;
+    this.body.vy = (this.homeY - height - centerY(this.body)) * LAVA_BUBBLE_STEERING;
+    this.isHidden = progress === 0;
+    this.emergence = this.isHidden ? 0 : 1;
   }
 
   private hasGroundAhead(): boolean {

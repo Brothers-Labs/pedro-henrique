@@ -39,6 +39,7 @@ export class BlockView {
   private readonly luckyBlocks: BlockMesh;
   private readonly usedSurprises: BlockMesh;
   private readonly springs: BlockMesh;
+  private readonly notes: BlockMesh;
   private readonly crumbles: BlockMesh;
   private readonly lava: InstancedMesh | null;
   private readonly water: InstancedMesh | null;
@@ -67,6 +68,7 @@ export class BlockView {
     this.luckyBlocks = this.blockMesh(surpriseBlocks.filter(isLucky), 'lucky', BLOCK_SIZE);
     this.usedSurprises = this.blockMesh(surpriseBlocks, 'surprise-used', BLOCK_SIZE);
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
+    this.notes = this.blockMesh(byKind('note'), 'note', BLOCK_SIZE);
     this.crumbles = this.blockMesh(byKind('crumble'), 'crumble', BLOCK_SIZE, 0.45);
     this.lava = this.buildLava();
     this.waterSurface = this.findWaterSurface();
@@ -80,6 +82,7 @@ export class BlockView {
     this.updateBlocks(this.luckyBlocks, now, (block) => !block.isUsed);
     this.updateBlocks(this.usedSurprises, now, (block) => block.isUsed);
     this.updateBlocks(this.springs, now, () => true);
+    this.updateBlocks(this.notes, now, () => true);
     this.updateBlocks(this.crumbles, now, (block) => !block.isHidden);
     this.updateLava(now);
     this.updateWater(now);

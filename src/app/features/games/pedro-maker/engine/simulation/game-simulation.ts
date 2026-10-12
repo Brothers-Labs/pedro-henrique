@@ -39,7 +39,17 @@ const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
 const CHEST_COINS = 10;
 
-const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha']);
+const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>([
+  'slime',
+  'spiky',
+  'bat',
+  'robot',
+  'ghost',
+  'turtle',
+  'piranha',
+  'penguin',
+  'lava-bubble',
+]);
 
 function isEnemyKind(type: LevelObjectType): type is EnemyKind {
   return ENEMY_KINDS.has(type);
@@ -328,8 +338,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
       if (target) {
         this.fireballs.remove(fireball);
-        this.defeatEnemy(target);
         this.extinguish(fireball);
+
+        if (!target.isFireproof) {
+          this.defeatEnemy(target);
+        }
       }
     }
   }

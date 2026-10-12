@@ -14,6 +14,12 @@ export const FENCE_HEIGHT = 36;
 export const SNOWMAN_WIDTH = 48;
 export const SNOWMAN_HEIGHT = 80;
 export const TOADSTOOL_SIZE = 40;
+export const BARREL_WIDTH = 40;
+export const BARREL_HEIGHT = 48;
+export const LAMP_WIDTH = 32;
+export const LAMP_HEIGHT = 120;
+export const GRASS_WIDTH = 40;
+export const GRASS_HEIGHT = 28;
 
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
@@ -364,5 +370,80 @@ export function paintToadstool(context: CanvasRenderingContext2D): void {
   for (const [x, y, radius] of [[12, 15, 3.5], [24, 9, 4], [30, 18, 3]] as const) {
     circle(context, x, y, radius);
     context.fill();
+  }
+}
+
+export function paintBarrel(context: CanvasRenderingContext2D): void {
+  const wood = '#a8662f';
+
+  context.beginPath();
+  context.moveTo(6, 2);
+  context.quadraticCurveTo(0, 24, 6, 46);
+  context.lineTo(34, 46);
+  context.quadraticCurveTo(40, 24, 34, 2);
+  context.closePath();
+  fillAndOutline(context, wood);
+
+  context.strokeStyle = darken(wood, 0.25);
+  context.lineWidth = 2;
+
+  for (const x of [14, 20, 26]) {
+    context.beginPath();
+    context.moveTo(x, 4);
+    context.lineTo(x, 44);
+    context.stroke();
+  }
+
+  for (const y of [12, 36]) {
+    roundedRect(context, 2, y - 3, 36, 6, 2);
+    fillAndOutline(context, '#5a3d2a', 2);
+  }
+}
+
+export function paintLamp(context: CanvasRenderingContext2D): void {
+  const iron = '#3d4254';
+
+  context.save();
+  context.globalAlpha = 0.3;
+  context.fillStyle = '#ffe066';
+  circle(context, 16, 22, 16);
+  context.fill();
+  context.restore();
+
+  roundedRect(context, 13, 34, 6, 80, 2);
+  fillAndOutline(context, iron, 2);
+  roundedRect(context, 6, 110, 20, 10, 3);
+  fillAndOutline(context, iron, 2);
+  roundedRect(context, 6, 30, 20, 5, 2);
+  fillAndOutline(context, iron, 2);
+  roundedRect(context, 8, 14, 16, 16, 3);
+  fillAndOutline(context, '#ffe066', 2);
+  context.beginPath();
+  context.moveTo(4, 15);
+  context.lineTo(16, 4);
+  context.lineTo(28, 15);
+  context.closePath();
+  fillAndOutline(context, iron, 2);
+}
+
+export function paintGrass(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  context.lineCap = 'round';
+
+  for (const [baseX, tipX, tipY, color] of [
+    [8, 4, 10, palette.foliageDark],
+    [14, 12, 2, palette.foliage],
+    [20, 22, 6, lighten(palette.foliage, 0.15)],
+    [26, 28, 0, palette.foliage],
+    [32, 36, 10, palette.foliageDark],
+  ] as const) {
+    context.beginPath();
+    context.moveTo(baseX, 28);
+    context.quadraticCurveTo(baseX, 14, tipX, tipY);
+    context.lineWidth = 7;
+    context.strokeStyle = OUTLINE;
+    context.stroke();
+    context.lineWidth = 4;
+    context.strokeStyle = color;
+    context.stroke();
   }
 }

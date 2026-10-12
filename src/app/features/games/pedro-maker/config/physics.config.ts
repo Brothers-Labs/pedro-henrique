@@ -34,6 +34,8 @@ export const PLAYER_PHYSICS = {
   /** Soltar o botão cedo corta o pulo, e é assim que se faz pulinho curto. */
   jumpCutMultiplier: 0.45,
   springVelocity: 1250,
+  /** Quique do bloco musical: alto segurando o pulo, um saltinho se soltar. */
+  noteBlockVelocity: 1050,
   stompBounceVelocity: 560,
   maxFallSpeed: 980,
   /** Tolerâncias que perdoam o pulo apertado um instante antes ou depois. */

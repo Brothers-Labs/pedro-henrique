@@ -23,9 +23,10 @@ export type LevelTheme =
 
 /**
  * A tartaruga anda devagar e pode ser pisada; a planta carnívora mora num
- * cano, sobe e desce, e só cai com fogo ou estrela.
+ * cano, sobe e desce, e só cai com fogo ou estrela. O pinguim patrulha
+ * ligeiro; a bolinha de lava salta da lava e não se apaga com fogo.
  */
-export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost' | 'turtle' | 'piranha';
+export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost' | 'turtle' | 'piranha' | 'penguin' | 'lava-bubble';
 
 /**
  * Poderes que o Pedro pode pegar.
@@ -68,15 +69,36 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
  * segura ninguém: quem entra nela nada. Os espinhos seguram, mas machucam
- * quem encosta.
+ * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele.
  */
-export type BlockType = 'brick' | 'surprise' | 'spring' | 'crumble' | 'platform' | 'cloud' | 'lava' | 'water' | 'spikes';
+export type BlockType =
+  | 'brick'
+  | 'surprise'
+  | 'spring'
+  | 'crumble'
+  | 'platform'
+  | 'cloud'
+  | 'lava'
+  | 'water'
+  | 'spikes'
+  | 'note';
 
 export type ItemType = 'coin' | 'crystal' | 'heart' | 'power-up';
 
 export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'secret-door';
 
-export type DecorType = 'tree' | 'bush' | 'flower' | 'rock' | 'sign' | 'fence' | 'snowman' | 'toadstool';
+export type DecorType =
+  | 'tree'
+  | 'bush'
+  | 'flower'
+  | 'rock'
+  | 'sign'
+  | 'fence'
+  | 'snowman'
+  | 'toadstool'
+  | 'barrel'
+  | 'lamp'
+  | 'grass';
 
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';

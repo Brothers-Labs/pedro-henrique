@@ -19,6 +19,8 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   ghost: paintGhost,
   turtle: paintTurtle,
   piranha: paintPiranha,
+  penguin: paintPenguin,
+  'lava-bubble': paintLavaBubble,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -262,6 +264,56 @@ function paintPiranha(context: CanvasRenderingContext2D): void {
     context.closePath();
     context.fill();
   }
+}
+
+function paintPenguin(context: CanvasRenderingContext2D): void {
+  const orange = '#ff9f1a';
+
+  for (const footX of [17, 31]) {
+    ellipse(context, footX, 45, 6, 2.5);
+    fillAndOutline(context, orange, 2);
+  }
+
+  context.beginPath();
+  context.moveTo(24, 6);
+  context.bezierCurveTo(42, 6, 42, 46, 24, 44);
+  context.bezierCurveTo(6, 46, 6, 6, 24, 6);
+  fillAndOutline(context, '#2a2f4a');
+
+  ellipse(context, 24, 31, 10, 12);
+  fillAndOutline(context, '#f7fbff', 2);
+
+  eye(context, 19, 18, 3.6, 0);
+  eye(context, 29, 18, 3.6, 0);
+
+  context.beginPath();
+  context.moveTo(20, 23);
+  context.lineTo(28, 23);
+  context.lineTo(24, 28);
+  context.closePath();
+  fillAndOutline(context, orange, 2);
+}
+
+function paintLavaBubble(context: CanvasRenderingContext2D): void {
+  // Labaredas em cima, bola de brasa embaixo: é fogo e não se pisa.
+  context.beginPath();
+  context.moveTo(10, 28);
+  context.quadraticCurveTo(12, 10, 18, 6);
+  context.quadraticCurveTo(20, 14, 24, 4);
+  context.quadraticCurveTo(28, 14, 31, 7);
+  context.quadraticCurveTo(37, 12, 38, 28);
+  context.closePath();
+  fillAndOutline(context, '#ffd23f');
+
+  circle(context, 24, 30, 15);
+  fillAndOutline(context, '#ff6a00');
+  context.fillStyle = '#ffb020';
+  ellipse(context, 24, 34, 9, 7);
+  context.fill();
+  shine(context, 17, 23, 4, 2.5);
+
+  eye(context, 19, 28, 3.6, 0);
+  eye(context, 29, 28, 3.6, 0);
 }
 
 function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
