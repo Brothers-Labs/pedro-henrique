@@ -27,14 +27,23 @@ import {
 } from './block-art';
 import { paint } from './canvas';
 import {
+  BARREL_HEIGHT,
+  BARREL_WIDTH,
   BUSH_HEIGHT,
   BUSH_WIDTH,
   FENCE_HEIGHT,
   FENCE_WIDTH,
   FLOWER_SIZE,
+  GRASS_HEIGHT,
+  GRASS_WIDTH,
+  LAMP_HEIGHT,
+  LAMP_WIDTH,
+  paintBarrel,
   paintBush,
   paintFence,
   paintFlower,
+  paintGrass,
+  paintLamp,
   paintRock,
   paintSnowman,
   paintToadstool,
@@ -150,6 +159,9 @@ function drawIcon(
     case 'brick':
       paintBrick(context);
       return;
+    case 'note':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'note');
+      return;
     case 'surprise':
       if (object.properties?.contents === 'lucky') {
         paintVoxelIcon(context, ICON_SIZE, palette, 'lucky');
@@ -173,6 +185,8 @@ function drawIcon(
     case 'ghost':
     case 'turtle':
     case 'piranha':
+    case 'penguin':
+    case 'lava-bubble':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -228,6 +242,15 @@ function drawIcon(
       return;
     case 'toadstool':
       fit(TOADSTOOL_SIZE, TOADSTOOL_SIZE, paintToadstool);
+      return;
+    case 'barrel':
+      fit(BARREL_WIDTH, BARREL_HEIGHT, paintBarrel);
+      return;
+    case 'lamp':
+      fit(LAMP_WIDTH, LAMP_HEIGHT, paintLamp);
+      return;
+    case 'grass':
+      fit(GRASS_WIDTH, GRASS_HEIGHT, (inner) => paintGrass(inner, palette));
       return;
     case 'sign':
       paintSign(context);

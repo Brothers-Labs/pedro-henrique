@@ -142,6 +142,15 @@ export class PropView {
         case 'toadstool':
           at(x, y, DECOR_Z + 0.3, toadstool());
           break;
+        case 'barrel':
+          at(x, y, DECOR_Z, barrel());
+          break;
+        case 'lamp':
+          at(x, y, DECOR_Z, lamp());
+          break;
+        case 'grass':
+          at(x, y, DECOR_Z + 0.3, grass(this.palette));
+          break;
         case 'spikes':
           // Bloco do terreno: ocupa a célula inteira, no plano do Pedro.
           at(x, y, 0, spikes());
@@ -352,6 +361,44 @@ function toadstool(): readonly VoxelBox[] {
     box(0, 0.5, 0, 0.3, 0.1, 0.3, '#f06a73'),
     box(-0.12, 0.47, 0.18, 0.1, 0.04, 0.1, '#ffffff'),
     box(0.14, 0.44, -0.1, 0.08, 0.04, 0.08, '#ffffff'),
+  ];
+}
+
+function barrel(): readonly VoxelBox[] {
+  const wood = '#a8662f';
+  const band = '#5a3d2a';
+
+  return [
+    box(0, 0.4, 0, 0.56, 0.8, 0.56, wood),
+    box(0, 0.4, 0, 0.64, 0.5, 0.64, lighten(wood, 0.06)),
+    box(0, 0.18, 0, 0.66, 0.06, 0.66, band),
+    box(0, 0.62, 0, 0.66, 0.06, 0.66, band),
+    box(0, 0.81, 0, 0.46, 0.02, 0.46, darken(wood, 0.2)),
+  ];
+}
+
+/** Poste de rua com a lanterna acesa no alto. */
+function lamp(): readonly VoxelBox[] {
+  const iron = '#3d4254';
+
+  return [
+    box(0, 0.08, 0, 0.36, 0.16, 0.36, iron),
+    box(0, 1.1, 0, 0.1, 2.0, 0.1, iron),
+    box(0, 2.18, 0, 0.36, 0.06, 0.36, iron),
+    box(0, 2.34, 0, 0.28, 0.26, 0.28, '#ffe066'),
+    box(0, 2.5, 0, 0.36, 0.06, 0.36, iron),
+    box(0, 2.58, 0, 0.12, 0.1, 0.12, iron),
+  ];
+}
+
+/** Tufinhos de grama de alturas diferentes, na cor das folhas do tema. */
+function grass(palette: ThemePalette): readonly VoxelBox[] {
+  return [
+    box(-0.22, 0.12, 0, 0.08, 0.24, 0.08, palette.foliage),
+    box(-0.1, 0.18, 0.06, 0.08, 0.36, 0.08, lighten(palette.foliage, 0.1)),
+    box(0.04, 0.14, -0.04, 0.08, 0.28, 0.08, palette.foliageDark),
+    box(0.16, 0.2, 0.04, 0.08, 0.4, 0.08, palette.foliage),
+    box(0.27, 0.1, 0, 0.08, 0.2, 0.08, lighten(palette.foliage, 0.1)),
   ];
 }
 

@@ -22,7 +22,7 @@ export interface SpawnExtra {
   readonly crystalIndex?: number;
 }
 
-export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble';
+export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note';
 
 /** Bloco que reage ao Pedro. A tela lê os momentos para animar. */
 export interface InteractiveBlock {
@@ -72,7 +72,7 @@ const MOVING_SPEED = 90;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
 
-const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['brick', 'surprise', 'spring', 'crumble']);
+const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['brick', 'surprise', 'spring', 'crumble', 'note']);
 
 function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
   return INTERACTIVE_KINDS.has(type);
@@ -83,7 +83,8 @@ function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
  *
  * Quebrável, surpresa e mola ocupam a grade como sólidos; a plataforma frágil,
  * como chão de mão única. A reação vem do lado do contato: cabeçada por baixo
- * quebra ou abre, pisar em cima faz a mola saltar e a plataforma frágil tremer.
+ * quebra ou abre, pisar em cima faz a mola saltar, o bloco musical quicar e a
+ * plataforma frágil tremer.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -173,6 +174,12 @@ export class BlockSystem {
   handleHeadHit(cellX: number, cellY: number, now: number): void {
     const block = this.blockAt(cellX, cellY);
 
+    if (block?.kind === 'note') {
+      block.bumpedAt = now;
+      this.host.playSound('spring');
+      return;
+    }
+
     if (!block || block.isBroken || (block.kind !== 'brick' && block.kind !== 'surprise')) {
       return;
     }
@@ -206,6 +213,11 @@ export class BlockSystem {
 
       if (block?.kind === 'spring') {
         this.launch(player, block, now);
+        return;
+      }
+
+      if (block?.kind === 'note') {
+        this.bounceOnNote(player, block, now);
         return;
       }
 
@@ -298,6 +310,14 @@ export class BlockSystem {
     block.bumpedAt = now;
     this.host.playSound('spring');
     this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 8);
+  }
+
+  /** Diferente da mola, o quique pode ser cortado: soltar o pulo vira um saltinho. */
+  private bounceOnNote(player: Player, block: InteractiveBlock, now: number): void {
+    player.bounce(PLAYER_PHYSICS.noteBlockVelocity, true);
+    block.bumpedAt = now;
+    this.host.playSound('spring');
+    this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 6);
   }
 
   private startCrumbling(block: InteractiveBlock, now: number): void {

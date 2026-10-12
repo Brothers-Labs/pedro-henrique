@@ -32,6 +32,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   pipe: { surface: 'solid', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
+  note: { surface: 'solid', isUnique: false },
   spring: { surface: 'one-way', isUnique: false },
   crumble: { surface: 'one-way', isUnique: false },
   platform: { surface: 'one-way', isUnique: false },
@@ -47,6 +48,8 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   ghost: { surface: 'none', isUnique: false },
   turtle: { surface: 'none', isUnique: false },
   piranha: { surface: 'none', isUnique: false },
+  penguin: { surface: 'none', isUnique: false },
+  'lava-bubble': { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   crystal: { surface: 'none', isUnique: false },
@@ -65,6 +68,9 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   fence: { surface: 'none', isUnique: false },
   snowman: { surface: 'none', isUnique: false },
   toadstool: { surface: 'none', isUnique: false },
+  barrel: { surface: 'none', isUnique: false },
+  lamp: { surface: 'none', isUnique: false },
+  grass: { surface: 'none', isUnique: false },
   hint: { surface: 'none', isUnique: false },
   'mascot-tip': { surface: 'none', isUnique: false },
 };
@@ -126,6 +132,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
 
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
+  { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
   { id: 'surprise-coins', category: 'blocos', type: 'surprise', label: 'Surpresa', properties: { contents: 'coins' } },
   { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
   { id: 'surprise-crystal', category: 'blocos', type: 'surprise', label: 'Surpresa 💎', properties: { contents: 'crystal' } },
@@ -144,6 +151,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'ghost', category: 'inimigos', type: 'ghost', label: 'Fantasminha' },
   { id: 'turtle', category: 'inimigos', type: 'turtle', label: 'Tartaruga' },
   { id: 'piranha', category: 'inimigos', type: 'piranha', label: 'Planta Carnívora' },
+  { id: 'penguin', category: 'inimigos', type: 'penguin', label: 'Pinguim' },
+  { id: 'lava-bubble', category: 'inimigos', type: 'lava-bubble', label: 'Bolinha de Lava' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
@@ -176,6 +185,9 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'fence', category: 'decoracao', type: 'fence', label: 'Cerca' },
   { id: 'snowman', category: 'decoracao', type: 'snowman', label: 'Boneco de Neve' },
   { id: 'toadstool', category: 'decoracao', type: 'toadstool', label: 'Cogumelinho' },
+  { id: 'barrel', category: 'decoracao', type: 'barrel', label: 'Barril' },
+  { id: 'lamp', category: 'decoracao', type: 'lamp', label: 'Poste' },
+  { id: 'grass', category: 'decoracao', type: 'grass', label: 'Matinho' },
 
   { id: 'power-super-jump', category: 'power-ups', type: 'power-up', label: 'Super Pulo', properties: { powerUp: 'super-jump' } },
   { id: 'power-shield', category: 'power-ups', type: 'power-up', label: 'Escudo', properties: { powerUp: 'shield' } },

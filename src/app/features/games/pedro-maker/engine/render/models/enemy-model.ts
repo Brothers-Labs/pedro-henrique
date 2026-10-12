@@ -28,6 +28,8 @@ export interface EnemyPose {
 export class EnemyMaterials {
   readonly solid = new MeshStandardMaterial({ vertexColors: true, roughness: 0.6 });
   readonly glow = new MeshStandardMaterial({ vertexColors: true, emissive: '#6ff3ff', emissiveIntensity: 1.2, roughness: 0.3 });
+  /** A bolinha de lava brilha sozinha, mesmo nas fases escuras. */
+  readonly ember = new MeshStandardMaterial({ vertexColors: true, emissive: '#ff5a00', emissiveIntensity: 0.9, roughness: 0.5 });
 
   ghost(): MeshStandardMaterial {
     return new MeshStandardMaterial({ vertexColors: true, roughness: 0.4, transparent: true, opacity: 0.9, depthWrite: false });
@@ -36,6 +38,7 @@ export class EnemyMaterials {
   dispose(): void {
     this.solid.dispose();
     this.glow.dispose();
+    this.ember.dispose();
   }
 }
 
@@ -44,7 +47,8 @@ export class EnemyMaterials {
  *
  * O slime quica amassando, o morcego bate as asas, o robô balança a antena, o
  * fantasma flutua e fica transparente quando some, a tartaruga balança o casco
- * e a planta carnívora sobe do cano mordendo. Derrotado, achata e some.
+ * e a planta carnívora sobe do cano mordendo, o pinguim gingando e a bolinha de
+ * lava pula girando. Derrotado, achata e some.
  */
 export class EnemyModel {
   readonly root = new Group();
@@ -68,7 +72,7 @@ export class EnemyModel {
       this.ghostMaterial = materials.ghost();
     }
 
-    const material = this.ghostMaterial ?? materials.solid;
+    const material = this.ghostMaterial ?? (kind === 'lava-bubble' ? materials.ember : materials.solid);
 
     this.body.add(this.mesh(PARTS[kind], material));
 
@@ -142,6 +146,14 @@ export class EnemyModel {
         // Sempre de frente para a tela, só virando um pouco para o lado do Pedro.
         this.body.rotation.y = this.heading * 0.4;
         this.body.scale.y = 1 + Math.sin(time * 12) * 0.04 * pose.emergence;
+        return;
+      case 'penguin':
+        this.body.rotation.z = pose.isMoving ? Math.sin(time * 14) * 0.12 : 0;
+        return;
+      case 'lava-bubble':
+        // Dentro da lava some de vez; fora, gira e pulsa como uma brasa.
+        this.body.scale.setScalar(pose.emergence === 0 ? 0.001 : 1 + Math.sin(time * 20) * 0.06);
+        this.body.rotation.z = time * 6;
         return;
     }
   }
@@ -234,6 +246,25 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(0.18, 0.36, 0.25, 0.3, 0.04, 0.02, '#2f8f47'),
     box(0, 0.38, 0.36, 0.3, 0.3, 0.26, '#f2c14e'),
     ...eyes(0.44, 0.495, 0.07, 0.09),
+  ],
+  penguin: [
+    box(-0.12, 0.03, 0.06, 0.16, 0.06, 0.22, '#ff9f1a'),
+    box(0.12, 0.03, 0.06, 0.16, 0.06, 0.22, '#ff9f1a'),
+    box(0, 0.36, 0, 0.56, 0.62, 0.46, '#2a2f4a'),
+    box(0, 0.32, 0.2, 0.36, 0.46, 0.08, '#f7fbff'),
+    box(-0.31, 0.38, 0, 0.08, 0.36, 0.26, '#20243a'),
+    box(0.31, 0.38, 0, 0.08, 0.36, 0.26, '#20243a'),
+    box(0, 0.52, 0.28, 0.14, 0.08, 0.12, '#ff9f1a'),
+    box(0, 0.48, 0.245, 0.4, 0.06, 0.02, '#e8505b'),
+    ...eyes(0.6, 0.235, 0.1, 0.1),
+  ],
+  'lava-bubble': [
+    box(0, 0.26, 0, 0.5, 0.5, 0.5, '#ff6a00'),
+    box(0, 0.26, 0, 0.58, 0.36, 0.36, '#ff8a1f'),
+    box(0, 0.4, 0, 0.3, 0.2, 0.3, '#ffd23f'),
+    box(-0.12, 0.56, 0, 0.12, 0.14, 0.12, '#ffb020'),
+    box(0.1, 0.6, 0.04, 0.1, 0.12, 0.1, '#ffd23f'),
+    ...eyes(0.3, 0.255, 0.1, 0.1),
   ],
   piranha: [
     box(0, 0.2, 0, 0.12, 0.4, 0.12, '#2f8f47'),

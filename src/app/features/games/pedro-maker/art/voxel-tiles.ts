@@ -30,7 +30,8 @@ export type VoxelTile =
   | 'spring'
   | 'lava'
   | 'water'
-  | 'lucky';
+  | 'lucky'
+  | 'note';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -52,6 +53,7 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'lava',
   'water',
   'lucky',
+  'note',
 ];
 
 /** Blocos por linha no atlas. */
@@ -76,6 +78,9 @@ interface TilePainterContext {
 }
 
 const QUESTION_MARK = ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'] as const;
+
+/** Colcheia: a nota musical do bloco musical. */
+const MUSIC_NOTE = ['...###', '...#.#', '...#.#', '...#..', '...#..', '.###..', '####..', '.##...'] as const;
 
 const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void>> = {
   'grass-top': ({ set, random, palette }) =>
@@ -205,6 +210,19 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
     frame(set, '#fff3a8', 1);
     questionMark(set, '#d9480f', 1);
     questionMark(set, '#ffffff', 0);
+  },
+  note: ({ set }) => {
+    fill(set, '#fff8e8');
+    frame(set, '#c9a227', 0);
+    rivets(set, '#c9a227');
+
+    MUSIC_NOTE.forEach((row, y) => {
+      [...row].forEach((pixel, x) => {
+        if (pixel === '#') {
+          set(x + 4, y + 4, '#2a2350');
+        }
+      });
+    });
   },
 };
 

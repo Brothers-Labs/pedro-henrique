@@ -427,6 +427,57 @@ describe('Simulação do Pedro Maker', () => {
     expect(lastHud(harness.events)?.hearts).toBe(3);
   });
 
+  it('quica alto no bloco musical segurando o pulo', () => {
+    const harness = start(flatLevel().add('note', 10, SURFACE - 1).build(META));
+    const player = harness.simulation.player;
+    run(harness, 0.2);
+
+    player.placeFeetAt(10.5 * TILE_SIZE, (SURFACE - 3) * TILE_SIZE);
+    let fastestRise = 0;
+
+    for (let step = 0; step < 40; step += 1) {
+      harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
+      fastestRise = Math.min(fastestRise, player.body.vy);
+    }
+
+    expect(fastestRise).toBeLessThan(-PLAYER_PHYSICS.jumpVelocity);
+    expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeTrue();
+    expect(harness.simulation.grid.isSolidCell(10, SURFACE - 1)).toBeTrue();
+  });
+
+  it('derrota o pinguim com um pisão', () => {
+    const harness = start(flatLevel().add('penguin', 12, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    const penguin = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(penguin.body), penguin.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    expect(penguin.isDefeated).toBeTrue();
+  });
+
+  it('faz a bolinha de lava saltar da lava e mergulhar de volta', () => {
+    const harness = start(flatLevel().clearColumns(19, 21).fill('lava', 19, 21, SURFACE, SURFACE).add('lava-bubble', 20, SURFACE).build(META));
+    const bubble = harness.simulation.enemies[0];
+    const homeY = bubble.body.y;
+    const states = new Set<boolean>();
+    let highest = homeY;
+
+    for (let step = 0; step < 300; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      states.add(bubble.isHidden);
+      highest = Math.min(highest, bubble.body.y);
+    }
+
+    expect(states).toEqual(new Set([true, false]));
+    expect(homeY - highest).toBeGreaterThan(TILE_SIZE * 3);
+    expect(bubble.canBeStomped).toBeFalse();
+    expect(bubble.isFireproof).toBeTrue();
+  });
+
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {
     const level = campaignLevelById('1-1');
 
