@@ -37,6 +37,7 @@ export class BlockView {
   private readonly bricks: BlockMesh;
   private readonly surprises: BlockMesh;
   private readonly luckyBlocks: BlockMesh;
+  private readonly multiCoinBlocks: BlockMesh;
   private readonly usedSurprises: BlockMesh;
   private readonly springs: BlockMesh;
   private readonly notes: BlockMesh;
@@ -62,10 +63,14 @@ export class BlockView {
     const byKind = (kind: InteractiveBlock['kind']): InteractiveBlock[] => system.interactive.filter((block) => block.kind === kind);
     const surpriseBlocks = byKind('surprise');
     const isLucky = (block: InteractiveBlock): boolean => block.contents === 'lucky';
+    // O bloco de moedas se disfarça de tijolo até esvaziar.
+    const isMultiCoin = (block: InteractiveBlock): boolean => block.contents === 'multi-coins';
+    const isPlainSurprise = (block: InteractiveBlock): boolean => !isLucky(block) && !isMultiCoin(block);
 
     this.bricks = this.blockMesh(byKind('brick'), 'brick', BLOCK_SIZE);
-    this.surprises = this.blockMesh(surpriseBlocks.filter((block) => !isLucky(block)), 'surprise', BLOCK_SIZE);
+    this.surprises = this.blockMesh(surpriseBlocks.filter(isPlainSurprise), 'surprise', BLOCK_SIZE);
     this.luckyBlocks = this.blockMesh(surpriseBlocks.filter(isLucky), 'lucky', BLOCK_SIZE);
+    this.multiCoinBlocks = this.blockMesh(surpriseBlocks.filter(isMultiCoin), 'brick', BLOCK_SIZE);
     this.usedSurprises = this.blockMesh(surpriseBlocks, 'surprise-used', BLOCK_SIZE);
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
     this.notes = this.blockMesh(byKind('note'), 'note', BLOCK_SIZE);
@@ -80,6 +85,7 @@ export class BlockView {
     this.updateBlocks(this.bricks, now, (block) => !block.isBroken);
     this.updateBlocks(this.surprises, now, (block) => !block.isUsed);
     this.updateBlocks(this.luckyBlocks, now, (block) => !block.isUsed);
+    this.updateBlocks(this.multiCoinBlocks, now, (block) => !block.isUsed);
     this.updateBlocks(this.usedSurprises, now, (block) => block.isUsed);
     this.updateBlocks(this.springs, now, () => true);
     this.updateBlocks(this.notes, now, () => true);

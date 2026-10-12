@@ -21,13 +21,14 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   crumble: '#e3c28a',
   spring: '#ff5a8a',
   coin: '#ffe066',
+  'big-coin': '#ffc629',
   crystal: '#4fd8ff',
   start: '#ffffff',
   portal: '#9a6cf0',
   checkpoint: '#ff4f9a',
 };
 
-const ENEMIES = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha', 'penguin', 'lava-bubble']);
+const ENEMIES = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha', 'penguin', 'lava-bubble', 'bee']);
 
 /**
  * Miniatura de uma fase criada: a planta vista de longe.

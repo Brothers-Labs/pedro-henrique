@@ -81,15 +81,11 @@ export class EnemyModel {
     }
 
     if (kind === 'bat') {
-      this.wings = [-1, 1].map((side) => {
-        const wing = new Group();
+      this.wings = this.buildWings(0.18, 0.02, [box(0.22, 0, 0, 0.44, 0.06, 0.26, '#5b3aa8'), box(0.36, -0.06, 0, 0.18, 0.06, 0.2, '#4a2e8c')], material);
+    }
 
-        wing.position.set(side * 0.18, 0.02, 0);
-        wing.add(this.mesh([box(side * 0.22, 0, 0, 0.44, 0.06, 0.26, '#5b3aa8'), box(side * 0.36, -0.06, 0, 0.18, 0.06, 0.2, '#4a2e8c')], material));
-        this.body.add(wing);
-
-        return wing;
-      });
+    if (kind === 'bee') {
+      this.wings = this.buildWings(0.08, 0.36, [box(0.16, 0.06, -0.04, 0.3, 0.04, 0.2, '#e6f6ff')], material);
     }
 
     this.root.add(this.body);
@@ -125,9 +121,11 @@ export class EnemyModel {
         this.body.rotation.z = pose.isMoving ? Math.sin(time * 10) * 0.05 : 0;
         return;
       case 'bat':
-        this.wings.forEach((wing, index) => {
-          wing.rotation.z = (index === 0 ? 1 : -1) * Math.sin(time * 18) * 0.7;
-        });
+        this.flapWings(time * 18, 0.7);
+        return;
+      case 'bee':
+        this.flapWings(time * 40, 0.5);
+        this.body.position.y = Math.sin(time * 5) * 0.03;
         return;
       case 'ghost':
         this.body.position.y = Math.sin(time * 2.4) * 0.08;
@@ -156,6 +154,25 @@ export class EnemyModel {
         this.body.rotation.z = time * 6;
         return;
     }
+  }
+
+  /** Um par de asas espelhadas; `parts` descreve a asa direita. */
+  private buildWings(offsetX: number, offsetY: number, parts: readonly VoxelBox[], material: MeshStandardMaterial): readonly Group[] {
+    return [-1, 1].map((side) => {
+      const wing = new Group();
+
+      wing.position.set(side * offsetX, offsetY, 0);
+      wing.add(this.mesh(parts.map((part) => ({ ...part, x: part.x * side })), material));
+      this.body.add(wing);
+
+      return wing;
+    });
+  }
+
+  private flapWings(angle: number, amplitude: number): void {
+    this.wings.forEach((wing, index) => {
+      wing.rotation.z = (index === 0 ? 1 : -1) * Math.sin(angle) * amplitude;
+    });
   }
 
   dispose(): void {
@@ -257,6 +274,13 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(0, 0.52, 0.28, 0.14, 0.08, 0.12, '#ff9f1a'),
     box(0, 0.48, 0.245, 0.4, 0.06, 0.02, '#e8505b'),
     ...eyes(0.6, 0.235, 0.1, 0.1),
+  ],
+  bee: [
+    box(0, 0.2, 0, 0.36, 0.36, 0.5, '#ffc629'),
+    box(0, 0.2, -0.1, 0.38, 0.38, 0.08, '#2a2350'),
+    box(0, 0.2, 0.06, 0.38, 0.38, 0.08, '#2a2350'),
+    box(0, 0.18, -0.3, 0.06, 0.06, 0.1, '#2a2350'),
+    ...eyes(0.24, 0.255, 0.08, 0.08),
   ],
   'lava-bubble': [
     box(0, 0.26, 0, 0.5, 0.5, 0.5, '#ff6a00'),

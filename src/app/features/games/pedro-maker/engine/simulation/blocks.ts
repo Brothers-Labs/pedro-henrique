@@ -1,4 +1,4 @@
-import { PLAYER_PHYSICS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
+import { MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelObjectType, PlatformAxis, PowerUpKind, SurpriseContent } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { PhysicsBody, PlatformSurface } from './physics-body';
@@ -37,6 +37,8 @@ export interface InteractiveBlock {
   isBroken: boolean;
   /** Plataforma frágil que desabou e ainda não voltou. */
   isHidden: boolean;
+  /** Moedas que ainda saem do bloco de moedas. */
+  coinsLeft: number;
   /** Última cabeçada ou impulso de mola, para o pulinho do bloco na tela. */
   bumpedAt: number;
   crumbleStartedAt: number;
@@ -202,6 +204,11 @@ export class BlockSystem {
       return;
     }
 
+    if (block.contents === 'multi-coins') {
+      this.releaseOneCoin(block, centerX, centerY - TILE_SIZE);
+      return;
+    }
+
     block.isUsed = true;
     this.releaseContents(block, centerX, centerY - TILE_SIZE);
   }
@@ -239,6 +246,7 @@ export class BlockSystem {
       isUsed: false,
       isBroken: false,
       isHidden: false,
+      coinsLeft: object.properties?.contents === 'multi-coins' ? MULTI_COIN_BLOCK_COUNT : 0,
       bumpedAt: Number.NEGATIVE_INFINITY,
       crumbleStartedAt: Number.NEGATIVE_INFINITY,
     };
@@ -297,12 +305,23 @@ export class BlockSystem {
         this.host.effects.burst('sparkle', x, y + TILE_SIZE / 2, 14);
         this.host.effects.floatingText(x, y - TILE_SIZE / 2, '🍀 SORTE!', '#ffe066');
         return;
+      case 'multi-coins':
+        this.releaseOneCoin(block, x, y);
+        return;
       case 'coins':
       case undefined:
         this.host.addCoins(SURPRISE_COIN_COUNT, x, y);
         this.host.effects.coinFountain(x, y + TILE_SIZE / 2, SURPRISE_COIN_COUNT);
         return;
     }
+  }
+
+  /** Uma moeda por cabeçada; a última esvazia o bloco. */
+  private releaseOneCoin(block: InteractiveBlock, x: number, y: number): void {
+    block.coinsLeft -= 1;
+    block.isUsed = block.coinsLeft <= 0;
+    this.host.addCoins(1, x, y);
+    this.host.effects.coinFountain(x, y + TILE_SIZE / 2, 1);
   }
 
   private launch(player: Player, block: InteractiveBlock, now: number): void {

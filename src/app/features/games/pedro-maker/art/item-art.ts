@@ -2,6 +2,7 @@ import type { PowerUpKind } from '../models/level.model';
 import { circle, darken, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
 
 export const COIN_SIZE = 32;
+export const BIG_COIN_SIZE = 40;
 export const CRYSTAL_WIDTH = 32;
 export const CRYSTAL_HEIGHT = 40;
 export const HEART_SIZE = 32;
@@ -24,6 +25,22 @@ export function paintCoinIcon(context: CanvasRenderingContext2D): void {
   context.fill();
   shine(context, -5, -6, 3, 2);
   context.restore();
+}
+
+/** Moeda gigante: maior, com o "10" no meio no lugar da estrela. */
+export function paintBigCoin(context: CanvasRenderingContext2D): void {
+  circle(context, 20, 20, 18);
+  fillAndOutline(context, GOLD, 3);
+  circle(context, 20, 20, 13);
+  context.strokeStyle = darken(GOLD, 0.25);
+  context.lineWidth = 2;
+  context.stroke();
+  context.fillStyle = darken(GOLD, 0.45);
+  context.font = 'bold 14px sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('10', 20, 21);
+  shine(context, 12, 11, 4, 2.5);
 }
 
 export function paintCrystal(context: CanvasRenderingContext2D): void {

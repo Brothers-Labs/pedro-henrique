@@ -1,6 +1,6 @@
 import { TILE_SIZE } from '../config/physics.config';
 import { DEFAULT_LOOK, paletteFor, type CharacterPalette } from '../config/character.config';
-import type { LevelObject, LevelTheme } from '../models/level.model';
+import type { LevelObject, LevelTheme, SurpriseContent } from '../models/level.model';
 import {
   MOVING_PLATFORM_HEIGHT,
   MOVING_PLATFORM_WIDTH,
@@ -13,6 +13,7 @@ import {
   paintPlatformTile,
   paintPortalFrame,
   paintPortalSwirl,
+  paintMultiCoinBlock,
   paintSecretDoor,
   paintSign,
   paintSpikes,
@@ -27,10 +28,13 @@ import {
 } from './block-art';
 import { paint } from './canvas';
 import {
+  ARROW_HEIGHT,
+  ARROW_WIDTH,
   BARREL_HEIGHT,
   BARREL_WIDTH,
   BUSH_HEIGHT,
   BUSH_WIDTH,
+  CRATE_SIZE,
   FENCE_HEIGHT,
   FENCE_WIDTH,
   FLOWER_SIZE,
@@ -38,8 +42,10 @@ import {
   GRASS_WIDTH,
   LAMP_HEIGHT,
   LAMP_WIDTH,
+  paintArrowSign,
   paintBarrel,
   paintBush,
+  paintCrate,
   paintFence,
   paintFlower,
   paintGrass,
@@ -58,10 +64,12 @@ import {
 } from './decor-art';
 import { paintEnemyIcon } from './enemy-art';
 import {
+  BIG_COIN_SIZE,
   COIN_SIZE,
   CRYSTAL_HEIGHT,
   CRYSTAL_WIDTH,
   HEART_SIZE,
+  paintBigCoin,
   paintCoinIcon,
   paintCrystal,
   paintHeart,
@@ -163,11 +171,7 @@ function drawIcon(
       paintVoxelIcon(context, ICON_SIZE, palette, 'note');
       return;
     case 'surprise':
-      if (object.properties?.contents === 'lucky') {
-        paintVoxelIcon(context, ICON_SIZE, palette, 'lucky');
-      } else {
-        paintSurprise(context);
-      }
+      paintSurpriseIcon(context, object.properties?.contents, palette);
       return;
     case 'spring':
       paintSpring(context);
@@ -187,6 +191,7 @@ function drawIcon(
     case 'piranha':
     case 'penguin':
     case 'lava-bubble':
+    case 'bee':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -194,6 +199,9 @@ function drawIcon(
       return;
     case 'coin':
       fit(COIN_SIZE, COIN_SIZE, paintCoinIcon);
+      return;
+    case 'big-coin':
+      fit(BIG_COIN_SIZE, BIG_COIN_SIZE, paintBigCoin);
       return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);
@@ -252,11 +260,31 @@ function drawIcon(
     case 'grass':
       fit(GRASS_WIDTH, GRASS_HEIGHT, (inner) => paintGrass(inner, palette));
       return;
+    case 'arrow':
+      fit(ARROW_WIDTH, ARROW_HEIGHT, paintArrowSign);
+      return;
+    case 'crate':
+      fit(CRATE_SIZE, CRATE_SIZE, paintCrate);
+      return;
     case 'sign':
       paintSign(context);
       return;
     case 'hint':
     case 'mascot-tip':
       return;
+  }
+}
+
+/** O Lucky Block e o bloco de moedas têm cara própria; os outros, a do "?". */
+function paintSurpriseIcon(context: CanvasRenderingContext2D, contents: SurpriseContent | undefined, palette: ThemePalette): void {
+  switch (contents) {
+    case 'lucky':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'lucky');
+      return;
+    case 'multi-coins':
+      paintMultiCoinBlock(context);
+      return;
+    default:
+      paintSurprise(context);
   }
 }

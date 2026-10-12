@@ -21,6 +21,7 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   piranha: paintPiranha,
   penguin: paintPenguin,
   'lava-bubble': paintLavaBubble,
+  bee: paintBee,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -314,6 +315,33 @@ function paintLavaBubble(context: CanvasRenderingContext2D): void {
 
   eye(context, 19, 28, 3.6, 0);
   eye(context, 29, 28, 3.6, 0);
+}
+
+function paintBee(context: CanvasRenderingContext2D): void {
+  context.save();
+  context.globalAlpha = 0.85;
+
+  for (const [x, y] of [[18, 14], [30, 12]] as const) {
+    ellipse(context, x, y, 8, 6);
+    fillAndOutline(context, '#e6f6ff', 2);
+  }
+
+  context.restore();
+
+  ellipse(context, 24, 30, 16, 11);
+  fillAndOutline(context, '#ffc629');
+  context.fillStyle = OUTLINE;
+  context.fillRect(18, 20, 4, 20);
+  context.fillRect(26, 20, 4, 20);
+
+  context.beginPath();
+  context.moveTo(8, 30);
+  context.lineTo(2, 30);
+  context.lineTo(8, 27);
+  context.closePath();
+  context.fill();
+
+  eye(context, 35, 27, 3.4, 0.3);
 }
 
 function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {

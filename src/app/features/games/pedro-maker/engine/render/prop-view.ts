@@ -151,6 +151,12 @@ export class PropView {
         case 'grass':
           at(x, y, DECOR_Z + 0.3, grass(this.palette));
           break;
+        case 'arrow':
+          at(x, y, SIGN_Z, arrowSign());
+          break;
+        case 'crate':
+          at(x, y, DECOR_Z, crate());
+          break;
         case 'spikes':
           // Bloco do terreno: ocupa a célula inteira, no plano do Pedro.
           at(x, y, 0, spikes());
@@ -399,6 +405,35 @@ function grass(palette: ThemePalette): readonly VoxelBox[] {
     box(0.04, 0.14, -0.04, 0.08, 0.28, 0.08, palette.foliageDark),
     box(0.16, 0.2, 0.04, 0.08, 0.4, 0.08, palette.foliage),
     box(0.27, 0.1, 0, 0.08, 0.2, 0.08, lighten(palette.foliage, 0.1)),
+  ];
+}
+
+/** Placa com a seta apontando para a direita, o caminho do portal. */
+function arrowSign(): readonly VoxelBox[] {
+  const board = '#d9a066';
+  const arrow = '#e8505b';
+
+  return [
+    box(0, 0.45, 0, 0.12, 0.9, 0.12, '#8a5a33'),
+    box(0, 0.95, 0, 0.9, 0.5, 0.1, board),
+    box(-0.1, 0.95, 0.055, 0.4, 0.12, 0.01, arrow),
+    box(0.16, 0.95, 0.055, 0.12, 0.3, 0.01, arrow),
+    box(0.24, 0.95, 0.055, 0.08, 0.18, 0.01, arrow),
+    box(0.3, 0.95, 0.055, 0.04, 0.08, 0.01, arrow),
+  ];
+}
+
+function crate(): readonly VoxelBox[] {
+  const wood = '#c98a4b';
+  const edge = darken(wood, 0.25);
+
+  return [
+    box(0, 0.36, 0, 0.72, 0.72, 0.72, wood),
+    box(0, 0.36, 0.365, 0.72, 0.08, 0.02, edge),
+    box(0, 0.04, 0.365, 0.72, 0.08, 0.02, edge),
+    box(0, 0.68, 0.365, 0.72, 0.08, 0.02, edge),
+    box(-0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
+    box(0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
   ];
 }
 
