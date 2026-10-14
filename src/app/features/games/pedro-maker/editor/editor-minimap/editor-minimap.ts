@@ -20,6 +20,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   portal: '#b39cff',
   checkpoint: '#4cc94a',
   coin: '#ffc629',
+  'big-coin': '#ffc629',
   crystal: '#6fe3ff',
   lava: '#ff6a00',
   water: '#2f9be8',
@@ -33,6 +34,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   piranha: '#e8505b',
   penguin: '#e8505b',
   'lava-bubble': '#e8505b',
+  bee: '#e8505b',
   boss: '#e8505b',
 };
 

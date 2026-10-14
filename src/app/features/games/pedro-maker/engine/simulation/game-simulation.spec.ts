@@ -1,6 +1,6 @@
 import { heroDefinition } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
-import { PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
+import { BIG_COIN_VALUE, MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
 import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
@@ -476,6 +476,53 @@ describe('Simulação do Pedro Maker', () => {
     expect(homeY - highest).toBeGreaterThan(TILE_SIZE * 3);
     expect(bubble.canBeStomped).toBeFalse();
     expect(bubble.isFireproof).toBeTrue();
+  });
+
+  it('soma várias moedas de uma vez com a moeda gigante', () => {
+    const harness = start(flatLevel().add('big-coin', 4, SURFACE - 1).build(META));
+
+    run(harness, 1, { right: true });
+
+    expect(lastHud(harness.events)?.coins).toBe(BIG_COIN_VALUE);
+    expect(harness.simulation.collectibles.items.length).toBe(0);
+  });
+
+  it('solta uma moeda por cabeçada no bloco de moedas até esvaziar', () => {
+    const harness = start(flatLevel().add('surprise', 2, SURFACE - 3, { contents: 'multi-coins' }).build(META));
+    const block = harness.simulation.blocks.blockAt(2, SURFACE - 3);
+    run(harness, 0.2);
+
+    jump(harness, 0.4);
+    run(harness, 0.6);
+
+    expect(lastHud(harness.events)?.coins).toBe(1);
+    expect(block?.isUsed).toBeFalse();
+
+    for (let attempt = 0; attempt < MULTI_COIN_BLOCK_COUNT + 2; attempt += 1) {
+      jump(harness, 0.4);
+      run(harness, 0.6);
+    }
+
+    expect(lastHud(harness.events)?.coins).toBe(MULTI_COIN_BLOCK_COUNT);
+    expect(block?.isUsed).toBeTrue();
+  });
+
+  it('faz a abelha voar de um lado para o outro sem sair do trecho', () => {
+    const harness = start(flatLevel().add('bee', 20, SURFACE - 3).build(META));
+    const bee = harness.simulation.enemies[0];
+    const homeX = centerX(bee.body);
+    const directions = new Set<number>();
+    let farthest = 0;
+
+    for (let step = 0; step < 600; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      directions.add(bee.direction);
+      farthest = Math.max(farthest, Math.abs(centerX(bee.body) - homeX));
+    }
+
+    expect(directions).toEqual(new Set([1, -1]));
+    expect(farthest).toBeLessThan(TILE_SIZE * 3.5);
+    expect(bee.canBeStomped).toBeTrue();
   });
 
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {

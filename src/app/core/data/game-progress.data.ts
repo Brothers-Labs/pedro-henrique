@@ -141,6 +141,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-flash',
+    label: 'Pedro Flash',
+    emoji: '⚡',
+    color: 'purple',
+    /** Cada partida terminada conta como um desafio; duas estrelas ou mais contam como acerto. */
+    tagline: 'Velocidade do raio em 3D: fases, corridas, chefões e fases que você cria.',
+    unit: 'corrida',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));

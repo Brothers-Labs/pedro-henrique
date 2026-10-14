@@ -1,0 +1,146 @@
+@let current = draft();
+
+<app-flash-page-frame
+  [heading]="isEditing() ? 'Editar fase' : 'Pedro Flash Maker'"
+  emoji="🛠️"
+  [backLink]="isEditing() ? '/jogos/pedro-flash/fases' : '/jogos/pedro-flash'"
+>
+  @switch (status()) {
+    @case ('pronto') {
+      <div class="maker">
+        <section class="maker__board" aria-labelledby="mapa-flash-titulo">
+          <h2 id="mapa-flash-titulo" class="maker__hint">{{ toolHint() }}</h2>
+
+          <div class="tools" role="radiogroup" aria-label="Ferramenta">
+            <button
+              type="button"
+              class="tools__button"
+              role="radio"
+              [attr.aria-checked]="tool() === 'caminho'"
+              [class.tools__button--active]="tool() === 'caminho'"
+              (click)="chooseTool('caminho')"
+            >
+              <span aria-hidden="true">✏️</span> Desenhar caminho
+            </button>
+            <button
+              type="button"
+              class="tools__button"
+              role="radio"
+              [attr.aria-checked]="tool() === 'borracha'"
+              [class.tools__button--active]="tool() === 'borracha'"
+              (click)="chooseTool('borracha')"
+            >
+              <span aria-hidden="true">🧽</span> Borracha
+            </button>
+            <button type="button" class="tools__button" [disabled]="!canUndo()" (click)="undo()">
+              <span aria-hidden="true">↩️</span> Desfazer
+            </button>
+            <button type="button" class="tools__button" [disabled]="current.path.length === 0" (click)="clear()">
+              <span aria-hidden="true">🧹</span> Limpar
+            </button>
+          </div>
+
+          <app-course-grid [draft]="current" (cellPointer)="onCellPointer($event)" />
+
+          <p class="maker__status" [class.maker__status--ready]="isPlayable() && !pieceMessage()" role="status">
+            @if (pieceMessage(); as message) {
+              <span aria-hidden="true">⚠️</span> {{ message }}
+            } @else if (problemMessage(); as message) {
+              {{ message }}
+            } @else {
+              <span aria-hidden="true">✅</span> A fase está pronta para correr! {{ current.pieces.length }} peças no caminho.
+            }
+          </p>
+        </section>
+
+        <section class="maker__settings" aria-labelledby="pecas-titulo">
+          <h2 id="pecas-titulo" class="maker__title">Peças</h2>
+
+          @for (group of pieceGroups; track group.id) {
+            <div class="palette" role="radiogroup" [attr.aria-label]="group.label">
+              <span class="palette__label">{{ group.label }}</span>
+              @for (piece of group.pieces; track piece.kind) {
+                <button
+                  type="button"
+                  class="tools__button"
+                  role="radio"
+                  [attr.aria-checked]="tool() === piece.kind"
+                  [class.tools__button--active]="tool() === piece.kind"
+                  (click)="chooseTool(piece.kind)"
+                >
+                  <span aria-hidden="true">{{ piece.emoji }}</span> {{ piece.label }}
+                </button>
+              }
+            </div>
+          }
+
+          <h2 class="maker__title">Ajustes da fase</h2>
+
+          <label class="field">
+            <span class="field__label">Nome</span>
+            <input
+              class="field__input"
+              type="text"
+              [attr.maxlength]="limits.maximumNameLength"
+              placeholder="Minha fase"
+              [value]="current.name"
+              (change)="rename($event)"
+            />
+          </label>
+
+          <fieldset class="field">
+            <legend class="field__label">Cenário</legend>
+            <div class="themes">
+              @for (theme of themes; track theme.id) {
+                <button
+                  type="button"
+                  class="themes__button"
+                  [style.background]="theme.ground"
+                  [attr.aria-pressed]="current.theme === theme.id"
+                  [class.themes__button--active]="current.theme === theme.id"
+                  (click)="chooseTheme(theme.id)"
+                >
+                  <span aria-hidden="true">{{ theme.emoji }}</span> {{ theme.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+
+          <div class="maker__actions">
+            <button
+              type="button"
+              class="maker__save"
+              data-tone="yellow"
+              [disabled]="!isPlayable() || saveState() === 'salvando'"
+              (click)="save(true)"
+            >
+              <span aria-hidden="true">⚡</span> Salvar e correr
+            </button>
+            <button
+              type="button"
+              class="maker__save"
+              data-tone="green"
+              [disabled]="!isPlayable() || saveState() === 'salvando'"
+              (click)="save(false)"
+            >
+              <span aria-hidden="true">💾</span> Salvar
+            </button>
+          </div>
+
+          @if (saveState() === 'erro') {
+            <p class="maker__error" role="alert">Não deu para salvar a fase agora. Tente de novo.</p>
+          }
+        </section>
+      </div>
+    }
+    @case ('nao-encontrada') {
+      <p class="maker__message">Essa fase não existe mais. Que tal montar uma nova?</p>
+    }
+    @case ('erro') {
+      <p class="maker__message">Não deu para abrir essa fase agora. Tente de novo daqui a pouco.</p>
+    }
+    @default {
+      <p class="maker__message">Abrindo a fase…</p>
+    }
+  }
+</app-flash-page-frame>

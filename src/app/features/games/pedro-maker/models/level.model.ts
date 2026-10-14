@@ -24,9 +24,20 @@ export type LevelTheme =
 /**
  * A tartaruga anda devagar e pode ser pisada; a planta carnívora mora num
  * cano, sobe e desce, e só cai com fogo ou estrela. O pinguim patrulha
- * ligeiro; a bolinha de lava salta da lava e não se apaga com fogo.
+ * ligeiro; a bolinha de lava salta da lava e não se apaga com fogo. A abelha
+ * voa de um lado para o outro e pode ser pisada.
  */
-export type EnemyKind = 'slime' | 'spiky' | 'bat' | 'robot' | 'ghost' | 'turtle' | 'piranha' | 'penguin' | 'lava-bubble';
+export type EnemyKind =
+  | 'slime'
+  | 'spiky'
+  | 'bat'
+  | 'robot'
+  | 'ghost'
+  | 'turtle'
+  | 'piranha'
+  | 'penguin'
+  | 'lava-bubble'
+  | 'bee';
 
 /**
  * Poderes que o Pedro pode pegar.
@@ -51,8 +62,12 @@ export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
 /** Os poderes clássicos, que o Lucky Block sorteia. */
 export const CLASSIC_POWER_UPS = ['mushroom', 'fire-flower', 'star', 'one-up'] as const satisfies readonly PowerUpKind[];
 
-/** `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada. */
-export const SURPRISE_CONTENTS = ['coins', 'heart', 'crystal', 'power-up', 'lucky'] as const;
+/**
+ * `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada.
+ * `multi-coins`: o bloco de moedas, com cara de tijolo, que solta uma moeda a
+ * cada cabeçada até esvaziar.
+ */
+export const SURPRISE_CONTENTS = ['coins', 'heart', 'crystal', 'power-up', 'lucky', 'multi-coins'] as const;
 
 export type SurpriseContent = (typeof SURPRISE_CONTENTS)[number];
 
@@ -83,7 +98,8 @@ export type BlockType =
   | 'spikes'
   | 'note';
 
-export type ItemType = 'coin' | 'crystal' | 'heart' | 'power-up';
+/** A moeda gigante vale várias moedas de uma vez. */
+export type ItemType = 'coin' | 'big-coin' | 'crystal' | 'heart' | 'power-up';
 
 export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'secret-door';
 
@@ -98,7 +114,9 @@ export type DecorType =
   | 'toadstool'
   | 'barrel'
   | 'lamp'
-  | 'grass';
+  | 'grass'
+  | 'arrow'
+  | 'crate';
 
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';

@@ -1,0 +1,134 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+.modes,
+.group {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: maker.$ink;
+}
+
+.modes__title,
+.group__title {
+  font-size: var(--text-lg);
+}
+
+.modes__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.modes__option {
+  @include maker.pill;
+  @include touch-target(3rem);
+
+  cursor: pointer;
+  font-size: var(--text-lg);
+
+  &--active {
+    background: #ffd23f;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.modes__hint,
+.group__message {
+  font-weight: 700;
+}
+
+.group__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.group__create,
+.group__retry,
+.course__run,
+.course__small {
+  @include maker.game-button;
+}
+
+.course__small,
+.group__retry {
+  & {
+    padding: 0.4rem 0.9rem;
+    font-size: var(--text-md);
+  }
+}
+
+.courses {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include from($breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include from($breakpoint-lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.course {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+  padding: 0.75rem;
+  border: 3px solid maker.$ink;
+  border-radius: 1.1rem;
+  background: #ffffff;
+}
+
+.course__body {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.course__name {
+  font-size: var(--text-lg);
+}
+
+.course__meta,
+.course__record,
+.course__description {
+  font-weight: 700;
+}
+
+.course__record {
+  font-size: var(--text-sm);
+}
+
+.course__stars {
+  font-size: 1.3rem;
+  letter-spacing: 0.1rem;
+}
+
+.course__star--empty {
+  filter: grayscale(1);
+  opacity: 0.3;
+}
+
+.course__actions,
+.course__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.course__confirm {
+  font-weight: 800;
+}

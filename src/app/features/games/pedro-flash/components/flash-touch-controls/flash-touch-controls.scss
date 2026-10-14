@@ -1,0 +1,19 @@
+.pad__button--jump {
+  width: 5.75rem;
+  height: 5.75rem;
+  background: rgb(63 184 255 / 90%);
+  color: #ffffff;
+  font-size: 2.6rem;
+}
+
+.pad__button--dash {
+  width: 4.25rem;
+  height: 4.25rem;
+  opacity: 0.55;
+
+  &.pad__button--ready {
+    background: rgb(255 210 63 / 95%);
+    opacity: 1;
+    box-shadow: 0 0 1rem rgb(255 210 63 / 80%), 0 5px 0 rgb(42 35 80 / 45%);
+  }
+}

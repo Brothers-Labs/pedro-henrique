@@ -29,6 +29,7 @@ navegador.
 - [Como funciona o upload de vídeos](#como-funciona-o-upload-de-vídeos)
 - [Pedro Maker](#pedro-maker)
 - [Pedro Kart](#pedro-kart)
+- [Pedro Flash](#pedro-flash)
 - [Design system](#design-system)
 - [Acessibilidade](#acessibilidade)
 - [Como editar o conteúdo](#como-editar-o-conteúdo)
@@ -74,7 +75,7 @@ navegador.
 | Persistência | IndexedDB (vídeos) e `localStorage` (recados, frases favoritas, idioma, modo calmo) |
 | Voz | Web Speech API (`speechSynthesis`), nativa do navegador |
 | Movimento | GSAP 3.15.0 (core, sem plugins), carregado só no chunk da home |
-| Jogos em 3D | Three.js 0.186, carregado só quando uma fase do Pedro Maker ou uma corrida do Pedro Kart abre |
+| Jogos em 3D | Three.js 0.186, carregado só quando uma fase do Pedro Maker, uma corrida do Pedro Kart ou uma partida do Pedro Flash abre |
 | Testes | Karma + Jasmine |
 
 Requisitos: **Node.js 20.19+, 22.12+ ou 24+** e npm.
@@ -528,6 +529,55 @@ Decisões que valem saber antes de mexer:
 - **Reaproveita o Pedro Maker**: o relógio de passo fixo, o controle de qualidade gráfica, as peças do
   boneco do Pedro e os sons. Cada corrida terminada conta como desafio na jornada de jogos, e chegar
   ao pódio conta como acerto.
+
+### Pedro Flash
+
+Jogo de velocidade em 3D em `/jogos/pedro-flash`: o Pedro do Pedro Maker corre na velocidade do raio
+por estradas suspensas com loopings, molas, rampas, buracos e robôs do Doutor Apagão. São três jeitos
+de jogar — **Aventura** (sozinho, atrás de raios e do tempo de ouro), **Corrida** (contra três
+corredores) e **Batalha** (contra um chefão numa arena fechada) —, 6 fases oficiais em cenários
+diferentes, 3 arenas, um vestiário com 4 tênis e 6 cores de rastro e o **Pedro Flash Maker** para criar
+fases. Todo o código fica em `src/app/features/games/pedro-flash/`.
+
+| Pasta | O que tem |
+| --- | --- |
+| `models/`, `config/` | Tipos de fase, corredor e sessão; tênis, rastros, adversários, dificuldades, cenários, peças e chefões |
+| `course/` | Geometria 3D da pista (com loopings), as fases e arenas oficiais, as regras de validação e a lógica pura do editor |
+| `simulation/` | A partida sem desenho: física do corredor, raios, caixas, perigos, robôs, chefão, adversários e piloto automático |
+| `engine/` | O único código que conhece o Three.js: palco com brilho e reflexos, pista, corredores, robôs, câmera, faíscas e vitrine |
+| `services/` | Vestiário, dificuldade e recordes (`localStorage`) e fases criadas (IndexedDB, coleção `flash-courses`, banco na versão 5) |
+| `components/`, `pages/` | Telas Angular: menu, fases, batalha, partida, resultado, vestiário e editor |
+
+Decisões que valem saber antes de mexer:
+
+- **Tudo é medido na própria pista** (distância, lado e altura), não no mundo. Cada ponto da linha
+  central tem um referencial (frente, cima, direita) que gira no looping: o Pedro corre de cabeça
+  para baixo sem física especial, e a câmera gira junto.
+- **Uma fase é um caminho aberto de casas** na mesma grade do Pedro Kart, com no máximo uma peça por
+  casa. As oficiais e as criadas usam o mesmo formato (`CourseDefinition`); as arenas são caminhos
+  fechados.
+- **O Pedro corre sozinho**: a criança só vai para os lados, pula (no ar, o segundo toque vira o ataque
+  teleguiado nos robôs e no chefão) e usa o modo relâmpago quando a energia enche.
+- **Nunca existe fim de jogo**: machucado tira raios (ou faz tropeçar), cair no buraco faz reaparecer
+  logo antes dele e o chefão sempre volta a cansar.
+- **Dificuldade** (`FlashTuning`, em `config/runner.config.ts`):
+
+  | | Fácil | Normal | Difícil |
+  | --- | --- | --- | --- |
+  | Velocidade do Pedro | 82% | 92% | 100% |
+  | Ritmo dos adversários | 74% | 88% | 99% |
+  | Pulo automático nos buracos | Sim | Não | Não |
+  | Raios perdidos no machucado | 20% | 50% | Todos |
+  | Golpes para vencer cada chefão | 2 a 4 | 3 a 5 | 4 a 7 |
+
+  Os testes correm cada fase oficial nas três dificuldades e nos modos aventura e corrida, e
+  derrotam os três chefões em todas as dificuldades com o piloto automático.
+- **Acabamento gráfico por aparelho**: na qualidade alta entram o brilho (bloom) do neon e dos raios
+  e o reflexo do ambiente no metal; o monitor de quadros do Pedro Maker baixa a qualidade sozinho se
+  o aparelho engasgar. Em telas 4K a imagem sai em resolução nativa (até 2× a densidade de pixels).
+- **Reaproveita o Pedro Maker e o Pedro Kart**: relógio de passo fixo, qualidade gráfica, boneco do
+  Pedro, sons e trilhas, grade e traçado do editor e alguns enfeites do cenário. Cada partida terminada
+  conta como desafio na jornada de jogos, e duas estrelas ou mais contam como acerto.
 
 ---
 

@@ -1,0 +1,111 @@
+@let current = mode();
+
+<app-flash-page-frame heading="Escolha a fase" emoji="⚡">
+  <section class="modes" aria-labelledby="modo-titulo">
+    <h2 id="modo-titulo" class="modes__title">Jeito de jogar</h2>
+    <div class="modes__options" role="radiogroup" aria-labelledby="modo-titulo">
+      @for (option of modes; track option.id) {
+        <button
+          type="button"
+          class="modes__option"
+          role="radio"
+          [attr.aria-checked]="current === option.id"
+          [class.modes__option--active]="current === option.id"
+          (click)="chooseMode(option.id)"
+        >
+          <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+        </button>
+      }
+    </div>
+    <p class="modes__hint">{{ hint() }}</p>
+  </section>
+
+  <app-flash-difficulty-picker />
+
+  <section class="group" aria-labelledby="fases-oficiais">
+    <h2 id="fases-oficiais" class="group__title">Fases do Pedro Flash</h2>
+    <ul class="courses">
+      @for (course of officialCourses; track course.id; let position = $index) {
+        <li class="course">
+          <app-course-thumbnail [path]="course.path" [theme]="course.theme" [name]="course.name" />
+          <div class="course__body">
+            <h3 class="course__name">{{ position + 1 }}. {{ course.name }}</h3>
+            <p class="course__meta">{{ themeLabel(course) }} · {{ course.path.length }} casas</p>
+            <p class="course__stars" [attr.aria-label]="starsOf(course) + ' de 3 estrelas'">
+              @for (slot of starSlots; track slot) {
+                <span aria-hidden="true" [class.course__star--empty]="slot > starsOf(course)">⭐</span>
+              }
+            </p>
+            @if (recordLabel(course); as record) {
+              <p class="course__record"><span aria-hidden="true">🏆</span> {{ record }}</p>
+            }
+          </div>
+          <a class="course__run" data-tone="yellow" [routerLink]="['..', 'correr', current, course.id]">
+            <span aria-hidden="true">▶</span> Correr
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="group" aria-labelledby="minhas-fases">
+    <div class="group__header">
+      <h2 id="minhas-fases" class="group__title">Minhas fases</h2>
+      <a class="group__create" data-tone="green" routerLink="../criar">
+        <span aria-hidden="true">🛠️</span> Criar fase
+      </a>
+    </div>
+
+    @switch (status()) {
+      @case ('error') {
+        <p class="group__message">
+          Não deu para abrir as suas fases agora.
+          <button type="button" class="group__retry" (click)="retryLoading()">Tentar de novo</button>
+        </p>
+      }
+      @case ('ready') {
+        @if (isEmpty()) {
+          <p class="group__message">Você ainda não criou nenhuma fase. Abra o Pedro Flash Maker e monte a sua!</p>
+        } @else {
+          <ul class="courses">
+            @for (course of customCourses(); track course.id) {
+              <li class="course">
+                <app-course-thumbnail [path]="course.path" [theme]="course.theme" [name]="course.name" />
+                <div class="course__body">
+                  <h3 class="course__name">{{ course.name }}</h3>
+                  <p class="course__meta">{{ themeLabel(course) }} · {{ course.path.length }} casas</p>
+                  @if (recordLabel(course); as record) {
+                    <p class="course__record"><span aria-hidden="true">🏆</span> {{ record }}</p>
+                  }
+                </div>
+
+                @if (pendingDeletion() === course.id) {
+                  <div class="course__confirm" role="group" [attr.aria-label]="'Apagar a fase ' + course.name + '?'">
+                    <span>Apagar mesmo?</span>
+                    <button type="button" class="course__small" data-tone="red" (click)="confirmDeletion(course.id)">Sim, apagar</button>
+                    <button type="button" class="course__small" data-tone="gray" (click)="cancelDeletion()">Não</button>
+                  </div>
+                } @else {
+                  <div class="course__actions">
+                    <a class="course__run" data-tone="yellow" [routerLink]="['..', 'correr', current, course.id]">
+                      <span aria-hidden="true">▶</span> Correr
+                    </a>
+                    <a class="course__small" data-tone="blue" [routerLink]="['..', 'criar', course.id]">
+                      <span aria-hidden="true">✏️</span> Editar
+                    </a>
+                    <button type="button" class="course__small" data-tone="gray" (click)="askToDelete(course.id)">
+                      <span aria-hidden="true">🗑️</span> Apagar
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+      @default {
+        <p class="group__message">Abrindo as suas fases…</p>
+      }
+    }
+  </section>
+</app-flash-page-frame>

@@ -1,0 +1,38 @@
+<app-flash-page-frame heading="Batalha" emoji="🤖">
+  <section class="modes" aria-labelledby="como-lutar">
+    <h2 id="como-lutar" class="modes__title">Como vencer um chefão</h2>
+    <p class="modes__hint">
+      Ele voa na frente e ataca: desvie das bombas e pule as ondas. Quando ele cansar e descer, pule nele — no ar, aperte o pulo
+      de novo para o ataque teleguiado!
+    </p>
+  </section>
+
+  <app-flash-difficulty-picker />
+
+  <section class="group" aria-labelledby="arenas-titulo">
+    <h2 id="arenas-titulo" class="group__title">Arenas</h2>
+    <ul class="courses">
+      @for (view of arenas; track view.arena.id) {
+        <li class="course">
+          <app-course-thumbnail [path]="view.arena.course.path" [theme]="view.arena.course.theme" [isCircuit]="true" [name]="view.arena.name" />
+          <div class="course__body">
+            <h3 class="course__name"><span aria-hidden="true">{{ view.boss.emoji }}</span> {{ view.boss.name }}</h3>
+            <p class="course__meta">{{ view.arena.name }}</p>
+            <p class="course__description">{{ view.boss.description }}</p>
+            <p class="course__stars" [attr.aria-label]="starsOf(view.arena) + ' de 3 estrelas'">
+              @for (slot of starSlots; track slot) {
+                <span aria-hidden="true" [class.course__star--empty]="slot > starsOf(view.arena)">⭐</span>
+              }
+            </p>
+            @if (recordLabel(view.arena); as record) {
+              <p class="course__record"><span aria-hidden="true">🏆</span> {{ record }}</p>
+            }
+          </div>
+          <a class="course__run" data-tone="purple" [routerLink]="['..', 'correr', 'batalha', view.arena.id]">
+            <span aria-hidden="true">⚔️</span> Lutar
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+</app-flash-page-frame>

@@ -72,6 +72,7 @@ export function analyzeReachability(blueprint: LevelBlueprint): ReachabilityRepo
 function isCollectible(object: LevelObject): boolean {
   return (
     object.type === 'coin' ||
+    object.type === 'big-coin' ||
     object.type === 'crystal' ||
     object.type === 'heart' ||
     object.type === 'power-up'

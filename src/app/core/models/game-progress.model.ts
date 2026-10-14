@@ -16,7 +16,8 @@ export type GameId =
   | 'matematica'
   | 'qi'
   | 'pedro-maker'
-  | 'pedro-kart';
+  | 'pedro-kart'
+  | 'pedro-flash';
 
 /**
  * Nome da unidade de desafio de cada jogo.

@@ -83,6 +83,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'orange',
   },
   {
+    id: 'pedro-flash',
+    label: 'Pedro Flash',
+    route: '/jogos/pedro-flash',
+    emoji: '⚡',
+    description: 'Corro na velocidade do raio: loopings, robôs, chefões, corridas e fases que eu mesmo crio.',
+    color: 'purple',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',
@@ -129,7 +137,7 @@ export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   {
     id: 'brincar',
     label: 'Brincar',
-    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'mascote'].map(findSection),
+    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'mascote'].map(findSection),
   },
   { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
 ];

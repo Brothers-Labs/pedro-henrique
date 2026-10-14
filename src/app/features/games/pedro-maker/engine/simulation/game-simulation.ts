@@ -16,7 +16,7 @@ import type { DifficultyRules } from '../../models/settings.model';
 import type { InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { Boss, type BossHost } from './boss';
-import { type Collectible, CollectibleSystem, type CollectibleHost } from './collectibles';
+import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
 import { type Fireball, FireballSystem } from './fireballs';
 import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
@@ -49,6 +49,7 @@ const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>([
   'piranha',
   'penguin',
   'lava-bubble',
+  'bee',
 ]);
 
 function isEnemyKind(type: LevelObjectType): type is EnemyKind {
@@ -552,6 +553,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         this.coins += 1;
         this.playSound('coin');
         this.effects.burst('coin', x, y, 5);
+        break;
+      case 'big-coin':
+        this.addCoins(coinValue(item.kind), x, y);
+        this.effects.burst('coin', x, y, 14);
         break;
       case 'crystal':
         if (item.crystalIndex !== undefined) {

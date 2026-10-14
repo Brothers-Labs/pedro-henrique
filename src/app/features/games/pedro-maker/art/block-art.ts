@@ -272,6 +272,16 @@ export function paintMovingPlatform(context: CanvasRenderingContext2D): void {
 }
 
 /** Lava ondulando, com bolhas claras. */
+/** Tijolo com uma moedinha no canto: o bloco de moedas, sem entregar demais o segredo. */
+export function paintMultiCoinBlock(context: CanvasRenderingContext2D): void {
+  paintBrick(context);
+  circle(context, 38, 10, 7);
+  fillAndOutline(context, '#ffc629', 2);
+  context.fillStyle = '#fff3a8';
+  circle(context, 36, 8, 2);
+  context.fill();
+}
+
 /** Fileira de espinhos prateados sobre uma base escura. */
 export function paintSpikes(context: CanvasRenderingContext2D): void {
   roundedRect(context, 2, 34, 44, 12, 3);

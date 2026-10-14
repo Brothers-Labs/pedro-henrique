@@ -1,0 +1,107 @@
+@let panel = hud();
+
+<div #stage class="stage"></div>
+
+@if (panel?.isFast) {
+  <div class="speed-lines" aria-hidden="true"></div>
+}
+
+@if (panel) {
+  <div class="hud">
+    <div class="hud__left">
+      <p class="hud__raios" [attr.aria-label]="panel.raios + ' raios'"><span aria-hidden="true">⚡</span> {{ panel.raios }}</p>
+      <div class="energy" [class.energy--ready]="panel.canDash" role="img" [attr.aria-label]="panel.canDash ? 'Modo relâmpago pronto' : 'Energia do raio carregando'">
+        @for (fill of energyFill(); track $index) {
+          <span class="energy__segment"><span class="energy__fill" [style.width.%]="fill"></span></span>
+        }
+      </div>
+      <p class="hud__powers" aria-live="polite">
+        @if (panel.hasShield) {
+          <span aria-label="Com escudo">🛡️</span>
+        }
+        @if (panel.hasMagnet) {
+          <span aria-label="Com ímã de raios">🧲</span>
+        }
+      </p>
+    </div>
+
+    <div class="hud__center">
+      @if (panel.boss; as boss) {
+        <div class="boss" [class.boss--tired]="boss.isTired" [attr.aria-label]="boss.name + ': faltam ' + boss.hitsLeft + ' golpes'">
+          <p class="boss__name">🤖 {{ boss.name }}</p>
+          <p class="boss__hearts" aria-hidden="true">
+            @for (isFull of bossHearts(); track $index) {
+              <span [class.boss__heart--empty]="!isFull">💜</span>
+            }
+          </p>
+        </div>
+      } @else if (panel.progress !== null) {
+        <div class="progress" role="progressbar" aria-label="Caminho até a chegada" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="(panel.progress * 100).toFixed(0)">
+          <span class="progress__goal" aria-hidden="true">🏁</span>
+          @for (rival of panel.rivalProgress; track $index) {
+            <span class="progress__rival" [style.left.%]="rival * 100" aria-hidden="true"></span>
+          }
+          <span class="progress__player" [style.left.%]="panel.progress * 100" aria-hidden="true">⚡</span>
+        </div>
+      }
+    </div>
+
+    <div class="hud__right">
+      @if (panel.mode === 'corrida') {
+        <p class="hud__position" [attr.aria-label]="'Você está em ' + formatPlacement(panel.position) + ' lugar de ' + panel.racers">
+          {{ formatPlacement(panel.position) }}<small>/{{ panel.racers }}</small>
+        </p>
+      }
+      <p class="hud__time" aria-hidden="true">{{ formatTime(panel.elapsedMs) }}</p>
+      <button type="button" class="hud__pause" aria-label="Pausar" (click)="pause()">⏸</button>
+    </div>
+  </div>
+
+  <p class="speed" [class.speed--fast]="panel.isFast" aria-hidden="true">{{ panel.speedKmh }} <small>km/h</small></p>
+}
+
+@if (countdown(); as value) {
+  <p class="countdown" aria-live="assertive">{{ value }}</p>
+}
+
+@if (toast(); as message) {
+  <p class="toast" role="status">{{ message }}</p>
+}
+
+@if (isTouch && phase() === 'correndo') {
+  <app-flash-touch-controls [state]="runState" [canDash]="panel?.canDash ?? false" />
+}
+
+@switch (phase()) {
+  @case ('carregando') {
+    <div class="overlay">
+      <p class="overlay__panel">Carregando a fase… <span aria-hidden="true">⚡</span></p>
+    </div>
+  }
+  @case ('pausado') {
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pausa-flash-titulo">
+      <div class="overlay__panel">
+        <h2 id="pausa-flash-titulo" class="overlay__title">Pausa</h2>
+        <button type="button" class="overlay__button" data-tone="green" (click)="resume()">
+          <span aria-hidden="true">▶</span> Continuar
+        </button>
+        <button type="button" class="overlay__button" data-tone="gray" (click)="exit()">
+          <span aria-hidden="true">🚪</span> Sair da fase
+        </button>
+      </div>
+    </div>
+  }
+  @case ('erro') {
+    <div class="overlay" role="alertdialog" aria-labelledby="erro-flash-titulo">
+      <div class="overlay__panel">
+        <h2 id="erro-flash-titulo" class="overlay__title">Ops!</h2>
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="overlay__button" data-tone="blue" (click)="exit()">Voltar</button>
+      </div>
+    </div>
+  }
+}
+
+@if (!isTouch && phase() === 'correndo' && countdown()) {
+  <p class="keys">← → para os lados · Espaço pula (duas vezes ataca) · Shift usa o raio · Esc pausa</p>
+}

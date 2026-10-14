@@ -1,0 +1,73 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+.result,
+.message {
+  @include maker.panel;
+
+  justify-self: center;
+  width: min(100%, 38rem);
+  padding: 1.25rem;
+  color: maker.$ink;
+  text-align: center;
+}
+
+.message {
+  font-weight: 800;
+}
+
+.result {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+}
+
+.result__stars {
+  font-size: clamp(2.6rem, 2rem + 3vw, 3.6rem);
+  letter-spacing: 0.3rem;
+}
+
+.result__star--empty {
+  filter: grayscale(1);
+  opacity: 0.3;
+}
+
+.result__title {
+  font-size: var(--text-xl);
+}
+
+.result__course {
+  @include maker.pill;
+}
+
+.result__numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+  font-weight: 800;
+
+  dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.result__record {
+  font-weight: 800;
+  color: #6d45c4;
+}
+
+.result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.result__button {
+  @include maker.game-button;
+}

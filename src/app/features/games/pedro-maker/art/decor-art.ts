@@ -20,6 +20,9 @@ export const LAMP_WIDTH = 32;
 export const LAMP_HEIGHT = 120;
 export const GRASS_WIDTH = 40;
 export const GRASS_HEIGHT = 28;
+export const ARROW_WIDTH = 48;
+export const ARROW_HEIGHT = 48;
+export const CRATE_SIZE = 40;
 
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
@@ -446,4 +449,37 @@ export function paintGrass(context: CanvasRenderingContext2D, palette: ThemePale
     context.strokeStyle = color;
     context.stroke();
   }
+}
+
+/** Placa de madeira com a seta vermelha apontando para a direita. */
+export function paintArrowSign(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 21, 26, 6, 22, 2);
+  fillAndOutline(context, '#8a5a33', 2);
+  roundedRect(context, 2, 6, 44, 24, 4);
+  fillAndOutline(context, '#d9a066');
+
+  context.beginPath();
+  context.moveTo(9, 15);
+  context.lineTo(26, 15);
+  context.lineTo(26, 10);
+  context.lineTo(39, 18);
+  context.lineTo(26, 26);
+  context.lineTo(26, 21);
+  context.lineTo(9, 21);
+  context.closePath();
+  fillAndOutline(context, '#e8505b', 2);
+}
+
+export function paintCrate(context: CanvasRenderingContext2D): void {
+  const wood = '#c98a4b';
+
+  roundedRect(context, 2, 2, 36, 36, 3);
+  fillAndOutline(context, wood);
+  context.strokeStyle = darken(wood, 0.3);
+  context.lineWidth = 3;
+  context.strokeRect(7, 7, 26, 26);
+  context.beginPath();
+  context.moveTo(7, 7);
+  context.lineTo(33, 33);
+  context.stroke();
 }

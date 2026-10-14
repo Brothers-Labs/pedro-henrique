@@ -108,3 +108,9 @@ export const MAGNET_RADIUS = 190;
 
 /** Moedas que um bloco surpresa de moedas solta. */
 export const SURPRISE_COIN_COUNT = 5;
+
+/** Cabeçadas que o bloco de moedas aguenta, uma moeda por cabeçada. */
+export const MULTI_COIN_BLOCK_COUNT = 8;
+
+/** Quanto vale a moeda gigante. */
+export const BIG_COIN_VALUE = 10;

@@ -25,6 +25,7 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   piranha: { speed: 0, bodyWidth: 26, bodyHeight: 40, flies: false, isStompable: false, isFireproof: false },
   penguin: { speed: 95, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true, isFireproof: false },
   'lava-bubble': { speed: 0, bodyWidth: 26, bodyHeight: 26, flies: true, isStompable: false, isFireproof: true },
+  bee: { speed: 85, bodyWidth: 28, bodyHeight: 24, flies: true, isStompable: true, isFireproof: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -47,6 +48,10 @@ const PIRANHA_CYCLE_MS = PIRANHA_HIDDEN_MS + PIRANHA_RISE_MS + PIRANHA_OUT_MS + 
 /** Com o Pedro colado no cano, a planta espera: ninguém é mordido sem ver. */
 const PIRANHA_SHY_DISTANCE = TILE_SIZE * 1.5;
 
+/** Distância que a abelha voa para cada lado do ponto de partida. */
+const BEE_PATROL = TILE_SIZE * 3;
+const BEE_BOB_HEIGHT = 30;
+
 /** Ciclo da bolinha de lava: espera na lava e dá um salto alto. */
 const LAVA_BUBBLE_WAIT_MS = 1100;
 const LAVA_BUBBLE_JUMP_MS = 1500;
@@ -67,7 +72,8 @@ export const ENEMY_DEFEAT_MS = 280;
  * tartaruga anda como o slime, só que mais devagar, e a planta carnívora não
  * sai do lugar: sobe e desce do cano, e escondida também não machuca. O
  * pinguim patrulha como o slime, mais ligeiro, e a bolinha de lava salta da
- * lava e mergulha de volta, sem machucar enquanto está lá dentro.
+ * lava e mergulha de volta, sem machucar enquanto está lá dentro. A abelha
+ * voa de um lado para o outro, subindo e descendo de leve.
  */
 export class Enemy {
   readonly body: PhysicsBody;
@@ -165,6 +171,9 @@ export class Enemy {
         return;
       case 'lava-bubble':
         this.leapFromLava(now);
+        return;
+      case 'bee':
+        this.buzzAround(now);
         return;
     }
   }
@@ -274,6 +283,21 @@ export class Enemy {
 
     this.emergence = piranhaEmergence(this.piranhaCycleMs);
     this.isHidden = this.emergence < 0.5;
+  }
+
+  private buzzAround(now: number): void {
+    const body = this.body;
+    const x = centerX(body);
+    const isAtLimit =
+      (this.direction < 0 && (x <= this.homeX - BEE_PATROL || body.blockedLeft)) ||
+      (this.direction > 0 && (x >= this.homeX + BEE_PATROL || body.blockedRight));
+
+    if (isAtLimit) {
+      this.turnAround();
+    }
+
+    body.vx = this.direction * this.profile.speed * this.speedMultiplier;
+    body.vy = Math.cos(now / 300 + this.phase) * BEE_BOB_HEIGHT;
   }
 
   private leapFromLava(now: number): void {

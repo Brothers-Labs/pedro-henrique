@@ -222,6 +222,13 @@ export class CollectibleView {
       }
       case 'power-up':
         return this.powerUpModel(item.powerUp ?? 'super-jump');
+      case 'big-coin': {
+        const coin = new Mesh(new CylinderGeometry(0.5, 0.5, 0.12, 28).rotateX(Math.PI / 2), this.coinMaterial);
+
+        coin.castShadow = true;
+
+        return coin;
+      }
       case 'coin':
         return new Group();
     }

@@ -1,7 +1,7 @@
-import { MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
+import { BIG_COIN_VALUE, MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, PowerUpKind } from '../../models/level.model';
 
-export type CollectibleKind = 'coin' | 'crystal' | 'heart' | 'power-up';
+export type CollectibleKind = 'coin' | 'big-coin' | 'crystal' | 'heart' | 'power-up';
 
 export interface Collectible {
   readonly id: number;
@@ -47,6 +47,7 @@ export class CollectibleSystem {
 
       switch (object.type) {
         case 'coin':
+        case 'big-coin':
         case 'heart':
           this.spawn(object.type, x, y, {}, null);
           break;
@@ -62,9 +63,9 @@ export class CollectibleSystem {
     }
   }
 
-  /** Quantas moedas soltas a fase tem, para a meta de 70% das estrelas. */
+  /** Quantas moedas soltas a fase vale, para a meta de 70% das estrelas. */
   get coinCount(): number {
-    return this.items.filter((item) => item.kind === 'coin').length;
+    return this.items.reduce((total, item) => total + coinValue(item.kind), 0);
   }
 
   spawn(
@@ -84,7 +85,7 @@ export class CollectibleSystem {
     for (let index = this.items.length - 1; index >= 0; index -= 1) {
       const item = this.items[index];
 
-      if (hasMagnet && item.kind === 'coin') {
+      if (hasMagnet && coinValue(item.kind) > 0) {
         const distanceX = playerX - item.x;
         const distanceY = playerY - item.y;
 
@@ -99,5 +100,19 @@ export class CollectibleSystem {
         this.host.onCollected(item);
       }
     }
+  }
+}
+
+/** Moedas que um item vale: a gigante vale várias; o que não é moeda, nenhuma. */
+export function coinValue(kind: CollectibleKind): number {
+  switch (kind) {
+    case 'coin':
+      return 1;
+    case 'big-coin':
+      return BIG_COIN_VALUE;
+    case 'crystal':
+    case 'heart':
+    case 'power-up':
+      return 0;
   }
 }
