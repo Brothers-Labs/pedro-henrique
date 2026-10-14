@@ -74,6 +74,15 @@ export const routes: Routes = [
       import('./features/games/pedro-kart/pedro-kart.routes').then((m) => m.PEDRO_KART_ROUTES),
   },
   {
+    path: 'jogos/pedro-flash',
+    data: {
+      description:
+        'Pedro Flash: o Pedro corre na velocidade do raio em 3D, com loopings, robôs, corridas, chefões e o Pedro Flash Maker para criar fases.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-flash/pedro-flash.routes').then((m) => m.PEDRO_FLASH_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

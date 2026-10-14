@@ -1,0 +1,95 @@
+@switch (status()) {
+  @case ('pronta') {
+    @if (plan(); as current) {
+      @if (finished(); as run) {
+        <app-flash-page-frame [backLink]="listLink()" [backLabel]="listLabel()">
+          <section class="result" aria-labelledby="resultado-flash-titulo">
+            <p class="result__stars" [attr.aria-label]="run.outcome.stars + ' de 3 estrelas'">
+              @for (slot of starSlots; track slot) {
+                <span aria-hidden="true" [class.result__star--empty]="slot > run.outcome.stars">⭐</span>
+              }
+            </p>
+            <h1 id="resultado-flash-titulo" class="result__title">{{ finishMessage(run.result, run.outcome.stars) }}</h1>
+            <p class="result__course">{{ current.course.name }}</p>
+
+            <dl class="result__numbers">
+              @if (run.result.mode === 'corrida') {
+                <div>
+                  <dt>Colocação</dt>
+                  <dd>{{ formatPlacement(run.result.placement) }} de {{ run.result.racers }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Tempo</dt>
+                <dd>{{ formatTime(run.result.timeMs) }}</dd>
+              </div>
+              @if (run.result.mode === 'aventura') {
+                <div>
+                  <dt>Tempo de ouro</dt>
+                  <dd>{{ formatTime(run.result.parTimeMs) }}</dd>
+                </div>
+              }
+              @if (run.result.mode !== 'batalha') {
+                <div>
+                  <dt>Raios</dt>
+                  <dd>{{ run.result.raios }} de {{ run.result.totalRaios }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Robôs</dt>
+                <dd>{{ run.result.enemiesDefeated }}</dd>
+              </div>
+              @if (run.result.mode === 'batalha') {
+                <div>
+                  <dt>Machucados</dt>
+                  <dd>{{ run.result.hitsTaken }}</dd>
+                </div>
+              }
+            </dl>
+
+            @if (run.outcome.isNewBestTime) {
+              <p class="result__record"><span aria-hidden="true">🏆</span> Novo recorde!</p>
+            }
+
+            <div class="result__actions">
+              <button type="button" class="result__button" data-tone="yellow" (click)="runAgain()">
+                <span aria-hidden="true">🔁</span> Correr de novo
+              </button>
+              <a class="result__button" data-tone="blue" [routerLink]="listLink()">
+                <span aria-hidden="true">⚡</span> {{ isBattle() ? 'Outra arena' : 'Outra fase' }}
+              </a>
+              <a class="result__button" data-tone="green" routerLink="/jogos/pedro-flash/vestiario">
+                <span aria-hidden="true">👟</span> Vestiário
+              </a>
+            </div>
+          </section>
+        </app-flash-page-frame>
+      } @else {
+        @for (key of runKeys(); track key) {
+          <app-flash-run-host
+            [course]="current.course"
+            [mode]="current.mode"
+            [boss]="current.boss"
+            (finished)="onFinished($event)"
+            (exited)="leave()"
+          />
+        }
+      }
+    }
+  }
+  @case ('nao-encontrada') {
+    <app-flash-page-frame backLink="/jogos/pedro-flash/fases" backLabel="Fases" heading="Fase não encontrada" emoji="🔎">
+      <p class="message">Essa fase não existe mais. Que tal escolher outra ou criar uma nova?</p>
+    </app-flash-page-frame>
+  }
+  @case ('erro') {
+    <app-flash-page-frame backLink="/jogos/pedro-flash/fases" backLabel="Fases" heading="Ops!" emoji="😕">
+      <p class="message">Não deu para abrir essa fase agora. Tente de novo daqui a pouco.</p>
+    </app-flash-page-frame>
+  }
+  @default {
+    <app-flash-page-frame backLink="/jogos/pedro-flash/fases" backLabel="Fases">
+      <p class="message">Preparando a fase… <span aria-hidden="true">⚡</span></p>
+    </app-flash-page-frame>
+  }
+}

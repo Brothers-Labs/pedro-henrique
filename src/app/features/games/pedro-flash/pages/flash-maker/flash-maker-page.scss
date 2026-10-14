@@ -1,0 +1,17 @@
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.palette__label {
+  flex-basis: 100%;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.tools__button--active,
+.themes__button--active {
+  background: #ffd23f;
+}

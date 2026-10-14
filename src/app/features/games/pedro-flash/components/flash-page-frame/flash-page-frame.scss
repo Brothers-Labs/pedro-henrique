@@ -1,0 +1,36 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+@use '../../flash' as flash;
+
+:host {
+  @include flash.storm-scene;
+
+  display: block;
+  min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height));
+}
+
+.frame {
+  @include container;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding-block: 1rem 2.5rem;
+}
+
+.frame__back {
+  @include maker.game-button;
+
+  & {
+    justify-self: start;
+    font-size: var(--text-md);
+    padding-inline: 1rem;
+  }
+}
+
+.frame__title {
+  @include maker.title-text(clamp(1.8rem, 1.2rem + 2.4vw, 3rem));
+  @include flash.glow-text;
+
+  text-align: center;
+}

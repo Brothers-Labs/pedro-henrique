@@ -1,0 +1,165 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+@use '../../flash' as flash;
+
+.home {
+  display: grid;
+  gap: 1.25rem;
+
+  @include from($breakpoint-lg) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+.home__intro {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.logo {
+  display: grid;
+  justify-items: center;
+  line-height: 0.9;
+  transform: skewX(-8deg) rotate(-3deg);
+}
+
+.logo__top,
+.logo__bottom {
+  @include maker.title-text(clamp(2.8rem, 1.8rem + 5vw, 5.2rem));
+  @include flash.glow-text;
+}
+
+.logo__top {
+  color: #ffffff;
+}
+
+.logo__bottom {
+  color: flash.$bolt;
+}
+
+.logo__ribbon {
+  margin-top: 0.4rem;
+  padding: 0.2rem 1.2rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.6rem;
+  background: #7b52d3;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.home__tagline {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 0 maker.$ink;
+}
+
+.menu {
+  display: grid;
+  gap: 0.75rem;
+  width: min(100%, 22rem);
+}
+
+.menu__button {
+  @include maker.game-button;
+
+  &:first-child {
+    font-size: var(--text-xl);
+    padding-block: 1rem;
+  }
+}
+
+.home__scene {
+  @include maker.panel(rgb(27 31 61 / 75%));
+
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem 1rem;
+  overflow: hidden;
+}
+
+.scene__bolt {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  font-size: 2.6rem;
+  filter: drop-shadow(0 0 0.6rem flash.$bolt);
+}
+
+.scene__runner {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+/** O rastro de raio atrás do Pedro, na cor escolhida no vestiário. */
+.scene__trail {
+  position: absolute;
+  top: 45%;
+  right: 55%;
+  width: 9rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--trail-color));
+  box-shadow: 0 0 1.2rem var(--trail-color);
+}
+
+.scene__pedro {
+  position: relative;
+  width: 6.5rem;
+}
+
+.scene__road {
+  width: 100%;
+  height: 1.4rem;
+  border-block: 3px solid maker.$ink;
+  background: repeating-linear-gradient(90deg, #24233a 0 2.5rem, flash.$bolt 2.5rem 3.5rem) center / 100% 0.25rem no-repeat, #24233a;
+}
+
+.scene__caption {
+  @include maker.pill;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @include from($breakpoint-md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  @include from($breakpoint-lg) {
+    grid-column: 1 / -1;
+  }
+}
+
+.card {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.card__title {
+  font-size: var(--text-md);
+  color: maker.$ink;
+}
+
+.card__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: maker.$ink;
+}

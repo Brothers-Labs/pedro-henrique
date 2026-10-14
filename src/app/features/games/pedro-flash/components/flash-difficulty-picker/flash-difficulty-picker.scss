@@ -1,0 +1,41 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+.difficulty {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: maker.$ink;
+}
+
+.difficulty__title {
+  font-size: var(--text-lg);
+}
+
+.difficulty__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.difficulty__option {
+  @include maker.pill;
+  @include touch-target(3rem);
+
+  cursor: pointer;
+  font-size: var(--text-md);
+
+  &--active {
+    background: #ffd23f;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.difficulty__hint {
+  font-weight: 700;
+}

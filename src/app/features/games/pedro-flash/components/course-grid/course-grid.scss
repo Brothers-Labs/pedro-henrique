@@ -1,0 +1,11 @@
+.grid__cell--goal {
+  background: #ffd23f;
+}
+
+.grid__symbol {
+  pointer-events: none;
+
+  &--shifted {
+    transform: translate(calc(var(--shift-x) * 100%), calc(var(--shift-y) * 100%)) scale(0.8);
+  }
+}

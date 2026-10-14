@@ -1,0 +1,68 @@
+@let current = selectedShoe();
+
+<app-flash-page-frame heading="Vestiário" emoji="👟">
+  <div class="garage">
+    <section class="garage__preview" aria-labelledby="tenis-escolhido">
+      <h2 id="tenis-escolhido" class="garage__name">
+        <span aria-hidden="true">{{ current.emoji }}</span> Tênis {{ current.label }}
+      </h2>
+      <app-flash-showroom class="garage__showroom" [setup]="setup()" [label]="showroomLabel()" />
+      <p class="garage__description">{{ current.description }}</p>
+
+      <dl class="stats">
+        @for (stat of stats(); track stat.label) {
+          <div class="stats__row">
+            <dt><span aria-hidden="true">{{ stat.emoji }}</span> {{ stat.label }}</dt>
+            <dd [attr.aria-label]="stat.value + ' de ' + statDots.length">
+              @for (dot of statDots; track dot) {
+                <span class="stats__dot" [class.stats__dot--full]="dot <= stat.value" aria-hidden="true"></span>
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <section class="garage__choices">
+      <fieldset class="choice">
+        <legend class="choice__title">Tênis</legend>
+        <div class="choice__grid">
+          @for (option of shoes; track option.id) {
+            <button
+              type="button"
+              class="choice__body"
+              [attr.aria-pressed]="setup().shoe === option.id"
+              [class.choice__body--active]="setup().shoe === option.id"
+              (click)="chooseShoe(option.id)"
+            >
+              <span class="choice__emoji" aria-hidden="true">{{ option.emoji }}</span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="choice">
+        <legend class="choice__title">Cor do rastro</legend>
+        <div class="choice__colors">
+          @for (trail of trails; track trail.id) {
+            <button
+              type="button"
+              class="choice__color"
+              [style.background]="trail.hex"
+              [attr.aria-pressed]="setup().trail === trail.id"
+              [attr.aria-label]="trail.label"
+              [attr.title]="trail.label"
+              [class.choice__color--active]="setup().trail === trail.id"
+              (click)="chooseTrail(trail.id)"
+            ></button>
+          }
+        </div>
+      </fieldset>
+
+      <a class="garage__race" data-tone="yellow" routerLink="../fases">
+        <span aria-hidden="true">⚡</span> Escolher fase
+      </a>
+    </section>
+  </div>
+</app-flash-page-frame>

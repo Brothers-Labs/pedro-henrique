@@ -1,0 +1,292 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+@use '../../flash' as flash;
+
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: block;
+  overflow: hidden;
+  background: #0d0b2e;
+  touch-action: none;
+  user-select: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+/** Riscos de velocidade nas bordas da tela no turbo e no raio; o meio fica limpo. */
+.speed-lines {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 55%, rgb(255 255 255 / 0%) 0deg 6deg, rgb(255 255 255 / 22%) 6deg 7deg);
+  mask-image: radial-gradient(ellipse 45% 40% at 50% 55%, transparent 55%, #000000 100%);
+  pointer-events: none;
+  animation: speed-lines 0.25s linear infinite;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+@keyframes speed-lines {
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+.hud {
+  position: absolute;
+  inset: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) auto max(0.75rem, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.hud__left,
+.hud__right {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.hud__right {
+  justify-items: end;
+  grid-auto-flow: column;
+  align-items: start;
+}
+
+.hud__raios {
+  @include maker.title-text(clamp(2rem, 1.5rem + 2.4vw, 3.2rem));
+  @include flash.glow-text;
+
+  color: flash.$bolt;
+  font-variant-numeric: tabular-nums;
+}
+
+.energy {
+  display: flex;
+  gap: 0.25rem;
+  width: 8rem;
+  padding: 0.2rem;
+  border: 3px solid maker.$ink;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 70%);
+
+  &--ready {
+    box-shadow: 0 0 0.9rem flash.$bolt;
+  }
+}
+
+.energy__segment {
+  flex: 1;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(42 35 80 / 25%);
+}
+
+.energy__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ffb000, flash.$bolt);
+}
+
+.hud__powers {
+  display: flex;
+  gap: 0.25rem;
+  min-height: 1.8rem;
+  font-size: 1.6rem;
+}
+
+.hud__center {
+  display: grid;
+  justify-items: center;
+  padding-top: 0.4rem;
+}
+
+.progress {
+  position: relative;
+  width: min(100%, 22rem);
+  height: 0.9rem;
+  border: 3px solid maker.$ink;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 70%);
+}
+
+.progress__goal {
+  position: absolute;
+  top: 50%;
+  right: -0.6rem;
+  transform: translateY(-50%);
+  font-size: 1.4rem;
+}
+
+.progress__rival,
+.progress__player {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.progress__rival {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid maker.$ink;
+  border-radius: 50%;
+  background: #a678ff;
+}
+
+.progress__player {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 0 0.3rem flash.$bolt);
+}
+
+.boss {
+  @include maker.pill;
+
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  padding: 0.3rem 1rem;
+
+  &--tired {
+    background: flash.$bolt;
+  }
+}
+
+.boss__name {
+  font-size: var(--text-md);
+}
+
+.boss__hearts {
+  font-size: 1.1rem;
+  letter-spacing: 0.1rem;
+}
+
+.boss__heart--empty {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.hud__position {
+  @include maker.title-text(clamp(2rem, 1.6rem + 2vw, 3rem));
+
+  color: flash.$bolt;
+
+  small {
+    font-size: 0.5em;
+  }
+}
+
+.hud__time {
+  @include maker.pill;
+
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__pause {
+  @include touch-target(3rem);
+
+  border: 3px solid maker.$ink;
+  border-radius: 50%;
+  background: #ffffff;
+  color: maker.$ink;
+  font-size: 1.3rem;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.speed {
+  @include maker.pill;
+
+  position: absolute;
+  bottom: 7.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+
+  &--fast {
+    background: flash.$bolt;
+  }
+
+  @include from($breakpoint-md) {
+    bottom: 1rem;
+  }
+
+  // Celular deitado e baixinho: o velocímetro cobriria o painel de cima.
+  @media (max-height: 30rem) {
+    display: none;
+  }
+}
+
+.countdown {
+  @include maker.title-text(clamp(5rem, 3rem + 10vw, 9rem));
+  @include flash.glow-text;
+
+  position: absolute;
+  inset: 30% 0 auto;
+  color: flash.$bolt;
+  text-align: center;
+  pointer-events: none;
+}
+
+.toast {
+  @include maker.pill;
+
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  font-size: var(--text-xl);
+  text-align: center;
+  pointer-events: none;
+}
+
+.keys {
+  @include maker.pill;
+
+  position: absolute;
+  bottom: 3.5rem;
+  left: 50%;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(13 11 46 / 60%);
+}
+
+.overlay__panel {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(100%, 18rem);
+  padding: 1.25rem;
+  color: maker.$ink;
+  font-weight: 800;
+  text-align: center;
+}
+
+.overlay__title {
+  font-size: var(--text-2xl);
+}
+
+.overlay__button {
+  @include maker.game-button;
+}

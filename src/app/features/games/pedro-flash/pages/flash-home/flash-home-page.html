@@ -1,0 +1,54 @@
+@let current = look();
+@let stats = progress();
+
+<app-flash-page-frame backLink="/jogos" backLabel="Jogos">
+  <div class="home">
+    <section class="home__intro" aria-labelledby="pedro-flash-titulo">
+      <h1 id="pedro-flash-titulo" class="logo">
+        <span class="logo__top">PEDRO</span>
+        <span class="logo__bottom">FLASH <span aria-hidden="true">⚡</span></span>
+        <span class="logo__ribbon">Na velocidade do raio</span>
+      </h1>
+      <p class="home__tagline">Corra, faça o looping e derrote os robôs!</p>
+
+      <nav class="menu" aria-label="Menu do Pedro Flash">
+        @for (entry of menu; track entry.label) {
+          <a class="menu__button" [attr.data-tone]="entry.tone" [routerLink]="entry.route" [queryParams]="entry.query">
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </a>
+        }
+      </nav>
+    </section>
+
+    <section class="home__scene" aria-label="O Pedro pronto para correr">
+      <span class="scene__bolt" aria-hidden="true">⚡</span>
+      <div class="scene__runner" [style.--trail-color]="current.trail.hex">
+        <span class="scene__trail" aria-hidden="true"></span>
+        <app-pedro-figure class="scene__pedro" [character]="character()" />
+      </div>
+      <span class="scene__road" aria-hidden="true"></span>
+      <p class="scene__caption">
+        <span aria-hidden="true">{{ current.shoe.emoji }}</span> Tênis {{ current.shoe.label }} · rastro {{ current.trail.label.toLowerCase() }}
+      </p>
+    </section>
+
+    <section class="cards" aria-label="Suas conquistas">
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">⚡</span> Raios</h2>
+        <p class="card__value">{{ stats.raiosCollected }}</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🥇</span> Vitórias</h2>
+        <p class="card__value">{{ stats.wins }}</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">💥</span> Robôs</h2>
+        <p class="card__value">{{ stats.enemiesDefeated }}</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🏆</span> Chefões</h2>
+        <p class="card__value">{{ stats.bossesDefeated }}</p>
+      </article>
+    </section>
+  </div>
+</app-flash-page-frame>
