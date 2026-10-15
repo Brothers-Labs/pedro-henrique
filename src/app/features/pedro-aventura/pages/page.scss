@@ -1,0 +1,78 @@
+@use 'mixins' as *;
+@use '../aventura' as av;
+
+/* Estrutura comum das telas de lista do Pedro Aventura (missões, passe, loja, ranking, configurações). */
+
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+
+  &__header {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  &__title {
+    @include av.gold-title;
+
+    font-size: var(--text-2xl);
+  }
+
+  &__lead {
+    margin: 0;
+    color: var(--av-text-soft);
+    font-weight: 700;
+  }
+}
+
+.group {
+  @include av.glass(true);
+
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+
+  &__title {
+    margin: 0;
+    color: var(--av-text);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    text-transform: uppercase;
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--av-text-soft);
+    font-size: var(--text-sm);
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+    gap: 0.6rem;
+  }
+}
+
+.primary {
+  @include av.gold-button;
+}
+
+.secondary {
+  @include av.blue-button;
+}
+
+.ghost {
+  @include av.ghost-button;
+}
+
+.visually-hidden {
+  @include visually-hidden;
+}

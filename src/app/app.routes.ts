@@ -158,6 +158,17 @@ export const routes: Routes = [
       ),
   },
   {
+    // Jogo separado do resto do site: abre em tela cheia, sem o cabeçalho e os menus.
+    path: 'pedro-aventura',
+    data: {
+      immersive: true,
+      description:
+        'Temporada do Pedro: o jogo 3D do Pedro Henrique, com lobby, mapa de seis regiões, corridas, missões e passe de temporada.',
+    },
+    loadChildren: () =>
+      import('./features/pedro-aventura/pedro-aventura.routes').then((m) => m.PEDRO_AVENTURA_ROUTES),
+  },
+  {
     path: '**',
     title: 'Página não encontrada',
     data: { description: 'Esta página não existe no site do Pedro Henrique.' },

@@ -30,6 +30,7 @@ navegador.
 - [Pedro Maker](#pedro-maker)
 - [Pedro Kart](#pedro-kart)
 - [Pedro Flash](#pedro-flash)
+- [Pedro Aventura: Temporada do Pedro 3D](#pedro-aventura-temporada-do-pedro-3d)
 - [Design system](#design-system)
 - [Acessibilidade](#acessibilidade)
 - [Como editar o conteúdo](#como-editar-o-conteúdo)
@@ -578,6 +579,49 @@ Decisões que valem saber antes de mexer:
 - **Reaproveita o Pedro Maker e o Pedro Kart**: relógio de passo fixo, qualidade gráfica, boneco do
   Pedro, sons e trilhas, grade e traçado do editor e alguns enfeites do cenário. Cada partida terminada
   conta como desafio na jornada de jogos, e duas estrelas ou mais contam como acerto.
+
+---
+
+## Pedro Aventura: Temporada do Pedro 3D
+
+Jogo 3D separado do resto do site, em `/pedro-aventura`. A rota abre em tela cheia: o `App` lê
+`data.immersive` e esconde o cabeçalho, os menus e o rodapé. O jogo não lê nem altera o estado do
+Pedro Maker, do Kart, do Flash ou do mascote. Todo o código fica em `src/app/features/pedro-aventura/`.
+Análise, prompt original, plano, fila e relatório ficam em [`docs/pedro-aventura/`](docs/pedro-aventura/).
+
+As telas do jogo:
+
+| Tela | Rota | O que tem |
+| --- | --- | --- |
+| Lobby | `/pedro-aventura` | O Pedro e o Rex em 3D no pódio, contagem da temporada, Jogar agora, missões do dia, evento especial e passes |
+| Mapa | `/pedro-aventura/mapa` | Seis ilhas 3D (Ilha Inicial, Zona Urbana, Montanha Radical, Cidade do Luxo, Deserto Xtreme, Eventos Especiais), 28 fases, estrelas e desbloqueio |
+| Fase | `/pedro-aventura/fase/:id` | Corrida 3D em três faixas: pular, derrapar, atacar caixas, rampas, moedas, corações, coroas, vidas, checkpoints, cronômetro, objetivos, vitória e derrota |
+| Missões | `/pedro-aventura/missoes` | Diárias, semanais, de temporada e especiais, com resgate |
+| Passe | `/pedro-aventura/passe` | Trilha de 20 níveis (Gratuito, VIP e Luxo), resgate, compra de níveis e baús de conteúdo visível |
+| Loja | `/pedro-aventura/loja` | Roupas, visuais do Rex e veículos por moedas ou diamantes do jogo |
+| Personagem | `/pedro-aventura/personagem` | Prévia 3D e equipamento de roupa, cachorro e veículo |
+| Ranking | `/pedro-aventura/ranking` | Recordes pessoais; o ranking entre jogadores depende de servidor |
+| Configurações | `/pedro-aventura/configuracoes` | Qualidade 3D, volumes, botões de toque e apagar progresso |
+
+- **Sem dinheiro de verdade**: o VIP e o Luxo saem por 199 e 490 diamantes, que só se ganham
+  jogando. Os preços de referência do conceito (R$ 1,99 e R$ 4,90) ficam só na configuração, com
+  `IS_REAL_PAYMENT_ENABLED = false`.
+- **Economia pura e idempotente** (`rules/`): toda moeda ou diamante é um lançamento com id único. O
+  mesmo resultado de partida (`attemptId`) ou o mesmo prêmio nunca paga duas vezes. O resultado é
+  conferido contra a própria pista: uma fase não rende mais moedas do que tem.
+- **Pistas determinísticas** (`simulation/level-generator.ts`): cada fase é um registro de dados, e o
+  gerador garante uma passagem em cada fileira. Um teste percorre as 28 fases, e um piloto automático
+  vence as fases da Ilha e da Montanha.
+- **Simulação sem tela** (`simulation/run-simulation.ts`): física em passo fixo de 1/60 s, testada sem
+  three.js. A cena 3D (`engine/`) só lê o estado.
+- **Controles**: setas ou A/D, Espaço ou W, S, E ou F e Esc. Há também deslizar o dedo, botões de
+  toque grandes e controle de videogame.
+- **Arte e som feitos em código**: modelos montados com blocos e texturas desenhadas em canvas, e
+  áudio sintetizado com Web Audio. Não há arquivo de terceiros nem licença envolvida.
+- **Conforto**: o modo calmo e o movimento reduzido do site desligam a câmera passeando, a tremida, o
+  piscar e as faíscas. No modo calmo a música não toca.
+- **Onde fica guardado**: no `localStorage`, na chave `pedro-henrique:pedro-aventura:v1`, saneada
+  campo a campo ao carregar. O contrato `AventuraRepository` é o ponto de troca para uma API.
 
 ---
 

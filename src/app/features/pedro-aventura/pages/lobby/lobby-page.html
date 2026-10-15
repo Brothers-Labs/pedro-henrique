@@ -1,0 +1,91 @@
+<div class="lobby">
+  <div class="lobby__scene">
+    <app-lobby-stage framing="lobby" />
+  </div>
+
+  <section class="hero" aria-labelledby="lobby-titulo">
+    <span class="hero__crown" aria-hidden="true">👑</span>
+    <h1 id="lobby-titulo" class="hero__title">
+      <span class="hero__small">Temporada do</span>
+      <span class="hero__big">Pedro</span>
+    </h1>
+    <p class="hero__tagline">{{ season.tagline }}</p>
+
+    @switch (phase()) {
+      @case ('active') {
+        <p class="hero__countdown" [attr.aria-label]="'A temporada acaba em ' + countdownLabel()">
+          <span aria-hidden="true">⏱</span>
+          <small>Acaba em</small>
+          <strong>{{ countdown() }}</strong>
+        </p>
+      }
+      @case ('ended') {
+        <p class="hero__countdown">Temporada encerrada. Os prêmios que faltam ainda podem ser resgatados.</p>
+      }
+      @default {
+        <p class="hero__countdown">A temporada ainda vai começar.</p>
+      }
+    }
+
+    <p class="hero__lead">Complete missões, ganhe XP e resgate prêmios incríveis!</p>
+
+    <div class="hero__actions">
+      <button type="button" class="hero__play" (click)="play()">
+        Jogar agora <span aria-hidden="true">▶</span>
+      </button>
+      <a class="hero__map" routerLink="/pedro-aventura/mapa"><span aria-hidden="true">🧭</span> Explorar mapa</a>
+    </div>
+    <p class="hero__next">Próxima fase: {{ suggested().id }} · {{ suggested().name }}</p>
+  </section>
+
+  <aside class="side">
+    <app-level-badge />
+
+    <section class="card" aria-labelledby="missoes-diarias">
+      <header class="card__header">
+        <h2 id="missoes-diarias" class="card__title">Missões diárias</h2>
+        <a class="card__more" routerLink="/pedro-aventura/missoes">Ver todas →</a>
+      </header>
+      <div class="card__list">
+        @for (entry of dailyMissions(); track entry.mission.id) {
+          <app-mission-card [status]="entry" />
+        }
+      </div>
+    </section>
+
+    @let special = event();
+    <a class="event" routerLink="/pedro-aventura/mapa" [queryParams]="{ regiao: 'eventos-especiais' }">
+      <span class="event__art" aria-hidden="true">🏎️🌙</span>
+      <span class="event__body">
+        <small>Evento especial</small>
+        <strong>Corrida Noturna</strong>
+        @switch (special.status) {
+          @case ('unlocked') {
+            <span>Disponível por tempo limitado! ⏱ {{ special.timeLeft }}</span>
+          }
+          @case ('locked') {
+            <span>🔒 {{ special.hint }}</span>
+          }
+          @default {
+            <span>O evento terminou.</span>
+          }
+        }
+      </span>
+      <span class="event__arrow" aria-hidden="true">›</span>
+    </a>
+  </aside>
+
+  <section class="bottom" aria-label="Atalhos e passes">
+    <a class="shortcut" routerLink="/pedro-aventura/mapa">
+      <span class="shortcut__art" aria-hidden="true">🏝️</span>
+      <span><strong>Explorar mapa</strong><small>Descubra regiões, fases e desafios</small></span>
+    </a>
+    <a class="shortcut" routerLink="/pedro-aventura/passe">
+      <span class="shortcut__art" aria-hidden="true">🎁</span>
+      <span><strong>Passe de temporada</strong><small>Prêmios em 20 níveis</small></span>
+    </a>
+    <div class="bottom__passes">
+      <app-pass-cards />
+    </div>
+  </section>
+</div>

@@ -1,0 +1,86 @@
+<div class="page">
+  <header class="page__header">
+    <h1 class="page__title">Configurações</h1>
+    <p class="page__lead">Tudo fica salvo neste aparelho.</p>
+  </header>
+
+  <section class="group" aria-labelledby="config-qualidade">
+    <h2 class="group__title" id="config-qualidade">Qualidade do 3D</h2>
+    <div class="choices" role="radiogroup" aria-labelledby="config-qualidade">
+      @for (option of qualityOptions; track option.id) {
+        <button
+          type="button"
+          role="radio"
+          class="choice"
+          [class.choice--active]="settings().quality === option.id"
+          [attr.aria-checked]="settings().quality === option.id"
+          (click)="setQuality(option.id)"
+        >
+          <strong>{{ option.label }}</strong>
+          <small>{{ option.hint }}</small>
+        </button>
+      }
+    </div>
+    <p class="group__hint">A mudança vale a partir da próxima tela 3D aberta.</p>
+  </section>
+
+  <section class="group" aria-labelledby="config-som">
+    <h2 class="group__title" id="config-som">Som</h2>
+    <label class="slider">
+      <span>🎵 Música · {{ musicPercent() }}%</span>
+      <input type="range" min="0" max="100" step="5" [value]="musicPercent()" (change)="setMusic($event)" />
+    </label>
+    <label class="slider">
+      <span>🔊 Efeitos · {{ effectsPercent() }}%</span>
+      <input type="range" min="0" max="100" step="5" [value]="effectsPercent()" (change)="setEffects($event)" />
+    </label>
+    @if (isCalm()) {
+      <p class="group__hint">O modo calmo do site está ligado: a música fica desligada.</p>
+    }
+  </section>
+
+  <section class="group" aria-labelledby="config-toque">
+    <h2 class="group__title" id="config-toque">Botões de toque na fase</h2>
+    <div class="choices" role="radiogroup" aria-labelledby="config-toque">
+      @for (option of touchOptions; track option.id) {
+        <button
+          type="button"
+          role="radio"
+          class="choice"
+          [class.choice--active]="settings().touchControls === option.id"
+          [attr.aria-checked]="settings().touchControls === option.id"
+          (click)="setTouch(option.id)"
+        >
+          <strong>{{ option.label }}</strong>
+        </button>
+      }
+    </div>
+    <p class="group__hint">No teclado: setas ou A/D trocam de faixa, Espaço pula, S derrapa, E ataca e Esc pausa. Controle de videogame também funciona.</p>
+  </section>
+
+  <section class="group" aria-labelledby="config-movimento">
+    <h2 class="group__title" id="config-movimento">Movimento</h2>
+    <p class="group__hint">
+      @if (isMotionReduced()) {
+        Movimento reduzido ligado (pelo aparelho ou pelo modo calmo): sem câmera passeando, sem tremida e sem faíscas.
+      } @else {
+        Para menos movimento, ligue o modo calmo do site ou a opção "reduzir movimento" do aparelho.
+      }
+    </p>
+  </section>
+
+  <section class="group group--danger" aria-labelledby="config-progresso">
+    <h2 class="group__title" id="config-progresso">Progresso</h2>
+    <p class="group__hint">Apagar o progresso zera fases, estrelas, moedas, diamantes, passes e itens deste jogo. O resto do site não muda.</p>
+    <button type="button" class="ghost" (click)="isResetting.set(true)">🗑️ Apagar progresso</button>
+  </section>
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isResetting()"
+  heading="Apagar todo o progresso?"
+  message="Isto não tem volta: fases, estrelas, moedas, diamantes, passes e itens do Pedro Aventura voltam do zero."
+  confirmLabel="Apagar"
+  (confirmed)="reset()"
+  (cancelled)="isResetting.set(false)"
+/>

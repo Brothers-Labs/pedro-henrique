@@ -1,0 +1,53 @@
+@use 'mixins' as *;
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: 0.5rem;
+}
+
+.choice {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 3.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--av-line);
+  border-radius: var(--av-radius);
+  background: rgb(255 255 255 / 5%);
+  color: var(--av-text);
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-family: var(--font-display);
+  }
+
+  small {
+    color: var(--av-text-soft);
+  }
+
+  &--active {
+    border-color: var(--av-blue);
+    background: rgb(21 101 216 / 30%);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--av-blue));
+  }
+}
+
+.slider {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+
+  input {
+    width: 100%;
+    min-height: 2.75rem;
+    accent-color: var(--av-gold);
+  }
+}
+
+.group--danger {
+  border-color: rgb(255 77 94 / 45%);
+}

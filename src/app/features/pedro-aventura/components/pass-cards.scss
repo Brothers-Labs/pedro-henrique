@@ -1,0 +1,81 @@
+@use 'mixins' as *;
+@use '../aventura' as av;
+
+.passes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 0.9rem;
+}
+
+.pass {
+  @include av.glass;
+
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+
+  &--vip {
+    border-color: rgb(63 184 255 / 60%);
+    box-shadow: var(--av-shadow), var(--av-glow-blue);
+  }
+
+  &--luxo {
+    border-color: rgb(245 197 66 / 70%);
+    box-shadow: var(--av-shadow), var(--av-glow-gold);
+  }
+
+  &__shield {
+    font-size: 2.4rem;
+  }
+
+  &__name {
+    @include av.gold-title;
+
+    font-size: var(--text-lg);
+  }
+
+  &__text {
+    margin: 0;
+    color: var(--av-text-soft);
+  }
+
+  &__perks {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0;
+    color: var(--av-text-soft);
+    font-size: var(--text-sm);
+    list-style: none;
+
+    li::before {
+      content: '✓ ';
+      color: var(--av-green);
+      font-weight: 800;
+    }
+  }
+
+  &__active {
+    @include av.ghost-button;
+
+    & {
+      cursor: default;
+    }
+  }
+
+  &__buy {
+    @include av.gold-button(var(--text-md));
+  }
+
+  &--vip &__buy {
+    @include av.blue-button(var(--text-md));
+  }
+
+  &__closed {
+    color: var(--av-text-soft);
+    font-weight: 700;
+  }
+}

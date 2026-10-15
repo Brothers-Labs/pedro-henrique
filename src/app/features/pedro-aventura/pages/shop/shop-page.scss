@@ -1,0 +1,48 @@
+@use '../../aventura' as av;
+
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1rem 0.75rem;
+  border: 1px solid var(--av-line);
+  border-radius: var(--av-radius);
+  background: rgb(255 255 255 / 5%);
+  text-align: center;
+
+  &--raro {
+    border-color: rgb(63 184 255 / 55%);
+  }
+
+  &--epico {
+    border-color: rgb(176 107 255 / 60%);
+  }
+
+  &--lendario {
+    border-color: rgb(245 197 66 / 70%);
+    box-shadow: var(--av-glow-gold);
+  }
+
+  &__emoji {
+    font-size: 2.6rem;
+  }
+
+  &__name {
+    font-family: var(--font-display);
+  }
+
+  &__rarity {
+    color: var(--av-text-soft);
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+}

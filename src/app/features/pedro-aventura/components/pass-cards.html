@@ -1,0 +1,45 @@
+<div class="passes">
+  <article class="pass pass--gratuito">
+    <span class="pass__shield" aria-hidden="true">🛡️</span>
+    <h3 class="pass__name">Passe Gratuito</h3>
+    <p class="pass__text">Jogue e evolua gratuitamente.</p>
+    <span class="pass__active"><span aria-hidden="true">✔</span> Ativado</span>
+  </article>
+
+  @for (card of cards(); track card.pass.id) {
+    <article class="pass" [class.pass--vip]="card.pass.id === 'vip'" [class.pass--luxo]="card.pass.id === 'luxo'">
+      <span class="pass__shield" aria-hidden="true">{{ card.pass.id === 'vip' ? '🔷' : '👑' }}</span>
+      <h3 class="pass__name">{{ card.pass.name }}</h3>
+      <ul class="pass__perks">
+        @for (perk of card.pass.perks; track perk) {
+          <li>{{ perk }}</li>
+        }
+      </ul>
+
+      @if (card.isOwned) {
+        <span class="pass__active"><span aria-hidden="true">✔</span> Ativado</span>
+      } @else if (isSeasonActive()) {
+        <button type="button" class="pass__buy" (click)="ask(card)">
+          Liberar por {{ formatNumber(card.price) }} <span aria-hidden="true">💎</span>
+        </button>
+      } @else {
+        <span class="pass__closed">Temporada encerrada</span>
+      }
+    </article>
+  }
+</div>
+
+@if (pending(); as card) {
+  <app-confirm-dialog
+    [isOpen]="true"
+    [heading]="card.pass.name"
+    [message]="
+      card.canAfford
+        ? 'Trocar ' + formatNumber(card.price) + ' diamantes pelo ' + card.pass.name + '? Os prêmios dos níveis que você já alcançou ficam liberados na hora.'
+        : 'Faltam ' + formatNumber(missing()) + ' diamantes. Eles aparecem nas missões, na primeira vitória de cada fase e na trilha do passe gratuito.'
+    "
+    [confirmLabel]="card.canAfford ? 'Liberar' : 'Entendi'"
+    (confirmed)="card.canAfford ? confirm() : pending.set(null)"
+    (cancelled)="pending.set(null)"
+  />
+}

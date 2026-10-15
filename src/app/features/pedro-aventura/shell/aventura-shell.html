@@ -1,0 +1,55 @@
+<div class="aventura" [class.aventura--playing]="isPlaying()">
+  @if (!isPlaying()) {
+    <header class="topbar">
+      <a class="brand" routerLink="/pedro-aventura" aria-label="Temporada do Pedro: início">
+        <span class="brand__crown" aria-hidden="true">👑</span>
+        <span class="brand__text">
+          <span class="brand__small">Temporada do</span>
+          <span class="brand__big">Pedro</span>
+        </span>
+      </a>
+
+      <nav class="tabs" aria-label="Seções do jogo">
+        @for (tab of tabs; track tab.path) {
+          <a
+            class="tabs__link"
+            [routerLink]="tab.path"
+            routerLinkActive="tabs__link--active"
+            [routerLinkActiveOptions]="{ exact: tab.isExact }"
+            ariaCurrentWhenActive="page"
+          >
+            <span aria-hidden="true">{{ tab.emoji }}</span>
+            <span class="tabs__label">{{ tab.label }}</span>
+            @if (badgeOf(tab) > 0) {
+              <span class="tabs__badge" [attr.aria-label]="badgeOf(tab) + ' para resgatar'">{{ badgeOf(tab) }}</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="topbar__right">
+        <p class="wallet" aria-label="Carteira">
+          <span class="wallet__chip" [attr.aria-label]="formatNumber(diamonds()) + ' diamantes'">
+            <span aria-hidden="true">💎</span> {{ formatNumber(diamonds()) }}
+          </span>
+          <span class="wallet__chip" [attr.aria-label]="formatNumber(coins()) + ' moedas'">
+            <span aria-hidden="true">🪙</span> {{ formatNumber(coins()) }}
+          </span>
+        </p>
+        <a class="icon-link" routerLink="/pedro-aventura/personagem" aria-label="Personagem">🧑</a>
+        <a class="icon-link" routerLink="/pedro-aventura/configuracoes" aria-label="Configurações">⚙️</a>
+        <a class="icon-link icon-link--exit" href="/" aria-label="Voltar para o site do Pedro">🏠</a>
+      </div>
+    </header>
+
+    @if (!isPersistent()) {
+      <p class="notice" role="status">
+        ⚠️ Este aparelho não está deixando salvar. O progresso vale só enquanto o jogo estiver aberto.
+      </p>
+    }
+  }
+
+  <div class="aventura__page">
+    <router-outlet />
+  </div>
+</div>

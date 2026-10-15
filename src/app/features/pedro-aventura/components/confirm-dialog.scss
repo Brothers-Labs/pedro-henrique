@@ -1,0 +1,36 @@
+@use '../aventura' as av;
+
+:host {
+  @include av.tokens;
+}
+
+.confirm {
+  @include av.dialog;
+
+  &__title {
+    @include av.gold-title;
+
+    font-size: var(--text-xl);
+  }
+
+  &__message {
+    margin: 0.75rem 0 1.25rem;
+    color: var(--av-text);
+    font-size: var(--text-md);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  &__cancel {
+    @include av.ghost-button;
+  }
+
+  &__ok {
+    @include av.gold-button(var(--text-md));
+  }
+}

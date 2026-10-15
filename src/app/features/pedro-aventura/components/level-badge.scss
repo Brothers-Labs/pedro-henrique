@@ -1,0 +1,62 @@
+@use '../aventura' as av;
+
+.badge {
+  @include av.glass;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.75rem 1rem;
+
+  &__shield {
+    display: grid;
+    place-items: center;
+    width: 3.6rem;
+    height: 4rem;
+    clip-path: polygon(50% 0, 100% 18%, 100% 70%, 50% 100%, 0 70%, 0 18%);
+    background: linear-gradient(180deg, #fff1b8, var(--av-gold) 50%, var(--av-gold-deep));
+    color: #2a1c02;
+    font-family: var(--font-display);
+    line-height: 1;
+
+    small {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    strong {
+      font-size: 1.6rem;
+    }
+  }
+
+  &__body {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  &__xp {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
+
+  &__track {
+    @include av.progress-track;
+  }
+
+  &__fill {
+    @include av.progress-fill;
+  }
+
+  &__next {
+    color: var(--av-gold-soft);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+  }
+}

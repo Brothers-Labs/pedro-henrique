@@ -1,0 +1,93 @@
+<div class="page">
+  <header class="pass-hero">
+    <div>
+      <h1 class="page__title">Passe de Temporada</h1>
+      <p class="page__lead">{{ season.tagline }}</p>
+      @if (phase() === 'active') {
+        <p class="pass-hero__countdown">⏱ Acaba em <strong>{{ countdown() }}</strong></p>
+      } @else if (phase() === 'ended') {
+        <p class="pass-hero__countdown">Temporada encerrada: os prêmios alcançados continuam resgatáveis.</p>
+      }
+    </div>
+    <div class="pass-hero__level">
+      <app-level-badge />
+      @if (canBuyLevel()) {
+        <button type="button" class="secondary" (click)="isBuyingLevel.set(true)">
+          ⬆ Comprar nível · {{ levelPrice() }} 💎
+        </button>
+      }
+    </div>
+  </header>
+
+  <section class="track" aria-labelledby="trilha-titulo">
+    <header class="track__header">
+      <h2 id="trilha-titulo" class="track__title">Recompensas</h2>
+      @if (claimableCount() > 0) {
+        <button type="button" class="primary" (click)="claimAll()">🎁 Resgatar tudo ({{ claimableCount() }})</button>
+      }
+    </header>
+
+    <div class="track__pager">
+      <button type="button" class="ghost" aria-label="Níveis anteriores" [disabled]="page() === 0" (click)="previousPage()">‹</button>
+      <span class="track__range">Níveis {{ visibleLevels()[0] }}–{{ visibleLevels()[visibleLevels().length - 1] }}</span>
+      <button type="button" class="ghost" aria-label="Próximos níveis" [disabled]="page() === pageCount - 1" (click)="nextPage()">›</button>
+    </div>
+
+    <div class="track__grid" role="table" aria-label="Trilha de recompensas">
+      <div class="track__row" role="row">
+        <span class="track__corner" role="columnheader">Níveis →</span>
+        @for (level of visibleLevels(); track level) {
+          <span class="track__level" role="columnheader">{{ level }}</span>
+        }
+      </div>
+
+      @for (row of rows(); track row.pass) {
+        <div class="track__row" role="row" [class.track__row--vip]="row.pass === 'vip'" [class.track__row--luxo]="row.pass === 'luxo'">
+          <span class="track__pass" role="rowheader">
+            {{ passLabel[row.pass] }}
+          </span>
+          @for (cell of row.cells; track cell.level) {
+            <span role="cell">
+              <button
+                type="button"
+                class="track__cell"
+                [attr.aria-disabled]="cell.status !== 'claimable'"
+                [attr.aria-label]="cellLabel(cell)"
+                (click)="claim(cell)"
+              >
+                <app-reward-tile [reward]="cell.reward" [status]="cell.status" />
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="highlights" aria-label="Destaques do passe Luxo">
+    @for (highlight of highlights(); track highlight.level) {
+      <article class="highlight">
+        <span class="highlight__emoji" aria-hidden="true">{{ highlight.view.emoji }}</span>
+        <span>
+          <small>Nível {{ highlight.level }} · Passe Luxo</small>
+          <strong>{{ highlight.view.label }}</strong>
+        </span>
+      </article>
+    }
+  </section>
+
+  <app-pass-cards />
+</div>
+
+<app-confirm-dialog
+  [isOpen]="isBuyingLevel()"
+  heading="Comprar um nível"
+  [message]="
+    canAffordLevel()
+      ? 'Trocar ' + levelPrice() + ' diamantes por um nível do passe?'
+      : 'Faltam diamantes: um nível custa ' + levelPrice() + '. Jogue as fases e as missões para juntar mais.'
+  "
+  [confirmLabel]="canAffordLevel() ? 'Comprar' : 'Entendi'"
+  (confirmed)="canAffordLevel() ? buyLevel() : isBuyingLevel.set(false)"
+  (cancelled)="isBuyingLevel.set(false)"
+/>

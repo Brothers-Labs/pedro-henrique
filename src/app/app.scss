@@ -11,6 +11,11 @@
   padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
 }
 
+/** Tela cheia (Pedro Aventura): sem barra inferior, não há o que reservar. */
+:host(.is-immersive) {
+  padding-bottom: 0;
+}
+
 /** Menu lateral (fixo só no desktop) ao lado da coluna de conteúdo e rodapé. */
 .shell {
   display: flex;

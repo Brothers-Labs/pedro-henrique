@@ -1,0 +1,265 @@
+@use 'mixins' as *;
+@use '../../aventura' as av;
+
+:host {
+  display: block;
+  flex: 1;
+}
+
+.run {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000000;
+  user-select: none;
+
+  &__stage {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+.hud {
+  position: absolute;
+  inset: calc(0.6rem + env(safe-area-inset-top, 0px)) 0.6rem auto;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  &__level {
+    @include av.glass(true);
+
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.8rem;
+  }
+
+  &__crown {
+    font-size: 1.5rem;
+  }
+
+  &__name {
+    display: grid;
+    line-height: 1.05;
+
+    small {
+      color: var(--av-gold);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    strong {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+    }
+  }
+
+  &__hearts {
+    font-size: 1.3rem;
+    letter-spacing: 0.1rem;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+
+    div {
+      @include av.glass(true);
+
+      padding: 0.45rem 0.7rem;
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__pause {
+    @include av.ghost-button;
+
+    & {
+      width: 3.25rem;
+      margin-left: auto;
+      padding: 0;
+      background: rgb(10 10 20 / 70%);
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.objectives {
+  @include av.glass(true);
+
+  position: absolute;
+  top: calc(7.6rem + env(safe-area-inset-top, 0px));
+  right: 0.6rem;
+  z-index: 4;
+  width: min(17rem, calc(100% - 1.2rem));
+  padding: 0.4rem 0.7rem 0.6rem;
+
+  @include from(48rem) {
+    top: calc(0.6rem + env(safe-area-inset-top, 0px));
+    right: 4.6rem;
+  }
+
+  &--closed {
+    width: auto;
+    padding-bottom: 0.4rem;
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--av-gold);
+    font-family: var(--font-display);
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:focus-visible {
+      @include focus-ring(var(--av-blue));
+    }
+  }
+
+  &__list {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0.2rem 0 0;
+    padding: 0;
+    font-size: var(--text-sm);
+    list-style: none;
+
+    li {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.4rem;
+      color: var(--av-text-soft);
+    }
+
+    .is-met {
+      color: var(--av-text);
+    }
+
+    strong {
+      color: var(--av-gold);
+    }
+  }
+}
+
+.progress {
+  position: absolute;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  z-index: 3;
+  width: min(26rem, 60%);
+  height: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--av-line);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  transform: translateX(-50%);
+
+  .run--touch & {
+    bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+
+    @include until(30rem) {
+      bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  &__fill {
+    @include av.progress-fill(var(--av-gold), false);
+  }
+
+  &__label {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-shadow: 0 1px 2px #000000;
+  }
+}
+
+.overlay {
+  @include av.glass(true);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(26rem, calc(100% - 2rem));
+  margin: 0;
+  padding: 1.25rem;
+  text-align: center;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+
+  &--countdown {
+    background: rgb(5 5 12 / 70%);
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: var(--text-md);
+  }
+
+  &__count {
+    @include av.gold-title;
+
+    font-size: 5rem;
+    line-height: 1;
+  }
+}
+
+.message {
+  @include av.glass(true);
+
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(30rem, calc(100% - 2rem));
+  margin: 4rem auto;
+  padding: 1.5rem;
+  text-align: center;
+
+  &__title {
+    @include av.gold-title;
+
+    font-size: var(--text-2xl);
+  }
+
+  &__action {
+    @include av.gold-button;
+  }
+}
+
+.visually-hidden {
+  @include visually-hidden;
+}

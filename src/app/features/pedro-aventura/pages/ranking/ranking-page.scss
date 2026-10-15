@@ -1,0 +1,51 @@
+@use '../../aventura' as av;
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+
+  div {
+    @include av.glass(true);
+
+    padding: 0.9rem;
+    text-align: center;
+  }
+
+  dt {
+    color: var(--av-text-soft);
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0.3rem 0 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 800;
+  }
+}
+
+.records {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th,
+  td {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--av-line);
+    text-align: left;
+  }
+
+  thead th {
+    color: var(--av-text-soft);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+  }
+
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+}
