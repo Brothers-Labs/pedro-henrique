@@ -36,6 +36,8 @@
         <div><dt class="visually-hidden">Tempo</dt><dd><span aria-hidden="true">⏱</span> {{ formatStopwatch(status.timeMs) }}</dd></div>
         <div><dt class="visually-hidden">Coroas</dt><dd><span aria-hidden="true">👑</span> {{ status.crowns }}/3</dd></div>
         <div><dt class="visually-hidden">Moedas</dt><dd><span aria-hidden="true">🪙</span> {{ status.coins }}/{{ info.coinTarget }}</dd></div>
+        <div><dt class="visually-hidden">Barras de ouro</dt><dd><span aria-hidden="true">🧈</span> {{ status.goldBars }}</dd></div>
+        <div><dt class="visually-hidden">Diamantes</dt><dd><span aria-hidden="true">💎</span> {{ status.diamonds }}</dd></div>
       </dl>
 
       <button type="button" class="hud__pause" aria-label="Pausar" (click)="pause()" [disabled]="phase() !== 'playing'">⏸</button>
@@ -82,6 +84,14 @@
           @if (info.hint) {
             <p class="overlay__hint">{{ info.hint }}</p>
           }
+          <ul class="legend" aria-label="O que tem na pista">
+            <li><span aria-hidden="true">🪙</span> Moeda = 1</li>
+            <li><span aria-hidden="true">🧈</span> Barra de ouro = 10 moedas</li>
+            <li><span aria-hidden="true">💎</span> Diamante = 1 diamante</li>
+            <li><span aria-hidden="true">⚡</span> Turbo: corre e atravessa tudo</li>
+            <li><span aria-hidden="true">🍌</span> Banana: escorrega, pule!</li>
+            <li><span aria-hidden="true">🐾</span> Bichos: desvie ou pule</li>
+          </ul>
           <p class="overlay__count" [attr.aria-label]="'Começa em ' + countdown()">{{ countdown() }}</p>
         </div>
       }

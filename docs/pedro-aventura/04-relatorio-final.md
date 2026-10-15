@@ -299,3 +299,38 @@ No mapa, as ilhas trancadas não ficavam cinza e o anel de seleção não aparec
 - **Navegador:** Chrome sem janela via CDP (lobby, personagem, fase no Fácil e no Difícil com 2
   corações, mapa). Nenhum erro no console.
 
+## 12. Evolução 3 (15/10/2026): itens e perigos novos (AV-018)
+
+| Elemento | Onde aparece | O que faz | Valor |
+| --- | --- | --- | --- |
+| 🪙 Moeda | fileiras entre obstáculos e arcos das rampas | — | 1 moeda |
+| 🧈 Barra de ouro | fim de algumas fileiras de moedas (pelo menos 1 por fase) | — | 10 moedas |
+| 💎 Diamante | 2 por fase, a 2,3 m de altura numa faixa livre | só pulando se alcança | 1 diamante |
+| ⚡ Turbo | 1 por fase (2 nas fases de 700 m ou mais) | 3 s a 145% da velocidade, atravessando obstáculos | — |
+| 🍌 Banana | fases da Ilha (a partir da 1-3), Zona Urbana, Montanha, Luxo, Deserto e evento | escorrega para outra faixa e perde velocidade por 0,8 s, sem perder coração; pulando passa | — |
+| 🐾 Pato, gato e porquinho | 1-5 e fases seguintes de cada região | atravessam a pista de um lado a outro; bater tira coração | — |
+
+- **Economia:**
+  - a carteira recebe `moedas + barras × 10` e os diamantes pegos, em lançamentos idempotentes por tentativa;
+  - a conferência do resultado recusa mais barras ou diamantes do que a pista tem;
+  - a missão "Coletar 100 moedas" conta o valor (uma barra vale 10).
+- **Pontuação:** barra de ouro vale 100 pontos e diamante, 300.
+- **Tela:**
+  - o painel da fase mostra 🧈 e 💎;
+  - a contagem regressiva mostra uma legenda com o valor e o efeito de cada item;
+  - cada item tem som e faíscas próprios;
+  - o turbo abre a câmera e deixa um rastro azul (sem efeito com movimento reduzido);
+  - o escorregão faz o Pedro rodopiar e anuncia "Escorregou na banana!".
+- **Gerador:** bananas são obstáculos comuns, que podem ser puladas. Os bichos andam, então ficam sozinhos na fileira, como os carros e a barreira que varre. O Fácil mantém os obstáculos de sempre; os itens novos entram nos trechos livres.
+- **Testes:**
+  - turbo acelera e evita batida;
+  - banana escorrega sem dano, e quem pula passa por cima;
+  - barra e diamante são contados, e o diamante só vem pulando;
+  - todas as 28 fases × 3 dificuldades têm barra, 2 diamantes no alto e turbo;
+  - valores creditados na carteira e resultado adulterado recusado;
+  - o piloto automático segue vencendo a Ilha e a Montanha com bananas e bichos.
+- **Verificação:**
+  - `npx ng test --watch=false --browsers=ChromeHeadless`: **1229 de 1229 passando**;
+  - `npm run build`: passou;
+  - fase 1-5 jogada no Chrome sem janela via CDP, sem erros no console.
+

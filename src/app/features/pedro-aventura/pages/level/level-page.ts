@@ -40,6 +40,10 @@ const SETTLE_DELAY_MS = 1500;
 
 const EVENT_SOUNDS: Partial<Record<RunEvent['type'], AventuraSound>> = {
   coin: 'coin',
+  'gold-bar': 'gold-bar',
+  diamond: 'diamond',
+  turbo: 'turbo',
+  slip: 'slip',
   heart: 'heart',
   crown: 'crown',
   jump: 'jump',
@@ -53,6 +57,10 @@ const ANNOUNCEMENTS: Partial<Record<RunEvent['type'], string>> = {
   hit: 'Ai! Perdeu um coração.',
   heart: 'Ganhou um coração!',
   crown: 'Pegou uma coroa!',
+  'gold-bar': 'Barra de ouro: mais 10 moedas!',
+  diamond: 'Pegou um diamante!',
+  turbo: 'Turbo!',
+  slip: 'Escorregou na banana!',
   checkpoint: 'Checkpoint!',
 };
 
@@ -63,6 +71,8 @@ const EMPTY_HUD: RunHud = {
   progress: 0,
   timeMs: 0,
   coins: 0,
+  goldBars: 0,
+  diamonds: 0,
   hearts: 0,
   crowns: 0,
   ramps: 0,

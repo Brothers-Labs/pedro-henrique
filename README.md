@@ -618,6 +618,18 @@ As telas do jogo:
   O Médio corre 15% mais rápido, com mais obstáculos e +25% de XP. O Difícil corre 30% mais rápido,
   com a pista mais cheia, só 2 corações e +50% de XP. A escolha fica no lobby, no mapa e nas
   configurações, e cada dificuldade gera uma pista própria, determinística.
+- **Itens e perigos da pista**:
+
+  | Item | Efeito |
+  | --- | --- |
+  | 🪙 Moeda | vale 1 moeda |
+  | 🧈 Barra de ouro | vale 10 moedas |
+  | 💎 Diamante | vale 1 diamante; fica no alto, só pulando |
+  | ⚡ Turbo | 3 s de supervelocidade atravessando obstáculos |
+  | 🍌 Banana | escorrega para outra faixa, sem perder coração |
+  | 🐾 Pato, gato e porquinho | atravessam a pista; é preciso desviar ou pular |
+
+  Os valores ficam em `PICKUP_VALUES` (`config/economy.config.ts`).
 - **Controles**: setas ou A/D, Espaço ou W, S, E ou F e Esc. Há também deslizar o dedo, botões de
   toque grandes e controle de videogame.
 - **Arte e som feitos em código**: modelos montados com blocos e texturas desenhadas em canvas, e

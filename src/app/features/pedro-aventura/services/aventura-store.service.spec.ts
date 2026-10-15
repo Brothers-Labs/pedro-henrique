@@ -21,6 +21,8 @@ function victory(attemptId: string): RunResult {
     isVictory: true,
     timeMs: 40_000,
     coins: 20,
+    goldBars: 0,
+    diamonds: 0,
     hearts: 0,
     crowns: 2,
     ramps: 1,

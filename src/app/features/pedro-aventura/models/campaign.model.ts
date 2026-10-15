@@ -28,7 +28,11 @@ export type ObstacleKind =
   /** Carro andando na contramão: trocar de faixa. */
   | 'traffic-car'
   /** Barreira que varre as faixas de um lado a outro: pular ou esperar a abertura. */
-  | 'sweeper';
+  | 'sweeper'
+  /** Casca de banana: pisar escorrega para outra faixa (sem perder coração); pular passa por cima. */
+  | 'banana'
+  /** Bicho atravessando a pista de um lado a outro (pato, gato, porquinho): desviar ou pular. */
+  | 'animal';
 
 /** Cores e clima de uma região, usados pelo mapa e pela cena da corrida. */
 export interface RegionTheme {

@@ -133,9 +133,9 @@ export const REGIONS: readonly RegionDefinition[] = [
     levels: levelsOf(1, 'ilha-inicial', { startSpeed: 9, maxSpeed: 12 }, [
       { name: 'Primeiros passos', lengthMeters: 380, obstacleKinds: ['cone', 'barrier'], density: 0.2, rampTarget: 1, hint: 'Pule com Espaço, W ou o botão PULAR. Troque de faixa com as setas ou deslizando o dedo.' },
       { name: 'Praia das caixas', lengthMeters: 440, obstacleKinds: ['crate', 'cone', 'barrier'], density: 0.28, rampTarget: 1, hint: 'Caixa no caminho? Quebre com E, F ou o botão ATACAR.' },
-      { name: 'Trilha das palmeiras', lengthMeters: 480, obstacleKinds: ['high-bar', 'barrier', 'cone'], density: 0.32, rampTarget: 2, hint: 'Barra no alto? Derrape por baixo com S, a seta para baixo ou o botão DERRAPAR.' },
-      { name: 'Rampa do farol', lengthMeters: 520, obstacleKinds: ['barrier', 'crate', 'high-bar'], density: 0.36, rampTarget: 3, hint: 'Suba nas rampas para voar alto e pegar as moedas do céu.' },
-      { name: 'Volta na ilha', lengthMeters: 600, obstacleKinds: ['barrier', 'crate', 'high-bar', 'cone'], density: 0.4, rampTarget: 3 },
+      { name: 'Trilha das palmeiras', lengthMeters: 480, obstacleKinds: ['high-bar', 'barrier', 'cone', 'banana'], density: 0.32, rampTarget: 2, hint: 'Barra no alto? Derrape por baixo com S, a seta para baixo ou o botão DERRAPAR.' },
+      { name: 'Rampa do farol', lengthMeters: 520, obstacleKinds: ['barrier', 'crate', 'high-bar', 'banana'], density: 0.36, rampTarget: 3, hint: 'Suba nas rampas para voar alto e pegar as moedas do céu.' },
+      { name: 'Volta na ilha', lengthMeters: 600, obstacleKinds: ['barrier', 'crate', 'high-bar', 'cone', 'animal'], density: 0.4, rampTarget: 3 },
     ]),
   },
   {
@@ -147,11 +147,11 @@ export const REGIONS: readonly RegionDefinition[] = [
     theme: THEMES['zona-urbana'],
     unlock: { kind: 'stars', regionId: 'ilha-inicial', stars: 8 },
     levels: levelsOf(2, 'zona-urbana', { startSpeed: 11, maxSpeed: 14 }, [
-      { name: 'Avenida do Pedro', lengthMeters: 560, obstacleKinds: ['parked-car', 'barrier', 'cone'], density: 0.36, rampTarget: 2 },
+      { name: 'Avenida do Pedro', lengthMeters: 560, obstacleKinds: ['parked-car', 'barrier', 'cone', 'banana'], density: 0.36, rampTarget: 2 },
       { name: 'Trânsito na orla', lengthMeters: 600, obstacleKinds: ['traffic-car', 'parked-car', 'cone'], density: 0.38, rampTarget: 2 },
-      { name: 'Corrida na orla', lengthMeters: 640, obstacleKinds: ['traffic-car', 'barrier', 'high-bar'], density: 0.42, rampTarget: 3 },
+      { name: 'Corrida na orla', lengthMeters: 640, obstacleKinds: ['traffic-car', 'barrier', 'high-bar', 'animal'], density: 0.42, rampTarget: 3 },
       { name: 'Viaduto', lengthMeters: 680, obstacleKinds: ['parked-car', 'high-bar', 'crate', 'traffic-car'], density: 0.45, rampTarget: 3 },
-      { name: 'Hora do rush', lengthMeters: 720, obstacleKinds: ['traffic-car', 'parked-car', 'barrier', 'crate'], density: 0.5, rampTarget: 3 },
+      { name: 'Hora do rush', lengthMeters: 720, obstacleKinds: ['traffic-car', 'parked-car', 'barrier', 'crate', 'banana'], density: 0.5, rampTarget: 3 },
     ]),
   },
   {
@@ -164,10 +164,10 @@ export const REGIONS: readonly RegionDefinition[] = [
     unlock: { kind: 'stars', regionId: 'zona-urbana', stars: 8 },
     levels: levelsOf(3, 'montanha-radical', { startSpeed: 12, maxSpeed: 15 }, [
       { name: 'Trilha da serra', lengthMeters: 640, obstacleKinds: ['barrier', 'high-bar', 'crate'], density: 0.42, rampTarget: 4 },
-      { name: 'Ponte de pedra', lengthMeters: 680, obstacleKinds: ['high-bar', 'crate', 'cone'], density: 0.45, rampTarget: 4 },
-      { name: 'Saltos na neve', lengthMeters: 720, obstacleKinds: ['barrier', 'cone', 'high-bar'], density: 0.48, rampTarget: 5 },
+      { name: 'Ponte de pedra', lengthMeters: 680, obstacleKinds: ['high-bar', 'crate', 'cone', 'animal'], density: 0.45, rampTarget: 4 },
+      { name: 'Saltos na neve', lengthMeters: 720, obstacleKinds: ['barrier', 'cone', 'high-bar', 'banana'], density: 0.48, rampTarget: 5 },
       { name: 'Cume gelado', lengthMeters: 760, obstacleKinds: ['crate', 'high-bar', 'barrier', 'cone'], density: 0.52, rampTarget: 5 },
-      { name: 'Descida radical', lengthMeters: 820, obstacleKinds: ['barrier', 'high-bar', 'crate', 'cone'], density: 0.56, rampTarget: 5 },
+      { name: 'Descida radical', lengthMeters: 820, obstacleKinds: ['barrier', 'high-bar', 'crate', 'cone', 'animal'], density: 0.56, rampTarget: 5 },
     ]),
   },
   {
@@ -180,9 +180,9 @@ export const REGIONS: readonly RegionDefinition[] = [
     unlock: { kind: 'stars', regionId: 'montanha-radical', stars: 8 },
     levels: levelsOf(4, 'cidade-do-luxo', { startSpeed: 13, maxSpeed: 16 }, [
       { name: 'Boulevard dourado', lengthMeters: 720, obstacleKinds: ['parked-car', 'high-bar', 'barrier'], density: 0.48, rampTarget: 3 },
-      { name: 'Garagem de luxo', lengthMeters: 760, obstacleKinds: ['parked-car', 'crate', 'traffic-car'], density: 0.5, rampTarget: 3 },
+      { name: 'Garagem de luxo', lengthMeters: 760, obstacleKinds: ['parked-car', 'crate', 'traffic-car', 'banana'], density: 0.5, rampTarget: 3 },
       { name: 'Marina', lengthMeters: 800, obstacleKinds: ['traffic-car', 'high-bar', 'cone'], density: 0.53, rampTarget: 4 },
-      { name: 'Torres de neon', lengthMeters: 840, obstacleKinds: ['traffic-car', 'parked-car', 'high-bar', 'crate'], density: 0.56, rampTarget: 4 },
+      { name: 'Torres de neon', lengthMeters: 840, obstacleKinds: ['traffic-car', 'parked-car', 'high-bar', 'crate', 'animal'], density: 0.56, rampTarget: 4 },
       { name: 'Grande prêmio', lengthMeters: 900, obstacleKinds: ['traffic-car', 'parked-car', 'barrier', 'high-bar'], density: 0.6, rampTarget: 5 },
     ]),
   },
@@ -195,11 +195,11 @@ export const REGIONS: readonly RegionDefinition[] = [
     theme: THEMES['deserto-xtreme'],
     unlock: { kind: 'stars', regionId: 'cidade-do-luxo', stars: 8 },
     levels: levelsOf(5, 'deserto-xtreme', { startSpeed: 14, maxSpeed: 17 }, [
-      { name: 'Mar de dunas', lengthMeters: 800, obstacleKinds: ['sweeper', 'barrier', 'cone'], density: 0.52, rampTarget: 4 },
+      { name: 'Mar de dunas', lengthMeters: 800, obstacleKinds: ['sweeper', 'barrier', 'cone', 'animal'], density: 0.52, rampTarget: 4 },
       { name: 'Tempestade de areia', lengthMeters: 840, obstacleKinds: ['sweeper', 'crate', 'high-bar'], density: 0.55, rampTarget: 4 },
-      { name: 'Cânion', lengthMeters: 880, obstacleKinds: ['high-bar', 'sweeper', 'barrier', 'crate'], density: 0.58, rampTarget: 5 },
+      { name: 'Cânion', lengthMeters: 880, obstacleKinds: ['high-bar', 'sweeper', 'barrier', 'crate', 'banana'], density: 0.58, rampTarget: 5 },
       { name: 'Oásis', lengthMeters: 920, obstacleKinds: ['sweeper', 'traffic-car', 'cone'], density: 0.6, rampTarget: 5 },
-      { name: 'Rali xtreme', lengthMeters: 1000, obstacleKinds: ['sweeper', 'traffic-car', 'high-bar', 'crate', 'barrier'], density: 0.64, rampTarget: 6 },
+      { name: 'Rali xtreme', lengthMeters: 1000, obstacleKinds: ['sweeper', 'traffic-car', 'high-bar', 'crate', 'barrier', 'animal'], density: 0.64, rampTarget: 6 },
     ]),
   },
   {
@@ -211,9 +211,9 @@ export const REGIONS: readonly RegionDefinition[] = [
     theme: THEMES['eventos-especiais'],
     unlock: { kind: 'event', startsAt: SEASON.startsAt, endsAt: SEASON.endsAt, requiresRegion: 'ilha-inicial' },
     levels: levelsOf(6, 'eventos-especiais', { startSpeed: 12, maxSpeed: 16 }, [
-      { name: 'Corrida Noturna I', lengthMeters: 620, obstacleKinds: ['barrier', 'high-bar', 'crate', 'cone'], density: 0.45, rampTarget: 3 },
+      { name: 'Corrida Noturna I', lengthMeters: 620, obstacleKinds: ['barrier', 'high-bar', 'crate', 'cone', 'banana'], density: 0.45, rampTarget: 3 },
       { name: 'Corrida Noturna II', lengthMeters: 720, obstacleKinds: ['parked-car', 'traffic-car', 'high-bar'], density: 0.5, rampTarget: 4 },
-      { name: 'Corrida Noturna III', lengthMeters: 820, obstacleKinds: ['sweeper', 'traffic-car', 'high-bar', 'crate'], density: 0.56, rampTarget: 5 },
+      { name: 'Corrida Noturna III', lengthMeters: 820, obstacleKinds: ['sweeper', 'traffic-car', 'high-bar', 'crate', 'animal'], density: 0.56, rampTarget: 5 },
     ]),
   },
 ];

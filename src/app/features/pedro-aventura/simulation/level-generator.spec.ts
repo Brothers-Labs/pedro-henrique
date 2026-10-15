@@ -4,7 +4,7 @@ import { generateLayout } from './level-generator';
 import { LANES, OBSTACLE_SIZE } from './track.model';
 
 /** Obstáculos que se passam por cima ou por baixo, e por isso podem fechar as três faixas. */
-const PASSABLE_IN_PLACE = new Set(['barrier', 'high-bar', 'cone', 'crate', 'sweeper']);
+const PASSABLE_IN_PLACE = new Set(['barrier', 'high-bar', 'cone', 'crate', 'sweeper', 'banana', 'animal']);
 
 describe('generateLayout', () => {
   it('gera sempre a mesma pista para a mesma fase', () => {
@@ -69,12 +69,20 @@ describe('generateLayout', () => {
           expect(layout.totals.crowns).toBe(3);
         });
 
+        it('tem barra de ouro, dois diamantes no alto e turbo', () => {
+          expect(layout.totals.goldBars).toBeGreaterThanOrEqual(1);
+          expect(layout.totals.diamonds).toBe(2);
+          expect(layout.totals.turbos).toBeGreaterThanOrEqual(1);
+          expect(layout.pickups.filter((pickup) => pickup.kind === 'diamond').every((pickup) => pickup.y > 2)).toBeTrue();
+        });
+
         it('nunca põe moeda dentro de um obstáculo', () => {
           for (const pickup of layout.pickups.filter((candidate) => candidate.y < 1.5)) {
             const clash = layout.obstacles.find(
               (obstacle) =>
                 obstacle.kind !== 'traffic-car' &&
                 obstacle.kind !== 'sweeper' &&
+                obstacle.kind !== 'animal' &&
                 obstacle.lane === pickup.lane &&
                 Math.abs(obstacle.z - pickup.z) < OBSTACLE_SIZE[obstacle.kind].depth / 2 + 0.5,
             );

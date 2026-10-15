@@ -27,8 +27,18 @@ const COIN_HEIGHT = 1.0;
 /** Obstáculos que podem ocupar as três faixas ao mesmo tempo, porque há como passar por cima ou por baixo. */
 const FULL_ROW_KINDS: ReadonlySet<ObstacleKind> = new Set<ObstacleKind>(['barrier', 'high-bar', 'cone']);
 
-/** Obstáculos que ficam sozinhos na fileira. */
-const SOLO_KINDS: ReadonlySet<ObstacleKind> = new Set<ObstacleKind>(['traffic-car', 'sweeper']);
+/** Obstáculos que ficam sozinhos na fileira: os que andam. */
+const SOLO_KINDS: ReadonlySet<ObstacleKind> = new Set<ObstacleKind>(['traffic-car', 'sweeper', 'animal']);
+
+/** Chance de uma fileira de moedas terminar numa barra de ouro. */
+const GOLD_BAR_CHANCE = 0.2;
+
+/** Diamantes ficam no alto: só quem pula na hora certa alcança. */
+const DIAMOND_HEIGHT = 2.3;
+const DIAMOND_FRACTIONS: readonly number[] = [0.45, 0.8];
+
+/** Fases a partir deste comprimento ganham um segundo turbo. */
+const LONG_LEVEL_METERS = 700;
 
 /** A coroa da rampa fica acima do arco: só quem pula pela rampa alcança. */
 const RAMP_CROWN_HEIGHT = 4.2;
@@ -75,6 +85,8 @@ export function generateLayout(baseLevel: LevelDefinition, difficulty: Difficult
   placeRamps(rampPositions, random, ids, ramps, pickups);
   placeGapPickups(level, rows, random, ids, ramps, pickups);
   placeCrowns(level, rows, ids, ramps, pickups);
+  placeDiamonds(level, rows, ids, pickups);
+  placeTurbos(level, rows, ids, pickups);
 
   const count = (kind: PickupSpec['kind']) => pickups.filter((pickup) => pickup.kind === kind).length;
 
@@ -85,7 +97,15 @@ export function generateLayout(baseLevel: LevelDefinition, difficulty: Difficult
     obstacles,
     pickups: pickups.sort((first, second) => first.z - second.z),
     ramps,
-    totals: { coins: count('coin'), hearts: count('heart'), crowns: count('crown'), ramps: ramps.length },
+    totals: {
+      coins: count('coin'),
+      goldBars: count('gold-bar'),
+      diamonds: count('diamond'),
+      hearts: count('heart'),
+      crowns: count('crown'),
+      turbos: count('turbo'),
+      ramps: ramps.length,
+    },
   };
 }
 
@@ -257,7 +277,15 @@ function placeGapPickups(
       pickups.push({ id: ids.next++, kind: 'coin', lane, z: stretch.from + index * COIN_SPACING, y: COIN_HEIGHT });
     }
 
-    if (!random.chance(0.22)) {
+    const hasHeart = random.chance(0.22);
+    const goldZ = stretch.from + coins * COIN_SPACING;
+
+    // A fileira de moedas às vezes termina numa barra de ouro, na mesma faixa.
+    if (random.chance(GOLD_BAR_CHANCE) && goldZ < stretch.to) {
+      pickups.push({ id: ids.next++, kind: 'gold-bar', lane, z: goldZ, y: COIN_HEIGHT });
+    }
+
+    if (!hasHeart) {
       continue;
     }
 
@@ -267,8 +295,69 @@ function placeGapPickups(
 
     if (otherLanes.length > 0) {
       pickups.push({ id: ids.next++, kind: 'heart', lane: random.pick(nonEmpty(otherLanes)), z: stretch.from + length / 2, y: COIN_HEIGHT });
-    } else if (afterCoins < stretch.to) {
-      pickups.push({ id: ids.next++, kind: 'heart', lane, z: afterCoins, y: COIN_HEIGHT });
+    } else if (afterCoins + 1.5 < stretch.to) {
+      pickups.push({ id: ids.next++, kind: 'heart', lane, z: afterCoins + 1.5, y: COIN_HEIGHT });
+    }
+  }
+
+  ensureGoldBar(pickups);
+}
+
+/** Toda fase tem ao menos uma barra de ouro: a última moeda da primeira fileira vira barra. */
+function ensureGoldBar(pickups: PickupSpec[]): void {
+  if (pickups.some((pickup) => pickup.kind === 'gold-bar')) {
+    return;
+  }
+
+  const firstLine = pickups.filter((pickup) => pickup.kind === 'coin' && pickup.y === COIN_HEIGHT);
+  const last = firstLine.find((pickup, index) => firstLine[index + 1]?.lane !== pickup.lane || index === firstLine.length - 1);
+
+  if (last) {
+    pickups[pickups.indexOf(last)] = { ...last, kind: 'gold-bar' };
+  }
+}
+
+/** Fileira mais perto de uma fração da pista, entre as que deixam faixa livre. */
+function rowNear(level: LevelDefinition, rows: readonly Row[], fraction: number): Row | null {
+  const target = level.lengthMeters * fraction;
+  const candidates = rows.filter((row) => !row.isSolo && freeLanes(row).length > 0);
+
+  return candidates.reduce<Row | null>(
+    (closest, candidate) => (closest === null || Math.abs(candidate.z - target) < Math.abs(closest.z - target) ? candidate : closest),
+    null,
+  );
+}
+
+/** Dois diamantes por fase, no alto de uma faixa livre bem na altura da fileira: é preciso pular. */
+function placeDiamonds(level: LevelDefinition, rows: readonly Row[], ids: { next: number }, pickups: PickupSpec[]): void {
+  for (const fraction of DIAMOND_FRACTIONS) {
+    const row = rowNear(level, rows, fraction);
+
+    if (row) {
+      pickups.push({ id: ids.next++, kind: 'diamond', lane: nonEmpty(freeLanes(row))[0], z: row.z, y: DIAMOND_HEIGHT });
+    }
+  }
+}
+
+/** Turbo no meio da pista (e um segundo nas fases longas), numa faixa sem outro item por perto. */
+function placeTurbos(level: LevelDefinition, rows: readonly Row[], ids: { next: number }, pickups: PickupSpec[]): void {
+  const fractions = level.lengthMeters >= LONG_LEVEL_METERS ? [0.3, 0.65] : [0.5];
+
+  for (const fraction of fractions) {
+    const target = level.lengthMeters * fraction;
+    // Da fileira mais perto do ponto desejado para a mais longe, até achar uma faixa sem item por perto.
+    const candidates = rows.filter((row) => !row.isSolo).sort((first, second) => Math.abs(first.z - target) - Math.abs(second.z - target));
+
+    for (const row of candidates) {
+      const z = row.z + 6;
+      const lane = freeLanes(row).find(
+        (candidate) => !pickups.some((pickup) => pickup.lane === candidate && Math.abs(pickup.z - z) < 2),
+      );
+
+      if (lane !== undefined) {
+        pickups.push({ id: ids.next++, kind: 'turbo', lane, z, y: COIN_HEIGHT });
+        break;
+      }
     }
   }
 }

@@ -29,6 +29,8 @@ export interface RunResult {
   readonly isVictory: boolean;
   readonly timeMs: number;
   readonly coins: number;
+  readonly goldBars: number;
+  readonly diamonds: number;
   readonly hearts: number;
   readonly crowns: number;
   readonly ramps: number;

@@ -1,6 +1,6 @@
 import { cosmeticById } from '../config/cosmetics.config';
 import { difficultyById, isDifficulty } from '../config/difficulty.config';
-import { RUN_REWARDS } from '../config/economy.config';
+import { PICKUP_VALUES, RUN_REWARDS } from '../config/economy.config';
 import { MISSIONS } from '../config/missions.config';
 import { findLevel, REGIONS } from '../config/regions.config';
 import { SEASON } from '../config/season.config';
@@ -17,6 +17,7 @@ import type {
 } from '../models/economy.model';
 import { generateLayout } from '../simulation/level-generator';
 import {
+  coinValueOf,
   isLevelUnlocked,
   objectivesFor,
   type ObjectiveStatus,
@@ -117,7 +118,7 @@ export function isPlausibleResult(level: LevelDefinition, result: RunResult): bo
   }
 
   const { totals } = generateLayout(level, result.difficulty);
-  const counts = [result.coins, result.hearts, result.crowns, result.ramps, result.damageTaken, result.timeMs];
+  const counts = [result.coins, result.goldBars, result.diamonds, result.hearts, result.crowns, result.ramps, result.damageTaken, result.timeMs];
   const areCounts = counts.every((value) => Number.isInteger(value) && value >= 0);
   const topSpeed = level.maxSpeed * difficultyById(result.difficulty).speedMultiplier;
   const fastestMs = (level.lengthMeters / topSpeed) * 1000 * MINIMUM_TIME_FACTOR;
@@ -127,6 +128,8 @@ export function isPlausibleResult(level: LevelDefinition, result: RunResult): bo
     (!result.isVictory || result.timeMs >= fastestMs) &&
     result.levelId === level.id &&
     result.coins <= totals.coins &&
+    result.goldBars <= totals.goldBars &&
+    result.diamonds <= totals.diamonds &&
     result.hearts <= totals.hearts &&
     result.crowns <= totals.crowns &&
     result.ramps <= totals.ramps
@@ -174,10 +177,14 @@ export function applyRunResult(
     ? RUN_REWARDS.victoryXp + stars * RUN_REWARDS.xpPerStar + result.crowns * RUN_REWARDS.xpPerCrown + result.ramps * RUN_REWARDS.xpPerRamp
     : RUN_REWARDS.defeatXp;
   const xpGained = Math.round(baseXp * difficultyById(result.difficulty).xpMultiplier);
-  const diamondsGained = (isFirstWin ? RUN_REWARDS.firstWinDiamonds : 0) + (isFirstThreeStars ? RUN_REWARDS.firstThreeStarsDiamonds : 0);
+  const pickedDiamonds = result.diamonds * PICKUP_VALUES.diamond.amount;
+  const diamondsGained =
+    pickedDiamonds + (isFirstWin ? RUN_REWARDS.firstWinDiamonds : 0) + (isFirstThreeStars ? RUN_REWARDS.firstThreeStarsDiamonds : 0);
+  const coinsGained = coinValueOf(result);
 
   const wallet = applyTransactions(state.wallet, [
-    transaction(`run:${result.attemptId}:coins`, 'coins', result.coins, `Fase ${level.id}`, now),
+    transaction(`run:${result.attemptId}:coins`, 'coins', coinsGained, `Fase ${level.id}`, now),
+    transaction(`run:${result.attemptId}:diamonds`, 'diamonds', pickedDiamonds, `Diamantes da fase ${level.id}`, now),
     transaction(`first-win:${level.id}`, 'diamonds', isFirstWin ? RUN_REWARDS.firstWinDiamonds : 0, `Primeira vitória na fase ${level.id}`, now),
     transaction(`three-stars:${level.id}`, 'diamonds', isFirstThreeStars ? RUN_REWARDS.firstThreeStarsDiamonds : 0, `Três estrelas na fase ${level.id}`, now),
   ]);
@@ -213,7 +220,7 @@ export function applyRunResult(
       stars,
       objectives,
       xpGained: seasonAfter.xp - seasonBefore.xp,
-      coinsGained: result.coins,
+      coinsGained,
       diamondsGained,
       isFirstWin,
       isNewRecord: scored.isVictory && scored.score > best,
@@ -236,7 +243,7 @@ function runIncrements(
   const won = result.isVictory ? 1 : 0;
 
   return {
-    'coins-collected': result.coins,
+    'coins-collected': coinValueOf(result),
     'hearts-collected': result.hearts,
     'crowns-collected': result.crowns,
     'ramps-jumped': result.ramps,
