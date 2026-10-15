@@ -240,3 +240,62 @@ O repositório não tem GitHub Actions, então não há CI para acompanhar. O de
 3. **P2:** minimapa e partículas de velocidade na fase; tela de Conquistas com medalhas por região.
 4. **P2:** backend com a mesma camada `rules/` rodando no servidor, para ranking real entre jogadores (AV-012).
 5. **P3:** mais cosméticos (helicóptero e iate no lobby), emotes de vitória e uma segunda temporada.
+
+## 11. Evolução 2 (14/10/2026): dificuldade e realismo visual
+
+Pedido depois da primeira entrega publicada: deixar o personagem, o rosto e o cenário do lobby mais
+realistas ("tudo muito quadrado") e criar os modos Fácil, Médio e Difícil, mantendo o Fácil como o
+jogo atual.
+
+### 11.1 Dificuldade (AV-016)
+
+| Modo | Velocidade | Obstáculos | Corações | Invencibilidade após batida | XP |
+| --- | --- | --- | --- | --- | --- |
+| 🐢 Fácil | o jogo original | densidade da fase | 3 | 1,5 s | ×1 |
+| 🐇 Médio | +15% | densidade +0,12 | 3 | 1,2 s | ×1,25 |
+| 🐆 Difícil | +30% | densidade +0,22 | 2 | 1,0 s | ×1,5 |
+
+- **Fácil sem mudança:** o Fácil usa a mesma semente de antes, então as pistas de sempre continuam
+  idênticas (há um teste para isso).
+- **Pista própria por modo:** Médio e Difícil têm cada um sua pista determinística.
+- **Onde escolher:** o seletor fica no lobby, no mapa e nas configurações, e a escolha é salva no
+  aparelho. A fase registra a dificuldade com que começou: trocar no meio não muda a corrida.
+- **Validação do resultado:** o resultado leva a dificuldade junto. A conferência contra a pista usa a
+  pista daquela dificuldade, e o tempo mínimo usa a velocidade daquela dificuldade.
+- **Testes:** passagem e metas conferidas nas 28 fases × 3 modos; velocidade e corações por modo;
+  multiplicador de XP.
+
+### 11.2 Realismo visual (AV-017)
+
+- **Pedro:**
+  - corpo de formas arredondadas (cápsulas e caixas de canto arredondado);
+  - moletom com capuz e cordões, calça jogger e tênis com sola e detalhe;
+  - rosto: crânio oval, orelhas, olhos com íris e brilho, sobrancelhas, nariz, boca, bigode, barba
+    cheia e cabelo com fade e topete.
+- **Rex:** corpo atlético, focinho comprido, orelhas em pé, olhos e as marcas cor de canela do
+  dobermann.
+- **Carros:** carroceria e cabine arredondadas, rodas com aro metálico.
+- **Lobby:**
+  - piso de mármore polido, com reflexo do ambiente na qualidade média e alta;
+  - mansão moderna de dois pavimentos, com vidraças acesas, lajes em balanço, frisos de luz e sacada
+    de vidro;
+  - piscina com borda de pedra, cercas vivas e arbustos;
+  - postes de jardim, lua e silhueta de cidade ao fundo.
+- **Palmeiras novas, valendo no lobby, na pista e no mapa:** tronco curvo em gomos, folhas compridas
+  que caem com o peso e cocos.
+
+### 11.3 Bug encontrado e corrigido na verificação
+
+No mapa, as ilhas trancadas não ficavam cinza e o anel de seleção não aparecia.
+
+- **Causa:** o efeito só lia `presence.phase()` depois de checar a sessão. Na primeira execução a
+  sessão ainda é nula, então o efeito nunca passava a depender da fase.
+- **Correção:** a fase é lida antes, no mapa e no palco do lobby.
+
+### 11.4 Verificação
+
+- **Testes:** `npx ng test --watch=false --browsers=ChromeHeadless`, com **1141 de 1141 passando**.
+- **Build:** `npm run build` passou.
+- **Navegador:** Chrome sem janela via CDP (lobby, personagem, fase no Fácil e no Difícil com 2
+  corações, mapa). Nenhum erro no console.
+

@@ -1,4 +1,5 @@
 import { COSMETICS, DEFAULT_EQUIPPED, isCosmeticId, STARTER_COSMETICS } from '../config/cosmetics.config';
+import { isDifficulty } from '../config/difficulty.config';
 import { APPLIED_IDS_LIMIT, WALLET_HISTORY_LIMIT } from '../config/economy.config';
 import { MISSIONS } from '../config/missions.config';
 import { ALL_LEVELS, REGIONS } from '../config/regions.config';
@@ -172,6 +173,7 @@ function sanitizeSettings(value: unknown): AventuraSettings {
     musicVolume: volume(stored['musicVolume'], DEFAULT_SETTINGS.musicVolume),
     effectsVolume: volume(stored['effectsVolume'], DEFAULT_SETTINGS.effectsVolume),
     touchControls: typeof touch === 'string' && TOUCH_VALUES.has(touch) ? (touch as AventuraSettings['touchControls']) : DEFAULT_SETTINGS.touchControls,
+    difficulty: isDifficulty(stored['difficulty']) ? stored['difficulty'] : DEFAULT_SETTINGS.difficulty,
   };
 }
 

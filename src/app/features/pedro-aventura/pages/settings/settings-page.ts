@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CalmModeService } from '../../../../core/services/calm-mode.service';
 import { MotionPreferenceService } from '../../../../core/services/motion-preference.service';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { DifficultyPicker } from '../../components/difficulty-picker';
 import type { QualityPreference, TouchControlsPreference } from '../../models/aventura-state.model';
 import { AventuraAudio } from '../../services/aventura-audio.service';
 import { AventuraStore } from '../../services/aventura-store.service';
@@ -24,7 +25,7 @@ const TOUCH_OPTIONS: readonly { readonly id: TouchControlsPreference; readonly l
 @Component({
   selector: 'app-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialog],
+  imports: [ConfirmDialog, DifficultyPicker],
   templateUrl: './settings-page.html',
   styleUrls: ['../page.scss', './settings-page.scss'],
 })

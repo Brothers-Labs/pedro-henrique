@@ -1,4 +1,5 @@
 import { cosmeticById } from '../config/cosmetics.config';
+import { difficultyById, isDifficulty } from '../config/difficulty.config';
 import { RUN_REWARDS } from '../config/economy.config';
 import { MISSIONS } from '../config/missions.config';
 import { findLevel, REGIONS } from '../config/regions.config';
@@ -60,6 +61,7 @@ export const DEFAULT_SETTINGS: AventuraSettings = {
   musicVolume: 0.5,
   effectsVolume: 0.8,
   touchControls: 'auto',
+  difficulty: 'facil',
 };
 
 export function createInitialState(now: Date): AventuraState {
@@ -110,10 +112,15 @@ export interface RunSummary {
  * pista tem foi adulterado e é recusado.
  */
 export function isPlausibleResult(level: LevelDefinition, result: RunResult): boolean {
-  const { totals } = generateLayout(level);
+  if (!isDifficulty(result.difficulty)) {
+    return false;
+  }
+
+  const { totals } = generateLayout(level, result.difficulty);
   const counts = [result.coins, result.hearts, result.crowns, result.ramps, result.damageTaken, result.timeMs];
   const areCounts = counts.every((value) => Number.isInteger(value) && value >= 0);
-  const fastestMs = (level.lengthMeters / level.maxSpeed) * 1000 * MINIMUM_TIME_FACTOR;
+  const topSpeed = level.maxSpeed * difficultyById(result.difficulty).speedMultiplier;
+  const fastestMs = (level.lengthMeters / topSpeed) * 1000 * MINIMUM_TIME_FACTOR;
 
   return (
     areCounts &&
@@ -163,9 +170,10 @@ export function applyRunResult(
   const regionsNow = unlockedRegionIds(levels, now);
   const newRegions = REGIONS.filter((region) => regionsNow.includes(region.id) && !regionsBefore.has(region.id));
 
-  const xpGained = result.isVictory
+  const baseXp = result.isVictory
     ? RUN_REWARDS.victoryXp + stars * RUN_REWARDS.xpPerStar + result.crowns * RUN_REWARDS.xpPerCrown + result.ramps * RUN_REWARDS.xpPerRamp
     : RUN_REWARDS.defeatXp;
+  const xpGained = Math.round(baseXp * difficultyById(result.difficulty).xpMultiplier);
   const diamondsGained = (isFirstWin ? RUN_REWARDS.firstWinDiamonds : 0) + (isFirstThreeStars ? RUN_REWARDS.firstThreeStarsDiamonds : 0);
 
   const wallet = applyTransactions(state.wallet, [

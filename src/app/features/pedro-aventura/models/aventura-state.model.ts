@@ -1,3 +1,4 @@
+import type { Difficulty } from '../config/difficulty.config';
 import type { PlayerLevelProgress } from './campaign.model';
 import type { Inventory, MissionProgress, SeasonProgress, Wallet } from './economy.model';
 
@@ -10,6 +11,8 @@ export interface AventuraSettings {
   readonly musicVolume: number;
   readonly effectsVolume: number;
   readonly touchControls: TouchControlsPreference;
+  /** Dificuldade escolhida para as próximas partidas. */
+  readonly difficulty: Difficulty;
 }
 
 /**
@@ -22,6 +25,7 @@ export interface RunResult {
   /** Chave de idempotência da tentativa: o mesmo resultado nunca paga duas vezes. */
   readonly attemptId: string;
   readonly levelId: string;
+  readonly difficulty: Difficulty;
   readonly isVictory: boolean;
   readonly timeMs: number;
   readonly coins: number;

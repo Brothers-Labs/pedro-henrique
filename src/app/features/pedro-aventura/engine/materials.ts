@@ -1,4 +1,4 @@
-import { Color, Mesh, type Object3D, MeshStandardMaterial, type Texture } from 'three';
+import { Color, FrontSide, Mesh, type Object3D, MeshStandardMaterial, type Side, type Texture } from 'three';
 
 export interface MaterialOptions {
   readonly emissive?: string;
@@ -8,6 +8,7 @@ export interface MaterialOptions {
   readonly map?: Texture;
   readonly transparent?: boolean;
   readonly opacity?: number;
+  readonly side?: Side;
 }
 
 /**
@@ -29,6 +30,7 @@ export class MaterialLibrary {
       options.roughness ?? 0.7,
       options.map?.uuid ?? '',
       options.opacity ?? 1,
+      options.side ?? FrontSide,
     ].join('|');
 
     const cached = this.cache.get(key);
@@ -46,6 +48,7 @@ export class MaterialLibrary {
       map: options.map ?? null,
       transparent: options.transparent ?? (options.opacity ?? 1) < 1,
       opacity: options.opacity ?? 1,
+      side: options.side ?? FrontSide,
     });
 
     this.cache.set(key, material);

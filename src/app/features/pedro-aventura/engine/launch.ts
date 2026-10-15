@@ -1,5 +1,6 @@
 import { GameLoop } from '../../games/pedro-maker/engine/game-loop';
 import { FrameBudgetMonitor, initialQualityTier, type QualityTier } from '../../games/pedro-maker/engine/render/quality';
+import { type Difficulty, difficultyById } from '../config/difficulty.config';
 import type { QualityPreference } from '../models/aventura-state.model';
 import type { LevelDefinition, RegionId, RegionStatus, RegionTheme } from '../models/campaign.model';
 import { generateLayout } from '../simulation/level-generator';
@@ -133,6 +134,7 @@ export type RunSessionEvent =
 export interface RunLaunchOptions {
   readonly parent: HTMLElement;
   readonly level: LevelDefinition;
+  readonly difficulty: Difficulty;
   readonly theme: RegionTheme;
   readonly look: RunLook;
   readonly quality: QualityPreference;
@@ -156,7 +158,7 @@ export interface RunSession extends SceneSession {
  */
 export function launchRun(options: RunLaunchOptions): RunSession {
   const { listener } = options;
-  const run = new RunSimulation(options.level, generateLayout(options.level));
+  const run = new RunSimulation(options.level, generateLayout(options.level, options.difficulty), difficultyById(options.difficulty));
   const input = new RunInput(window, options.parent);
   let lastHudAt = 0;
   let lastPhase = run.phase;
@@ -264,7 +266,11 @@ export interface LobbySession extends SceneSession {
 }
 
 export function launchLobby(options: LobbyLaunchOptions): LobbySession {
-  const { scene, session } = startScene(options, (stage) => new LobbyScene(stage, options.look, options.framing, options.isMotionAllowed));
+  const { scene, session } = startScene(
+    options,
+    // Reflexo do ambiente só onde o aparelho aguenta: na qualidade baixa o mármore fica fosco.
+    (stage, tier) => new LobbyScene(stage, options.look, options.framing, options.isMotionAllowed, tier !== 'baixa'),
+  );
 
   return { ...session, setLook: (look) => scene.setLook(look) };
 }

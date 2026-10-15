@@ -1,3 +1,4 @@
+import { DIFFICULTIES, type DifficultyDefinition } from '../config/difficulty.config';
 import type { LevelDefinition } from '../models/campaign.model';
 import {
   type Lane,
@@ -35,9 +36,8 @@ export const RUN_PHYSICS = {
   pickupReach: 0.9,
 } as const;
 
+/** Regras que não mudam com a dificuldade (vidas e invencibilidade vêm dela). */
 export const RUN_RULES = {
-  maxLives: 3,
-  invulnerableSeconds: 1.5,
   respawnInvulnerableSeconds: 2,
   /** Velocidade logo depois de uma batida, como fração da normal. */
   hitSlowdown: 0.55,
@@ -120,7 +120,7 @@ export class RunSimulation {
   private readonly events: RunEvent[] = [];
   private phaseValue: RunPhase = 'ready';
   private elapsedSeconds = 0;
-  private lives: number = RUN_RULES.maxLives;
+  private lives: number;
   private lastCheckpoint = 0;
   private recoverySeconds = 0;
   private jumpBufferSeconds = 0;
@@ -130,10 +130,18 @@ export class RunSimulation {
   private activeRampId: number | null = null;
   private stats = { coins: 0, hearts: 0, crowns: 0, ramps: 0, damageTaken: 0 };
 
+  /** Velocidades da fase já multiplicadas pela dificuldade. */
+  private readonly startSpeed: number;
+  private readonly maxSpeed: number;
+
   constructor(
     readonly level: LevelDefinition,
     readonly layout: TrackLayout,
+    readonly difficulty: DifficultyDefinition = DIFFICULTIES[0],
   ) {
+    this.startSpeed = level.startSpeed * difficulty.speedMultiplier;
+    this.maxSpeed = level.maxSpeed * difficulty.speedMultiplier;
+    this.lives = difficulty.maxLives;
     this.player = {
       x: 0,
       y: 0,
@@ -144,7 +152,7 @@ export class RunSimulation {
       slideSeconds: 0,
       invulnerableSeconds: 0,
       attackSeconds: 0,
-      speed: level.startSpeed,
+      speed: level.startSpeed * difficulty.speedMultiplier,
     };
     this.obstacles = layout.obstacles.map((spec) => ({ spec, x: laneX(spec.lane), z: spec.z, isBroken: false, isActive: false }));
   }
@@ -198,7 +206,7 @@ export class RunSimulation {
     player.isGrounded = true;
     player.slideSeconds = 0;
     player.invulnerableSeconds = RUN_RULES.respawnInvulnerableSeconds;
-    this.lives = RUN_RULES.maxLives;
+    this.lives = this.difficulty.maxLives;
     this.recoverySeconds = 0;
     this.activeRampId = null;
 
@@ -248,7 +256,7 @@ export class RunSimulation {
       ...this.result(),
       phase: this.phaseValue,
       lives: this.lives,
-      maxLives: RUN_RULES.maxLives,
+      maxLives: this.difficulty.maxLives,
       progress: Math.min(1, this.player.z / this.layout.length),
     };
   }
@@ -339,9 +347,9 @@ export class RunSimulation {
   /* Movimento -------------------------------------------------------------------------- */
 
   private moveForward(): void {
-    const { level, player } = this;
+    const { player } = this;
     const progress = Math.min(1, player.z / this.layout.length);
-    const cruise = level.startSpeed + (level.maxSpeed - level.startSpeed) * progress;
+    const cruise = this.startSpeed + (this.maxSpeed - this.startSpeed) * progress;
     const recovery = this.recoverySeconds > 0 ? 1 - (1 - RUN_RULES.hitSlowdown) * (this.recoverySeconds / RUN_RULES.recoverySeconds) : 1;
 
     player.speed = cruise * recovery;
@@ -499,7 +507,7 @@ export class RunSimulation {
         break;
       case 'heart':
         this.stats.hearts += 1;
-        this.lives = Math.min(RUN_RULES.maxLives, this.lives + 1);
+        this.lives = Math.min(this.difficulty.maxLives, this.lives + 1);
         break;
       case 'crown':
         this.stats.crowns += 1;
@@ -538,7 +546,7 @@ export class RunSimulation {
   private hit(obstacle: ObstacleState): void {
     this.lives -= 1;
     this.stats.damageTaken += 1;
-    this.player.invulnerableSeconds = RUN_RULES.invulnerableSeconds;
+    this.player.invulnerableSeconds = this.difficulty.invulnerableSeconds;
     this.recoverySeconds = RUN_RULES.recoverySeconds;
     this.events.push({ type: 'hit', obstacleId: obstacle.spec.id });
 

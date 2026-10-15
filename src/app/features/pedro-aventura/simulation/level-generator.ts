@@ -1,4 +1,5 @@
 import { SeededRandom, seedFromText } from '../../games/pedro-maker/levels/seeded-random';
+import { type Difficulty, difficultyById } from '../config/difficulty.config';
 import type { LevelDefinition, ObstacleKind } from '../models/campaign.model';
 import { type Lane, LANES, type ObstacleSpec, type PickupSpec, type RampSpec, type TrackLayout } from './track.model';
 
@@ -58,8 +59,11 @@ interface Row {
  * Regra de segurança: toda fileira deixa uma faixa livre, a não ser que seja
  * uma fileira inteira de algo que se pula ou se passa por baixo.
  */
-export function generateLayout(level: LevelDefinition): TrackLayout {
-  const random = new SeededRandom(seedFromText(`pedro-aventura:${level.id}`));
+export function generateLayout(baseLevel: LevelDefinition, difficulty: Difficulty = 'facil'): TrackLayout {
+  // O Fácil mantém a semente original: as pistas de sempre continuam as mesmas.
+  const seed = difficulty === 'facil' ? `pedro-aventura:${baseLevel.id}` : `pedro-aventura:${baseLevel.id}:${difficulty}`;
+  const random = new SeededRandom(seedFromText(seed));
+  const level = withDensity(baseLevel, difficulty);
   const checkpoints = [Math.round(level.lengthMeters / 3), Math.round((level.lengthMeters * 2) / 3)];
   const { rows, rampPositions } = buildPlan(level, random, checkpoints);
   const obstacles = rowsToObstacles(rows);
@@ -83,6 +87,15 @@ export function generateLayout(level: LevelDefinition): TrackLayout {
     ramps,
     totals: { coins: count('coin'), hearts: count('heart'), crowns: count('crown'), ramps: ramps.length },
   };
+}
+
+/** Densidade da fase já com o acréscimo da dificuldade, sem passar do teto que ainda deixa respirar. */
+const MAX_DENSITY = 0.85;
+
+function withDensity(level: LevelDefinition, difficulty: Difficulty): LevelDefinition {
+  const bonus = difficultyById(difficulty).densityBonus;
+
+  return bonus === 0 ? level : { ...level, density: Math.min(MAX_DENSITY, level.density + bonus) };
 }
 
 interface TrackPlan {

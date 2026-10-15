@@ -22,7 +22,7 @@
       <div class="hud__level">
         <span class="hud__crown" aria-hidden="true">👑</span>
         <span class="hud__name">
-          <small>Fase {{ info.id }}</small>
+          <small>Fase {{ info.id }} · {{ difficulty().emoji }} {{ difficulty().label }}</small>
           <strong>{{ info.name }}</strong>
         </span>
         <span class="hud__hearts" [attr.aria-label]="status.lives + ' de ' + status.maxLives + ' corações'">

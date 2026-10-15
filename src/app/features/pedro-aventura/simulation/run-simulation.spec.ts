@@ -1,7 +1,8 @@
+import { DIFFICULTIES, difficultyById } from '../config/difficulty.config';
 import { REGIONS, findLevel } from '../config/regions.config';
 import type { LevelDefinition } from '../models/campaign.model';
 import { generateLayout } from './level-generator';
-import { NO_COMMANDS, RUN_PHYSICS, RUN_RULES, type RunCommands, type RunEvent, RunSimulation } from './run-simulation';
+import { NO_COMMANDS, RUN_PHYSICS, type RunCommands, type RunEvent, RunSimulation } from './run-simulation';
 import { type Lane, LANES, laneX, OBSTACLE_SIZE, type TrackLayout } from './track.model';
 
 const MAX_STEPS = 60 * 240;
@@ -140,7 +141,7 @@ describe('RunSimulation', () => {
     const events = advance(run, 200);
 
     expect(events.filter((event) => event.type === 'hit').length).toBe(1);
-    expect(run.hud().lives).toBe(RUN_RULES.maxLives - 1);
+    expect(run.hud().lives).toBe(DIFFICULTIES[0].maxLives - 1);
     expect(run.result().damageTaken).toBe(1);
   });
 
@@ -214,7 +215,22 @@ describe('RunSimulation', () => {
     run.continueFromCheckpoint();
 
     expect(run.phase).toBe('playing');
-    expect(run.hud().lives).toBe(RUN_RULES.maxLives);
+    expect(run.hud().lives).toBe(DIFFICULTIES[0].maxLives);
+  });
+
+  it('corre mais rápido no Médio e no Difícil, e o Difícil tem só 2 corações', () => {
+    const distance = (id: 'facil' | 'medio' | 'dificil') => {
+      const run = new RunSimulation(level('1-1'), emptyTrack(), difficultyById(id));
+
+      run.start();
+      advance(run, 60);
+
+      return run.player.z;
+    };
+
+    expect(distance('medio')).toBeGreaterThan(distance('facil'));
+    expect(distance('dificil')).toBeGreaterThan(distance('medio'));
+    expect(new RunSimulation(level('1-1'), emptyTrack(), difficultyById('dificil')).hud().maxLives).toBe(2);
   });
 
   for (const regionId of ['ilha-inicial', 'montanha-radical'] as const) {

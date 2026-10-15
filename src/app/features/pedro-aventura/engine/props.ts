@@ -17,6 +17,7 @@ import type { ObstacleKind, RegionTheme } from '../models/campaign.model';
 import { RAMP_SIZE } from '../simulation/track.model';
 import { buildVehicle } from './characters';
 import { disposeGeometries, type MaterialLibrary } from './materials';
+import { buildPalm } from './nature';
 import { checkerTexture, chevronTexture, crateTexture, stripeTexture } from './textures';
 
 /** Cores dos carros da pista, sorteadas pelo id do obstáculo. */
@@ -198,21 +199,9 @@ export class PropKit {
     const accent = this.theme.accent;
 
     switch (this.theme.scenery) {
-      case 'palms': {
-        const trunk = materials.standard('#8d6e4a', { roughness: 0.9 });
-        const leaves = materials.standard('#2e9e5b', { roughness: 0.8 });
-        const height = 3.6 + variant * 0.8;
-
-        group.add(mesh(new CylinderGeometry(0.16, 0.24, height, 7), trunk, 0, height / 2, 0));
-
-        for (let index = 0; index < 5; index += 1) {
-          const leaf = mesh(new ConeGeometry(0.35, 2.2, 4), leaves, 0, height, 0);
-          leaf.rotation.set(Math.PI / 2.6, (index / 5) * Math.PI * 2, 0, 'YXZ');
-          group.add(leaf);
-        }
-
+      case 'palms':
+        group.add(buildPalm(materials, 3.8 + variant * 0.9, 0.25 + variant * 0.12));
         break;
-      }
       case 'buildings':
       case 'towers': {
         const isTower = this.theme.scenery === 'towers';

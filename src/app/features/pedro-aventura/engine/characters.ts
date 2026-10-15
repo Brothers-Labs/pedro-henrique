@@ -1,53 +1,70 @@
 import {
-  BoxGeometry,
+  type BufferGeometry,
   CanvasTexture,
+  CapsuleGeometry,
   ConeGeometry,
   CylinderGeometry,
   Group,
-  Mesh,
   type Material,
+  Mesh,
   MeshStandardMaterial,
   PlaneGeometry,
+  SphereGeometry,
   TorusGeometry,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 import type { CosmeticPalette } from '../models/economy.model';
 import { disposeGeometries, type MaterialLibrary } from './materials';
 import { crownTexture } from './textures';
 
-const SKIN = '#c98d63';
-const HAIR = '#1d1410';
+const SKIN = '#c58b62';
+const SKIN_SHADE = '#a8704c';
+const HAIR = '#1b120d';
+const LIPS = '#8a4a3c';
+const IRIS = '#3b2416';
 
 export type CharacterPose = 'idle' | 'run' | 'jump' | 'slide' | 'attack' | 'victory' | 'defeat' | 'sit';
 
-function box(width: number, height: number, depth: number, material: Material, castShadow = true): Mesh {
-  const mesh = new Mesh(new BoxGeometry(width, height, depth), material);
-  mesh.castShadow = castShadow;
+/** Peça com sombra, já posicionada. */
+function part(geometry: BufferGeometry, material: Material, x = 0, y = 0, z = 0): Mesh {
+  const mesh = new Mesh(geometry, material);
+
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
 
   return mesh;
+}
+
+/** Caixa de cantos arredondados: tecido e sola não têm quina viva. */
+function rounded(width: number, height: number, depth: number, radius: number): RoundedBoxGeometry {
+  return new RoundedBoxGeometry(width, height, depth, 3, radius);
+}
+
+/** Cápsula em pé com comprimento total `length` (as pontas incluídas). */
+function capsule(radius: number, length: number): CapsuleGeometry {
+  return new CapsuleGeometry(radius, Math.max(0.001, length - radius * 2), 6, 12);
 }
 
 /** Junta com o pivô no ponto de articulação: girar o grupo gira o membro inteiro. */
 function joint(x: number, y: number, z: number, ...children: Mesh[]): Group {
   const group = new Group();
+
   group.position.set(x, y, z);
   group.add(...children);
 
   return group;
 }
 
-function at<T extends Mesh>(mesh: T, x: number, y: number, z: number): T {
-  mesh.position.set(x, y, z);
-
-  return mesh;
-}
-
 /**
- * O Pedro em 3D, feito de blocos: moletom com a coroa, óculos escuros,
- * cordão e tênis.
+ * O Pedro em 3D: moletom da coroa, calça jogger, tênis e um rosto de verdade —
+ * olhos com íris e brilho, sobrancelhas, nariz, boca, barba e cabelo com
+ * topete.
  *
- * É procedural de propósito: nenhum modelo de terceiros, nenhuma licença, e a
- * roupa troca só mudando a paleta do cosmético.
+ * Tudo é geometria feita em código, sem modelo de terceiros: a roupa troca
+ * só mudando a paleta do cosmético. As juntas (quadril, joelho, ombro,
+ * cotovelo, pescoço) são grupos, e a animação só gira esses grupos.
  */
 export class PedroRig {
   readonly root = new Group();
@@ -65,66 +82,55 @@ export class PedroRig {
   private readonly shinRight: Group;
   private readonly emblem: CanvasTexture;
   private readonly emblemMaterial: MeshStandardMaterial;
+  /** Materiais só do rosto (olhos, boca): são do boneco, não da biblioteca. */
+  private readonly faceMaterials: MeshStandardMaterial[] = [];
 
   constructor(materials: MaterialLibrary, palette: CosmeticPalette) {
-    const hoodie = materials.standard(palette.primary, { roughness: 0.85 });
-    const trim = materials.standard(palette.secondary, { roughness: 0.8 });
-    const accent = materials.standard(palette.accent, { metalness: 0.6, roughness: 0.35, emissive: palette.accent, emissiveIntensity: 0.15 });
-    const skin = materials.standard(SKIN, { roughness: 0.75 });
-    const hair = materials.standard(HAIR, { roughness: 0.9 });
-    const glasses = materials.standard('#050507', { metalness: 0.4, roughness: 0.15 });
-    const pants = materials.standard('#141418', { roughness: 0.9 });
-    const sneaker = materials.standard('#f4f4f4', { roughness: 0.6 });
+    const hoodie = materials.standard(palette.primary, { roughness: 0.9 });
+    const trim = materials.standard(palette.secondary, { roughness: 0.85 });
+    const accent = materials.standard(palette.accent, { metalness: 0.75, roughness: 0.3, emissive: palette.accent, emissiveIntensity: 0.12 });
+    const skin = materials.standard(SKIN, { roughness: 0.55 });
+    const skinShade = materials.standard(SKIN_SHADE, { roughness: 0.6 });
+    const hair = materials.standard(HAIR, { roughness: 0.95 });
+    const pants = materials.standard('#16161c', { roughness: 0.92 });
+    const sneaker = materials.standard('#f2f2f2', { roughness: 0.5 });
+    const sole = materials.standard('#2a2a2a', { roughness: 0.8 });
 
     this.emblem = crownTexture(palette.accent);
-    this.emblemMaterial = new MeshStandardMaterial({ map: this.emblem, transparent: true, emissive: palette.accent, emissiveIntensity: 0.25 });
+    this.emblemMaterial = new MeshStandardMaterial({ map: this.emblem, transparent: true, emissive: palette.accent, emissiveIntensity: 0.2 });
 
-    // Pernas: coxa na junta do quadril, canela na junta do joelho.
-    this.shinLeft = joint(0, -0.45, 0, at(box(0.18, 0.42, 0.2, pants), 0, -0.21, 0), at(box(0.22, 0.12, 0.34, sneaker), 0, -0.45, 0.05));
-    this.shinRight = joint(0, -0.45, 0, at(box(0.18, 0.42, 0.2, pants), 0, -0.21, 0), at(box(0.22, 0.12, 0.34, sneaker), 0, -0.45, 0.05));
-    this.legLeft = joint(-0.13, 0.95, 0, at(box(0.21, 0.46, 0.23, pants), 0, -0.22, 0));
-    this.legRight = joint(0.13, 0.95, 0, at(box(0.21, 0.46, 0.23, pants), 0, -0.22, 0));
+    this.shinLeft = this.buildShin(pants, sneaker, sole, accent);
+    this.shinRight = this.buildShin(pants, sneaker, sole, accent);
+    this.legLeft = joint(-0.12, 0.95, 0, part(capsule(0.105, 0.5), pants, 0, -0.22, 0));
+    this.legRight = joint(0.12, 0.95, 0, part(capsule(0.105, 0.5), pants, 0, -0.22, 0));
     this.legLeft.add(this.shinLeft);
     this.legRight.add(this.shinRight);
 
-    // Braços: ombro e cotovelo.
-    this.forearmLeft = joint(0, -0.32, 0, at(box(0.14, 0.3, 0.15, hoodie), 0, -0.15, 0), at(box(0.12, 0.12, 0.12, skin), 0, -0.34, 0), at(box(0.15, 0.05, 0.16, accent), 0, -0.27, 0));
-    this.forearmRight = joint(0, -0.32, 0, at(box(0.14, 0.3, 0.15, hoodie), 0, -0.15, 0), at(box(0.12, 0.12, 0.12, skin), 0, -0.34, 0));
-    this.armLeft = joint(-0.34, 0.55, 0, at(box(0.16, 0.34, 0.17, hoodie), 0, -0.16, 0));
-    this.armRight = joint(0.34, 0.55, 0, at(box(0.16, 0.34, 0.17, hoodie), 0, -0.16, 0));
+    this.forearmLeft = this.buildForearm(hoodie, skin, accent, true);
+    this.forearmRight = this.buildForearm(hoodie, skin, accent, false);
+    this.armLeft = joint(-0.33, 0.52, 0, part(new SphereGeometry(0.11, 16, 12), hoodie), part(capsule(0.085, 0.36), hoodie, 0, -0.16, 0));
+    this.armRight = joint(0.33, 0.52, 0, part(new SphereGeometry(0.11, 16, 12), hoodie), part(capsule(0.085, 0.36), hoodie, 0, -0.16, 0));
     this.armLeft.add(this.forearmLeft);
     this.armRight.add(this.forearmRight);
 
-    // Cabeça: rosto, cabelo com topete, barba e óculos escuros.
-    this.head = joint(
-      0,
-      0.64,
-      0,
-      at(box(0.12, 0.1, 0.12, skin), 0, 0.03, 0),
-      at(box(0.34, 0.36, 0.32, skin), 0, 0.24, 0),
-      at(box(0.36, 0.12, 0.34, hair), 0, 0.44, -0.01),
-      at(box(0.36, 0.26, 0.06, hair), 0, 0.32, -0.16),
-      at(box(0.22, 0.1, 0.2, hair), 0, 0.51, 0.04),
-      at(box(0.36, 0.14, 0.08, hair), 0, 0.12, 0.14),
-      at(box(0.37, 0.08, 0.05, glasses), 0, 0.27, 0.17),
-      at(box(0.06, 0.08, 0.06, skin), -0.19, 0.24, 0),
-      at(box(0.06, 0.08, 0.06, skin), 0.19, 0.24, 0),
-    );
+    this.head = this.buildHead(skin, skinShade, hair);
 
-    const emblem = new Mesh(new PlaneGeometry(0.26, 0.26), this.emblemMaterial);
-    emblem.position.set(0, 0.36, 0.156);
+    const emblem = new Mesh(new PlaneGeometry(0.24, 0.24), this.emblemMaterial);
+    emblem.position.set(0, 0.36, 0.158);
 
-    const chain = new Mesh(new TorusGeometry(0.11, 0.014, 6, 16), accent);
-    chain.position.set(0, 0.5, 0.15);
-    chain.rotation.x = Math.PI / 2.4;
+    const chain = part(new TorusGeometry(0.1, 0.012, 8, 24), accent, 0, 0.5, 0.13);
+    chain.rotation.x = Math.PI / 2.3;
 
     this.torso = joint(
       0,
       0.95,
       0,
-      at(box(0.54, 0.6, 0.3, hoodie), 0, 0.3, 0),
-      at(box(0.56, 0.08, 0.32, trim), 0, 0.02, 0),
-      at(box(0.42, 0.22, 0.12, trim), 0, 0.56, -0.17),
+      // Moletom: tronco arredondado, barra mais justa e capuz caído nas costas.
+      part(rounded(0.56, 0.62, 0.3, 0.1), hoodie, 0, 0.3, 0),
+      part(rounded(0.54, 0.1, 0.29, 0.045), trim, 0, 0.02, 0),
+      part(rounded(0.42, 0.2, 0.16, 0.08), trim, 0, 0.55, -0.13),
+      part(new CylinderGeometry(0.008, 0.008, 0.16, 6), accent, -0.06, 0.48, 0.152),
+      part(new CylinderGeometry(0.008, 0.008, 0.16, 6), accent, 0.06, 0.48, 0.152),
       emblem,
       chain,
     );
@@ -182,12 +188,16 @@ export class PedroRig {
         return;
       case 'idle':
       case 'sit':
-        this.torso.scale.y = 1 + Math.sin(time * 2) * 0.012 * motion;
+        // Pose de capa de revista: mão no bolso, peso numa perna, olhar em volta.
+        this.torso.scale.y = 1 + Math.sin(time * 2) * 0.01 * motion;
         this.head.rotation.y = Math.sin(time * 0.6) * 0.3 * motion;
-        this.armLeft.rotation.z = 0.12;
-        this.armRight.rotation.z = -0.12;
-        this.armRight.rotation.x = -0.15;
-        this.forearmRight.rotation.x = -0.9;
+        this.head.rotation.x = -0.04;
+        this.armLeft.rotation.z = 0.1;
+        this.armRight.rotation.z = -0.22;
+        this.armRight.rotation.x = 0.12;
+        this.forearmRight.rotation.x = -0.35;
+        this.legLeft.rotation.z = -0.04;
+        this.legRight.rotation.z = 0.06;
         return;
     }
   }
@@ -195,7 +205,88 @@ export class PedroRig {
   dispose(): void {
     this.emblem.dispose();
     this.emblemMaterial.dispose();
+
+    for (const material of this.faceMaterials) {
+      material.dispose();
+    }
+
     disposeGeometries(this.root);
+  }
+
+  private buildShin(pants: Material, sneaker: Material, sole: Material, accent: Material): Group {
+    return joint(
+      0,
+      -0.45,
+      0,
+      part(capsule(0.09, 0.46), pants, 0, -0.2, 0),
+      // Tênis: cabedal arredondado, sola escura e o detalhe da cor do cosmético.
+      part(rounded(0.18, 0.12, 0.32, 0.055), sneaker, 0, -0.43, 0.05),
+      part(rounded(0.19, 0.04, 0.34, 0.018), sole, 0, -0.48, 0.05),
+      part(rounded(0.186, 0.03, 0.12, 0.012), accent, 0, -0.41, -0.02),
+    );
+  }
+
+  private buildForearm(sleeve: Material, skin: Material, accent: Material, hasWatch: boolean): Group {
+    const pieces = [
+      part(capsule(0.078, 0.32), sleeve, 0, -0.15, 0),
+      part(new SphereGeometry(0.062, 14, 10).scale(0.85, 1.15, 0.7), skin, 0, -0.35, 0.01),
+    ];
+
+    if (hasWatch) {
+      const watch = part(new TorusGeometry(0.068, 0.016, 8, 18), accent, 0, -0.29, 0);
+
+      watch.rotation.x = Math.PI / 2;
+      pieces.push(watch);
+    }
+
+    return joint(0, -0.32, 0, ...pieces);
+  }
+
+  /**
+   * Cabeça com rosto: crânio levemente oval, orelhas, olhos com íris e brilho,
+   * sobrancelhas, nariz, boca, bigode e barba cheia, cabelo com fade e topete.
+   */
+  private buildHead(skin: Material, skinShade: Material, hair: Material): Group {
+    const white = new MeshStandardMaterial({ color: '#f7f4ef', roughness: 0.25 });
+    const iris = new MeshStandardMaterial({ color: IRIS, roughness: 0.2 });
+    const shine = new MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 0.6 });
+    const lips = new MeshStandardMaterial({ color: LIPS, roughness: 0.5 });
+
+    this.faceMaterials.push(white, iris, shine, lips);
+
+    const skull = part(new SphereGeometry(0.17, 28, 22).scale(0.94, 1.1, 1), skin, 0, 0.26, 0);
+    const face: Mesh[] = [
+      part(new CylinderGeometry(0.066, 0.075, 0.14, 14), skin, 0, 0.05, 0),
+      skull,
+      // Orelhas.
+      part(new SphereGeometry(0.042, 12, 10).scale(0.45, 1, 0.75), skin, -0.158, 0.25, -0.005),
+      part(new SphereGeometry(0.042, 12, 10).scale(0.45, 1, 0.75), skin, 0.158, 0.25, -0.005),
+      // Cabelo: calota com fade nas laterais e o topete na frente.
+      part(new SphereGeometry(0.178, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.4).scale(0.95, 1.12, 1.02), hair, 0, 0.268, -0.004),
+      part(new SphereGeometry(0.176, 24, 14, Math.PI, Math.PI, 0, Math.PI * 0.62).scale(0.96, 1.1, 1.02), hair, 0, 0.26, 0),
+      part(new SphereGeometry(0.11, 18, 12).scale(1.05, 0.48, 0.9), hair, 0, 0.445, 0.05),
+      // Barba cheia contornando o queixo, com bigode.
+      part(new SphereGeometry(0.176, 28, 14, 0, Math.PI, Math.PI * 0.56, Math.PI * 0.36).scale(0.96, 1.1, 1.03), hair, 0, 0.255, 0),
+      part(capsule(0.016, 0.1).rotateZ(Math.PI / 2), hair, 0, 0.198, 0.162),
+      // Boca e nariz.
+      part(capsule(0.011, 0.06).rotateZ(Math.PI / 2), lips, 0, 0.178, 0.168),
+      part(new SphereGeometry(0.026, 14, 10).scale(0.85, 1, 1.15), skinShade, 0, 0.235, 0.178),
+      part(new SphereGeometry(0.02, 12, 8), skinShade, 0, 0.222, 0.19),
+    ];
+
+    for (const side of [-1, 1]) {
+      const x = side * 0.058;
+
+      face.push(
+        part(new SphereGeometry(0.024, 14, 10).scale(1, 0.75, 0.6), white, x, 0.275, 0.152),
+        part(new SphereGeometry(0.013, 12, 8), iris, x, 0.275, 0.165),
+        part(new SphereGeometry(0.004, 6, 4), shine, x + 0.005, 0.28, 0.177),
+        // Sobrancelha grossa, levemente arqueada.
+        part(capsule(0.009, 0.06).rotateZ(Math.PI / 2 + side * 0.15), hair, x, 0.312, 0.157),
+      );
+    }
+
+    return joint(0, 0.62, 0, ...face);
   }
 
   private poseRun(phase: number): void {
@@ -214,8 +305,8 @@ export class PedroRig {
   }
 
   private resetPose(): void {
-    for (const part of [this.body, this.torso, this.head, this.armLeft, this.armRight, this.forearmLeft, this.forearmRight, this.legLeft, this.legRight, this.shinLeft, this.shinRight]) {
-      part.rotation.set(0, 0, 0);
+    for (const joint of [this.body, this.torso, this.head, this.armLeft, this.armRight, this.forearmLeft, this.forearmRight, this.legLeft, this.legRight, this.shinLeft, this.shinRight]) {
+      joint.rotation.set(0, 0, 0);
     }
 
     this.body.position.y = 0;
@@ -224,7 +315,8 @@ export class PedroRig {
 }
 
 /**
- * O Rex, um dobermann de coleira dourada.
+ * O Rex, um dobermann de coleira dourada: corpo atlético, focinho comprido,
+ * orelhas em pé e as marcas cor de canela no focinho, no peito e nas patas.
  *
  * Os visuais "de óculos" e "gold" ganham os óculos escuros do mock.
  */
@@ -235,50 +327,60 @@ export class DogRig {
   private readonly head: Group;
   private readonly tail: Group;
   private readonly legs: readonly Group[];
+  private readonly eyeMaterial = new MeshStandardMaterial({ color: '#1a0f08', roughness: 0.15 });
 
   constructor(materials: MaterialLibrary, palette: CosmeticPalette, hasSunglasses: boolean) {
-    const coat = materials.standard(palette.primary, { roughness: 0.55, metalness: 0.15 });
-    const tan = materials.standard(palette.secondary, { roughness: 0.7 });
-    const collar = materials.standard(palette.accent, { metalness: 0.8, roughness: 0.3, emissive: palette.accent, emissiveIntensity: 0.2 });
-    const nose = materials.standard('#050505', { roughness: 0.3 });
+    const coat = materials.standard(palette.primary, { roughness: 0.4, metalness: 0.2 });
+    const tan = materials.standard(palette.secondary, { roughness: 0.6 });
+    const collar = materials.standard(palette.accent, { metalness: 0.85, roughness: 0.25, emissive: palette.accent, emissiveIntensity: 0.15 });
+    const nose = materials.standard('#0a0a0a', { roughness: 0.25 });
 
-    const leg = (x: number, z: number): Group => joint(x, 0.5, z, at(box(0.09, 0.42, 0.1, coat), 0, -0.21, 0), at(box(0.1, 0.07, 0.13, tan), 0, -0.46, 0.02));
+    const leg = (x: number, z: number): Group =>
+      joint(x, 0.5, z, part(capsule(0.045, 0.36), coat, 0, -0.17, 0), part(new SphereGeometry(0.05, 12, 8).scale(1, 0.6, 1.3), tan, 0, -0.38, 0.015));
 
-    this.legs = [leg(-0.11, 0.24), leg(0.11, 0.24), leg(-0.11, -0.26), leg(0.11, -0.26)];
+    this.legs = [leg(-0.1, 0.26), leg(0.1, 0.26), leg(-0.1, -0.24), leg(0.1, -0.24)];
 
-    const earLeft = new Mesh(new ConeGeometry(0.05, 0.2, 4), coat);
-    earLeft.position.set(-0.08, 0.22, -0.02);
-    const earRight = earLeft.clone();
-    earRight.position.x = 0.08;
+    const ear = (x: number): Mesh => {
+      const mesh = part(new ConeGeometry(0.04, 0.17, 12), coat, x, 0.16, -0.03);
+
+      mesh.rotation.z = -x * 1.8;
+
+      return mesh;
+    };
 
     const headParts: Mesh[] = [
-      at(box(0.22, 0.2, 0.24, coat), 0, 0.08, 0),
-      at(box(0.13, 0.11, 0.2, tan), 0, 0.02, 0.18),
-      at(box(0.06, 0.05, 0.05, nose), 0, 0.05, 0.29),
-      earLeft,
-      earRight,
+      part(new SphereGeometry(0.105, 20, 14).scale(0.95, 0.9, 1.1), coat, 0, 0.06, 0),
+      part(capsule(0.052, 0.2).rotateX(Math.PI / 2), coat, 0, 0.025, 0.13),
+      part(new SphereGeometry(0.05, 14, 10).scale(1.1, 0.7, 1.4), tan, 0, -0.005, 0.15),
+      part(new SphereGeometry(0.024, 10, 8), nose, 0, 0.035, 0.235),
+      part(new SphereGeometry(0.018, 10, 8), tan, -0.045, 0.105, 0.075),
+      part(new SphereGeometry(0.018, 10, 8), tan, 0.045, 0.105, 0.075),
+      part(new SphereGeometry(0.016, 10, 8), this.eyeMaterial, -0.045, 0.085, 0.09),
+      part(new SphereGeometry(0.016, 10, 8), this.eyeMaterial, 0.045, 0.085, 0.09),
+      ear(-0.06),
+      ear(0.06),
     ];
 
     if (hasSunglasses) {
-      headParts.push(at(box(0.24, 0.05, 0.04, materials.standard('#050507', { metalness: 0.5, roughness: 0.1 })), 0, 0.13, 0.13));
+      headParts.push(part(rounded(0.2, 0.045, 0.03, 0.012), materials.standard('#050507', { metalness: 0.6, roughness: 0.1 }), 0, 0.09, 0.1));
     }
 
-    this.head = joint(0, 0.82, 0.38, ...headParts);
+    this.head = joint(0, 0.84, 0.36, ...headParts);
 
-    const collarRing = new Mesh(new TorusGeometry(0.1, 0.022, 6, 14), collar);
-    collarRing.position.set(0, 0.72, 0.3);
+    const collarRing = part(new TorusGeometry(0.085, 0.018, 8, 20), collar, 0, 0.74, 0.3);
     collarRing.rotation.x = Math.PI / 2.6;
 
-    this.tail = joint(0, 0.62, -0.38, at(box(0.04, 0.04, 0.22, coat), 0, 0.08, -0.08));
-    this.tail.rotation.x = -0.9;
+    this.tail = joint(0, 0.66, -0.36, part(capsule(0.022, 0.24), coat, 0, 0.1, 0));
+    this.tail.rotation.x = -0.6;
 
     this.body = joint(
       0,
       0,
       0,
-      at(box(0.28, 0.27, 0.72, coat), 0, 0.6, 0),
-      at(box(0.2, 0.12, 0.4, tan), 0, 0.46, 0.12),
-      at(box(0.2, 0.28, 0.18, coat), 0, 0.74, 0.3),
+      part(capsule(0.14, 0.72).rotateX(Math.PI / 2), coat, 0, 0.6, 0),
+      part(new SphereGeometry(0.13, 18, 12).scale(1, 1.05, 1.1), coat, 0, 0.64, 0.24),
+      part(new SphereGeometry(0.09, 14, 10).scale(1, 0.9, 0.6), tan, 0, 0.6, 0.33),
+      part(capsule(0.075, 0.28).rotateX(-0.6), coat, 0, 0.76, 0.32),
       collarRing,
     );
     this.body.add(this.head, this.tail, ...this.legs);
@@ -288,12 +390,12 @@ export class DogRig {
   pose(pose: CharacterPose, time: number, cadence = 1, motion = 1): void {
     const [frontLeft, frontRight, backLeft, backRight] = this.legs;
 
-    for (const part of [this.body, ...this.legs, this.head]) {
-      part.rotation.set(0, 0, 0);
+    for (const piece of [this.body, ...this.legs, this.head]) {
+      piece.rotation.set(0, 0, 0);
     }
 
     this.body.position.y = 0;
-    this.tail.rotation.set(-0.9, Math.sin(time * 12) * 0.5 * motion, 0);
+    this.tail.rotation.set(-0.6, Math.sin(time * 12) * 0.5 * motion, 0);
 
     switch (pose) {
       case 'run':
@@ -332,58 +434,66 @@ export class DogRig {
   }
 
   dispose(): void {
+    this.eyeMaterial.dispose();
     disposeGeometries(this.root);
   }
 }
 
-/** Rodas de carro e moto: cilindro deitado. */
-function wheel(radius: number, width: number, material: Material): Mesh {
-  const mesh = new Mesh(new CylinderGeometry(radius, radius, width, 14), material);
-  mesh.rotation.z = Math.PI / 2;
-  mesh.castShadow = true;
+/** Rodas: pneu, aro metálico e calota. */
+function wheel(radius: number, width: number, tire: Material, rim: Material): Group {
+  const group = new Group();
+  const tireMesh = part(new CylinderGeometry(radius, radius, width, 22).rotateZ(Math.PI / 2), tire);
+  const rimMesh = part(new CylinderGeometry(radius * 0.62, radius * 0.62, width + 0.02, 18).rotateZ(Math.PI / 2), rim);
 
-  return mesh;
+  group.add(tireMesh, rimMesh);
+
+  return group;
 }
 
-/** Veículos do lobby e os carros da pista: SUV, esportivo e moto. */
+/** Veículos do lobby e os carros da pista: SUV, esportivo e moto, de linhas arredondadas. */
 export function buildVehicle(materials: MaterialLibrary, shape: 'suv' | 'sport' | 'moto', palette: CosmeticPalette): Group {
-  const paint = materials.standard(palette.primary, { metalness: 0.7, roughness: 0.25 });
-  const detail = materials.standard(palette.secondary, { metalness: 0.5, roughness: 0.4 });
-  const glass = materials.standard('#0d1420', { metalness: 0.6, roughness: 0.1 });
-  const tire = materials.standard('#0a0a0a', { roughness: 0.9 });
-  const light = materials.neon(palette.accent, 1.4);
+  const paint = materials.standard(palette.primary, { metalness: 0.8, roughness: 0.22 });
+  const detail = materials.standard(palette.secondary, { metalness: 0.6, roughness: 0.35 });
+  const glass = materials.standard('#0b1220', { metalness: 0.7, roughness: 0.08 });
+  const tire = materials.standard('#0b0b0b', { roughness: 0.9 });
+  const rim = materials.standard('#c9ced6', { metalness: 0.9, roughness: 0.2 });
+  const light = materials.neon(palette.accent, 1.6);
+  const tailLight = materials.neon('#ff2a2a', 1.3);
   const group = new Group();
 
   if (shape === 'moto') {
     group.add(
-      at(box(0.3, 0.35, 1.5, paint), 0, 0.65, 0),
-      at(box(0.32, 0.2, 0.6, detail), 0, 0.88, -0.2),
-      at(box(0.12, 0.08, 0.06, light), 0, 0.8, 0.78),
+      part(rounded(0.3, 0.32, 1.45, 0.12), paint, 0, 0.66, 0),
+      part(rounded(0.34, 0.16, 0.6, 0.07), detail, 0, 0.88, -0.22),
+      part(new SphereGeometry(0.07, 12, 10), light, 0, 0.8, 0.76),
     );
 
     for (const z of [-0.65, 0.65]) {
-      group.add(at(wheel(0.34, 0.14, tire), 0, 0.34, z));
+      group.add(wheel(0.34, 0.14, tire, rim).translateY(0.34).translateZ(z));
     }
 
     return group;
   }
 
   const isSport = shape === 'sport';
-  const bodyHeight = isSport ? 0.55 : 0.9;
-  const bodyY = isSport ? 0.5 : 0.78;
+  const bodyHeight = isSport ? 0.5 : 0.85;
+  const bodyY = isSport ? 0.52 : 0.8;
+  const cabinHeight = isSport ? 0.42 : 0.72;
 
   group.add(
-    at(box(2.0, bodyHeight, 4.3, paint), 0, bodyY, 0),
-    at(box(isSport ? 1.6 : 1.85, isSport ? 0.45 : 0.75, isSport ? 1.7 : 2.6, glass), 0, bodyY + bodyHeight / 2 + (isSport ? 0.2 : 0.37), isSport ? -0.25 : -0.3),
-    at(box(2.02, 0.12, 4.32, detail), 0, bodyY - bodyHeight / 2 + 0.06, 0),
-    at(box(0.4, 0.14, 0.05, light), -0.65, bodyY + 0.05, 2.16),
-    at(box(0.4, 0.14, 0.05, light), 0.65, bodyY + 0.05, 2.16),
-    at(box(1.7, 0.12, 0.05, materials.neon('#ff2a2a', 1.2)), 0, bodyY + 0.08, -2.16),
+    part(rounded(2.0, bodyHeight, 4.3, isSport ? 0.2 : 0.16), paint, 0, bodyY, 0),
+    part(rounded(isSport ? 1.6 : 1.84, cabinHeight, isSport ? 1.9 : 2.6, isSport ? 0.2 : 0.14), glass, 0, bodyY + bodyHeight / 2 + cabinHeight / 2 - 0.05, isSport ? -0.3 : -0.3),
+    part(rounded(2.04, 0.1, 4.34, 0.04), detail, 0, bodyY - bodyHeight / 2 + 0.06, 0),
+    part(rounded(0.42, 0.11, 0.06, 0.03), light, -0.65, bodyY + 0.08, 2.15),
+    part(rounded(0.42, 0.11, 0.06, 0.03), light, 0.65, bodyY + 0.08, 2.15),
+    part(rounded(1.7, 0.09, 0.06, 0.03), tailLight, 0, bodyY + 0.1, -2.15),
   );
 
   for (const x of [-0.95, 0.95]) {
     for (const z of [-1.35, 1.35]) {
-      group.add(at(wheel(isSport ? 0.36 : 0.42, 0.3, tire), x, isSport ? 0.36 : 0.42, z));
+      const radius = isSport ? 0.36 : 0.43;
+
+      group.add(wheel(radius, 0.3, tire, rim).translateX(x).translateY(radius).translateZ(z));
     }
   }
 

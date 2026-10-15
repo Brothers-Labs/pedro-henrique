@@ -17,6 +17,7 @@ function victory(attemptId: string): RunResult {
   return {
     attemptId,
     levelId: '1-1',
+    difficulty: 'facil',
     isVictory: true,
     timeMs: 40_000,
     coins: 20,
