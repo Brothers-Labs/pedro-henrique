@@ -1,0 +1,193 @@
+@use 'mixins' as *;
+
+/**
+ * Identidade visual do Pedro Aventura: preto profundo, dourado metálico, azul
+ * neon e vidro translúcido.
+ *
+ * Os tokens vivem como custom properties declaradas na moldura do jogo
+ * (`aventura-shell`), e todo componente da feature consome os mesmos nomes.
+ * Nada aqui vaza para o resto do site.
+ */
+
+@mixin tokens {
+  --av-ink: #07070d;
+  --av-ink-soft: #11111c;
+  --av-glass: rgb(16 16 30 / 72%);
+  --av-glass-strong: rgb(10 10 20 / 88%);
+  --av-line: rgb(255 255 255 / 12%);
+  --av-gold: #f5c542;
+  --av-gold-deep: #c9971c;
+  --av-gold-soft: #ffe7a1;
+  --av-blue: #3fb8ff;
+  --av-blue-deep: #1565d8;
+  --av-purple: #b06bff;
+  --av-red: #ff4d5e;
+  --av-green: #3ddc84;
+  --av-text: #f4f2ff;
+  --av-text-soft: #b9b5d6;
+  --av-radius: 1rem;
+  --av-radius-lg: 1.5rem;
+  --av-shadow: 0 12px 32px rgb(0 0 0 / 45%);
+  --av-glow-gold: 0 0 18px rgb(245 197 66 / 45%);
+  --av-glow-blue: 0 0 18px rgb(63 184 255 / 45%);
+  --av-touch: 3.5rem;
+}
+
+/** Cartão de vidro escuro com borda fina. */
+@mixin glass($strong: false) {
+  @if $strong {
+    background: var(--av-glass-strong);
+  } @else {
+    background: var(--av-glass);
+  }
+
+  border: 1px solid var(--av-line);
+  border-radius: var(--av-radius);
+  box-shadow: var(--av-shadow);
+  backdrop-filter: blur(10px);
+  color: var(--av-text);
+}
+
+/**
+ * Base dos botões de jogo. Todas as declarações vêm antes das regras de
+ * estado, e o que muda entre usos (tamanho, respiro) entra por parâmetro.
+ */
+@mixin -game-button($top, $middle, $bottom, $text, $edge, $glow, $size, $padding, $min-height) {
+  @include touch-target($min-height);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: $padding;
+  border: 0;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #{$top} 0%, #{$middle} 45%, #{$bottom} 100%);
+  color: $text;
+  font-family: var(--font-display);
+  font-size: $size;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 6px 0 #{$edge}, #{$glow};
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+
+  &:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 #{$edge}, #{$glow};
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--av-blue));
+  }
+
+  &:disabled {
+    filter: grayscale(0.7);
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+/** Botão principal dourado, grande e legível. */
+@mixin gold-button($size: var(--text-lg), $padding: 0.8rem 1.6rem, $min-height: var(--av-touch)) {
+  @include -game-button(#ffe08a, var(--av-gold), var(--av-gold-deep), #1a1206, #8a6510, var(--av-glow-gold), $size, $padding, $min-height);
+}
+
+/** Botão secundário azul neon. */
+@mixin blue-button($size: var(--text-lg), $padding: 0.8rem 1.6rem, $min-height: var(--av-touch)) {
+  @include -game-button(#62c8ff, var(--av-blue), var(--av-blue-deep), #ffffff, #0b3d8a, var(--av-glow-blue), $size, $padding, $min-height);
+}
+
+/** Botão discreto de vidro. */
+@mixin ghost-button {
+  @include touch-target(var(--av-touch));
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--av-line);
+  border-radius: 0.9rem;
+  background: rgb(255 255 255 / 6%);
+  color: var(--av-text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring(var(--av-blue));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @include hover-enabled {
+    background: rgb(255 255 255 / 12%);
+  }
+}
+
+/** Título dourado em caixa alta. */
+@mixin gold-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff3c4 0%, var(--av-gold) 55%, var(--av-gold-deep) 100%);
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgb(0 0 0 / 55%));
+}
+
+/** Barra de progresso (XP, missão, percurso). */
+@mixin progress-track {
+  position: relative;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+}
+
+/** `$isAnimated` falso para barras que andam a cada quadro (o percurso da fase). */
+@mixin progress-fill($color: var(--av-gold), $isAnimated: true) {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #{$color}, #fff3c4);
+
+  @if $isAnimated {
+    transition: width 300ms ease;
+
+    @include reduced-motion {
+      transition: none;
+    }
+  }
+}
+
+/** Diálogo nativo do jogo, centrado e sobre fundo escurecido. */
+@mixin dialog {
+  @include glass(true);
+
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  // O reset de margem do site anula a centralização nativa do <dialog>.
+  margin: auto;
+  padding: 1.5rem;
+  overflow-y: auto;
+
+  &::backdrop {
+    background: rgb(0 0 0 / 65%);
+    backdrop-filter: blur(3px);
+  }
+}

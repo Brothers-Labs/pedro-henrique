@@ -1,0 +1,78 @@
+@use '../aventura' as av;
+
+.mission {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--av-line);
+  border-radius: var(--av-radius);
+  background: rgb(255 255 255 / 4%);
+
+  &--done {
+    border-color: rgb(61 220 132 / 45%);
+  }
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 8%);
+    font-size: 1.4rem;
+  }
+
+  &__body {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--av-text);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+  }
+
+  &__track {
+    @include av.progress-track;
+
+    height: 0.45rem;
+  }
+
+  &__fill {
+    @include av.progress-fill(var(--av-green));
+  }
+
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    color: var(--av-text-soft);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  &__reward {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgb(63 184 255 / 50%);
+    border-radius: 999px;
+    background: rgb(21 101 216 / 35%);
+    font-family: var(--font-display);
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  &__claim {
+    @include av.gold-button(var(--text-sm), 0.45rem 0.9rem, 2.75rem);
+  }
+
+  &__claimed {
+    color: var(--av-green);
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}

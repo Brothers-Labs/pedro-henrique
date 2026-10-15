@@ -1,0 +1,117 @@
+@if (!level()) {
+  <section class="message">
+    <h1 class="message__title">Fase não encontrada</h1>
+    <p>Essa fase não existe no mapa da Temporada do Pedro.</p>
+    <a class="message__action" routerLink="/pedro-aventura/mapa">🗺️ Ir para o mapa</a>
+  </section>
+} @else if (isLocked()) {
+  <section class="message">
+    <h1 class="message__title">Fase trancada 🔒</h1>
+    <p>Vença a fase anterior para abrir esta. As regiões abrem com estrelas.</p>
+    <a class="message__action" routerLink="/pedro-aventura/mapa">🗺️ Ir para o mapa</a>
+  </section>
+} @else if (level(); as info) {
+  @let status = hud();
+
+  <div class="run" [class.run--touch]="showTouchControls()">
+    <div #stage class="run__stage"></div>
+
+    <p class="visually-hidden" aria-live="assertive">{{ announcement() }}</p>
+
+    <header class="hud">
+      <div class="hud__level">
+        <span class="hud__crown" aria-hidden="true">👑</span>
+        <span class="hud__name">
+          <small>Fase {{ info.id }}</small>
+          <strong>{{ info.name }}</strong>
+        </span>
+        <span class="hud__hearts" [attr.aria-label]="status.lives + ' de ' + status.maxLives + ' corações'">
+          @for (isFull of hearts(); track $index) {
+            <span aria-hidden="true">{{ isFull ? '❤️' : '🖤' }}</span>
+          }
+        </span>
+      </div>
+
+      <dl class="hud__stats">
+        <div><dt class="visually-hidden">Tempo</dt><dd><span aria-hidden="true">⏱</span> {{ formatStopwatch(status.timeMs) }}</dd></div>
+        <div><dt class="visually-hidden">Coroas</dt><dd><span aria-hidden="true">👑</span> {{ status.crowns }}/3</dd></div>
+        <div><dt class="visually-hidden">Moedas</dt><dd><span aria-hidden="true">🪙</span> {{ status.coins }}/{{ info.coinTarget }}</dd></div>
+      </dl>
+
+      <button type="button" class="hud__pause" aria-label="Pausar" (click)="pause()" [disabled]="phase() !== 'playing'">⏸</button>
+    </header>
+
+    <section class="objectives" [class.objectives--closed]="!isObjectivesOpen()" aria-labelledby="objetivos-titulo">
+      <button type="button" class="objectives__toggle" [attr.aria-expanded]="isObjectivesOpen()" (click)="toggleObjectives()">
+        <span id="objetivos-titulo">Objetivos da fase</span>
+        <span aria-hidden="true">{{ isObjectivesOpen() ? '▾' : '▸' }}</span>
+      </button>
+      @if (isObjectivesOpen()) {
+        <ul class="objectives__list">
+          @for (objective of objectives(); track objective.id) {
+            <li [class.is-met]="objective.isMet">
+              <span aria-hidden="true">{{ objective.isMet ? '✅' : '⬜' }}</span>
+              <span>{{ objective.label }}</span>
+              @if (objective.id === 'coins' || objective.id === 'ramps') {
+                <strong>{{ objective.current }}/{{ objective.target }}</strong>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <div
+      class="progress"
+      role="progressbar"
+      aria-label="Percurso"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="(status.progress * 100).toFixed(0)"
+    >
+      <span class="progress__fill" [style.width.%]="status.progress * 100"></span>
+      <span class="progress__label">{{ (status.progress * 100).toFixed(0) }}% 🏁</span>
+    </div>
+
+    @switch (phase()) {
+      @case ('loading') {
+        <p class="overlay" role="status">Preparando a pista…</p>
+      }
+      @case ('ready') {
+        <div class="overlay overlay--countdown" role="status">
+          @if (info.hint) {
+            <p class="overlay__hint">{{ info.hint }}</p>
+          }
+          <p class="overlay__count" [attr.aria-label]="'Começa em ' + countdown()">{{ countdown() }}</p>
+        </div>
+      }
+      @case ('error') {
+        <div class="overlay" role="alert">
+          <p>{{ errorMessage() }}</p>
+          <a class="message__action" routerLink="/pedro-aventura/mapa">🗺️ Voltar ao mapa</a>
+        </div>
+      }
+    }
+
+    @if (isContextLost()) {
+      <p class="overlay" role="status">A imagem 3D pausou. Ela volta sozinha em instantes.</p>
+    }
+
+    @if (showTouchControls() && phase() === 'playing') {
+      <app-touch-controls (command)="press($event)" />
+    }
+
+    <app-run-result-dialog
+      [mode]="dialogMode()"
+      [summary]="summary()"
+      [objectives]="objectives()"
+      [hud]="status"
+      [hasNext]="nextLevel() !== null"
+      (resumed)="resume()"
+      (continued)="continueFromCheckpoint()"
+      (restarted)="restart()"
+      (exited)="exitToMap()"
+      (nextChosen)="goToNext()"
+    />
+  </div>
+}

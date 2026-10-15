@@ -1,0 +1,279 @@
+@use 'mixins' as *;
+@use '../../aventura' as av;
+
+:host {
+  display: block;
+}
+
+.map {
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+
+  &__scene {
+    position: relative;
+    height: 58dvh;
+    min-height: 20rem;
+    overflow: hidden;
+  }
+
+  &__canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 2;
+    width: min(20rem, calc(100% - 1.5rem));
+  }
+
+  &__status {
+    position: absolute;
+    inset: auto 1rem 1rem;
+    z-index: 2;
+    margin: 0;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 1px 4px #000000;
+  }
+}
+
+.label {
+  @include av.glass(true);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  gap: 0.05rem;
+  padding: 0.35rem 0.65rem;
+  border-color: rgb(61 220 132 / 55%);
+  font-family: var(--font-display);
+  line-height: 1.1;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  will-change: transform;
+
+  small {
+    color: var(--av-text-soft);
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+  }
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  &--locked {
+    border-color: var(--av-line);
+  }
+
+  &--selected {
+    border-color: var(--av-gold);
+    box-shadow: var(--av-glow-gold);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--av-blue));
+  }
+
+  @include until(30rem) {
+    small,
+    span {
+      display: none;
+    }
+
+    strong {
+      font-size: 0.7rem;
+    }
+  }
+}
+
+.next {
+  @include av.glass(true);
+
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  display: none;
+  width: 11rem;
+  padding: 0.7rem;
+  text-align: center;
+
+  @include from(48rem) {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--av-gold);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+  }
+
+  &__text {
+    margin: 0;
+    color: var(--av-blue);
+    font-weight: 800;
+  }
+}
+
+.strip {
+  padding: 0 1rem;
+
+  @include snap-row(0.6rem);
+
+  &__card {
+    @include av.glass;
+
+    position: relative;
+    display: grid;
+    justify-items: start;
+    gap: 0.2rem;
+    width: 11rem;
+    padding: 0.7rem 0.8rem;
+    font-family: var(--font-display);
+    text-align: left;
+    cursor: pointer;
+
+    &--selected {
+      border-color: var(--av-gold);
+      box-shadow: var(--av-shadow), var(--av-glow-gold);
+    }
+
+    &:focus-visible {
+      @include focus-ring(var(--av-blue));
+    }
+  }
+
+  &__emoji {
+    font-size: 1.8rem;
+  }
+
+  &__name {
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  &__stars {
+    color: var(--av-gold);
+    font-weight: 800;
+  }
+
+  &__lock {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+  }
+}
+
+.region {
+  @include av.glass(true);
+
+  display: grid;
+  gap: 0.9rem;
+  margin: 0 1rem;
+  padding: 1rem;
+
+  &__title {
+    @include av.gold-title;
+
+    font-size: var(--text-xl);
+  }
+
+  &__tagline,
+  &__lock {
+    margin: 0.3rem 0 0;
+    color: var(--av-text-soft);
+    font-weight: 700;
+  }
+
+  &__lock {
+    color: var(--av-gold-soft);
+  }
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--av-line);
+    border-radius: var(--av-radius);
+    background: rgb(255 255 255 / 4%);
+
+    &--locked {
+      opacity: 0.55;
+    }
+  }
+
+  &__number {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: rgb(245 197 66 / 15%);
+    color: var(--av-gold);
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
+
+  &__info {
+    display: grid;
+    gap: 0.15rem;
+
+    strong {
+      font-family: var(--font-display);
+    }
+  }
+
+  &__stars {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    color: rgb(255 255 255 / 25%);
+
+    .is-on {
+      color: var(--av-gold);
+    }
+
+    small {
+      margin-left: 0.4rem;
+      color: var(--av-text-soft);
+      font-weight: 700;
+    }
+  }
+
+  &__play {
+    @include av.gold-button(var(--text-sm), 0.4rem 0.9rem, 2.75rem);
+  }
+
+  &__closed {
+    font-size: 1.4rem;
+  }
+}

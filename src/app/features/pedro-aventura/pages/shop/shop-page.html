@@ -1,0 +1,41 @@
+<div class="page">
+  <header class="page__header">
+    <h1 class="page__title">Loja do evento</h1>
+    <p class="page__lead">Roupas, visuais do Rex e veículos, trocados pelas moedas e diamantes que você ganha jogando.</p>
+  </header>
+
+  @for (section of sections(); track section.slot.id) {
+    <section class="group" [attr.aria-labelledby]="'loja-' + section.slot.id">
+      <h2 class="group__title" [id]="'loja-' + section.slot.id">{{ section.slot.emoji }} {{ section.slot.label }}</h2>
+      <ul class="shelf">
+        @for (item of section.items; track item.cosmetic.id) {
+          <li class="product" [class]="'product product--' + item.cosmetic.rarity">
+            <span class="product__emoji" aria-hidden="true">{{ item.cosmetic.emoji }}</span>
+            <strong class="product__name">{{ item.cosmetic.name }}</strong>
+            <small class="product__rarity">{{ rarityLabel[item.cosmetic.rarity] }}</small>
+            @if (item.isOwned) {
+              <a class="ghost" routerLink="/pedro-aventura/personagem">✔ Na coleção</a>
+            } @else if (item.cosmetic.price; as price) {
+              <button type="button" class="primary" (click)="pending.set(item.cosmetic)">
+                {{ formatNumber(price.amount) }} <span aria-hidden="true">{{ currencyEmoji[price.currency] }}</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <p class="page__lead">Os itens mais raros (Pedro Elite, Rex Gold, Lambo Gold) saem só do Passe de Temporada.</p>
+</div>
+
+@if (pending(); as cosmetic) {
+  <app-confirm-dialog
+    [isOpen]="true"
+    [heading]="cosmetic.name"
+    [message]="pendingMessage()"
+    [confirmLabel]="canAffordPending() ? 'Comprar' : 'Entendi'"
+    (confirmed)="canAffordPending() ? confirm() : pending.set(null)"
+    (cancelled)="pending.set(null)"
+  />
+}

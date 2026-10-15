@@ -1,19 +1,29 @@
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-<app-site-header />
+@if (!isImmersive()) {
+  <app-site-header />
+}
 
 <div class="shell">
-  <app-side-nav />
+  @if (!isImmersive()) {
+    <app-side-nav />
+  }
 
   <div class="shell__content">
-    <app-status-banner />
+    @if (!isImmersive()) {
+      <app-status-banner />
+    }
 
     <main id="conteudo" class="main" tabindex="-1">
       <router-outlet />
     </main>
 
-    <app-site-footer />
+    @if (!isImmersive()) {
+      <app-site-footer />
+    }
   </div>
 </div>
 
-<app-bottom-nav />
+@if (!isImmersive()) {
+  <app-bottom-nav />
+}

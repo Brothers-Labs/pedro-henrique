@@ -1,0 +1,59 @@
+<div class="page">
+  <header class="page__header">
+    <h1 class="page__title">Personagem</h1>
+    <p class="page__lead">Escolha a roupa do Pedro, o visual do Rex e o carro do lobby.</p>
+  </header>
+
+  <div class="dressing">
+    <section class="dressing__stage" aria-label="Prévia do personagem">
+      <app-lobby-stage framing="character" [look]="previewLook()" />
+
+      @let item = selected();
+      <div class="dressing__action">
+        <strong>{{ item.emoji }} {{ item.name }}</strong>
+        <small>{{ rarityLabel[item.rarity] }}</small>
+        @if (isEquipped(item)) {
+          <span class="ghost">✔ Usando</span>
+        } @else if (owns(item)) {
+          <button type="button" class="primary" (click)="equip(item)">Usar</button>
+        } @else if (item.price) {
+          <a class="secondary" routerLink="/pedro-aventura/loja">Ver na loja</a>
+        } @else {
+          <a class="secondary" routerLink="/pedro-aventura/passe">🔒 Prêmio do passe</a>
+        }
+      </div>
+    </section>
+
+    <section class="dressing__choices">
+      <div class="dressing__slots" role="group" aria-label="Tipo de item">
+        @for (entry of slots; track entry.id) {
+          <button type="button" class="ghost" [class.is-active]="slot() === entry.id" [attr.aria-pressed]="slot() === entry.id" (click)="chooseSlot(entry.id)">
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </button>
+        }
+      </div>
+
+      <ul class="dressing__grid">
+        @for (entry of items(); track entry.cosmetic.id) {
+          <li>
+            <button
+              type="button"
+              class="option"
+              [class.option--equipped]="entry.isEquipped"
+              [class.option--locked]="!entry.isOwned"
+              [class.option--selected]="selected().id === entry.cosmetic.id"
+              [attr.aria-pressed]="selected().id === entry.cosmetic.id"
+              (click)="tryOn(entry.cosmetic)"
+            >
+              <span class="option__swatch" [style.background]="entry.cosmetic.palette.primary" aria-hidden="true">
+                <span [style.background]="entry.cosmetic.palette.accent"></span>
+              </span>
+              <span class="option__name">{{ entry.cosmetic.name }}</span>
+              <small>{{ entry.isEquipped ? 'Usando' : entry.isOwned ? 'Na coleção' : '🔒 ' + rarityLabel[entry.cosmetic.rarity] }}</small>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>

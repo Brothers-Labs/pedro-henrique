@@ -1,0 +1,102 @@
+<div class="map">
+  <div class="map__scene">
+    <div #canvasHost class="map__canvas"></div>
+
+    @for (view of regions(); track view.region.id) {
+      <button
+        #regionLabel
+        type="button"
+        class="label"
+        [class.label--locked]="view.status !== 'unlocked'"
+        [class.label--selected]="view.region.id === selectedId()"
+        [attr.data-region]="view.region.id"
+        [attr.aria-label]="'Região ' + view.region.number + ': ' + view.region.name + ', ' + statusLabel(view.status) + ', ' + view.stars + ' de ' + view.maxStars + ' estrelas'"
+        (click)="select(view.region.id)"
+      >
+        <small>Região {{ view.region.number }}</small>
+        <strong>{{ view.region.emoji }} {{ view.region.name }}</strong>
+        <span>⭐ {{ view.stars }}/{{ view.maxStars }} @if (view.status !== 'unlocked') { 🔒 }</span>
+      </button>
+    }
+
+    <div class="map__badge">
+      <app-level-badge />
+    </div>
+
+    @if (nextReward(); as next) {
+      <aside class="next" aria-label="Próxima recompensa">
+        <h2 class="next__title">Próxima recompensa</h2>
+        <app-reward-tile [reward]="next.reward" />
+        <p class="next__text">Nível {{ next.level }} · faltam {{ next.missingXp }} XP</p>
+      </aside>
+    }
+
+    @switch (presence.phase()) {
+      @case ('loading') {
+        <p class="map__status" role="status">Carregando o mapa…</p>
+      }
+      @case ('error') {
+        <p class="map__status" role="alert">{{ noSceneMessage }} Use os cartões abaixo para escolher a região.</p>
+      }
+      @case ('context-lost') {
+        <p class="map__status" role="status">A imagem 3D pausou. Ela volta sozinha em instantes.</p>
+      }
+    }
+  </div>
+
+  <nav class="strip" aria-label="Regiões">
+    @for (view of regions(); track view.region.id) {
+      <button
+        type="button"
+        class="strip__card"
+        [class.strip__card--selected]="view.region.id === selectedId()"
+        [attr.aria-pressed]="view.region.id === selectedId()"
+        (click)="select(view.region.id)"
+      >
+        <span class="strip__emoji" aria-hidden="true">{{ view.region.emoji }}</span>
+        <span class="strip__name">{{ view.region.number }}. {{ view.region.name }}</span>
+        <span class="strip__stars">⭐ {{ view.stars }}/{{ view.maxStars }}</span>
+        @if (view.status !== 'unlocked') {
+          <span class="strip__lock" aria-hidden="true">🔒</span>
+        }
+      </button>
+    }
+  </nav>
+
+  @let current = selected();
+  <section class="region" aria-labelledby="regiao-titulo">
+    <header class="region__header">
+      <h1 id="regiao-titulo" class="region__title">{{ current.region.emoji }} {{ current.region.name }}</h1>
+      <p class="region__tagline">{{ current.region.tagline }}</p>
+      @if (current.status === 'locked') {
+        <p class="region__lock">🔒 {{ current.hint }}</p>
+      } @else if (current.status === 'event-closed') {
+        <p class="region__lock">⏱ O evento acontece só durante a temporada.</p>
+      }
+    </header>
+
+    <ol class="levels">
+      @for (entry of current.levels; track entry.level.id) {
+        <li class="levels__item" [class.levels__item--locked]="!entry.isUnlocked">
+          <span class="levels__number">{{ entry.level.id }}</span>
+          <span class="levels__info">
+            <strong>{{ entry.level.name }}</strong>
+            <span class="levels__stars" [attr.aria-label]="(entry.progress?.bestStars ?? 0) + ' de 3 estrelas'">
+              @for (slot of [1, 2, 3]; track slot) {
+                <span aria-hidden="true" [class.is-on]="slot <= (entry.progress?.bestStars ?? 0)">★</span>
+              }
+              @if (entry.progress?.bestTimeMs; as best) {
+                <small>Recorde {{ formatStopwatch(best) }}</small>
+              }
+            </span>
+          </span>
+          @if (entry.isUnlocked) {
+            <a class="levels__play" [routerLink]="['/pedro-aventura/fase', entry.level.id]">Jogar ▶</a>
+          } @else {
+            <span class="levels__closed">🔒</span>
+          }
+        </li>
+      }
+    </ol>
+  </section>
+</div>

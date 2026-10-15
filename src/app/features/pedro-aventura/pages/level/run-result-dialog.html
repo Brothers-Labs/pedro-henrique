@@ -1,0 +1,85 @@
+<dialog #dialog class="result" aria-labelledby="resultado-titulo" (cancel)="onCancel($event)">
+  @switch (mode()) {
+    @case ('paused') {
+      <h2 id="resultado-titulo" class="result__title">Pausa</h2>
+      <p class="result__text">Respira, toma uma água. A fase espera você.</p>
+      <div class="result__actions">
+        <button type="button" class="result__primary" (click)="resumed.emit()" autofocus>▶ Continuar</button>
+        <button type="button" class="result__ghost" (click)="restarted.emit()">↻ Recomeçar a fase</button>
+        <button type="button" class="result__ghost" (click)="exited.emit()">🗺️ Voltar ao mapa</button>
+      </div>
+      <p class="result__note">Sair agora não guarda as moedas desta tentativa.</p>
+    }
+
+    @case ('victory') {
+      <p class="result__burst" aria-hidden="true">🏆</p>
+      <h2 id="resultado-titulo" class="result__title">Fase completa!</h2>
+
+      <p class="result__stars" [attr.aria-label]="(summary()?.stars ?? 0) + ' de 3 estrelas'">
+        @for (isEarned of starSlots(); track $index) {
+          <span class="result__star" [class.result__star--on]="isEarned" aria-hidden="true">★</span>
+        }
+      </p>
+
+      <ul class="result__objectives">
+        @for (objective of objectives(); track objective.id) {
+          <li [class.is-met]="objective.isMet">
+            <span aria-hidden="true">{{ objective.isMet ? '✅' : '⬜' }}</span>
+            {{ objective.label }}
+            <span class="visually-hidden">{{ objective.isMet ? '(cumprido)' : '(não cumprido)' }}</span>
+          </li>
+        }
+      </ul>
+
+      @if (summary(); as result) {
+        <dl class="result__rewards">
+          <div><dt>Tempo</dt><dd>{{ formatStopwatch(hud().timeMs) }}</dd></div>
+          <div><dt>Moedas</dt><dd>🪙 +{{ formatNumber(result.coinsGained) }}</dd></div>
+          <div><dt>XP</dt><dd>⭐ +{{ formatNumber(result.xpGained) }}</dd></div>
+          @if (result.diamondsGained > 0) {
+            <div><dt>Diamantes</dt><dd>💎 +{{ result.diamondsGained }}</dd></div>
+          }
+        </dl>
+
+        @if (result.isNewRecord) {
+          <p class="result__badge">🎉 Novo recorde!</p>
+        }
+
+        @if (result.seasonLevelAfter > result.seasonLevelBefore) {
+          <p class="result__badge">👑 Você chegou ao nível {{ result.seasonLevelAfter }} do passe!</p>
+        }
+
+        @for (region of result.unlockedRegions; track region.id) {
+          <p class="result__badge">{{ region.emoji }} Nova região liberada: {{ region.name }}!</p>
+        }
+
+        @for (mission of result.completedMissions; track mission.id) {
+          <p class="result__badge">{{ mission.emoji }} Missão completa: {{ mission.title }}. Resgate em Missões!</p>
+        }
+      }
+
+      <div class="result__actions">
+        @if (hasNext()) {
+          <button type="button" class="result__primary" (click)="nextChosen.emit()" autofocus>Próxima fase ▶</button>
+        }
+        <button type="button" class="result__ghost" (click)="restarted.emit()">↻ Jogar de novo</button>
+        <button type="button" class="result__ghost" (click)="exited.emit()">🗺️ Mapa</button>
+      </div>
+    }
+
+    @case ('defeat') {
+      <p class="result__burst" aria-hidden="true">💔</p>
+      <h2 id="resultado-titulo" class="result__title">Acabaram os corações</h2>
+      <p class="result__text">Tudo bem! Dá para continuar do último checkpoint com os corações cheios.</p>
+      <dl class="result__rewards">
+        <div><dt>Moedas pegas</dt><dd>🪙 {{ hud().coins }}</dd></div>
+        <div><dt>Percurso</dt><dd>{{ (hud().progress * 100).toFixed(0) }}%</dd></div>
+      </dl>
+      <div class="result__actions">
+        <button type="button" class="result__primary" (click)="continued.emit()" autofocus>❤️ Continuar do checkpoint</button>
+        <button type="button" class="result__ghost" (click)="restarted.emit()">↻ Recomeçar a fase</button>
+        <button type="button" class="result__ghost" (click)="exited.emit()">🗺️ Mapa</button>
+      </div>
+    }
+  }
+</dialog>
