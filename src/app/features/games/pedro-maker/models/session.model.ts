@@ -25,7 +25,10 @@ export type MakerSoundCue =
   | 'spring'
   | 'break'
   | 'secret'
-  | 'fireball';
+  | 'fireball'
+  | 'iceball'
+  | 'freeze'
+  | 'slide';
 
 export interface HudState {
   readonly hearts: number;

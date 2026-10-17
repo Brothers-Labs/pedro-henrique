@@ -1,6 +1,14 @@
 import { heroDefinition } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
-import { BIG_COIN_VALUE, MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SWIM_PHYSICS, TILE_SIZE } from '../../config/physics.config';
+import {
+  BIG_COIN_VALUE,
+  HUGE_COIN_VALUE,
+  MULTI_COIN_BLOCK_COUNT,
+  PLAYER_PHYSICS,
+  SLIDE_PHYSICS,
+  SWIM_PHYSICS,
+  TILE_SIZE,
+} from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
 import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
@@ -523,6 +531,129 @@ describe('Simulação do Pedro Maker', () => {
     expect(directions).toEqual(new Set([1, -1]));
     expect(farthest).toBeLessThan(TILE_SIZE * 3.5);
     expect(bee.canBeStomped).toBeTrue();
+  });
+
+  it('soma cinquenta moedas de uma vez com a moeda gigante de 50', () => {
+    const harness = start(flatLevel().add('huge-coin', 4, SURFACE - 1).build(META));
+
+    run(harness, 1, { right: true });
+
+    expect(lastHud(harness.events)?.coins).toBe(HUGE_COIN_VALUE);
+    expect(harness.simulation.collectibles.items.length).toBe(0);
+  });
+
+  it('congela o slime com a Flor de Gelo: o gelo não machuca e quebra com um pisão', () => {
+    const harness = start(levelWithPowerUp('ice-flower').add('slime', 12, SURFACE - 1).build(META));
+    run(harness, 0.4, { right: true });
+
+    expect(harness.simulation.player.isBig).toBeTrue();
+
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 1.5);
+
+    const slime = harness.simulation.enemies[0];
+    const heartsBefore = lastHud(harness.events)?.hearts;
+
+    expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'iceball')).toBeTrue();
+    expect(slime.isFrozen).toBeTrue();
+    expect(slime.isHarmful).toBeFalse();
+
+    bumpIntoFirstEnemy(harness);
+
+    expect(lastHud(harness.events)?.hearts).toBe(heartsBefore);
+    expect(harness.simulation.player.isBig).toBeTrue();
+
+    harness.simulation.player.placeFeetAt(centerX(slime.body), slime.body.y - 20);
+    run(harness, 0.6);
+
+    expect(harness.simulation.enemies.length).toBe(0);
+  });
+
+  it('derrete o gelo depois de um tempo e o inimigo volta a andar', () => {
+    const harness = start(levelWithPowerUp('ice-flower').add('slime', 12, SURFACE - 1).build(META));
+    run(harness, 0.4, { right: true });
+
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 1.5);
+
+    const slime = harness.simulation.enemies[0];
+
+    expect(slime.isFrozen).toBeTrue();
+
+    run(harness, 5);
+
+    expect(slime.isFrozen).toBeFalse();
+    expect(slime.isHarmful).toBeTrue();
+  });
+
+  it('não congela a bolinha de lava', () => {
+    const harness = start(flatLevel().add('lava-bubble', 10, SURFACE - 1).build(META));
+
+    expect(harness.simulation.enemies[0].canBeFrozen).toBeFalse();
+  });
+
+  it('troca a Flor de Fogo pela Flor de Gelo: uma flor de cada vez', () => {
+    const harness = start(levelWithPowerUp('fire-flower').add('power-up', 5, SURFACE - 1, { powerUp: 'ice-flower' }).build(META));
+    run(harness, 0.8, { right: true });
+
+    const player = harness.simulation.player;
+
+    expect(player.hasPowerUp('fire-flower')).toBeFalse();
+    expect(player.hasPowerUp('ice-flower')).toBeTrue();
+    expect(player.flowerElement).toBe('ice');
+    expect(harness.events).toContain({ type: 'power-up-ended', kind: 'fire-flower' });
+  });
+
+  it('desce o escorregador ganhando velocidade e sai correndo lá embaixo', () => {
+    const harness = start(flatLevel().add('slide', 8, SURFACE - 1).build(META));
+    const ramp = harness.simulation.slides.ramps[0];
+    const player = harness.simulation.player;
+    let hasSlid = false;
+    let fastestX = 0;
+
+    player.placeFeetAt(8.5 * TILE_SIZE, (SURFACE - SLIDE_PHYSICS.height) * TILE_SIZE);
+
+    for (let step = 0; step < 90; step += 1) {
+      harness.simulation.step({ ...IDLE_INPUT, right: true });
+      hasSlid ||= player.mode === 'SLIDE';
+      fastestX = Math.max(fastestX, player.body.vx);
+    }
+
+    expect(hasSlid).toBeTrue();
+    expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'slide')).toBeTrue();
+    expect(player.isSliding).toBeFalse();
+    expect(centerX(player.body)).toBeGreaterThan(ramp.bottomX);
+    expect(bottom(player.body)).toBeCloseTo(SURFACE * TILE_SIZE, 3);
+    expect(fastestX).toBeGreaterThan(PLAYER_PHYSICS.runSpeed);
+  });
+
+  it('passa por baixo do escorregador sem ser pego por ele', () => {
+    const harness = start(flatLevel().add('slide', 8, SURFACE - 1).build(META));
+    const player = harness.simulation.player;
+    let hasSlid = false;
+
+    for (let step = 0; step < 150; step += 1) {
+      harness.simulation.step({ ...IDLE_INPUT, right: true });
+      hasSlid ||= player.isSliding;
+    }
+
+    expect(hasSlid).toBeFalse();
+    expect(centerX(player.body)).toBeGreaterThan(harness.simulation.slides.ramps[0].bottomX);
+  });
+
+  it('sai do escorregador com um pulo', () => {
+    const harness = start(flatLevel().add('slide', 8, SURFACE - 1).build(META));
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(9.3 * TILE_SIZE, (SURFACE - SLIDE_PHYSICS.height) * TILE_SIZE - 10);
+    run(harness, 0.15);
+
+    expect(player.isSliding).toBeTrue();
+
+    jump(harness, 0.1);
+
+    expect(player.isSliding).toBeFalse();
+    expect(player.body.vy).toBeLessThan(0);
   });
 
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {

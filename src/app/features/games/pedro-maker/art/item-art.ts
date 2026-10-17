@@ -3,6 +3,7 @@ import { circle, darken, fillAndOutline, lighten, OUTLINE, roundedRect, shine, s
 
 export const COIN_SIZE = 32;
 export const BIG_COIN_SIZE = 40;
+export const HUGE_COIN_SIZE = 48;
 export const CRYSTAL_WIDTH = 32;
 export const CRYSTAL_HEIGHT = 40;
 export const HEART_SIZE = 32;
@@ -29,18 +30,30 @@ export function paintCoinIcon(context: CanvasRenderingContext2D): void {
 
 /** Moeda gigante: maior, com o "10" no meio no lugar da estrela. */
 export function paintBigCoin(context: CanvasRenderingContext2D): void {
-  circle(context, 20, 20, 18);
-  fillAndOutline(context, GOLD, 3);
-  circle(context, 20, 20, 13);
+  paintNumberedCoin(context, BIG_COIN_SIZE, '10');
+}
+
+/** A maior de todas, com o "50". */
+export function paintHugeCoin(context: CanvasRenderingContext2D): void {
+  paintNumberedCoin(context, HUGE_COIN_SIZE, '50');
+}
+
+/** Moeda de frente com o valor escrito no meio, desenhada num quadrado de lado `size`. */
+export function paintNumberedCoin(context: CanvasRenderingContext2D, size: number, value: string): void {
+  const center = size / 2;
+
+  circle(context, center, center, size * 0.45);
+  fillAndOutline(context, GOLD, size * 0.075);
+  circle(context, center, center, size * 0.325);
   context.strokeStyle = darken(GOLD, 0.25);
-  context.lineWidth = 2;
+  context.lineWidth = size * 0.05;
   context.stroke();
   context.fillStyle = darken(GOLD, 0.45);
-  context.font = 'bold 14px sans-serif';
+  context.font = `bold ${Math.round(size * 0.35)}px sans-serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.fillText('10', 20, 21);
-  shine(context, 12, 11, 4, 2.5);
+  context.fillText(value, center, center + size * 0.025);
+  shine(context, size * 0.3, size * 0.275, size * 0.1, size * 0.0625);
 }
 
 export function paintCrystal(context: CanvasRenderingContext2D): void {
@@ -92,6 +105,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   wings: '#f4f1ff',
   mushroom: '#e8343a',
   'fire-flower': '#ff7a1f',
+  'ice-flower': '#5cc8ff',
   star: '#ffd23f',
   'one-up': '#2fb84a',
 };
@@ -124,7 +138,10 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       paintMushroom(context, color);
       break;
     case 'fire-flower':
-      paintFireFlower(context, color);
+      paintFlower(context, color, '#ffd23f');
+      break;
+    case 'ice-flower':
+      paintFlower(context, color, '#e6f6ff');
       break;
     case 'star':
       paintPowerStar(context, color);
@@ -217,8 +234,8 @@ function paintMushroom(context: CanvasRenderingContext2D, color: string): void {
   }
 }
 
-/** Flor de fogo: pétalas em anéis quentes sobre um caule com folhas. */
-function paintFireFlower(context: CanvasRenderingContext2D, color: string): void {
+/** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */
+function paintFlower(context: CanvasRenderingContext2D, color: string, ring: string): void {
   context.strokeStyle = OUTLINE;
   context.lineWidth = 5;
   context.beginPath();
@@ -238,7 +255,7 @@ function paintFireFlower(context: CanvasRenderingContext2D, color: string): void
   circle(context, 20, 15, 10);
   fillAndOutline(context, color, 2.5);
   circle(context, 20, 15, 6.5);
-  context.fillStyle = '#ffd23f';
+  context.fillStyle = ring;
   context.fill();
   circle(context, 20, 15, 3.5);
   context.fillStyle = '#ffffff';

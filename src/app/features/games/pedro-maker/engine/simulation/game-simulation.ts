@@ -18,10 +18,11 @@ import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
-import { type Fireball, FireballSystem } from './fireballs';
+import { type BallElement, type Fireball, FireballSystem } from './fireballs';
 import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
 import { Player, type PlayerHost } from './player';
 import { Scheduler } from './scheduler';
+import { SlideSystem } from './slides';
 import { cellOf, TileGrid } from './tile-grid';
 import { TriggerSystem, type TriggerHost } from './triggers';
 import { VisualEventQueue } from './visual-events';
@@ -34,6 +35,12 @@ const ENEMY_ACTIVE_DISTANCE = 1000;
 
 /** Distância, em células, a partir da qual o chefão acorda. */
 const BOSS_WAKE_DISTANCE = 11;
+
+/** O que cada flor solta, na dica do mascote. */
+const FLOWER_BALL_NAMES: Readonly<Partial<Record<PowerUpKind, string>>> = {
+  'fire-flower': 'fogo',
+  'ice-flower': 'gelo',
+};
 
 const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
@@ -84,6 +91,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly blocks: BlockSystem;
   readonly collectibles: CollectibleSystem;
   readonly triggers: TriggerSystem;
+  readonly slides: SlideSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -118,6 +126,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.blocks = new BlockSystem(blueprint.objects, crystalIndexOf, this.grid, this);
     this.collectibles = new CollectibleSystem(blueprint.objects, crystalIndexOf, this);
     this.triggers = new TriggerSystem(blueprint.objects, options.isTouch, this);
+    this.slides = new SlideSystem(blueprint.objects, this.grid);
     this.world = { grid: this.grid, platforms: this.blocks.platforms };
     this.coinsTotal = this.collectibles.coinCount + countSurpriseCoins(blueprint.objects) * SURPRISE_COIN_COUNT;
     this.player = this.createPlayer(blueprint.objects);
@@ -165,7 +174,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (player.isActive) {
       stepBody(body, this.world, seconds, true);
       this.reactToPlayerCollisions();
-      this.throwFireball(input);
+      this.catchSlide();
+      this.throwBall(input);
     }
 
     this.updateEnemies(seconds);
@@ -288,22 +298,45 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         enemy.step(this.clockMs, playerX, playerY);
         stepBody(body, this.world, seconds, true);
       } else {
-        enemy.freeze();
+        enemy.standStill();
         body.previousX = body.x;
         body.previousY = body.y;
       }
 
-      if (this.player.isActive && enemy.isHarmful && overlaps(playerBody, body)) {
+      if (!this.player.isActive || !overlaps(playerBody, body)) {
+        continue;
+      }
+
+      if (enemy.isFrozen) {
+        this.onFrozenEnemyContact(enemy);
+      } else if (enemy.isHarmful) {
         this.onEnemyContact(enemy);
       }
     }
   }
 
-  /** Com a Flor de Fogo, o botão de ação lança fogo — menos na frente de uma porta, onde ele abre a porta. */
-  private throwFireball(input: InputSnapshot): void {
+  /** Pousou num escorregador: a descida começa. */
+  private catchSlide(): void {
     const player = this.player;
 
-    if (!input.actionPressed || !player.hasPowerUp('fire-flower') || this.triggers.nearDoor || !this.fireballs.canThrow) {
+    if (player.isSliding) {
+      return;
+    }
+
+    const ramp = this.slides.rampLandedOn(player.body);
+
+    if (ramp) {
+      player.startSliding(ramp);
+      this.playSound('slide');
+    }
+  }
+
+  /** Com uma flor, o botão de ação lança fogo ou gelo — menos na frente de uma porta, onde ele abre a porta. */
+  private throwBall(input: InputSnapshot): void {
+    const player = this.player;
+    const element = player.flowerElement;
+
+    if (!input.actionPressed || !element || this.triggers.nearDoor || !this.fireballs.canThrow) {
       return;
     }
 
@@ -311,15 +344,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const x = centerX(body) + player.facing * body.width;
     const y = centerY(body) - 6;
 
-    this.playSound('fireball');
+    this.playSound(element === 'ice' ? 'iceball' : 'fireball');
 
-    // Colado na parede, a bola nasceria dentro do bloco e o atravessaria: ela se apaga ali mesmo.
+    // Colado na parede, a bola nasceria dentro do bloco e o atravessaria: ela se desfaz ali mesmo.
     if (this.grid.isSolidCell(cellOf(x), cellOf(y))) {
-      this.effects.burst('fire', x, y, 6);
+      this.effects.burst(element, x, y, 6);
       return;
     }
 
-    this.fireballs.throw(x, y, player.facing, this.clockMs);
+    this.fireballs.throw(x, y, player.facing, element, this.clockMs);
   }
 
   private updateFireballs(seconds: number): void {
@@ -340,16 +373,30 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       if (target) {
         this.fireballs.remove(fireball);
         this.extinguish(fireball);
-
-        if (!target.isFireproof) {
-          this.defeatEnemy(target);
-        }
+        this.hitWithBall(target, fireball.element);
       }
     }
   }
 
   private extinguish(fireball: Fireball): void {
-    this.effects.burst('fire', centerX(fireball.body), centerY(fireball.body), 6);
+    this.effects.burst(fireball.element, centerX(fireball.body), centerY(fireball.body), 6);
+  }
+
+  /** O fogo derrota; o gelo congela. A bolinha de lava resiste aos dois. */
+  private hitWithBall(enemy: Enemy, element: BallElement): void {
+    if (element === 'fire') {
+      if (!enemy.isFireproof) {
+        this.defeatEnemy(enemy);
+      }
+
+      return;
+    }
+
+    if (enemy.canBeFrozen) {
+      enemy.freezeInIce(this.clockMs);
+      this.playSound('freeze');
+      this.effects.burst('ice', centerX(enemy.body), centerY(enemy.body), 12);
+    }
   }
 
   private updateBoss(seconds: number): void {
@@ -428,6 +475,23 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.hurtPlayer(centerX(enemy.body));
   }
 
+  /** O bloco de gelo não machuca: um pisão (ou a estrela) o quebra com o inimigo dentro. */
+  private onFrozenEnemyContact(enemy: Enemy): void {
+    const body = this.player.body;
+    const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
+
+    if (!isStomp && !this.player.hasPowerUp('star')) {
+      return;
+    }
+
+    this.effects.burst('ice', centerX(enemy.body), centerY(enemy.body), 16);
+    this.defeatEnemy(enemy);
+
+    if (isStomp) {
+      this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
+    }
+  }
+
   private defeatEnemy(enemy: Enemy): void {
     enemy.defeat(this.clockMs);
     this.enemiesDefeated += 1;
@@ -492,7 +556,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const player = this.player;
     const body = player.body;
 
-    for (const kind of ['fire-flower', 'mushroom'] as const) {
+    for (const kind of ['fire-flower', 'ice-flower', 'mushroom'] as const) {
       if (player.hasPowerUp(kind)) {
         player.losePowerUp(kind);
         this.emit({ type: 'power-up-ended', kind });
@@ -557,6 +621,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       case 'big-coin':
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 14);
+        break;
+      case 'huge-coin':
+        this.addCoins(coinValue(item.kind), x, y);
+        this.effects.burst('coin', x, y, 30);
+        this.effects.burst('sparkle', x, y, 16);
         break;
       case 'crystal':
         if (item.crystalIndex !== undefined) {
@@ -670,9 +739,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.effects.floatingText(x, y - 30, `${emoji} ${label.toUpperCase()}!`, '#ffffff');
     this.emit({ type: 'power-up', kind, durationMs: POWER_UP_DURATION_MS[kind] });
 
-    if (kind === 'fire-flower') {
+    const ballName = FLOWER_BALL_NAMES[kind];
+
+    if (ballName) {
       const button = this.options.isTouch ? 'Toque em AÇÃO' : 'Aperte E';
-      this.emit({ type: 'mascot', text: `${button} para soltar bolas de fogo!` });
+      this.emit({ type: 'mascot', text: `${button} para soltar bolas de ${ballName}!` });
     }
   }
 

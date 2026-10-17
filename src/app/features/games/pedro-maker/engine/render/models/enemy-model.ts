@@ -1,4 +1,4 @@
-import { Group, MathUtils, Mesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Group, MathUtils, Mesh, MeshStandardMaterial } from 'three';
 
 import type { EnemyKind } from '../../../models/level.model';
 import { ENEMY_DEFEAT_MS } from '../../simulation/enemy';
@@ -14,6 +14,8 @@ export interface EnemyPose {
   readonly isDefeated: boolean;
   readonly defeatedAt: number;
   readonly isHidden: boolean;
+  /** Preso no bloco de gelo da Flor de Gelo. */
+  readonly isFrozen: boolean;
   /** Quanto a planta carnívora está para fora do cano, de 0 a 1. */
   readonly emergence: number;
   readonly isMoving: boolean;
@@ -30,6 +32,16 @@ export class EnemyMaterials {
   readonly glow = new MeshStandardMaterial({ vertexColors: true, emissive: '#6ff3ff', emissiveIntensity: 1.2, roughness: 0.3 });
   /** A bolinha de lava brilha sozinha, mesmo nas fases escuras. */
   readonly ember = new MeshStandardMaterial({ vertexColors: true, emissive: '#ff5a00', emissiveIntensity: 0.9, roughness: 0.5 });
+  /** Bloco de gelo translúcido em volta do inimigo congelado. */
+  readonly ice = new MeshStandardMaterial({
+    color: '#bfefff',
+    emissive: '#5cc8ff',
+    emissiveIntensity: 0.35,
+    roughness: 0.1,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+  });
 
   ghost(): MeshStandardMaterial {
     return new MeshStandardMaterial({ vertexColors: true, roughness: 0.4, transparent: true, opacity: 0.9, depthWrite: false });
@@ -39,6 +51,7 @@ export class EnemyMaterials {
     this.solid.dispose();
     this.glow.dispose();
     this.ember.dispose();
+    this.ice.dispose();
   }
 }
 
@@ -48,7 +61,8 @@ export class EnemyMaterials {
  * O slime quica amassando, o morcego bate as asas, o robô balança a antena, o
  * fantasma flutua e fica transparente quando some, a tartaruga balança o casco
  * e a planta carnívora sobe do cano mordendo, o pinguim gingando e a bolinha de
- * lava pula girando. Derrotado, achata e some.
+ * lava pula girando. Congelado, para dentro de um bloco de gelo. Derrotado,
+ * achata e some.
  */
 export class EnemyModel {
   readonly root = new Group();
@@ -56,12 +70,14 @@ export class EnemyModel {
   private readonly body = new Group();
   private readonly wings: readonly Group[] = [];
   private readonly ghostMaterial: MeshStandardMaterial | null = null;
+  /** Criado no primeiro congelamento: a maioria dos inimigos nunca precisa dele. */
+  private iceBlock: Mesh | null = null;
   private heading: number;
   private readonly phase = Math.random() * Math.PI * 2;
 
   constructor(
     private readonly kind: EnemyKind,
-    materials: EnemyMaterials,
+    private readonly materials: EnemyMaterials,
     scale: number,
   ) {
     this.root.name = `inimigo-${kind}`;
@@ -92,6 +108,12 @@ export class EnemyModel {
   }
 
   update(pose: EnemyPose, deltaSeconds: number, now: number): void {
+    this.showIce(pose.isFrozen);
+
+    if (pose.isFrozen) {
+      return;
+    }
+
     const target = pose.direction * (Math.PI / 2 - 0.5);
     this.heading = MathUtils.lerp(this.heading, target, 1 - Math.exp(-10 * deltaSeconds));
     this.body.rotation.y = this.heading;
@@ -156,6 +178,19 @@ export class EnemyModel {
     }
   }
 
+  private showIce(isFrozen: boolean): void {
+    if (isFrozen && !this.iceBlock) {
+      this.iceBlock = new Mesh(new BoxGeometry(ICE_BLOCK_SIZE, ICE_BLOCK_SIZE, ICE_BLOCK_SIZE), this.materials.ice);
+      // O morcego é desenhado a partir do centro; os outros, a partir dos pés.
+      this.iceBlock.position.y = this.kind === 'bat' ? 0 : ICE_BLOCK_SIZE / 2;
+      this.root.add(this.iceBlock);
+    }
+
+    if (this.iceBlock) {
+      this.iceBlock.visible = isFrozen;
+    }
+  }
+
   /** Um par de asas espelhadas; `parts` descreve a asa direita. */
   private buildWings(offsetX: number, offsetY: number, parts: readonly VoxelBox[], material: MeshStandardMaterial): readonly Group[] {
     return [-1, 1].map((side) => {
@@ -193,6 +228,9 @@ export class EnemyModel {
     return mesh;
   }
 }
+
+/** Lado do bloco de gelo, em blocos: cobre qualquer inimigo comum. */
+const ICE_BLOCK_SIZE = 0.82;
 
 /** Altura da planta carnívora fora do cano, em blocos. */
 const PIRANHA_HEIGHT = 1.0;

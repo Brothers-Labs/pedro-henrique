@@ -22,6 +22,7 @@ const STYLES: Readonly<Record<BurstKind, BurstStyle>> = {
   sparkle: { minSpeed: 0.8, maxSpeed: 2.9, startScale: 1, endScale: 0, lifeMs: 800, gravity: -1.2, colors: ['#ffe066', '#ffffff', '#b39cff'] },
   bubble: { minSpeed: 0.5, maxSpeed: 1.8, startScale: 0.9, endScale: 0.3, lifeMs: 650, gravity: -2.4, colors: ['#ffffff', '#bfe9ff', '#7fd0ff'] },
   fire: { minSpeed: 0.8, maxSpeed: 2.4, startScale: 1.1, endScale: 0, lifeMs: 360, gravity: -1.5, colors: ['#ffd23f', '#ff8a1f', '#ff4f1f'] },
+  ice: { minSpeed: 1, maxSpeed: 2.8, startScale: 1, endScale: 0, lifeMs: 480, gravity: 2, colors: ['#ffffff', '#c8f0ff', '#5cc8ff'] },
   confetti: {
     minSpeed: 4.2,
     maxSpeed: 8.7,

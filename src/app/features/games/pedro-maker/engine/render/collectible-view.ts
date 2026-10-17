@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   CanvasTexture,
+  CircleGeometry,
   CylinderGeometry,
   Group,
   InstancedMesh,
@@ -15,7 +16,8 @@ import {
   Vector3,
 } from 'three';
 
-import { context2d, createCanvas } from '../../art/canvas';
+import { context2d, createCanvas, paint } from '../../art/canvas';
+import { BIG_COIN_SIZE, HUGE_COIN_SIZE, paintNumberedCoin } from '../../art/item-art';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import type { PowerUpKind } from '../../models/level.model';
 import type { Collectible, CollectibleSystem } from '../simulation/collectibles';
@@ -36,9 +38,28 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   wings: '#b39cff',
   mushroom: '#e8343a',
   'fire-flower': '#ff7a1f',
+  'ice-flower': '#5cc8ff',
   star: '#ffd23f',
   'one-up': '#2fb84a',
 };
+
+type NumberedCoinKind = 'big-coin' | 'huge-coin';
+
+interface NumberedCoinLook {
+  /** Raio do disco, em blocos. */
+  readonly radius: number;
+  /** Lado do desenho do ícone, que vira a estampa das faces. */
+  readonly iconSize: number;
+  readonly value: string;
+}
+
+/** As moedas gigantes mostram o quanto valem, como no ícone do editor. */
+const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
+  'big-coin': { radius: 0.5, iconSize: BIG_COIN_SIZE, value: '10' },
+  'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
+};
+
+const COIN_FACE_RESOLUTION = 128;
 
 interface Fountain {
   readonly x: number;
@@ -79,6 +100,7 @@ export class CollectibleView {
   private readonly voxelMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5 });
   private readonly powerUpTextures = new Map<PowerUpKind, CanvasTexture>();
   private readonly powerUpMaterials = new Map<PowerUpKind, readonly Material[]>();
+  private readonly coinFaceMaterials = new Map<NumberedCoinKind, MeshStandardMaterial>();
   /** Itens vistos neste quadro; reaproveitado para não criar lixo 60 vezes por segundo. */
   private readonly present = new Set<number>();
 
@@ -152,6 +174,11 @@ export class CollectibleView {
     for (const texture of this.powerUpTextures.values()) {
       texture.dispose();
     }
+
+    for (const material of this.coinFaceMaterials.values()) {
+      material.map?.dispose();
+      material.dispose();
+    }
   }
 
   private placeCoin(item: Collectible, bob: number): void {
@@ -222,16 +249,64 @@ export class CollectibleView {
       }
       case 'power-up':
         return this.powerUpModel(item.powerUp ?? 'super-jump');
-      case 'big-coin': {
-        const coin = new Mesh(new CylinderGeometry(0.5, 0.5, 0.12, 28).rotateX(Math.PI / 2), this.coinMaterial);
-
-        coin.castShadow = true;
-
-        return coin;
-      }
+      case 'big-coin':
+      case 'huge-coin':
+        return this.numberedCoin(item.kind);
       case 'coin':
         return new Group();
     }
+  }
+
+  /** Disco dourado com o valor estampado na frente e no verso, que aparece quando a moeda gira. */
+  private numberedCoin(kind: NumberedCoinKind): Group {
+    const { radius } = NUMBERED_COINS[kind];
+    const thickness = radius * 0.24;
+    const faceMaterial = this.coinFaceMaterial(kind);
+    const coin = new Group();
+    const rim = new Mesh(new CylinderGeometry(radius, radius, thickness, 32).rotateX(Math.PI / 2), this.coinMaterial);
+
+    rim.castShadow = true;
+    coin.add(rim);
+
+    for (const side of [1, -1] as const) {
+      const face = new Mesh(new CircleGeometry(radius, 32), faceMaterial);
+
+      face.position.z = side * (thickness / 2 + 0.002);
+      face.rotation.y = side === 1 ? 0 : Math.PI;
+      coin.add(face);
+    }
+
+    return coin;
+  }
+
+  private coinFaceMaterial(kind: NumberedCoinKind): MeshStandardMaterial {
+    const cached = this.coinFaceMaterials.get(kind);
+
+    if (cached) {
+      return cached;
+    }
+
+    const { iconSize, value } = NUMBERED_COINS[kind];
+    const canvas = paint(COIN_FACE_RESOLUTION, COIN_FACE_RESOLUTION, (context) => {
+      context.scale(COIN_FACE_RESOLUTION / iconSize, COIN_FACE_RESOLUTION / iconSize);
+      paintNumberedCoin(context, iconSize, value);
+    });
+    const texture = new CanvasTexture(canvas);
+
+    texture.colorSpace = SRGBColorSpace;
+
+    const material = new MeshStandardMaterial({
+      map: texture,
+      alphaTest: 0.5,
+      metalness: 0.4,
+      roughness: 0.35,
+      emissive: '#8a5a00',
+      emissiveIntensity: 0.3,
+    });
+
+    this.coinFaceMaterials.set(kind, material);
+
+    return material;
   }
 
   /** Os poderes clássicos têm forma própria; os outros, a caixa com o emoji. */
@@ -345,7 +420,7 @@ function heartParts(): readonly VoxelBox[] {
   ];
 }
 
-/** Cogumelos, flor e estrela de cubinhos; `null` para os poderes de caixa. */
+/** Cogumelos, flores e estrela de cubinhos; `null` para os poderes de caixa. */
 function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
   switch (kind) {
     case 'mushroom':
@@ -353,7 +428,9 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
     case 'one-up':
       return mushroomParts(POWER_UP_COLORS['one-up']);
     case 'fire-flower':
-      return fireFlowerParts();
+      return flowerParts('#ff4f1f', '#ffd23f');
+    case 'ice-flower':
+      return flowerParts('#3fb8ff', '#e6f6ff');
     case 'star':
       return starParts();
     default:
@@ -379,15 +456,15 @@ function mushroomParts(cap: string): readonly VoxelBox[] {
   ];
 }
 
-function fireFlowerParts(): readonly VoxelBox[] {
+function flowerParts(petals: string, ring: string): readonly VoxelBox[] {
   const green = '#2fb84a';
 
   return [
     box(0, -0.18, 0, 0.07, 0.26, 0.07, green),
     box(-0.1, -0.2, 0, 0.14, 0.05, 0.08, green),
     box(0.1, -0.24, 0, 0.14, 0.05, 0.08, green),
-    box(0, 0.08, 0, 0.44, 0.3, 0.12, '#ff4f1f'),
-    box(0, 0.08, 0.065, 0.3, 0.2, 0.01, '#ffd23f'),
+    box(0, 0.08, 0, 0.44, 0.3, 0.12, petals),
+    box(0, 0.08, 0.065, 0.3, 0.2, 0.01, ring),
     box(0, 0.08, 0.075, 0.16, 0.1, 0.01, '#ffffff'),
   ];
 }

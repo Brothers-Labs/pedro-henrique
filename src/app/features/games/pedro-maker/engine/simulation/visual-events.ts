@@ -9,7 +9,7 @@
  * física e do validador de fases.
  */
 
-export type BurstKind = 'dust' | 'coin' | 'crystal' | 'poof' | 'sparkle' | 'confetti' | 'bubble' | 'fire';
+export type BurstKind = 'dust' | 'coin' | 'crystal' | 'poof' | 'sparkle' | 'confetti' | 'bubble' | 'fire' | 'ice';
 
 export type ShakeIntensity = 'leve' | 'forte';
 

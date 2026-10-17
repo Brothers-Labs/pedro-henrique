@@ -14,8 +14,9 @@ const TURN_RATE = 14;
 /** Rapidez com que o Pedro cresce ou encolhe: dá para ver acontecendo. */
 const GROW_RATE = 8;
 const STAR_GLOW = 0.65;
-const FIRE_GLOW = 0.22;
+const FLOWER_GLOW = 0.22;
 const FIRE_COLOR = '#ff5a1f';
+const ICE_COLOR = '#3fb8ff';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -29,6 +30,7 @@ export interface PedroPose {
   readonly isBig: boolean;
   readonly hasStar: boolean;
   readonly hasFireFlower: boolean;
+  readonly hasIceFlower: boolean;
 }
 
 /**
@@ -126,16 +128,16 @@ export class PedroModel {
     this.root.scale.setScalar(this.size);
   }
 
-  /** Estrela: o Pedro pisca em todas as cores. Flor de fogo: um brilho quente. */
+  /** Estrela: o Pedro pisca em todas as cores. Flor de fogo: um brilho quente; de gelo, um frio. */
   private glow(pose: PedroPose, now: number): void {
     const emissive = this.material.emissive;
 
     if (pose.hasStar) {
       emissive.setHSL((now / 400) % 1, 1, 0.5);
       this.material.emissiveIntensity = STAR_GLOW;
-    } else if (pose.hasFireFlower) {
-      emissive.set(FIRE_COLOR);
-      this.material.emissiveIntensity = FIRE_GLOW;
+    } else if (pose.hasFireFlower || pose.hasIceFlower) {
+      emissive.set(pose.hasFireFlower ? FIRE_COLOR : ICE_COLOR);
+      this.material.emissiveIntensity = FLOWER_GLOW;
     } else {
       this.material.emissiveIntensity = 0;
     }
@@ -193,6 +195,15 @@ export class PedroModel {
         legs[1].rotation.x = 0.25;
         arms[0].rotation.z = -1.1;
         arms[1].rotation.z = 1.1;
+        return;
+      case 'SLIDE':
+        // Sentado na rampa, pernas esticadas para a frente e braços para cima: "uhuu!".
+        this.body.position.y = -0.28;
+        this.body.rotation.x = -0.2;
+        legs[0].rotation.x = -1.45;
+        legs[1].rotation.x = -1.45;
+        arms[0].rotation.x = -2.6;
+        arms[1].rotation.x = -2.6;
         return;
       case 'HIT':
         this.body.rotation.x = -0.35;

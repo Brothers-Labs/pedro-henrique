@@ -1,12 +1,14 @@
 import type { HeroAbilities } from '../../config/hero.config';
-import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SWIM_PHYSICS } from '../../config/physics.config';
+import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SLIDE_PHYSICS, SWIM_PHYSICS } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { InputSnapshot } from '../input/input-snapshot';
+import type { BallElement } from './fireballs';
 import { bottom, centerX, createBody, type PhysicsBody, placeFeet } from './physics-body';
+import { rampSurfaceY, type SlideRamp } from './slides';
 import type { VisualEventQueue } from './visual-events';
 
-export type PlayerMode = 'IDLE' | 'RUN' | 'JUMP' | 'FALL' | 'HIT' | 'DEAD' | 'WIN';
+export type PlayerMode = 'IDLE' | 'RUN' | 'JUMP' | 'FALL' | 'SLIDE' | 'HIT' | 'DEAD' | 'WIN';
 
 /** O que o jogador precisa da partida, sem conhecer a partida inteira. */
 export interface PlayerHost {
@@ -24,7 +26,19 @@ export interface PlayerSurroundings {
 }
 
 /** Poderes que duram até proteger de um toque, em vez de acabar com o tempo. */
-const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(['shield', 'mushroom', 'fire-flower']);
+const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(['shield', 'mushroom', 'fire-flower', 'ice-flower']);
+
+/** Cada flor lança o seu elemento; pegar uma troca a outra. */
+const FLOWER_ELEMENTS = [
+  ['fire-flower', 'fire'],
+  ['ice-flower', 'ice'],
+] as const satisfies readonly (readonly [PowerUpKind, BallElement])[];
+
+/** Descida em andamento num escorregador. */
+interface SlideRide {
+  readonly ramp: SlideRamp;
+  speed: number;
+}
 
 /** Viagem até o centro do portal, desenhada pela tela a partir destes pontos. */
 export interface Celebration {
@@ -50,8 +64,8 @@ const RUN_DUST_SPEED = 200;
  *
  * Aqui mora a sensação do controle: aceleração e freio suaves, gelo
  * escorregadio, pulo que perdoa o botão apertado um pouquinho cedo ou tarde,
- * pulo curto ao soltar o botão, pulo duplo com a Asa, braçadas na água e a
- * piscada de invencibilidade depois de um toque.
+ * pulo curto ao soltar o botão, pulo duplo com a Asa, braçadas na água, a
+ * descida no escorregador e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
@@ -79,6 +93,7 @@ export class Player {
   private wasGrounded = false;
   private previousFallSpeed = 0;
   private lastRunDustAt = 0;
+  private slideRide: SlideRide | null = null;
 
   constructor(
     feetX: number,
@@ -101,9 +116,18 @@ export class Player {
     return this.protections.has('shield');
   }
 
-  /** Com o Super Cogumelo (ou a Flor de Fogo, que também faz crescer) o Pedro fica grande. */
+  /** Com o Super Cogumelo (ou uma flor, que também faz crescer) o Pedro fica grande. */
   get isBig(): boolean {
     return this.protections.has('mushroom');
+  }
+
+  get isSliding(): boolean {
+    return this.slideRide !== null;
+  }
+
+  /** O que o botão de ação lança: fogo, gelo ou nada, conforme a flor. */
+  get flowerElement(): BallElement | null {
+    return FLOWER_ELEMENTS.find(([flower]) => this.protections.has(flower))?.[1] ?? null;
   }
 
   isInvincible(now: number): boolean {
@@ -115,7 +139,16 @@ export class Player {
   }
 
   placeFeetAt(feetX: number, feetY: number): void {
+    this.stopSliding();
     placeFeet(this.body, feetX, feetY);
+  }
+
+  /** Pousou na rampa: dali em diante quem leva é o escorregador, até o fim dele ou um pulo. */
+  startSliding(ramp: SlideRamp): void {
+    this.slideRide = { ramp, speed: Math.max(SLIDE_PHYSICS.startSpeed, Math.abs(this.body.vx)) };
+    this.body.hasGravity = false;
+    this.body.riding = null;
+    this.facing = ramp.bottomX > ramp.topX ? 1 : -1;
   }
 
   /** Decide a velocidade deste passo; a física move o corpo logo depois. */
@@ -131,6 +164,13 @@ export class Player {
     if (grounded) {
       this.lastGroundedAt = now;
       this.hasUsedDoubleJump = false;
+    }
+
+    if (this.slideRide) {
+      this.rideSlide(this.slideRide, deltaMs / 1000, input);
+      this.wasGrounded = false;
+      this.previousFallSpeed = this.body.vy;
+      return;
     }
 
     this.handleWater(surroundings.isInWater);
@@ -157,6 +197,7 @@ export class Player {
    * estiver apertado, e um quiquinho se não estiver.
    */
   bounce(velocity: number, canBeCut: boolean): void {
+    this.stopSliding();
     this.body.vy = -velocity;
     this.body.riding = null;
     this.isJumpCut = !canBeCut;
@@ -171,8 +212,9 @@ export class Player {
 
     this.protections.add(kind);
 
-    if (kind === 'fire-flower') {
+    if (FLOWER_ELEMENTS.some(([flower]) => flower === kind)) {
       this.protections.add('mushroom');
+      this.dropOtherFlowers(kind);
     }
   }
 
@@ -191,6 +233,7 @@ export class Player {
   }
 
   showHitPose(now: number, knockbackDirection: number): void {
+    this.stopSliding();
     this.hitPoseUntil = now + HIT_POSE_MS;
     this.body.vx = knockbackDirection * 220;
     this.body.vy = -380;
@@ -199,6 +242,7 @@ export class Player {
   }
 
   defeat(): void {
+    this.stopSliding();
     this.mode = 'DEAD';
     this.body.vx = 0;
     this.body.vy = 0;
@@ -206,6 +250,7 @@ export class Player {
 
   /** Vitória: o Pedro para e viaja girando até o centro do portal. */
   celebrate(now: number, portalX: number, portalY: number): void {
+    this.stopSliding();
     this.mode = 'WIN';
     this.body.vx = 0;
     this.body.vy = 0;
@@ -227,6 +272,55 @@ export class Player {
     this.wasGrounded = false;
     this.previousFallSpeed = 0;
     this.makeInvincible(now, invincibilityMs);
+  }
+
+  /**
+   * Um passo de descida: acelera, gruda os pés na rampa e aponta a velocidade
+   * ao longo dela, para a física mover o corpo. No fim da rampa, ou batendo
+   * numa parede, o Pedro sai correndo com o embalo; o pulo também tira ele dali.
+   */
+  private rideSlide(ride: SlideRide, seconds: number, input: InputSnapshot): void {
+    const { ramp } = ride;
+    const body = this.body;
+    const x = centerX(body);
+    const runX = ramp.bottomX - ramp.topX;
+    const runY = ramp.bottomY - ramp.topY;
+    const length = Math.hypot(runX, runY);
+
+    ride.speed = Math.min(SLIDE_PHYSICS.maxSpeed, ride.speed + SLIDE_PHYSICS.acceleration * seconds);
+    body.vx = (ride.speed * runX) / length;
+
+    if (input.jumpPressed) {
+      this.stopSliding();
+      this.jump(this.jumpVelocity());
+      this.mode = 'JUMP';
+      return;
+    }
+
+    if (x >= ramp.bottomX || body.blockedLeft || body.blockedRight) {
+      this.stopSliding();
+      body.vy = 0;
+      this.mode = 'RUN';
+      return;
+    }
+
+    body.y = rampSurfaceY(ramp, x) - body.height;
+    body.vy = (ride.speed * runY) / length;
+    this.mode = 'SLIDE';
+  }
+
+  private stopSliding(): void {
+    this.slideRide = null;
+    this.body.hasGravity = true;
+  }
+
+  /** As flores não se somam: a nova toma o lugar da outra. */
+  private dropOtherFlowers(kept: PowerUpKind): void {
+    for (const [flower] of FLOWER_ELEMENTS) {
+      if (flower !== kept && this.protections.delete(flower)) {
+        this.host.onPowerUpEnded(flower);
+      }
+    }
   }
 
   /** Dentro da água a gravidade quase some e a queda fica lenta; ao entrar ou sair, espirra. */

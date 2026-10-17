@@ -229,6 +229,48 @@ export function paintSpring(context: CanvasRenderingContext2D): void {
   fillAndOutline(context, '#4b4470', 3);
 }
 
+/** Escorregador de parquinho: escada à esquerda e a rampa vermelha descendo para a direita. */
+export function paintSlide(context: CanvasRenderingContext2D): void {
+  context.lineCap = 'round';
+
+  for (const [color, width] of [[OUTLINE, 6], ['#3fa3f5', 3]] as const) {
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.beginPath();
+
+    for (const x of [6, 15]) {
+      context.moveTo(x, 13);
+      context.lineTo(x, 45);
+    }
+
+    for (let y = 20; y <= 40; y += 7) {
+      context.moveTo(6, y);
+      context.lineTo(15, y);
+    }
+
+    context.stroke();
+  }
+
+  context.beginPath();
+  context.moveTo(3, 9);
+  context.lineTo(17, 9);
+  context.lineTo(46, 38);
+  context.lineTo(46, 45);
+  context.lineTo(39, 45);
+  context.lineTo(14, 16);
+  context.lineTo(3, 16);
+  context.closePath();
+  fillAndOutline(context, '#ff5a5a', 3);
+
+  context.strokeStyle = '#ffd23f';
+  context.lineWidth = 2.5;
+  context.beginPath();
+  context.moveTo(5, 12);
+  context.lineTo(16, 12);
+  context.lineTo(44, 40);
+  context.stroke();
+}
+
 export function paintCrumble(context: CanvasRenderingContext2D): void {
   const color = '#e3c28a';
 
