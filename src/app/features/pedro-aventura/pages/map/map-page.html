@@ -68,6 +68,9 @@
     <header class="region__header">
       <h1 id="regiao-titulo" class="region__title">{{ current.region.emoji }} {{ current.region.name }}</h1>
       <p class="region__tagline">{{ current.region.tagline }}</p>
+      <div class="region__difficulty">
+        <app-difficulty-picker [showDescription]="false" />
+      </div>
       @if (current.status === 'locked') {
         <p class="region__lock">🔒 {{ current.hint }}</p>
       } @else if (current.status === 'event-closed') {

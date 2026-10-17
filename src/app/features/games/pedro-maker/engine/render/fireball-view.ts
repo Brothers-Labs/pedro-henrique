@@ -1,21 +1,34 @@
 import { Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 
 import { FIREBALL_PHYSICS } from '../../config/physics.config';
-import type { FireballSystem } from '../simulation/fireballs';
+import type { BallElement, FireballSystem } from '../simulation/fireballs';
 import { disposeTree } from './dispose';
 import { box, buildBoxesGeometry } from './voxel-geometry';
 import type { WorldSpace } from './world-space';
 
 const SPIN_RATE = 1 / 70;
 
+interface BallLook {
+  readonly shell: string;
+  readonly core: string;
+  readonly emissive: string;
+}
+
+const LOOKS: Readonly<Record<BallElement, BallLook>> = {
+  fire: { shell: '#ff6a1f', core: '#ffd23f', emissive: '#ff8a1f' },
+  ice: { shell: '#7fd8ff', core: '#ffffff', emissive: '#3fb8ff' },
+};
+
+const ELEMENTS: readonly BallElement[] = ['fire', 'ice'];
+
 /**
- * Bolas de fogo em 3D: um cubinho em brasa girando, numa malha instanciada
- * do tamanho do máximo de bolas no ar.
+ * Bolas de fogo e de gelo em 3D: um cubinho brilhante girando, numa malha
+ * instanciada por elemento, do tamanho do máximo de bolas no ar.
  */
 export class FireballView {
   readonly root = new Group();
 
-  private readonly mesh: InstancedMesh;
+  private readonly meshes: Readonly<Record<BallElement, InstancedMesh>>;
   private readonly matrix = new Matrix4();
   private readonly position = new Vector3();
   private readonly rotation = new Quaternion();
@@ -26,41 +39,56 @@ export class FireballView {
     private readonly system: FireballSystem,
     private readonly space: WorldSpace,
   ) {
-    this.root.name = 'bolas-de-fogo';
+    this.root.name = 'bolas-de-fogo-e-gelo';
 
     const size = space.length(FIREBALL_PHYSICS.size);
-    const geometry = buildBoxesGeometry([
-      box(0, 0, 0, size, size, size, '#ff6a1f'),
-      box(0, 0, 0, size * 0.6, size * 0.6, size * 1.05, '#ffd23f'),
-    ]);
-    const material = new MeshStandardMaterial({ vertexColors: true, emissive: '#ff8a1f', emissiveIntensity: 0.9 });
 
-    this.mesh = new InstancedMesh(geometry, material, FIREBALL_PHYSICS.maxAlive);
-    this.mesh.count = 0;
-    this.mesh.frustumCulled = false;
-    this.root.add(this.mesh);
+    this.meshes = {
+      fire: this.ballMesh(LOOKS.fire, size),
+      ice: this.ballMesh(LOOKS.ice, size),
+    };
   }
 
   update(now: number, alpha: number): void {
-    const fireballs = this.system.fireballs;
-
     this.rotation.setFromAxisAngle(this.spinAxis, -now * SPIN_RATE);
 
-    fireballs.forEach((fireball, index) => {
+    for (const element of ELEMENTS) {
+      this.meshes[element].count = 0;
+    }
+
+    for (const fireball of this.system.fireballs) {
+      const mesh = this.meshes[fireball.element];
       const body = fireball.body;
       const x = body.previousX + (body.x - body.previousX) * alpha + body.width / 2;
       const y = body.previousY + (body.y - body.previousY) * alpha + body.height / 2;
 
       this.position.set(this.space.x(x), this.space.y(y), 0.2);
       this.matrix.compose(this.position, this.rotation, this.scale);
-      this.mesh.setMatrixAt(index, this.matrix);
-    });
+      mesh.setMatrixAt(mesh.count, this.matrix);
+      mesh.count += 1;
+    }
 
-    this.mesh.count = fireballs.length;
-    this.mesh.instanceMatrix.needsUpdate = true;
+    for (const element of ELEMENTS) {
+      this.meshes[element].instanceMatrix.needsUpdate = true;
+    }
   }
 
   dispose(): void {
     disposeTree(this.root);
+  }
+
+  private ballMesh(look: BallLook, size: number): InstancedMesh {
+    const geometry = buildBoxesGeometry([
+      box(0, 0, 0, size, size, size, look.shell),
+      box(0, 0, 0, size * 0.6, size * 0.6, size * 1.05, look.core),
+    ]);
+    const material = new MeshStandardMaterial({ vertexColors: true, emissive: look.emissive, emissiveIntensity: 0.9 });
+    const mesh = new InstancedMesh(geometry, material, FIREBALL_PHYSICS.maxAlive);
+
+    mesh.count = 0;
+    mesh.frustumCulled = false;
+    this.root.add(mesh);
+
+    return mesh;
   }
 }

@@ -68,6 +68,9 @@ const CUES: Readonly<Record<MakerSoundCue, Cue>> = {
     tones: [tone(659, 0, 0.2, 'sine'), tone(831, 0.18, 0.2, 'sine'), tone(988, 0.36, 0.2, 'sine'), tone(1319, 0.54, 0.5, 'sine')],
   },
   fireball: { tones: [tone(440, 0, 0.09, 'square', 0.05, 990)], noise: { duration: 0.05, gain: 0.04 } },
+  iceball: { tones: [tone(1320, 0, 0.08, 'sine', 0.08, 1760), tone(1760, 0.05, 0.08, 'sine', 0.06)] },
+  freeze: { tones: [tone(1568, 0, 0.12, 'triangle', 0.1, 784), tone(2093, 0.08, 0.18, 'sine', 0.06)], noise: { duration: 0.08, gain: 0.03 } },
+  slide: { tones: [tone(880, 0, 0.5, 'sine', 0.12, 330)] },
 };
 
 /** Escala pentatônica maior: qualquer combinação dessas notas soa bem. */

@@ -1,5 +1,5 @@
 import { REGIONS } from '../config/regions.config';
-import { SCORE_RULES } from '../config/economy.config';
+import { PICKUP_VALUES, SCORE_RULES } from '../config/economy.config';
 import type { RunResult } from '../models/aventura-state.model';
 import type {
   LevelDefinition,
@@ -76,15 +76,22 @@ export function starsFor(objectives: readonly ObjectiveStatus[]): number {
   return metExtras > 0 ? 2 : 1;
 }
 
+/** Moedas que a partida rende na carteira: cada moeda vale 1 e cada barra de ouro vale 10. */
+export function coinValueOf(result: { readonly coins: number; readonly goldBars: number }): number {
+  return result.coins * PICKUP_VALUES.coin.amount + result.goldBars * PICKUP_VALUES.goldBar.amount;
+}
+
 export function scoreFor(level: LevelDefinition, result: Omit<RunResult, 'score' | 'attemptId'>): number {
+  const pickups = result.coins * SCORE_RULES.perCoin + result.goldBars * SCORE_RULES.perGoldBar + result.diamonds * SCORE_RULES.perDiamond;
+
   if (!result.isVictory) {
-    return result.coins * SCORE_RULES.perCoin;
+    return pickups;
   }
 
   const secondsUnder = Math.max(0, level.targetTimeSeconds - Math.floor(result.timeMs / 1000));
 
   return (
-    result.coins * SCORE_RULES.perCoin +
+    pickups +
     result.crowns * SCORE_RULES.perCrown +
     result.ramps * SCORE_RULES.perRamp +
     secondsUnder * SCORE_RULES.perSecondUnderTarget +

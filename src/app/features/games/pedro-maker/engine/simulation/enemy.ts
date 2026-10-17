@@ -1,4 +1,4 @@
-import { TILE_SIZE } from '../../config/physics.config';
+import { FROZEN_ENEMY_MS, TILE_SIZE } from '../../config/physics.config';
 import type { EnemyKind } from '../../models/level.model';
 import { bottom, centerX, centerY, createBody, type PhysicsBody } from './physics-body';
 
@@ -11,7 +11,7 @@ interface EnemyProfile {
   readonly bodyHeight: number;
   readonly flies: boolean;
   readonly isStompable: boolean;
-  /** A bola de fogo se apaga nele sem derrotá-lo. */
+  /** A bola de fogo se apaga nele sem derrotá-lo, e o gelo derrete sem congelá-lo. */
   readonly isFireproof: boolean;
 }
 
@@ -74,6 +74,9 @@ export const ENEMY_DEFEAT_MS = 280;
  * pinguim patrulha como o slime, mais ligeiro, e a bolinha de lava salta da
  * lava e mergulha de volta, sem machucar enquanto está lá dentro. A abelha
  * voa de um lado para o outro, subindo e descendo de leve.
+ *
+ * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
+ * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
  */
 export class Enemy {
   readonly body: PhysicsBody;
@@ -85,8 +88,11 @@ export class Enemy {
   emergence = 1;
   /** 1 olhando para a direita, -1 para a esquerda. */
   direction: 1 | -1 = -1;
+  /** Preso num bloco de gelo da Flor de Gelo. */
+  isFrozen = false;
 
   private readonly profile: EnemyProfile;
+  private frozenUntil = 0;
   private readonly homeX: number;
   private readonly homeY: number;
   private pausedUntil = 0;
@@ -142,11 +148,21 @@ export class Enemy {
   }
 
   get isHarmful(): boolean {
-    return !this.isDefeated && !this.isHidden;
+    return !this.isDefeated && !this.isHidden && !this.isFrozen;
+  }
+
+  /** A bolinha de lava é quente demais: o gelo derrete nela. */
+  get canBeFrozen(): boolean {
+    return !this.profile.isFireproof;
   }
 
   step(now: number, targetX: number, targetY: number): void {
     if (this.isDefeated) {
+      return;
+    }
+
+    if (this.isFrozen) {
+      this.stayFrozen(now);
       return;
     }
 
@@ -179,7 +195,7 @@ export class Enemy {
   }
 
   /** Longe do Pedro, o inimigo espera: poupa processamento e não foge da fase. */
-  freeze(): void {
+  standStill(): void {
     this.body.vx = 0;
 
     if (this.profile.flies) {
@@ -187,11 +203,29 @@ export class Enemy {
     }
   }
 
+  /** Atingido pelo gelo: para onde está. Um segundo acerto renova o gelo. */
+  freezeInIce(now: number): void {
+    this.isFrozen = true;
+    this.frozenUntil = now + FROZEN_ENEMY_MS;
+    this.standStill();
+  }
+
   defeat(now: number): void {
     this.isDefeated = true;
+    this.isFrozen = false;
     this.defeatedAt = now;
     this.body.vx = 0;
     this.body.vy = 0;
+  }
+
+  /** Congelado, quem anda no chão ainda cai; quem voa fica parado no ar. */
+  private stayFrozen(now: number): void {
+    if (now >= this.frozenUntil) {
+      this.isFrozen = false;
+      return;
+    }
+
+    this.standStill();
   }
 
   private patrolLedges(): void {

@@ -1,3 +1,4 @@
+import { DIFFICULTIES, type DifficultyDefinition } from '../config/difficulty.config';
 import type { LevelDefinition } from '../models/campaign.model';
 import {
   type Lane,
@@ -35,9 +36,8 @@ export const RUN_PHYSICS = {
   pickupReach: 0.9,
 } as const;
 
+/** Regras que não mudam com a dificuldade (vidas e invencibilidade vêm dela). */
 export const RUN_RULES = {
-  maxLives: 3,
-  invulnerableSeconds: 1.5,
   respawnInvulnerableSeconds: 2,
   /** Velocidade logo depois de uma batida, como fração da normal. */
   hitSlowdown: 0.55,
@@ -45,6 +45,13 @@ export const RUN_RULES = {
   trafficSpeed: 6,
   trafficActivationDistance: 45,
   sweeperAngularSpeed: 1.4,
+  /** Os bichos atravessam mais devagar que a barreira: dá para ver e desviar. */
+  animalAngularSpeed: 0.9,
+  turboSeconds: 3,
+  turboSpeedFactor: 1.45,
+  /** Depois de escorregar na banana, o Pedro perde velocidade por um instante. */
+  slipSeconds: 0.8,
+  slipSlowdown: 0.6,
 } as const;
 
 /** Estados da partida. `LOADING` e `ERROR` pertencem à tela, que é quem carrega o motor. */
@@ -62,7 +69,8 @@ export interface RunCommands {
 export const NO_COMMANDS: RunCommands = { left: false, right: false, jump: false, slide: false, attack: false };
 
 export type RunEvent =
-  | { readonly type: 'coin' | 'heart' | 'crown'; readonly pickupId: number }
+  | { readonly type: 'coin' | 'gold-bar' | 'diamond' | 'heart' | 'crown' | 'turbo'; readonly pickupId: number }
+  | { readonly type: 'slip'; readonly obstacleId: number }
   | { readonly type: 'jump' | 'land' | 'slide' | 'lane' | 'attack' | 'checkpoint' | 'victory' | 'defeat' }
   | { readonly type: 'ramp'; readonly rampId: number }
   | { readonly type: 'hit' | 'break'; readonly obstacleId: number };
@@ -86,12 +94,18 @@ export interface PlayerState {
   slideSeconds: number;
   invulnerableSeconds: number;
   attackSeconds: number;
+  /** Supervelocidade restante: atravessa obstáculos sem bater. */
+  turboSeconds: number;
+  /** Rodopio depois de pisar numa banana. */
+  slipSeconds: number;
   speed: number;
 }
 
 export interface RunStats {
   readonly timeMs: number;
   readonly coins: number;
+  readonly goldBars: number;
+  readonly diamonds: number;
   readonly hearts: number;
   readonly crowns: number;
   readonly ramps: number;
@@ -120,7 +134,7 @@ export class RunSimulation {
   private readonly events: RunEvent[] = [];
   private phaseValue: RunPhase = 'ready';
   private elapsedSeconds = 0;
-  private lives: number = RUN_RULES.maxLives;
+  private lives: number;
   private lastCheckpoint = 0;
   private recoverySeconds = 0;
   private jumpBufferSeconds = 0;
@@ -128,12 +142,22 @@ export class RunSimulation {
   private attackCooldownSeconds = 0;
   private isSlideQueued = false;
   private activeRampId: number | null = null;
-  private stats = { coins: 0, hearts: 0, crowns: 0, ramps: 0, damageTaken: 0 };
+  private stats = { coins: 0, goldBars: 0, diamonds: 0, hearts: 0, crowns: 0, ramps: 0, damageTaken: 0 };
+  /** Para que lado o próximo escorregão leva, quando o Pedro está no meio. */
+  private nextSlipDirection: -1 | 1 = 1;
+
+  /** Velocidades da fase já multiplicadas pela dificuldade. */
+  private readonly startSpeed: number;
+  private readonly maxSpeed: number;
 
   constructor(
     readonly level: LevelDefinition,
     readonly layout: TrackLayout,
+    readonly difficulty: DifficultyDefinition = DIFFICULTIES[0],
   ) {
+    this.startSpeed = level.startSpeed * difficulty.speedMultiplier;
+    this.maxSpeed = level.maxSpeed * difficulty.speedMultiplier;
+    this.lives = difficulty.maxLives;
     this.player = {
       x: 0,
       y: 0,
@@ -144,7 +168,9 @@ export class RunSimulation {
       slideSeconds: 0,
       invulnerableSeconds: 0,
       attackSeconds: 0,
-      speed: level.startSpeed,
+      turboSeconds: 0,
+      slipSeconds: 0,
+      speed: level.startSpeed * difficulty.speedMultiplier,
     };
     this.obstacles = layout.obstacles.map((spec) => ({ spec, x: laneX(spec.lane), z: spec.z, isBroken: false, isActive: false }));
   }
@@ -198,7 +224,7 @@ export class RunSimulation {
     player.isGrounded = true;
     player.slideSeconds = 0;
     player.invulnerableSeconds = RUN_RULES.respawnInvulnerableSeconds;
-    this.lives = RUN_RULES.maxLives;
+    this.lives = this.difficulty.maxLives;
     this.recoverySeconds = 0;
     this.activeRampId = null;
 
@@ -248,7 +274,7 @@ export class RunSimulation {
       ...this.result(),
       phase: this.phaseValue,
       lives: this.lives,
-      maxLives: RUN_RULES.maxLives,
+      maxLives: this.difficulty.maxLives,
       progress: Math.min(1, this.player.z / this.layout.length),
     };
   }
@@ -339,12 +365,14 @@ export class RunSimulation {
   /* Movimento -------------------------------------------------------------------------- */
 
   private moveForward(): void {
-    const { level, player } = this;
+    const { player } = this;
     const progress = Math.min(1, player.z / this.layout.length);
-    const cruise = level.startSpeed + (level.maxSpeed - level.startSpeed) * progress;
+    const cruise = this.startSpeed + (this.maxSpeed - this.startSpeed) * progress;
     const recovery = this.recoverySeconds > 0 ? 1 - (1 - RUN_RULES.hitSlowdown) * (this.recoverySeconds / RUN_RULES.recoverySeconds) : 1;
+    const slip = player.slipSeconds > 0 ? RUN_RULES.slipSlowdown : 1;
+    const turbo = player.turboSeconds > 0 ? RUN_RULES.turboSpeedFactor : 1;
 
-    player.speed = cruise * recovery;
+    player.speed = cruise * Math.min(recovery, slip) * turbo;
     player.z += player.speed * STEP_SECONDS;
   }
 
@@ -433,6 +461,8 @@ export class RunSimulation {
     player.slideSeconds = Math.max(0, player.slideSeconds - STEP_SECONDS);
     player.invulnerableSeconds = Math.max(0, player.invulnerableSeconds - STEP_SECONDS);
     player.attackSeconds = Math.max(0, player.attackSeconds - STEP_SECONDS);
+    player.turboSeconds = Math.max(0, player.turboSeconds - STEP_SECONDS);
+    player.slipSeconds = Math.max(0, player.slipSeconds - STEP_SECONDS);
     this.attackCooldownSeconds = Math.max(0, this.attackCooldownSeconds - STEP_SECONDS);
     this.recoverySeconds = Math.max(0, this.recoverySeconds - STEP_SECONDS);
     this.jumpBufferSeconds = Math.max(0, this.jumpBufferSeconds - STEP_SECONDS);
@@ -462,6 +492,9 @@ export class RunSimulation {
         case 'sweeper':
           // Cada barreira começa num ponto diferente do vaivém, pela posição na pista.
           obstacle.x = Math.sin(this.elapsedSeconds * RUN_RULES.sweeperAngularSpeed + obstacle.spec.z) * LANE_WIDTH;
+          break;
+        case 'animal':
+          obstacle.x = Math.sin(this.elapsedSeconds * RUN_RULES.animalAngularSpeed + obstacle.spec.z) * LANE_WIDTH;
           break;
         default:
           break;
@@ -497,9 +530,18 @@ export class RunSimulation {
       case 'coin':
         this.stats.coins += 1;
         break;
+      case 'gold-bar':
+        this.stats.goldBars += 1;
+        break;
+      case 'diamond':
+        this.stats.diamonds += 1;
+        break;
+      case 'turbo':
+        this.player.turboSeconds = RUN_RULES.turboSeconds;
+        break;
       case 'heart':
         this.stats.hearts += 1;
-        this.lives = Math.min(RUN_RULES.maxLives, this.lives + 1);
+        this.lives = Math.min(this.difficulty.maxLives, this.lives + 1);
         break;
       case 'crown':
         this.stats.crowns += 1;
@@ -512,7 +554,8 @@ export class RunSimulation {
   private checkObstacles(): void {
     const player = this.player;
 
-    if (player.invulnerableSeconds > 0) {
+    // No turbo o Pedro atravessa tudo; invencível, só não escorrega nem bate.
+    if (player.invulnerableSeconds > 0 || player.turboSeconds > 0) {
       return;
     }
 
@@ -529,16 +572,38 @@ export class RunSimulation {
       const overlapsY = player.y < size.bottom + size.height && player.y + height > size.bottom;
 
       if (overlapsZ && overlapsX && overlapsY) {
-        this.hit(obstacle);
+        if (obstacle.spec.kind === 'banana') {
+          this.slip(obstacle);
+        } else {
+          this.hit(obstacle);
+        }
+
         return;
       }
     }
   }
 
+  /** Banana: escorrega uma faixa para o lado e perde velocidade, sem perder coração. */
+  private slip(obstacle: ObstacleState): void {
+    const player = this.player;
+
+    obstacle.isBroken = true;
+    player.slipSeconds = RUN_RULES.slipSeconds;
+
+    if (player.lane === 0) {
+      player.lane = this.nextSlipDirection;
+      this.nextSlipDirection = this.nextSlipDirection === 1 ? -1 : 1;
+    } else {
+      player.lane = 0;
+    }
+
+    this.events.push({ type: 'slip', obstacleId: obstacle.spec.id });
+  }
+
   private hit(obstacle: ObstacleState): void {
     this.lives -= 1;
     this.stats.damageTaken += 1;
-    this.player.invulnerableSeconds = RUN_RULES.invulnerableSeconds;
+    this.player.invulnerableSeconds = this.difficulty.invulnerableSeconds;
     this.recoverySeconds = RUN_RULES.recoverySeconds;
     this.events.push({ type: 'hit', obstacleId: obstacle.spec.id });
 

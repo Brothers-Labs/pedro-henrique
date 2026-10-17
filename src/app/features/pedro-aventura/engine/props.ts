@@ -9,14 +9,19 @@ import {
   Mesh,
   type Material,
   Object3D,
+  OctahedronGeometry,
+  Shape,
+  ExtrudeGeometry,
   SphereGeometry,
   TorusGeometry,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 import type { ObstacleKind, RegionTheme } from '../models/campaign.model';
-import { RAMP_SIZE } from '../simulation/track.model';
+import { type PickupKind, RAMP_SIZE } from '../simulation/track.model';
 import { buildVehicle } from './characters';
 import { disposeGeometries, type MaterialLibrary } from './materials';
+import { buildPalm } from './nature';
 import { checkerTexture, chevronTexture, crateTexture, stripeTexture } from './textures';
 
 /** Cores dos carros da pista, sorteadas pelo id do obstáculo. */
@@ -26,6 +31,25 @@ const TRAFFIC_PALETTES = [
   { primary: '#f5f5f5', secondary: '#2a2a33', accent: '#ffe7a8' },
   { primary: '#ffb300', secondary: '#1a1a1f', accent: '#ffffff' },
 ] as const;
+
+type AnimalVariant = 'pato' | 'gato' | 'porquinho';
+
+const ANIMALS: readonly AnimalVariant[] = ['pato', 'gato', 'porquinho'];
+
+/** Raio do turbo: um zigue-zague extrudado, que brilha sozinho. */
+function lightningGeometry(): BufferGeometry {
+  const shape = new Shape();
+
+  shape.moveTo(0.05, 0.42);
+  shape.lineTo(-0.2, 0.0);
+  shape.lineTo(-0.02, 0.0);
+  shape.lineTo(-0.1, -0.42);
+  shape.lineTo(0.2, 0.06);
+  shape.lineTo(0.02, 0.06);
+  shape.closePath();
+
+  return new ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 1 }).translate(0, 0, -0.04);
+}
 
 function mesh(geometry: BufferGeometry, material: Material, x = 0, y = 0, z = 0): Mesh {
   const result = new Mesh(geometry, material);
@@ -53,6 +77,12 @@ export class PropKit {
   ) {}
 
   obstacle(kind: ObstacleKind, id: number): Object3D {
+    if (kind === 'animal') {
+      const variant = ANIMALS[id % ANIMALS.length];
+
+      return this.template(`animal-${variant}`, () => this.buildAnimal(variant)).clone();
+    }
+
     if (kind === 'parked-car' || kind === 'traffic-car') {
       const palette = TRAFFIC_PALETTES[id % TRAFFIC_PALETTES.length];
       const car = this.template(`car-${id % TRAFFIC_PALETTES.length}`, () => buildVehicle(this.materials, id % 3 === 0 ? 'suv' : 'sport', palette));
@@ -102,26 +132,39 @@ export class PropKit {
     }).clone();
   }
 
-  /** Geometrias das peças que viram `InstancedMesh` (moedas, corações, coroas). */
-  pickupGeometry(kind: 'coin' | 'heart' | 'crown'): BufferGeometry {
+  /** Geometrias das peças que viram `InstancedMesh` (uma chamada de desenho por tipo). */
+  pickupGeometry(kind: PickupKind): BufferGeometry {
     switch (kind) {
       case 'coin':
         return new CylinderGeometry(0.42, 0.42, 0.09, 18).rotateX(Math.PI / 2);
+      case 'gold-bar':
+        // Lingote: mais largo embaixo, de cantos suaves.
+        return new RoundedBoxGeometry(0.75, 0.28, 0.4, 2, 0.06);
+      case 'diamond':
+        return new OctahedronGeometry(0.34, 0).scale(1, 1.35, 1);
       case 'heart':
         return new SphereGeometry(0.34, 12, 10).scale(1, 0.9, 0.55);
       case 'crown':
         return new TorusGeometry(0.34, 0.1, 6, 12).rotateX(Math.PI / 2);
+      case 'turbo':
+        return lightningGeometry();
     }
   }
 
-  pickupMaterial(kind: 'coin' | 'heart' | 'crown'): Material {
+  pickupMaterial(kind: PickupKind): Material {
     switch (kind) {
       case 'coin':
         return this.materials.gold();
+      case 'gold-bar':
+        return this.materials.standard('#f2b51c', { metalness: 0.9, roughness: 0.18, emissive: '#c98a00', emissiveIntensity: 0.6 });
+      case 'diamond':
+        return this.materials.standard('#7fe3ff', { metalness: 0.3, roughness: 0.05, emissive: '#2fb8ff', emissiveIntensity: 1.1, transparent: true, opacity: 0.9 });
       case 'heart':
         return this.materials.standard('#ff2d55', { emissive: '#ff2d55', emissiveIntensity: 0.6, roughness: 0.3 });
       case 'crown':
         return this.materials.standard('#ffd54a', { emissive: '#ffb300', emissiveIntensity: 0.9, metalness: 0.8, roughness: 0.25 });
+      case 'turbo':
+        return this.materials.neon('#3fb8ff', 2.4);
     }
   }
 
@@ -184,10 +227,95 @@ export class PropKit {
       case 'cone':
         group.add(mesh(new ConeGeometry(0.33, 0.8, 10), materials.standard('#ff6d00', { roughness: 0.5 }), 0, 0.4, 0), mesh(new CylinderGeometry(0.22, 0.25, 0.12, 10), materials.standard('#ffffff'), 0, 0.42, 0));
         break;
+      case 'banana':
+        group.add(...this.buildBanana());
+        break;
+      case 'animal':
+        // O bicho é sorteado pelo id na hora de montar a pista (ver `obstacle`).
+        break;
       case 'sweeper':
         group.add(mesh(new BoxGeometry(1.8, 0.7, 0.4), materials.standard('#ffffff', { map: this.texture(stripeTexture('#ff3d00', '#1a1a1f')) }), 0, 0.6, 0), mesh(new CylinderGeometry(0.18, 0.18, 0.3, 10).rotateZ(Math.PI / 2), materials.standard('#111111'), -0.7, 0.18, 0), mesh(new CylinderGeometry(0.18, 0.18, 0.3, 10).rotateZ(Math.PI / 2), materials.standard('#111111'), 0.7, 0.18, 0));
         break;
     }
+
+    return group;
+  }
+
+  /** Casca de banana aberta no chão: arco amarelo com as pontas escuras. */
+  private buildBanana(): Mesh[] {
+    const peel = this.materials.standard('#ffd23f', { roughness: 0.55 });
+    const tip = this.materials.standard('#5a3b14', { roughness: 0.8 });
+    const pieces: Mesh[] = [];
+
+    for (let index = 0; index < 3; index += 1) {
+      const strip = mesh(new TorusGeometry(0.22, 0.055, 8, 16, Math.PI * 0.9), peel, 0, 0.06, 0);
+
+      strip.rotation.set(Math.PI / 2, 0, (index / 3) * Math.PI * 2);
+      pieces.push(strip);
+    }
+
+    pieces.push(mesh(new SphereGeometry(0.06, 10, 8), tip, 0, 0.08, 0));
+
+    return pieces;
+  }
+
+  /** Pato, gato ou porquinho: bichos de formas redondas que atravessam a pista. */
+  private buildAnimal(variant: AnimalVariant): Object3D {
+    const group = new Group();
+    const materials = this.materials;
+    const eye = materials.standard('#111111', { roughness: 0.2 });
+
+    switch (variant) {
+      case 'pato': {
+        const feather = materials.standard('#ffffff', { roughness: 0.7 });
+        const beak = materials.standard('#ff9a1f', { roughness: 0.5 });
+
+        group.add(
+          mesh(new SphereGeometry(0.34, 18, 14).scale(1, 0.85, 1.25), feather, 0, 0.38, 0),
+          mesh(new SphereGeometry(0.2, 16, 12), feather, 0, 0.72, 0.28),
+          mesh(new ConeGeometry(0.08, 0.2, 10).rotateX(Math.PI / 2), beak, 0, 0.7, 0.5),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, -0.09, 0.78, 0.43),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, 0.09, 0.78, 0.43),
+          mesh(new CylinderGeometry(0.03, 0.03, 0.12, 6), beak, -0.1, 0.06, 0),
+          mesh(new CylinderGeometry(0.03, 0.03, 0.12, 6), beak, 0.1, 0.06, 0),
+        );
+        break;
+      }
+      case 'gato': {
+        const fur = materials.standard('#f08a2b', { roughness: 0.8 });
+        const belly = materials.standard('#ffe2c2', { roughness: 0.8 });
+
+        group.add(
+          mesh(new SphereGeometry(0.3, 18, 14).scale(0.9, 0.85, 1.4), fur, 0, 0.42, 0),
+          mesh(new SphereGeometry(0.2, 16, 12), fur, 0, 0.7, 0.36),
+          mesh(new SphereGeometry(0.1, 12, 10).scale(1, 0.8, 0.8), belly, 0, 0.64, 0.5),
+          mesh(new ConeGeometry(0.07, 0.15, 8), fur, -0.11, 0.9, 0.34),
+          mesh(new ConeGeometry(0.07, 0.15, 8), fur, 0.11, 0.9, 0.34),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, -0.08, 0.74, 0.54),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, 0.08, 0.74, 0.54),
+          mesh(new CylinderGeometry(0.035, 0.025, 0.5, 8).rotateX(-0.9), fur, 0, 0.62, -0.5),
+        );
+        break;
+      }
+      case 'porquinho': {
+        const skin = materials.standard('#ff9fb6', { roughness: 0.6 });
+        const snout = materials.standard('#ff7f9e', { roughness: 0.6 });
+
+        group.add(
+          mesh(new SphereGeometry(0.36, 18, 14).scale(1, 0.85, 1.3), skin, 0, 0.42, 0),
+          mesh(new SphereGeometry(0.22, 16, 12), skin, 0, 0.55, 0.42),
+          mesh(new CylinderGeometry(0.09, 0.09, 0.08, 14).rotateX(Math.PI / 2), snout, 0, 0.52, 0.64),
+          mesh(new ConeGeometry(0.07, 0.12, 8), skin, -0.12, 0.76, 0.4),
+          mesh(new ConeGeometry(0.07, 0.12, 8), skin, 0.12, 0.76, 0.4),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, -0.09, 0.62, 0.6),
+          mesh(new SphereGeometry(0.03, 8, 6), eye, 0.09, 0.62, 0.6),
+        );
+        break;
+      }
+    }
+
+    // De lado: o bicho atravessa a pista, não vem de frente.
+    group.rotation.y = Math.PI / 2;
 
     return group;
   }
@@ -198,21 +326,9 @@ export class PropKit {
     const accent = this.theme.accent;
 
     switch (this.theme.scenery) {
-      case 'palms': {
-        const trunk = materials.standard('#8d6e4a', { roughness: 0.9 });
-        const leaves = materials.standard('#2e9e5b', { roughness: 0.8 });
-        const height = 3.6 + variant * 0.8;
-
-        group.add(mesh(new CylinderGeometry(0.16, 0.24, height, 7), trunk, 0, height / 2, 0));
-
-        for (let index = 0; index < 5; index += 1) {
-          const leaf = mesh(new ConeGeometry(0.35, 2.2, 4), leaves, 0, height, 0);
-          leaf.rotation.set(Math.PI / 2.6, (index / 5) * Math.PI * 2, 0, 'YXZ');
-          group.add(leaf);
-        }
-
+      case 'palms':
+        group.add(buildPalm(materials, 3.8 + variant * 0.9, 0.25 + variant * 0.12));
         break;
-      }
       case 'buildings':
       case 'towers': {
         const isTower = this.theme.scenery === 'towers';

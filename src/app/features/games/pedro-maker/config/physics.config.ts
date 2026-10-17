@@ -67,10 +67,11 @@ export const POWER_UP_DURATION_MS = {
   magnet: 15000,
   wings: 20000,
   star: 10000,
-  /** Escudo, cogumelo e flor duram até proteger de um toque. */
+  /** Escudo, cogumelo e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
   'fire-flower': 0,
+  'ice-flower': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
 } as const;
@@ -100,6 +101,27 @@ export const FIREBALL_PHYSICS = {
   maxAlive: 2,
 } as const;
 
+/** Bolas de gelo da Flor de Gelo: mais lentas e rasteiras que as de fogo. */
+export const ICEBALL_PHYSICS = {
+  speed: 430,
+  bounceVelocity: 300,
+} as const;
+
+/** Quanto tempo um inimigo atingido pelo gelo fica congelado antes de derreter. */
+export const FROZEN_ENEMY_MS = 5000;
+
+/**
+ * Escorregador: a rampa desce `height` blocos em `length` blocos de largura.
+ * A velocidade cresce do embalo inicial até o máximo; a altura cabe num pulo.
+ */
+export const SLIDE_PHYSICS = {
+  length: 3,
+  height: 3,
+  startSpeed: 320,
+  acceleration: 1100,
+  maxSpeed: 820,
+} as const;
+
 /** Tamanho do Pedro com o Super Cogumelo, só no desenho: a colisão não muda. */
 export const BIG_PEDRO_SCALE = 1.35;
 
@@ -112,5 +134,6 @@ export const SURPRISE_COIN_COUNT = 5;
 /** Cabeçadas que o bloco de moedas aguenta, uma moeda por cabeçada. */
 export const MULTI_COIN_BLOCK_COUNT = 8;
 
-/** Quanto vale a moeda gigante. */
+/** Quanto valem as moedas gigantes. */
 export const BIG_COIN_VALUE = 10;
+export const HUGE_COIN_VALUE = 50;

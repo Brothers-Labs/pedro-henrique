@@ -51,7 +51,7 @@ describe('campaign', () => {
   });
 
   it('guarda recordes que só melhoram', () => {
-    const result = { attemptId: 'a', levelId: '1-1', isVictory: true, timeMs: 50_000, coins: 10, hearts: 0, crowns: 1, ramps: 1, damageTaken: 0, score: 900 };
+    const result = { attemptId: 'a', levelId: '1-1', difficulty: 'facil' as const, isVictory: true, timeMs: 50_000, coins: 10, goldBars: 0, diamonds: 0, hearts: 0, crowns: 1, ramps: 1, damageTaken: 0, score: 900 };
     const firstRecord = recordAttempt(undefined, result, 2);
     const worse = recordAttempt(firstRecord, { ...result, timeMs: 70_000, score: 100 }, 1);
 

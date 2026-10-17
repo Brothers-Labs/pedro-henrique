@@ -1,18 +1,23 @@
-import { FIREBALL_PHYSICS } from '../../config/physics.config';
+import { FIREBALL_PHYSICS, ICEBALL_PHYSICS } from '../../config/physics.config';
 import { createBody, type PhysicsBody, type PhysicsWorld, stepBody } from './physics-body';
+
+/** Do que é feita a bola: fogo da Flor de Fogo ou gelo da Flor de Gelo. */
+export type BallElement = 'fire' | 'ice';
 
 export interface Fireball {
   readonly id: number;
+  readonly element: BallElement;
   readonly body: PhysicsBody;
   readonly expiresAt: number;
 }
 
 /**
- * Bolas de fogo da Flor de Fogo.
+ * Bolas de fogo e de gelo das flores.
  *
  * Usam a mesma física dos outros corpos: caem, quicam no chão e se apagam ao
- * bater numa parede ou quando o tempo acaba. Quem decide o que acontece com
- * um inimigo atingido é a partida.
+ * bater numa parede ou quando o tempo acaba. O gelo só voa mais devagar e
+ * quica mais baixo. Quem decide o que acontece com um inimigo atingido é a
+ * partida.
  */
 export class FireballSystem {
   readonly fireballs: Fireball[] = [];
@@ -24,7 +29,7 @@ export class FireballSystem {
   }
 
   /** Lança uma bola a partir do centro (x, y), para o lado em que o Pedro olha. */
-  throw(x: number, y: number, direction: 1 | -1, now: number): void {
+  throw(x: number, y: number, direction: 1 | -1, element: BallElement, now: number): void {
     const { size } = FIREBALL_PHYSICS;
     const body = createBody(size, size, true, FIREBALL_PHYSICS.maxFallSpeed);
 
@@ -32,9 +37,9 @@ export class FireballSystem {
     body.y = y - size / 2;
     body.previousX = body.x;
     body.previousY = body.y;
-    body.vx = direction * FIREBALL_PHYSICS.speed;
+    body.vx = direction * motionOf(element).speed;
 
-    this.fireballs.push({ id: this.nextId, body, expiresAt: now + FIREBALL_PHYSICS.lifeMs });
+    this.fireballs.push({ id: this.nextId, element, body, expiresAt: now + FIREBALL_PHYSICS.lifeMs });
     this.nextId += 1;
   }
 
@@ -53,7 +58,7 @@ export class FireballSystem {
       stepBody(body, world, seconds, false);
 
       if (body.blockedDown) {
-        body.vy = -FIREBALL_PHYSICS.bounceVelocity;
+        body.vy = -motionOf(fireball.element).bounceVelocity;
       }
 
       const hitWall = body.blockedLeft || body.blockedRight;
@@ -72,4 +77,8 @@ export class FireballSystem {
       this.fireballs.splice(index, 1);
     }
   }
+}
+
+function motionOf(element: BallElement): { readonly speed: number; readonly bounceVelocity: number } {
+  return element === 'ice' ? ICEBALL_PHYSICS : FIREBALL_PHYSICS;
 }

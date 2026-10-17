@@ -41,6 +41,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   spikes: { surface: 'hazard', isUnique: false },
   water: { surface: 'water', isUnique: false },
   'moving-platform': { surface: 'none', isUnique: false },
+  slide: { surface: 'none', isUnique: false },
   slime: { surface: 'none', isUnique: false },
   spiky: { surface: 'none', isUnique: false },
   bat: { surface: 'none', isUnique: false },
@@ -54,6 +55,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
+  'huge-coin': { surface: 'none', isUnique: false },
   crystal: { surface: 'none', isUnique: false },
   heart: { surface: 'none', isUnique: false },
   'power-up': { surface: 'none', isUnique: false },
@@ -167,7 +169,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'bee', category: 'inimigos', type: 'bee', label: 'Abelha' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
-  { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante' },
+  { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante 10' },
+  { id: 'huge-coin', category: 'itens', type: 'huge-coin', label: 'Moeda Gigante 50' },
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
 
@@ -189,6 +192,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   },
   { id: 'crumble', category: 'plataformas', type: 'crumble', label: 'Desaparece' },
   { id: 'spring', category: 'plataformas', type: 'spring', label: 'Mola' },
+  { id: 'slide', category: 'plataformas', type: 'slide', label: 'Escorregador' },
 
   { id: 'tree', category: 'decoracao', type: 'tree', label: 'Árvore' },
   { id: 'bush', category: 'decoracao', type: 'bush', label: 'Arbusto' },
@@ -212,6 +216,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
 
   { id: 'power-mushroom', category: 'cogumelos', type: 'power-up', label: 'Super Cogumelo', properties: { powerUp: 'mushroom' } },
   { id: 'power-fire-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Fogo', properties: { powerUp: 'fire-flower' } },
+  { id: 'power-ice-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Gelo', properties: { powerUp: 'ice-flower' } },
   { id: 'power-star', category: 'cogumelos', type: 'power-up', label: 'Super Estrela', properties: { powerUp: 'star' } },
   { id: 'power-one-up', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Vida', properties: { powerUp: 'one-up' } },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
@@ -257,6 +262,7 @@ export const POWER_UP_LABELS = {
   wings: { label: 'Asa', emoji: '🪽' },
   mushroom: { label: 'Super Cogumelo', emoji: '🍄' },
   'fire-flower': { label: 'Flor de Fogo', emoji: '🔥' },
+  'ice-flower': { label: 'Flor de Gelo', emoji: '❄️' },
   star: { label: 'Super Estrela', emoji: '⭐' },
   'one-up': { label: 'Cogumelo Vida', emoji: '💚' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;

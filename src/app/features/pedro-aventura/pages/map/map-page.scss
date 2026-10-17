@@ -196,6 +196,11 @@
     font-size: var(--text-xl);
   }
 
+  &__difficulty {
+    display: flex;
+    margin-top: 0.6rem;
+  }
+
   &__tagline,
   &__lock {
     margin: 0.3rem 0 0;

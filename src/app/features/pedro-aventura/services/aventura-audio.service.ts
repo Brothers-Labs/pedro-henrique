@@ -5,6 +5,10 @@ import { AventuraStore } from './aventura-store.service';
 
 export type AventuraSound =
   | 'coin'
+  | 'gold-bar'
+  | 'diamond'
+  | 'turbo'
+  | 'slip'
   | 'heart'
   | 'crown'
   | 'jump'
@@ -37,6 +41,10 @@ const tone = (hertz: number, delay: number, duration: number, wave: OscillatorTy
 /** Efeitos curtos, em notas da escala maior: só a batida e a derrota descem. */
 const SOUNDS: Readonly<Record<AventuraSound, readonly Tone[]>> = {
   coin: [tone(988, 0, 0.06, 'square'), tone(1319, 0.05, 0.1, 'square')],
+  'gold-bar': [tone(784, 0, 0.08, 'square'), tone(988, 0.07, 0.08, 'square'), tone(1319, 0.14, 0.16, 'square')],
+  diamond: [tone(1319, 0, 0.08), tone(1760, 0.07, 0.1), tone(2093, 0.15, 0.22)],
+  turbo: [tone(330, 0, 0.12, 'sawtooth'), tone(494, 0.08, 0.12, 'sawtooth'), tone(740, 0.16, 0.2, 'sawtooth')],
+  slip: [tone(660, 0, 0.1, 'sine'), tone(440, 0.09, 0.14, 'sine')],
   heart: [tone(659, 0, 0.1), tone(880, 0.08, 0.16)],
   crown: [tone(784, 0, 0.1), tone(988, 0.09, 0.1), tone(1319, 0.18, 0.24)],
   jump: [tone(392, 0, 0.08), tone(587, 0.05, 0.08)],

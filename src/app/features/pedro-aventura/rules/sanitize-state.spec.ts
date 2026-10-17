@@ -30,6 +30,6 @@ describe('sanitizeState', () => {
     expect(state.inventory.owned).toContain('lambo-gold');
     expect(state.inventory.owned).not.toContain('carro-falso');
     expect(state.inventory.equipped).toEqual({ outfit: 'moletom-coroa', dog: 'rex', vehicle: 'lambo-gold' });
-    expect(state.settings).toEqual({ quality: 'auto', musicVolume: 1, effectsVolume: 0.3, touchControls: 'sempre' });
+    expect(state.settings).toEqual({ quality: 'auto', musicVolume: 1, effectsVolume: 0.3, touchControls: 'sempre', difficulty: 'facil' });
   });
 });

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
+import { DifficultyPicker } from '../../components/difficulty-picker';
 import { describeCountdown, formatCountdown } from '../../components/format';
 import { LevelBadge } from '../../components/level-badge';
 import { LobbyStage } from '../../components/lobby-stage';
@@ -23,7 +24,7 @@ const EVENT_REGION = REGIONS.find((region) => region.id === 'eventos-especiais')
 @Component({
   selector: 'app-lobby-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LobbyStage, LevelBadge, MissionCard, PassCards],
+  imports: [RouterLink, LobbyStage, LevelBadge, MissionCard, PassCards, DifficultyPicker],
   templateUrl: './lobby-page.html',
   styleUrl: './lobby-page.scss',
 })

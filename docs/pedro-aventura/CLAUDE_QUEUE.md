@@ -21,3 +21,6 @@ Estados possíveis: `PENDING` · `IN_PROGRESS` · `BLOCKED` · `DONE`.
 | AV-013 | GitHub Actions: build e testes em PR e staging | — | BLOCKED | O repositório não tem workflows; precisa de aprovação, porque afeta o site inteiro |
 | AV-014 | Playwright E2E da jornada e ESLint | AV-011 | BLOCKED | Dependências novas; precisam de aprovação |
 | AV-015 | Benchmarks de FPS em aparelho real (desktop e tablet) | AV-011 | PENDING | Precisa de medição manual no aparelho |
+| AV-016 | Dificuldade Fácil (o jogo de sempre), Médio e Difícil | AV-011 | DONE | Entregue em 14/10/2026; ver seção 11 do relatório |
+| AV-017 | Personagem e rosto mais realistas; lobby menos quadrado | AV-011 | DONE | Entregue em 14/10/2026; ver seção 11 do relatório |
+| AV-018 | Turbo, banana, bichos para desviar, barra de ouro e diamante com valores próprios | AV-016 | DONE | Entregue em 15/10/2026; ver seção 12 do relatório |

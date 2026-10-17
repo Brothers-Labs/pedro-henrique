@@ -178,3 +178,69 @@ export function windowsTexture(lit: string, wall: string): CanvasTexture {
 
   return texture;
 }
+
+/** Piso de mármore escuro polido, em placas grandes com veios. */
+export function marbleTexture(): CanvasTexture {
+  const texture = paint(512, 512, (context, width, height) => {
+    context.fillStyle = '#17141f';
+    context.fillRect(0, 0, width, height);
+
+    // Veios: curvas finas e claras, sempre no mesmo lugar (sem aleatório).
+    context.strokeStyle = 'rgba(210, 200, 230, 0.16)';
+    context.lineWidth = 1.5;
+
+    for (let vein = 0; vein < 14; vein += 1) {
+      const start = (vein * 97) % width;
+
+      context.beginPath();
+      context.moveTo(start, 0);
+      context.bezierCurveTo(start + 80, height * 0.3, start - 60, height * 0.6, start + 40, height);
+      context.stroke();
+    }
+
+    // Juntas entre as placas.
+    context.strokeStyle = 'rgba(0, 0, 0, 0.55)';
+    context.lineWidth = 3;
+    context.strokeRect(0, 0, width, height);
+    context.beginPath();
+    context.moveTo(width / 2, 0);
+    context.lineTo(width / 2, height);
+    context.moveTo(0, height / 2);
+    context.lineTo(width, height / 2);
+    context.stroke();
+  });
+
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+
+  return texture;
+}
+
+/** Vidraça da mansão à noite: painéis grandes com luz quente e esquadrias finas. */
+export function villaGlassTexture(): CanvasTexture {
+  return paint(256, 128, (context, width, height) => {
+    const gradient = context.createLinearGradient(0, 0, 0, height);
+
+    gradient.addColorStop(0, '#ffd58a');
+    gradient.addColorStop(1, '#ff9f4a');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+
+    // Cortinas e móveis em sombra, para o vidro não parecer uma lâmpada.
+    context.fillStyle = 'rgba(60, 30, 10, 0.35)';
+    context.fillRect(width * 0.08, height * 0.55, width * 0.22, height * 0.45);
+    context.fillRect(width * 0.62, height * 0.6, width * 0.3, height * 0.4);
+
+    context.strokeStyle = '#1b1712';
+    context.lineWidth = 5;
+
+    for (let x = 0; x <= width; x += width / 4) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, height);
+      context.stroke();
+    }
+
+    context.strokeRect(0, 0, width, height);
+  });
+}

@@ -233,9 +233,22 @@
   &__count {
     @include av.gold-title;
 
+
     font-size: 5rem;
     line-height: 1;
   }
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  color: var(--av-text-soft);
+  font-size: var(--text-sm);
+  text-align: left;
+  list-style: none;
 }
 
 .message {

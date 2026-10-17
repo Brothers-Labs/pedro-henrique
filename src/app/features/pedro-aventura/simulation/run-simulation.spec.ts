@@ -1,7 +1,8 @@
+import { DIFFICULTIES, difficultyById } from '../config/difficulty.config';
 import { REGIONS, findLevel } from '../config/regions.config';
 import type { LevelDefinition } from '../models/campaign.model';
 import { generateLayout } from './level-generator';
-import { NO_COMMANDS, RUN_PHYSICS, RUN_RULES, type RunCommands, type RunEvent, RunSimulation } from './run-simulation';
+import { NO_COMMANDS, RUN_PHYSICS, type RunCommands, type RunEvent, RunSimulation } from './run-simulation';
 import { type Lane, LANES, laneX, OBSTACLE_SIZE, type TrackLayout } from './track.model';
 
 const MAX_STEPS = 60 * 240;
@@ -25,7 +26,7 @@ function emptyTrack(length = 200): TrackLayout {
     obstacles: [],
     pickups: [],
     ramps: [],
-    totals: { coins: 0, hearts: 0, crowns: 0, ramps: 0 },
+    totals: { coins: 0, goldBars: 0, diamonds: 0, hearts: 0, crowns: 0, turbos: 0, ramps: 0 },
   };
 }
 
@@ -140,7 +141,7 @@ describe('RunSimulation', () => {
     const events = advance(run, 200);
 
     expect(events.filter((event) => event.type === 'hit').length).toBe(1);
-    expect(run.hud().lives).toBe(RUN_RULES.maxLives - 1);
+    expect(run.hud().lives).toBe(DIFFICULTIES[0].maxLives - 1);
     expect(run.result().damageTaken).toBe(1);
   });
 
@@ -179,6 +180,58 @@ describe('RunSimulation', () => {
     expect(events).toContain({ type: 'break', obstacleId: 9 });
   });
 
+  it('o turbo acelera e atravessa obstáculos sem bater', () => {
+    const layout: TrackLayout = {
+      ...emptyTrack(),
+      pickups: [{ id: 1, kind: 'turbo', lane: 0, z: 5, y: 1 }],
+      obstacles: [{ id: 2, kind: 'parked-car', lane: 0, z: 20 }],
+    };
+    const run = startRun(layout);
+    const events = advance(run, 30);
+    const normalSpeed = run.level.startSpeed;
+
+    expect(events.some((event) => event.type === 'turbo')).toBeTrue();
+    expect(run.player.speed).toBeGreaterThan(normalSpeed * 1.3);
+
+    advance(run, 90);
+    expect(run.result().damageTaken).toBe(0);
+  });
+
+  it('escorrega na banana para outra faixa sem perder coração, e pulando passa por cima', () => {
+    const banana = { ...emptyTrack(), obstacles: [{ id: 3, kind: 'banana' as const, lane: 0 as const, z: 12 }] };
+    const slipper = startRun(banana);
+    const events = advance(slipper, 120);
+
+    expect(events).toContain({ type: 'slip', obstacleId: 3 });
+    expect(slipper.player.lane).not.toBe(0);
+    expect(slipper.hud().lives).toBe(DIFFICULTIES[0].maxLives);
+
+    const jumper = startRun(banana);
+
+    advance(jumper, Math.round(((12 - 2.5) / jumper.level.startSpeed) * 60));
+    expect(advance(jumper, 120, { jump: true }).some((event) => event.type === 'slip')).toBeFalse();
+  });
+
+  it('conta barras de ouro e diamantes; o diamante do alto só vem pulando', () => {
+    const layout: TrackLayout = {
+      ...emptyTrack(),
+      pickups: [
+        { id: 1, kind: 'gold-bar', lane: 0, z: 8, y: 1 },
+        { id: 2, kind: 'diamond', lane: 0, z: 30, y: 2.3 },
+      ],
+    };
+    const runner = startRun(layout);
+
+    advance(runner, 200);
+    expect(runner.result()).toEqual(jasmine.objectContaining({ goldBars: 1, diamonds: 0 }));
+
+    const jumper = startRun(layout);
+
+    advance(jumper, Math.round(((30 - 4) / jumper.level.startSpeed) * 60));
+    advance(jumper, 120, { jump: true });
+    expect(jumper.result().diamonds).toBe(1);
+  });
+
   it('pega moedas e corações e conta a rampa uma vez só', () => {
     const layout: TrackLayout = {
       ...emptyTrack(),
@@ -214,7 +267,22 @@ describe('RunSimulation', () => {
     run.continueFromCheckpoint();
 
     expect(run.phase).toBe('playing');
-    expect(run.hud().lives).toBe(RUN_RULES.maxLives);
+    expect(run.hud().lives).toBe(DIFFICULTIES[0].maxLives);
+  });
+
+  it('corre mais rápido no Médio e no Difícil, e o Difícil tem só 2 corações', () => {
+    const distance = (id: 'facil' | 'medio' | 'dificil') => {
+      const run = new RunSimulation(level('1-1'), emptyTrack(), difficultyById(id));
+
+      run.start();
+      advance(run, 60);
+
+      return run.player.z;
+    };
+
+    expect(distance('medio')).toBeGreaterThan(distance('facil'));
+    expect(distance('dificil')).toBeGreaterThan(distance('medio'));
+    expect(new RunSimulation(level('1-1'), emptyTrack(), difficultyById('dificil')).hud().maxLives).toBe(2);
   });
 
   for (const regionId of ['ilha-inicial', 'montanha-radical'] as const) {

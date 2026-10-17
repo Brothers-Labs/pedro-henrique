@@ -22,6 +22,8 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   spring: '#ff5a8a',
   coin: '#ffe066',
   'big-coin': '#ffc629',
+  'huge-coin': '#ffc629',
+  slide: '#ff5a5a',
   crystal: '#4fd8ff',
   start: '#ffffff',
   portal: '#9a6cf0',

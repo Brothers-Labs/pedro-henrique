@@ -40,6 +40,21 @@ const CAMERA = { back: 6.4, height: 3.3, lookAhead: 7, smoothing: 6 } as const;
 
 const UP = new Vector3(0, 1, 0);
 
+const PICKUP_KINDS: readonly PickupKind[] = ['coin', 'gold-bar', 'diamond', 'heart', 'crown', 'turbo'];
+
+/** Cor das faíscas de cada item pego. */
+const PICKUP_SPARKS: Readonly<Record<PickupKind, { readonly color: string; readonly amount: number }>> = {
+  coin: { color: '#ffd54a', amount: 6 },
+  'gold-bar': { color: '#ffb300', amount: 18 },
+  diamond: { color: '#7fe3ff', amount: 22 },
+  heart: { color: '#ff2d55', amount: 16 },
+  crown: { color: '#ffd54a', amount: 16 },
+  turbo: { color: '#3fb8ff', amount: 26 },
+};
+
+/** Quanto a câmera abre no turbo: a sensação de velocidade vem daí. */
+const TURBO_FOV_KICK = 9;
+
 const PARTICLE_COUNT = 96;
 const PARTICLE_LIFE_SECONDS = 0.6;
 
@@ -121,10 +136,17 @@ export class RunScene {
   handle(event: RunEvent): void {
     switch (event.type) {
       case 'coin':
+      case 'gold-bar':
+      case 'diamond':
       case 'heart':
       case 'crown':
+      case 'turbo':
         this.hidePickup(event.type, event.pickupId);
-        this.burst(event.type === 'heart' ? '#ff2d55' : '#ffd54a', event.type === 'coin' ? 6 : 16);
+        this.burst(PICKUP_SPARKS[event.type].color, PICKUP_SPARKS[event.type].amount);
+        return;
+      case 'slip':
+        this.obstacleViews.get(event.obstacleId)?.removeFromParent();
+        this.burst('#ffd23f', 10);
         return;
       case 'break':
         this.obstacleViews.get(event.obstacleId)?.removeFromParent();
@@ -247,7 +269,7 @@ export class RunScene {
       }
     }
 
-    for (const kind of ['coin', 'heart', 'crown'] as const) {
+    for (const kind of PICKUP_KINDS) {
       this.buildBatch(kind);
     }
   }
@@ -302,6 +324,13 @@ export class RunScene {
 
     this.pedro.root.position.set(player.x, player.y, player.z);
     this.pedro.pose(this.poseOf(), this.time, cadence, motion);
+    // Escorregão na banana: o Pedro rodopia (um giro só, mesmo com movimento reduzido, porque é informação).
+    this.pedro.root.rotation.y = player.slipSeconds > 0 ? (1 - player.slipSeconds / 0.8) * Math.PI * 2 : 0;
+
+    // Rastro azul enquanto o turbo dura.
+    if (player.turboSeconds > 0 && Math.floor(this.time * 30) % 3 === 0) {
+      this.burst('#3fb8ff', 2);
+    }
 
     // Pisca enquanto está invencível; sem piscar quando o movimento é reduzido.
     const isBlinking = player.invulnerableSeconds > 0 && this.isMotionAllowed && Math.floor(this.time * 10) % 2 === 0;
@@ -342,7 +371,7 @@ export class RunScene {
     for (const obstacle of this.run.obstacles) {
       const view = this.obstacleViews.get(obstacle.spec.id);
 
-      if (view && (obstacle.spec.kind === 'traffic-car' || obstacle.spec.kind === 'sweeper')) {
+      if (view && (obstacle.spec.kind === 'traffic-car' || obstacle.spec.kind === 'sweeper' || obstacle.spec.kind === 'animal')) {
         view.position.set(obstacle.x, 0, obstacle.z);
       }
     }
@@ -363,7 +392,7 @@ export class RunScene {
     const angle = this.isMotionAllowed ? this.time * 3 : 0;
 
     for (const [kind, batch] of this.batches) {
-      if (kind === 'heart' && !this.isMotionAllowed) {
+      if ((kind === 'heart' || kind === 'gold-bar') && !this.isMotionAllowed) {
         continue;
       }
 
@@ -375,7 +404,7 @@ export class RunScene {
         const bob = kind === 'heart' ? Math.sin(this.time * 4 + spec.z) * 0.12 : 0;
 
         this.position.set(laneX(spec.lane), spec.y + bob, spec.z);
-        this.quaternion.setFromAxisAngle(UP, kind === 'heart' ? 0 : angle + spec.z);
+        this.quaternion.setFromAxisAngle(UP, kind === 'heart' || kind === 'gold-bar' ? 0 : angle + spec.z);
         this.scale.setScalar(1);
         this.matrix.compose(this.position, this.quaternion, this.scale);
         batch.mesh.setMatrixAt(index, this.matrix);
@@ -465,7 +494,9 @@ export class RunScene {
     const back = isPortrait ? CAMERA.back + 1.6 : CAMERA.back;
     const follow = Math.min(1, frameSeconds * CAMERA.smoothing);
 
-    camera.fov = isPortrait ? 74 : 62;
+    const turboKick = player.turboSeconds > 0 && this.isMotionAllowed ? TURBO_FOV_KICK : 0;
+
+    camera.fov = (isPortrait ? 74 : 62) + turboKick;
     camera.updateProjectionMatrix();
 
     const targetX = player.x * 0.55;

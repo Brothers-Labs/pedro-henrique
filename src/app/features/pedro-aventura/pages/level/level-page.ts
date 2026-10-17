@@ -18,6 +18,7 @@ import { map } from 'rxjs';
 
 import { MotionPreferenceService } from '../../../../core/services/motion-preference.service';
 import { formatNumber, formatStopwatch } from '../../components/format';
+import { type Difficulty, difficultyById } from '../../config/difficulty.config';
 import { findLevel, regionById } from '../../config/regions.config';
 import type { LevelDefinition } from '../../models/campaign.model';
 import type { RunLaunchOptions, RunSession, RunSessionEvent } from '../../engine/launch';
@@ -39,6 +40,10 @@ const SETTLE_DELAY_MS = 1500;
 
 const EVENT_SOUNDS: Partial<Record<RunEvent['type'], AventuraSound>> = {
   coin: 'coin',
+  'gold-bar': 'gold-bar',
+  diamond: 'diamond',
+  turbo: 'turbo',
+  slip: 'slip',
   heart: 'heart',
   crown: 'crown',
   jump: 'jump',
@@ -52,6 +57,10 @@ const ANNOUNCEMENTS: Partial<Record<RunEvent['type'], string>> = {
   hit: 'Ai! Perdeu um coração.',
   heart: 'Ganhou um coração!',
   crown: 'Pegou uma coroa!',
+  'gold-bar': 'Barra de ouro: mais 10 moedas!',
+  diamond: 'Pegou um diamante!',
+  turbo: 'Turbo!',
+  slip: 'Escorregou na banana!',
   checkpoint: 'Checkpoint!',
 };
 
@@ -62,6 +71,8 @@ const EMPTY_HUD: RunHud = {
   progress: 0,
   timeMs: 0,
   coins: 0,
+  goldBars: 0,
+  diamonds: 0,
   hearts: 0,
   crowns: 0,
   ramps: 0,
@@ -103,6 +114,8 @@ export class LevelPage {
   private isDestroyed = false;
   /** Fase que a sessão atual está correndo: o resultado é sempre dela, mesmo que a rota já tenha mudado. */
   private runningLevel: LevelDefinition | null = null;
+  /** Dificuldade da partida em curso: mudar a configuração no meio não muda a corrida. */
+  private runningDifficulty: Difficulty = 'facil';
   /** Último `levelId` visto: ir para a próxima fase reaproveita esta tela. */
   private observedLevelId: string | null = null;
   /** Cada abertura ganha um número; uma abertura atrasada (rede lenta) que perdeu a vez é descartada. */
@@ -179,6 +192,7 @@ export class LevelPage {
 
   protected readonly formatStopwatch = formatStopwatch;
   protected readonly formatNumber = formatNumber;
+  protected readonly difficulty = computed(() => difficultyById(this.store.settings().difficulty));
 
   constructor() {
     afterNextRender(() => void this.start());
@@ -320,11 +334,13 @@ export class LevelPage {
       }
 
       this.runningLevel = level;
+      this.runningDifficulty = this.store.settings().difficulty;
 
       const equipped = this.store.equipped();
       const options: RunLaunchOptions = {
         parent: host,
         level,
+        difficulty: this.runningDifficulty,
         theme: region.theme,
         look: { outfit: equipped.outfit, dog: equipped.dog },
         quality: this.store.settings().quality,
@@ -449,7 +465,7 @@ export class LevelPage {
       return;
     }
 
-    const result = { levelId: level.id, isVictory, ...this.session.stats() };
+    const result = { levelId: level.id, difficulty: this.runningDifficulty, isVictory, ...this.session.stats() };
     const summary = this.store.submitRun({ ...result, attemptId: this.attemptId, score: scoreFor(level, result) });
 
     this.isResultSubmitted = true;

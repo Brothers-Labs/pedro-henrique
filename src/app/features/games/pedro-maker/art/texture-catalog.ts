@@ -14,6 +14,7 @@ import {
   paintPortalFrame,
   paintPortalSwirl,
   paintMultiCoinBlock,
+  paintSlide,
   paintSecretDoor,
   paintSign,
   paintSpikes,
@@ -66,11 +67,13 @@ import { paintEnemyIcon } from './enemy-art';
 import {
   BIG_COIN_SIZE,
   COIN_SIZE,
+  HUGE_COIN_SIZE,
   CRYSTAL_HEIGHT,
   CRYSTAL_WIDTH,
   HEART_SIZE,
   paintBigCoin,
   paintCoinIcon,
+  paintHugeCoin,
   paintCrystal,
   paintHeart,
   paintPowerUp,
@@ -176,6 +179,9 @@ function drawIcon(
     case 'spring':
       paintSpring(context);
       return;
+    case 'slide':
+      paintSlide(context);
+      return;
     case 'crumble':
       paintCrumble(context);
       return;
@@ -202,6 +208,9 @@ function drawIcon(
       return;
     case 'big-coin':
       fit(BIG_COIN_SIZE, BIG_COIN_SIZE, paintBigCoin);
+      return;
+    case 'huge-coin':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, paintHugeCoin);
       return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);

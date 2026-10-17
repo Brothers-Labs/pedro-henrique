@@ -18,6 +18,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { MotionPreferenceService } from '../../../../core/services/motion-preference.service';
+import { DifficultyPicker } from '../../components/difficulty-picker';
 import { formatStopwatch } from '../../components/format';
 import { LevelBadge } from '../../components/level-badge';
 import { RewardTile } from '../../components/reward-tile';
@@ -44,7 +45,7 @@ function isRegionId(value: string | undefined): value is RegionId {
 @Component({
   selector: 'app-map-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LevelBadge, RewardTile],
+  imports: [RouterLink, LevelBadge, RewardTile, DifficultyPicker],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
@@ -98,9 +99,11 @@ export class MapPage {
     effect(() => {
       const statuses = new Map<RegionId, RegionStatus>(this.regions().map((view) => [view.region.id, view.status]));
       const selected = this.selectedId();
+      // A fase é lida sempre, antes da sessão: assim o efeito volta a rodar quando a cena fica pronta.
+      const isReady = this.presence.phase() === 'ready';
       const session = this.presence.current;
 
-      if (session && this.presence.phase() === 'ready') {
+      if (session && isReady) {
         untracked(() => session.setStatuses(statuses, selected));
       }
     });

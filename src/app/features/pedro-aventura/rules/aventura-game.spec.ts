@@ -23,9 +23,12 @@ function victory(levelId: string, overrides: Partial<RunResult> = {}): RunResult
   return {
     attemptId: `tentativa-${levelId}-${Math.random()}`,
     levelId,
+    difficulty: 'facil',
     isVictory: true,
     timeMs: 90_000,
     coins: 12,
+    goldBars: 0,
+    diamonds: 0,
     hearts: 0,
     crowns: 1,
     ramps: 1,
@@ -76,6 +79,21 @@ describe('aventura-game', () => {
   it('recusa vitória em tempo impossível e fase ainda trancada', () => {
     expect(applyRunResult(createInitialState(NOW), victory('1-1', { timeMs: 1000 }), NOW)).toBeNull();
     expect(applyRunResult(createInitialState(NOW), victory('1-2'), NOW)).toBeNull();
+  });
+
+  it('credita barra de ouro como 10 moedas e diamante na carteira de diamantes', () => {
+    const outcome = applyRunResult(createInitialState(NOW), victory('1-1', { coins: 5, goldBars: 1, diamonds: 2 }), NOW);
+
+    expect(outcome?.state.wallet.coins).toBe(5 + 10);
+    expect(outcome?.state.wallet.diamonds).toBe(2 + RUN_REWARDS.firstWinDiamonds);
+    expect(applyRunResult(createInitialState(NOW), victory('1-1', { diamonds: 3 }), NOW)).toBeNull();
+  });
+
+  it('paga mais XP nas dificuldades maiores', () => {
+    const easy = applyRunResult(createInitialState(NOW), victory('1-1'), NOW);
+    const hard = applyRunResult(createInitialState(NOW), victory('1-1', { difficulty: 'dificil' }), NOW);
+
+    expect(hard?.summary.xpGained).toBe(Math.round((easy?.summary.xpGained ?? 0) * 1.5));
   });
 
   it('recalcula a pontuação em vez de confiar no número da tela', () => {

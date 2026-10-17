@@ -21,6 +21,8 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   checkpoint: '#4cc94a',
   coin: '#ffc629',
   'big-coin': '#ffc629',
+  'huge-coin': '#ffc629',
+  slide: '#ff5a5a',
   crystal: '#6fe3ff',
   lava: '#ff6a00',
   water: '#2f9be8',

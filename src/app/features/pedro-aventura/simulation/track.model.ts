@@ -21,7 +21,14 @@ export interface ObstacleSpec {
   readonly z: number;
 }
 
-export type PickupKind = 'coin' | 'heart' | 'crown';
+/**
+ * O que se pega na pista.
+ *
+ * - `coin`: 1 moeda; `gold-bar`: 10 moedas; `diamond`: 1 diamante.
+ * - `heart`: +1 coração; `crown`: item especial (3 por fase).
+ * - `turbo`: alguns segundos de supervelocidade atravessando obstáculos.
+ */
+export type PickupKind = 'coin' | 'gold-bar' | 'diamond' | 'heart' | 'crown' | 'turbo';
 
 export interface PickupSpec {
   readonly id: number;
@@ -46,8 +53,11 @@ export interface TrackLayout {
   readonly ramps: readonly RampSpec[];
   readonly totals: {
     readonly coins: number;
+    readonly goldBars: number;
+    readonly diamonds: number;
     readonly hearts: number;
     readonly crowns: number;
+    readonly turbos: number;
     readonly ramps: number;
   };
 }
@@ -68,6 +78,8 @@ export const OBSTACLE_SIZE: Readonly<Record<ObstacleKind, ObstacleSize>> = {
   'parked-car': { width: 2.0, height: 1.6, depth: 4.2, bottom: 0 },
   'traffic-car': { width: 2.0, height: 1.6, depth: 4.2, bottom: 0 },
   sweeper: { width: 1.8, height: 1.0, depth: 0.6, bottom: 0 },
+  banana: { width: 0.7, height: 0.25, depth: 0.6, bottom: 0 },
+  animal: { width: 0.9, height: 0.8, depth: 0.9, bottom: 0 },
 };
 
 /** Comprimento da rampa e altura da ponta. */

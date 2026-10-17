@@ -81,9 +81,11 @@ export class LobbyStage {
 
     effect(() => {
       const look = this.currentLook();
+      // A fase é lida sempre, antes da sessão: assim o efeito volta a rodar quando a cena fica pronta.
+      const isReady = this.presence.phase() === 'ready';
       const session = this.presence.current;
 
-      if (session && this.presence.phase() === 'ready' && !isSameLook(look, this.appliedLook)) {
+      if (session && isReady && !isSameLook(look, this.appliedLook)) {
         this.appliedLook = look;
         untracked(() => session.setLook(look));
       }

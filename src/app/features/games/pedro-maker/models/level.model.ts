@@ -42,8 +42,9 @@ export type EnemyKind =
 /**
  * Poderes que o Pedro pode pegar.
  *
- * Os quatro últimos são os clássicos dos jogos de plataforma: cogumelo que faz
- * crescer, flor de fogo, estrela da invencibilidade e cogumelo de vida.
+ * Os cinco últimos são os clássicos dos jogos de plataforma: cogumelo que faz
+ * crescer, flor de fogo, flor de gelo, estrela da invencibilidade e cogumelo
+ * de vida.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -53,6 +54,7 @@ export const POWER_UP_KINDS = [
   'wings',
   'mushroom',
   'fire-flower',
+  'ice-flower',
   'star',
   'one-up',
 ] as const;
@@ -60,7 +62,7 @@ export const POWER_UP_KINDS = [
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
 
 /** Os poderes clássicos, que o Lucky Block sorteia. */
-export const CLASSIC_POWER_UPS = ['mushroom', 'fire-flower', 'star', 'one-up'] as const satisfies readonly PowerUpKind[];
+export const CLASSIC_POWER_UPS = ['mushroom', 'fire-flower', 'ice-flower', 'star', 'one-up'] as const satisfies readonly PowerUpKind[];
 
 /**
  * `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada.
@@ -98,8 +100,8 @@ export type BlockType =
   | 'spikes'
   | 'note';
 
-/** A moeda gigante vale várias moedas de uma vez. */
-export type ItemType = 'coin' | 'big-coin' | 'crystal' | 'heart' | 'power-up';
+/** As moedas gigantes valem várias moedas de uma vez: 10 e 50. */
+export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'crystal' | 'heart' | 'power-up';
 
 export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'secret-door';
 
@@ -121,10 +123,15 @@ export type DecorType =
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';
 
+/**
+ * O escorregador fica em pé no chão, com a escada à esquerda: quem pousa na
+ * rampa desce sozinho, ganhando velocidade, e sai correndo lá embaixo.
+ */
 export type LevelObjectType =
   | TerrainType
   | BlockType
   | 'moving-platform'
+  | 'slide'
   | EnemyKind
   | 'boss'
   | ItemType

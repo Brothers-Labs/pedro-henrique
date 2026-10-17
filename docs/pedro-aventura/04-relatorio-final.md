@@ -240,3 +240,97 @@ O repositório não tem GitHub Actions, então não há CI para acompanhar. O de
 3. **P2:** minimapa e partículas de velocidade na fase; tela de Conquistas com medalhas por região.
 4. **P2:** backend com a mesma camada `rules/` rodando no servidor, para ranking real entre jogadores (AV-012).
 5. **P3:** mais cosméticos (helicóptero e iate no lobby), emotes de vitória e uma segunda temporada.
+
+## 11. Evolução 2 (14/10/2026): dificuldade e realismo visual
+
+Pedido depois da primeira entrega publicada: deixar o personagem, o rosto e o cenário do lobby mais
+realistas ("tudo muito quadrado") e criar os modos Fácil, Médio e Difícil, mantendo o Fácil como o
+jogo atual.
+
+### 11.1 Dificuldade (AV-016)
+
+| Modo | Velocidade | Obstáculos | Corações | Invencibilidade após batida | XP |
+| --- | --- | --- | --- | --- | --- |
+| 🐢 Fácil | o jogo original | densidade da fase | 3 | 1,5 s | ×1 |
+| 🐇 Médio | +15% | densidade +0,12 | 3 | 1,2 s | ×1,25 |
+| 🐆 Difícil | +30% | densidade +0,22 | 2 | 1,0 s | ×1,5 |
+
+- **Fácil sem mudança:** o Fácil usa a mesma semente de antes, então as pistas de sempre continuam
+  idênticas (há um teste para isso).
+- **Pista própria por modo:** Médio e Difícil têm cada um sua pista determinística.
+- **Onde escolher:** o seletor fica no lobby, no mapa e nas configurações, e a escolha é salva no
+  aparelho. A fase registra a dificuldade com que começou: trocar no meio não muda a corrida.
+- **Validação do resultado:** o resultado leva a dificuldade junto. A conferência contra a pista usa a
+  pista daquela dificuldade, e o tempo mínimo usa a velocidade daquela dificuldade.
+- **Testes:** passagem e metas conferidas nas 28 fases × 3 modos; velocidade e corações por modo;
+  multiplicador de XP.
+
+### 11.2 Realismo visual (AV-017)
+
+- **Pedro:**
+  - corpo de formas arredondadas (cápsulas e caixas de canto arredondado);
+  - moletom com capuz e cordões, calça jogger e tênis com sola e detalhe;
+  - rosto: crânio oval, orelhas, olhos com íris e brilho, sobrancelhas, nariz, boca, bigode, barba
+    cheia e cabelo com fade e topete.
+- **Rex:** corpo atlético, focinho comprido, orelhas em pé, olhos e as marcas cor de canela do
+  dobermann.
+- **Carros:** carroceria e cabine arredondadas, rodas com aro metálico.
+- **Lobby:**
+  - piso de mármore polido, com reflexo do ambiente na qualidade média e alta;
+  - mansão moderna de dois pavimentos, com vidraças acesas, lajes em balanço, frisos de luz e sacada
+    de vidro;
+  - piscina com borda de pedra, cercas vivas e arbustos;
+  - postes de jardim, lua e silhueta de cidade ao fundo.
+- **Palmeiras novas, valendo no lobby, na pista e no mapa:** tronco curvo em gomos, folhas compridas
+  que caem com o peso e cocos.
+
+### 11.3 Bug encontrado e corrigido na verificação
+
+No mapa, as ilhas trancadas não ficavam cinza e o anel de seleção não aparecia.
+
+- **Causa:** o efeito só lia `presence.phase()` depois de checar a sessão. Na primeira execução a
+  sessão ainda é nula, então o efeito nunca passava a depender da fase.
+- **Correção:** a fase é lida antes, no mapa e no palco do lobby.
+
+### 11.4 Verificação
+
+- **Testes:** `npx ng test --watch=false --browsers=ChromeHeadless`, com **1141 de 1141 passando**.
+- **Build:** `npm run build` passou.
+- **Navegador:** Chrome sem janela via CDP (lobby, personagem, fase no Fácil e no Difícil com 2
+  corações, mapa). Nenhum erro no console.
+
+## 12. Evolução 3 (15/10/2026): itens e perigos novos (AV-018)
+
+| Elemento | Onde aparece | O que faz | Valor |
+| --- | --- | --- | --- |
+| 🪙 Moeda | fileiras entre obstáculos e arcos das rampas | — | 1 moeda |
+| 🧈 Barra de ouro | fim de algumas fileiras de moedas (pelo menos 1 por fase) | — | 10 moedas |
+| 💎 Diamante | 2 por fase, a 2,3 m de altura numa faixa livre | só pulando se alcança | 1 diamante |
+| ⚡ Turbo | 1 por fase (2 nas fases de 700 m ou mais) | 3 s a 145% da velocidade, atravessando obstáculos | — |
+| 🍌 Banana | fases da Ilha (a partir da 1-3), Zona Urbana, Montanha, Luxo, Deserto e evento | escorrega para outra faixa e perde velocidade por 0,8 s, sem perder coração; pulando passa | — |
+| 🐾 Pato, gato e porquinho | 1-5 e fases seguintes de cada região | atravessam a pista de um lado a outro; bater tira coração | — |
+
+- **Economia:**
+  - a carteira recebe `moedas + barras × 10` e os diamantes pegos, em lançamentos idempotentes por tentativa;
+  - a conferência do resultado recusa mais barras ou diamantes do que a pista tem;
+  - a missão "Coletar 100 moedas" conta o valor (uma barra vale 10).
+- **Pontuação:** barra de ouro vale 100 pontos e diamante, 300.
+- **Tela:**
+  - o painel da fase mostra 🧈 e 💎;
+  - a contagem regressiva mostra uma legenda com o valor e o efeito de cada item;
+  - cada item tem som e faíscas próprios;
+  - o turbo abre a câmera e deixa um rastro azul (sem efeito com movimento reduzido);
+  - o escorregão faz o Pedro rodopiar e anuncia "Escorregou na banana!".
+- **Gerador:** bananas são obstáculos comuns, que podem ser puladas. Os bichos andam, então ficam sozinhos na fileira, como os carros e a barreira que varre. O Fácil mantém os obstáculos de sempre; os itens novos entram nos trechos livres.
+- **Testes:**
+  - turbo acelera e evita batida;
+  - banana escorrega sem dano, e quem pula passa por cima;
+  - barra e diamante são contados, e o diamante só vem pulando;
+  - todas as 28 fases × 3 dificuldades têm barra, 2 diamantes no alto e turbo;
+  - valores creditados na carteira e resultado adulterado recusado;
+  - o piloto automático segue vencendo a Ilha e a Montanha com bananas e bichos.
+- **Verificação:**
+  - `npx ng test --watch=false --browsers=ChromeHeadless`: **1229 de 1229 passando**;
+  - `npm run build`: passou;
+  - fase 1-5 jogada no Chrome sem janela via CDP, sem erros no console.
+

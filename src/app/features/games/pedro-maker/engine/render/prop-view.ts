@@ -11,7 +11,7 @@ import {
 
 import { context2d, createCanvas, darken, lighten } from '../../art/canvas';
 import type { ThemePalette } from '../../art/palettes';
-import { TILE_SIZE } from '../../config/physics.config';
+import { SLIDE_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelTheme } from '../../models/level.model';
 import { CHEST_DROP_MS, type Checkpoint, type TriggerSystem } from '../simulation/triggers';
 import { disposeTree } from './dispose';
@@ -22,6 +22,8 @@ import type { WorldSpace } from './world-space';
 
 /** Enfeites ficam atrás do plano do Pedro: nunca escondem a ação. */
 const DECOR_Z = -0.95;
+/** Escada e pés do escorregador ficam logo atrás do Pedro, que sobe e desce na frente deles. */
+const SLIDE_FRAME_Z = -0.4;
 const DOOR_Z = -0.55;
 const SIGN_Z = -0.6;
 
@@ -161,6 +163,10 @@ export class PropView {
           // Bloco do terreno: ocupa a célula inteira, no plano do Pedro.
           at(x, y, 0, spikes());
           break;
+        case 'slide':
+          at(x, y, 0, slideFrame());
+          this.root.add(this.slideRamp(object.x, y));
+          break;
         default:
           break;
       }
@@ -256,6 +262,27 @@ export class PropView {
     this.root.add(root);
 
     return { root, lid };
+  }
+
+  /**
+   * A rampa inclinada, numa peça própria: as caixas são sempre retas, então
+   * a rampa é montada deitada e girada. O piso fica rente à rampa da física.
+   */
+  private slideRamp(cellX: number, groundY: number): Mesh {
+    const { length, height } = SLIDE_PHYSICS;
+    const span = Math.hypot(length, height);
+    const geometry = buildBoxesGeometry([
+      box(0, -0.05, 0, span, 0.1, 0.9, '#ff5a5a'),
+      box(0, 0.12, -0.44, span, 0.34, 0.06, '#ffd23f'),
+      box(0, 0.06, 0.44, span, 0.16, 0.06, '#ffd23f'),
+    ]).rotateZ(-Math.atan2(height, length));
+    const mesh = new Mesh(geometry, this.voxelMaterial);
+
+    mesh.position.set(cellX + 1 + length / 2, groundY + height / 2, 0);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    return mesh;
   }
 
   private voxelMesh(parts: readonly VoxelBox[]): Mesh {
@@ -435,6 +462,34 @@ function crate(): readonly VoxelBox[] {
     box(-0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
     box(0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
   ];
+}
+
+/**
+ * Escada, patamar e o pé do meio do escorregador, a partir do pé da escada.
+ * A rampa inclinada é desenhada à parte (`PropView.slideRamp`).
+ */
+function slideFrame(): readonly VoxelBox[] {
+  const { length, height } = SLIDE_PHYSICS;
+  const metal = '#3fa3f5';
+  const rung = '#c9cfdd';
+  const parts: VoxelBox[] = [
+    box(-0.36, height / 2, SLIDE_FRAME_Z, 0.1, height, 0.1, metal),
+    box(0.36, height / 2, SLIDE_FRAME_Z, 0.1, height, 0.1, metal),
+    box(0, height - 0.06, 0, 1, 0.12, 0.9, '#ff5a5a'),
+    box(0, height + 0.25, -0.44, 1, 0.5, 0.06, '#ffd23f'),
+  ];
+
+  for (let step = 0.5; step < height; step += 0.5) {
+    parts.push(box(0, step, SLIDE_FRAME_Z, 0.72, 0.07, 0.07, rung));
+  }
+
+  // O pé do meio segura a rampa onde ela ainda está alta.
+  const middleX = 0.5 + length / 3;
+  const middleHeight = height * (1 - (middleX - 0.5) / length);
+
+  parts.push(box(middleX, middleHeight / 2, SLIDE_FRAME_Z, 0.1, middleHeight, 0.1, metal));
+
+  return parts;
 }
 
 /** Espinhos prateados em três fileiras, cobrindo a faixa toda do terreno. */
