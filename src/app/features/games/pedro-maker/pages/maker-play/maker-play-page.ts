@@ -5,17 +5,20 @@ import { map } from 'rxjs';
 
 import { MakerGameHost } from '../../components/maker-game-host/maker-game-host';
 import { MakerAchievementToast } from '../../components/maker-achievement-toast/maker-achievement-toast';
+import { MakerHeroPicker } from '../../components/maker-hero-picker/maker-hero-picker';
 import { MakerVictory, type VictoryAction } from '../../components/maker-victory/maker-victory';
 import { campaignLevelById, nextCampaignLevel, SECRET_ENTRANCES } from '../../levels/campaign';
 import type { CampaignLevel } from '../../models/campaign.model';
 import type { LevelBlueprint } from '../../models/level.model';
-import type { LevelReward, LevelRunResult } from '../../models/progress.model';
+import type { HeroId, LevelReward, LevelRunResult } from '../../models/progress.model';
 import { CustomLevelService, customLevelBlueprint } from '../../services/custom-level.service';
+import { MakerAudioService } from '../../services/maker-audio.service';
 import { MakerProgressService } from '../../services/maker-progress.service';
 
 export type PlaySource = 'campanha' | 'minha';
 
-type PlayStatus = 'loading' | 'ready' | 'not-found' | 'locked' | 'error';
+/** `choosing`: a fase já está montada e espera a criança escolher quem vai jogar. */
+type PlayStatus = 'loading' | 'choosing' | 'ready' | 'not-found' | 'locked' | 'error';
 
 interface Victory {
   readonly result: LevelRunResult;
@@ -28,12 +31,16 @@ interface Victory {
  *
  * Serve a campanha (`jogar/1-3`) e as fases criadas no editor
  * (`minhas-fases/jogar/:id`). A partida em si é do `MakerGameHost`; aqui
- * ficam a busca da fase, a recompensa e para onde ir em seguida.
+ * ficam a busca da fase, a escolha do herói, a recompensa e para onde ir em
+ * seguida.
+ *
+ * O herói é escolhido a cada fase aberta, com um toque, e a escolha fica
+ * guardada como o herói atual. "Jogar novamente" não pergunta de novo.
  */
 @Component({
   selector: 'app-maker-play-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MakerGameHost, MakerVictory, MakerAchievementToast],
+  imports: [RouterLink, MakerGameHost, MakerHeroPicker, MakerVictory, MakerAchievementToast],
   templateUrl: './maker-play-page.html',
   styleUrl: './maker-play-page.scss',
 })
@@ -42,6 +49,7 @@ export class MakerPlayPage {
   private readonly router = inject(Router);
   private readonly progress = inject(MakerProgressService);
   private readonly customLevels = inject(CustomLevelService);
+  private readonly audio = inject(MakerAudioService);
 
   private readonly source: PlaySource = this.route.snapshot.data['source'] === 'minha' ? 'minha' : 'campanha';
   private readonly levelId = toSignal(
@@ -52,6 +60,8 @@ export class MakerPlayPage {
   protected readonly status = signal<PlayStatus>('loading');
   protected readonly blueprint = signal<LevelBlueprint | null>(null);
   protected readonly victory = signal<Victory | null>(null);
+  protected readonly hero = this.progress.hero;
+  protected readonly look = this.progress.look;
 
   /** Muda a cada partida nova: é o que recria o jogo do zero em "jogar de novo". */
   protected readonly attempt = signal(0);
@@ -79,6 +89,12 @@ export class MakerPlayPage {
 
       untracked(() => void this.load(id));
     });
+  }
+
+  protected playAs(hero: HeroId): void {
+    this.progress.selectHero(hero);
+    this.audio.play('powerup');
+    this.status.set('ready');
   }
 
   protected onCompleted(result: LevelRunResult): void {
@@ -175,7 +191,7 @@ export class MakerPlayPage {
 
       if (blueprint) {
         this.blueprint.set(blueprint);
-        this.status.set('ready');
+        this.status.set('choosing');
       }
     } catch (error) {
       console.error(`Pedro Maker: a fase "${id}" não pôde ser montada.`, error);

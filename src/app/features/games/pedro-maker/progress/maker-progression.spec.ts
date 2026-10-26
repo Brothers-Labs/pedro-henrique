@@ -249,5 +249,12 @@ describe('Progressão do Pedro Maker', () => {
       });
       expect(paletteFor(look, 'gui')).toEqual({ hero: 'gui', ...guiOutfit });
     });
+
+    it('veste o Mario e o Luigi com a roupa deles, sem mochila, qualquer que seja o visual do Pedro', () => {
+      const look = { cap: 'bone-roxo', shirt: 'camiseta-rosa', backpack: 'mochila-estrela' };
+
+      expect(paletteFor(look, 'mario')).toEqual(jasmine.objectContaining({ hero: 'mario', cap: '#e52521', backpackStyle: 'none' }));
+      expect(paletteFor(look, 'luigi')).toEqual(jasmine.objectContaining({ hero: 'luigi', cap: '#1f9e3a', backpackStyle: 'none' }));
+    });
   });
 });

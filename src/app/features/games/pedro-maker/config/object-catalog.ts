@@ -52,6 +52,10 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   penguin: { surface: 'none', isUnique: false },
   'lava-bubble': { surface: 'none', isUnique: false },
   bee: { surface: 'none', isUnique: false },
+  goomba: { surface: 'none', isUnique: false },
+  bullet: { surface: 'none', isUnique: false },
+  thwomp: { surface: 'none', isUnique: false },
+  'king-slime': { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
@@ -63,6 +67,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   checkpoint: { surface: 'none', isUnique: false },
   portal: { surface: 'none', isUnique: true },
   door: { surface: 'none', isUnique: false },
+  'golden-door': { surface: 'none', isUnique: false },
   'secret-door': { surface: 'none', isUnique: false },
   tree: { surface: 'none', isUnique: false },
   bush: { surface: 'none', isUnique: false },
@@ -167,6 +172,10 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'penguin', category: 'inimigos', type: 'penguin', label: 'Pinguim' },
   { id: 'lava-bubble', category: 'inimigos', type: 'lava-bubble', label: 'Bolinha de Lava' },
   { id: 'bee', category: 'inimigos', type: 'bee', label: 'Abelha' },
+  { id: 'goomba', category: 'inimigos', type: 'goomba', label: 'Goomba' },
+  { id: 'bullet', category: 'inimigos', type: 'bullet', label: 'Bala de Canhão' },
+  { id: 'thwomp', category: 'inimigos', type: 'thwomp', label: 'Thwomp' },
+  { id: 'king-slime', category: 'inimigos', type: 'king-slime', label: 'Rei Slime' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante 10' },
@@ -232,6 +241,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'portal', category: 'portais', type: 'portal', label: 'Portal final' },
   { id: 'door-a', category: 'portais', type: 'door', label: 'Porta A', properties: { pair: 'A' } },
   { id: 'door-b', category: 'portais', type: 'door', label: 'Porta B', properties: { pair: 'B' } },
+  // Par próprio: duas portas douradas já se ligam sem mexer nas portas A e B.
+  { id: 'door-golden', category: 'portais', type: 'golden-door', label: 'Porta Dourada', properties: { pair: 'C' } },
 
   { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },
 ];

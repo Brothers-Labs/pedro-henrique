@@ -5,9 +5,9 @@ import { SeededRandom, seedFromText } from '../../levels/seeded-random';
 import {
   CLASSIC_POWER_UPS,
   type EnemyKind,
+  isEnemyKind,
   type LevelBlueprint,
   type LevelObject,
-  type LevelObjectType,
   type PowerUpKind,
 } from '../../models/level.model';
 import type { HeroId, LevelRunResult } from '../../models/progress.model';
@@ -45,23 +45,10 @@ const FLOWER_BALL_NAMES: Readonly<Partial<Record<PowerUpKind, string>>> = {
 const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
 const CHEST_COINS = 10;
-
-const ENEMY_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>([
-  'slime',
-  'spiky',
-  'bat',
-  'robot',
-  'ghost',
-  'turtle',
-  'piranha',
-  'penguin',
-  'lava-bubble',
-  'bee',
-]);
-
-function isEnemyKind(type: LevelObjectType): type is EnemyKind {
-  return ENEMY_KINDS.has(type);
-}
+/** Moedas que a porta dourada dá na primeira passagem. */
+const GOLDEN_DOOR_COINS = 10;
+/** Tempo em que os slimes do Rei Slime não machucam: nascem colados no herói que pisou. */
+const SPLIT_GRACE_MS = 600;
 
 export interface SimulationOptions {
   readonly blueprint: LevelBlueprint;
@@ -297,13 +284,14 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       if (Math.abs(centerX(body) - playerX) < ENEMY_ACTIVE_DISTANCE) {
         enemy.step(this.clockMs, playerX, playerY);
         stepBody(body, this.world, seconds, true);
+        this.reactToEnemyLanding(enemy);
       } else {
         enemy.standStill();
         body.previousX = body.x;
         body.previousY = body.y;
       }
 
-      if (!this.player.isActive || !overlaps(playerBody, body)) {
+      if (!this.player.isActive || this.clockMs < enemy.harmlessUntil || !overlaps(playerBody, body)) {
         continue;
       }
 
@@ -497,6 +485,34 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.enemiesDefeated += 1;
     this.playSound('enemyHit');
     this.effects.burst('poof', centerX(enemy.body), centerY(enemy.body), 12);
+
+    if (enemy.kind === 'king-slime') {
+      this.splitKingSlime(enemy);
+    }
+  }
+
+  /** O Rei Slime derrotado vira dois slimes, que saem cada um para um lado. */
+  private splitKingSlime(king: Enemy): void {
+    const cellX = Math.floor(centerX(king.body) / TILE_SIZE);
+    const cellY = Math.floor((bottom(king.body) - 1) / TILE_SIZE);
+
+    for (const direction of [-1, 1] as const) {
+      const slime = this.addEnemy('slime', cellX, cellY, 1);
+
+      slime.direction = direction;
+      slime.harmlessUntil = this.clockMs + SPLIT_GRACE_MS;
+    }
+  }
+
+  /** A pancada do thwomp no chão treme a tela e levanta poeira. */
+  private reactToEnemyLanding(enemy: Enemy): void {
+    if (!enemy.takeLanding()) {
+      return;
+    }
+
+    this.effects.shake('leve');
+    this.effects.burst('dust', centerX(enemy.body), bottom(enemy.body), 14);
+    this.playSound('break');
   }
 
   private onBossContact(boss: Boss): void {
@@ -661,6 +677,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.playSound('button');
     this.effects.flash();
     this.player.placeFeetAt(destinationFeetX, destinationFeetY);
+  }
+
+  onGoldenDoorOpened(x: number, y: number): void {
+    this.effects.burst('coin', x, y, 12);
+    this.addCoins(GOLDEN_DOOR_COINS, x, y);
   }
 
   onSecretDoor(): void {

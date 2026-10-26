@@ -8,6 +8,7 @@ import {
   paintCheckpoint,
   paintCrumble,
   paintDoor,
+  paintGoldenDoor,
   paintLava,
   paintMovingPlatform,
   paintPlatformTile,
@@ -79,8 +80,8 @@ import {
   paintPowerUp,
   POWER_UP_SIZE,
 } from './item-art';
+import { GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
-import { paintGuiPortrait } from './gui-art';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
 
@@ -109,14 +110,20 @@ export function paintCharacterIcon(character: CharacterPalette, scale = 1): HTML
   });
 }
 
-/** Pedro e Gui dividem o mesmo quadro de retrato; cada um tem o próprio pintor. */
+/** Todos os heróis dividem o mesmo quadro de retrato; o Pedro tem pintor próprio, e os de macacão, um só. */
 function paintCharacterPortrait(context: CanvasRenderingContext2D, character: CharacterPalette): void {
   switch (character.hero) {
     case 'pedro':
       paintPedroPortrait(context, character);
       return;
     case 'gui':
-      paintGuiPortrait(context, character);
+      paintOverallsPortrait(context, character, GUI_PORTRAIT);
+      return;
+    case 'mario':
+      paintOverallsPortrait(context, character, MARIO_PORTRAIT);
+      return;
+    case 'luigi':
+      paintOverallsPortrait(context, character, LUIGI_PORTRAIT);
       return;
   }
 }
@@ -198,6 +205,10 @@ function drawIcon(
     case 'penguin':
     case 'lava-bubble':
     case 'bee':
+    case 'goomba':
+    case 'bullet':
+    case 'thwomp':
+    case 'king-slime':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -235,6 +246,9 @@ function drawIcon(
       return;
     case 'door':
       fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintDoor);
+      return;
+    case 'golden-door':
+      fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintGoldenDoor);
       return;
     case 'secret-door':
       fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintSecretDoor);

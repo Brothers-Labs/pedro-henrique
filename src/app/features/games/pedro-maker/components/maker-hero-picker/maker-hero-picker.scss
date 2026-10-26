@@ -1,0 +1,97 @@
+@use 'mixins' as *;
+@use '../../maker' as maker;
+
+:host {
+  display: block;
+}
+
+.heroes {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.heroes__title {
+  @include maker.title-text(var(--text-xl));
+
+  margin: 0;
+}
+
+.heroes__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero {
+  @include maker.panel;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  text-align: left;
+  cursor: pointer;
+
+  &--selected {
+    background: #d3f7ea;
+    outline: 4px solid #ffcf3f;
+    outline-offset: 2px;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.hero__figure {
+  width: 100%;
+}
+
+.hero__text {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hero__name {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hero__description {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #4b4470;
+}
+
+.hero__traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.hero__trait {
+  @include maker.pill;
+
+  padding: 0.1rem 0.55rem;
+  border-width: 2px;
+  font-size: var(--text-sm);
+}
+
+.hero__badge {
+  @include maker.pill;
+
+  position: absolute;
+  top: -0.8rem;
+  right: 0.8rem;
+  background: #ffcf3f;
+  font-size: var(--text-sm);
+}

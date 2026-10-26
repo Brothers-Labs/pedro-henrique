@@ -223,22 +223,22 @@
               </select>
             </label>
           }
-          @case ('door') {
-            <div class="selection__row" role="group" aria-label="Par da porta">
-              <span>Leva à porta:</span>
-              @for (pair of doorPairs; track pair) {
-                <button
-                  type="button"
-                  class="tool"
-                  [class.tool--active]="object.properties?.pair === pair"
-                  [attr.aria-pressed]="object.properties?.pair === pair"
-                  (click)="setPair(pair)"
-                >
-                  {{ pair }}
-                </button>
-              }
-            </div>
-          }
+        }
+        @if (isSelectedDoor()) {
+          <div class="selection__row" role="group" aria-label="Par da porta">
+            <span>Leva à porta:</span>
+            @for (pair of doorPairs; track pair) {
+              <button
+                type="button"
+                class="tool"
+                [class.tool--active]="object.properties?.pair === pair"
+                [attr.aria-pressed]="object.properties?.pair === pair"
+                (click)="setPair(pair)"
+              >
+                {{ pair }}
+              </button>
+            }
+          </div>
         }
       </section>
     }

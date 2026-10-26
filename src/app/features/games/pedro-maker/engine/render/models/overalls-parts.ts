@@ -6,27 +6,48 @@ import type { CharacterParts } from './character-parts';
 const SKIN = '#f2c29b';
 const NOSE = '#e8a984';
 const HAIR = '#3a2516';
+const MUSTACHE = '#2a1a10';
 const EYE = '#2a2350';
 const OVERALLS = '#2f5fd0';
 const BUTTON = '#ffd23f';
 const SHOE = '#6b3f22';
 
+/** Perna mais comprida do grupo, a do Gui e do Luigi; as medidas abaixo partem dela. */
+const TALL_LEG = 0.46;
+
+/** O que muda entre os heróis de macacão: o comprimento das pernas e o bigode. */
+export interface OverallsBuild {
+  readonly legLength: number;
+  readonly hasMustache: boolean;
+}
+
+export const GUI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false };
+export const LUIGI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: true };
+export const MARIO_BUILD: OverallsBuild = { legLength: 0.36, hasMustache: true };
+
 /**
- * O Gui de cubos: mais alto e mais magro que o Pedro, de boné e camiseta
- * verdes e macacão azul com botões amarelos.
+ * Herói de cubos de boné, camiseta e macacão azul com botões amarelos: o
+ * Gui, o Luigi e o Mario.
  *
- * Pernas e tronco mais compridos fazem a diferença de altura; a cabeça é um
- * pouco menor, e ele parece esguio mesmo do lado do Pedro.
+ * Gui e Luigi são altos e magros; o Mario tem as pernas mais curtas, e todo o
+ * corpo desce junto. A cabeça é um pouco menor que a do Pedro, e eles parecem
+ * esguios mesmo do lado dele.
  */
-export function guiParts(palette: CharacterPalette): CharacterParts {
+export function overallsParts(palette: CharacterPalette, build: OverallsBuild): CharacterParts {
+  const drop = build.legLength - TALL_LEG;
+  const upperBody = [...torso(palette.shirt), ...head(palette.cap), ...(build.hasMustache ? mustache() : [])];
+
   return {
-    upperBody: [...torso(palette.shirt), ...head(palette.cap)],
+    upperBody: upperBody.map((part) => ({ ...part, y: part.y + drop })),
     arm: [box(0, -0.13, 0, 0.13, 0.28, 0.15, palette.shirt), box(0, -0.35, 0, 0.12, 0.16, 0.13, SKIN)],
-    leg: [box(0, -0.23, 0, 0.16, 0.46, 0.18, OVERALLS), box(0, -0.46, 0.04, 0.19, 0.08, 0.28, SHOE)],
+    leg: [
+      box(0, -build.legLength / 2, 0, 0.16, build.legLength, 0.18, OVERALLS),
+      box(0, -build.legLength, 0.04, 0.19, 0.08, 0.28, SHOE),
+    ],
     shoulderX: 0.29,
-    shoulderY: 0.96,
+    shoulderY: 0.96 + drop,
     hipX: 0.11,
-    hipY: 0.5,
+    hipY: 0.5 + drop,
   };
 }
 
@@ -60,10 +81,15 @@ function head(cap: string): readonly VoxelBox[] {
     box(0, 1.1, 0.205, 0.12, 0.035, 0.02, '#c9605a'),
     box(-0.15, 1.13, 0.202, 0.06, 0.04, 0.01, '#f59a9a'),
     box(0.15, 1.13, 0.202, 0.06, 0.04, 0.01, '#f59a9a'),
-    // Boné com aba para a frente e o emblema redondo do Gui.
+    // Boné com aba para a frente e o emblema redondo.
     box(0, 1.48, 0, 0.44, 0.14, 0.42, cap),
     box(0, 1.42, 0.27, 0.4, 0.05, 0.2, darken(cap, 0.15)),
     box(0, 1.49, 0.212, 0.14, 0.1, 0.01, '#ffffff'),
     box(0, 1.49, 0.218, 0.06, 0.05, 0.01, cap),
   ];
+}
+
+/** Bigodão logo abaixo do nariz, por cima do sorriso. */
+function mustache(): readonly VoxelBox[] {
+  return [box(0, 1.12, 0.222, 0.26, 0.05, 0.03, MUSTACHE), box(0, 1.105, 0.222, 0.16, 0.03, 0.03, MUSTACHE)];
 }

@@ -205,7 +205,7 @@ function explore(grid: Grid, blueprint: LevelBlueprint): Uint8Array {
     }
   }
 
-  const doors = blueprint.objects.filter((object) => object.type === 'door');
+  const doors = blueprint.objects.filter((object) => object.type === 'door' || object.type === 'golden-door');
 
   while (queue.length > 0) {
     const index = queue.shift() as number;

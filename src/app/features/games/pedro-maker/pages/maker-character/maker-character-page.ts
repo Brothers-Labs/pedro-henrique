@@ -2,17 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { PetService } from '../../../../../core/services/pet.service';
+import { MakerHeroPicker } from '../../components/maker-hero-picker/maker-hero-picker';
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
 import { PedroFigure } from '../../components/pedro-figure/pedro-figure';
-import {
-  LOOK_CATEGORIES,
-  LOOK_OPTIONS,
-  paletteFor,
-  type CharacterPalette,
-  type LookCategory,
-  type LookOption,
-} from '../../config/character.config';
-import { heroDefinition, HEROES, type HeroDefinition } from '../../config/hero.config';
+import { LOOK_CATEGORIES, LOOK_OPTIONS, paletteFor, type LookCategory, type LookOption } from '../../config/character.config';
+import { heroDefinition } from '../../config/hero.config';
 import type { CharacterLook, HeroId } from '../../models/progress.model';
 import { lookAvailability, type LookAvailability } from '../../progress/maker-progression';
 import { MakerAudioService } from '../../services/maker-audio.service';
@@ -23,25 +17,20 @@ interface OptionCard {
   readonly availability: LookAvailability;
 }
 
-interface HeroCard {
-  readonly hero: HeroDefinition;
-  readonly character: CharacterPalette;
-}
-
 /**
- * Meu personagem: quem joga — o Pedro ou o Gui — e o boné, a camiseta e a
- * mochila do Pedro.
+ * Meu personagem: quem joga — o Pedro, o Gui, o Mario ou o Luigi — e o boné,
+ * a camiseta e a mochila do Pedro.
  *
  * Trocar de herói é de graça e vale na hora. Tocar numa opção de visual
  * mostra como fica, sem compromisso; vestir ou comprar é um segundo toque, no
  * botão grande embaixo do Pedro. As moedas são do jogo e nunca de dinheiro de
- * verdade. O Gui tem roupa própria, e por isso o guarda-roupa só aparece para
- * o Pedro.
+ * verdade. Os outros heróis têm roupa própria, e por isso o guarda-roupa só
+ * aparece para o Pedro.
  */
 @Component({
   selector: 'app-maker-character-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MakerPageFrame, PedroFigure],
+  imports: [RouterLink, MakerPageFrame, MakerHeroPicker, PedroFigure],
   templateUrl: './maker-character-page.html',
   styleUrl: './maker-character-page.scss',
 })
@@ -54,15 +43,9 @@ export class MakerCharacterPage {
   protected readonly category = signal<LookCategory>('cap');
   protected readonly preview = signal<LookOption | null>(null);
   protected readonly coins = this.progress.coins;
+  protected readonly look = this.progress.look;
   protected readonly selectedHero = computed(() => heroDefinition(this.progress.hero()));
   protected readonly canCustomize = computed(() => this.selectedHero().outfit === null);
-
-  /** Cada herói como vai entrar na fase: o Pedro com o visual atual, o Gui com o dele. */
-  protected readonly heroCards = computed<readonly HeroCard[]>(() => {
-    const look = this.progress.look();
-
-    return HEROES.map((hero) => ({ hero, character: paletteFor(look, hero.id) }));
-  });
 
   protected readonly pet = computed(() => {
     const pet = this.pets.pet();

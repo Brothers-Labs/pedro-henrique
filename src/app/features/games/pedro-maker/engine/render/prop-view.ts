@@ -13,7 +13,7 @@ import { context2d, createCanvas, darken, lighten } from '../../art/canvas';
 import type { ThemePalette } from '../../art/palettes';
 import { SLIDE_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelTheme } from '../../models/level.model';
-import { CHEST_DROP_MS, type Checkpoint, type TriggerSystem } from '../simulation/triggers';
+import { CHEST_DROP_MS, type Checkpoint, type DoorKind, type TriggerSystem } from '../simulation/triggers';
 import { disposeTree } from './dispose';
 import { backOut, bounceOut } from './easing';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
@@ -26,6 +26,12 @@ const DECOR_Z = -0.95;
 const SLIDE_FRAME_Z = -0.4;
 const DOOR_Z = -0.55;
 const SIGN_Z = -0.6;
+
+const DOOR_PARTS: Readonly<Record<DoorKind, () => readonly VoxelBox[]>> = {
+  wooden: woodenDoor,
+  golden: goldenDoor,
+  secret: secretDoor,
+};
 
 const PORTAL_SWIRL_Y = 1.33;
 const PORTAL_OPEN_MS = 600;
@@ -177,7 +183,7 @@ export class PropView {
     }
 
     for (const door of this.triggers.doors) {
-      at(this.space.x(door.x), this.space.y(door.y), DOOR_Z, door.isSecret ? secretDoor() : woodenDoor());
+      at(this.space.x(door.x), this.space.y(door.y), DOOR_Z, DOOR_PARTS[door.kind]());
     }
 
     if (parts.length > 0) {
@@ -529,6 +535,17 @@ function woodenDoor(): readonly VoxelBox[] {
     box(0, 1.35, 0.15, 0.6, 0.05, 0.02, '#8f5c38'),
     box(0, 0.6, 0.15, 0.6, 0.05, 0.02, '#8f5c38'),
     box(0.26, 0.95, 0.16, 0.08, 0.08, 0.04, '#ffc629'),
+  ];
+}
+
+function goldenDoor(): readonly VoxelBox[] {
+  return [
+    box(0, 1.0, 0, 1.0, 2.0, 0.24, '#b8860b'),
+    box(0, 0.92, 0.07, 0.78, 1.8, 0.14, '#ffcf3f'),
+    box(-0.13, 0.92, 0.145, 0.03, 1.8, 0.01, '#e0a800'),
+    box(0.13, 0.92, 0.145, 0.03, 1.8, 0.01, '#e0a800'),
+    box(0, 1.55, 0.16, 0.2, 0.2, 0.04, '#6fe3ff'),
+    box(0.26, 0.95, 0.16, 0.08, 0.08, 0.04, '#ffffff'),
   ];
 }
 

@@ -37,6 +37,10 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   penguin: '#e8505b',
   'lava-bubble': '#e8505b',
   bee: '#e8505b',
+  goomba: '#e8505b',
+  bullet: '#e8505b',
+  thwomp: '#e8505b',
+  'king-slime': '#e8505b',
   boss: '#e8505b',
 };
 

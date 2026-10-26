@@ -6,6 +6,7 @@ export interface TriggerHost {
   readonly effects: VisualEventQueue;
   onCheckpoint(feetX: number, feetY: number): void;
   onDoor(destinationFeetX: number, destinationFeetY: number): void;
+  onGoldenDoorOpened(x: number, y: number): void;
   onSecretDoor(): void;
   onPortal(centerX: number, centerY: number): void;
   onChestOpened(x: number, y: number): void;
@@ -19,13 +20,22 @@ export interface Checkpoint {
   isActive: boolean;
 }
 
+/** A de madeira e a dourada levam à porta do mesmo par; a secreta libera a fase secreta. */
+export type DoorKind = 'wooden' | 'golden' | 'secret';
+
 export interface Door {
   readonly x: number;
   readonly y: number;
   readonly pair: string | null;
-  readonly isSecret: boolean;
+  readonly kind: DoorKind;
   wasUsed: boolean;
 }
+
+const DOOR_KINDS: Readonly<Record<'door' | 'golden-door' | 'secret-door', DoorKind>> = {
+  door: 'wooden',
+  'golden-door': 'golden',
+  'secret-door': 'secret',
+};
 
 export interface Hint {
   readonly id: number;
@@ -150,8 +160,9 @@ export class TriggerSystem {
         this.checkpoints.push({ x, y, isActive: false });
         return;
       case 'door':
+      case 'golden-door':
       case 'secret-door':
-        this.doors.push({ x, y, pair: object.properties?.pair ?? null, isSecret: object.type === 'secret-door', wasUsed: false });
+        this.doors.push({ x, y, pair: object.properties?.pair ?? null, kind: DOOR_KINDS[object.type], wasUsed: false });
         return;
       case 'portal':
         this.portal = { x, y, isOpen: true, isLocked: false, openedAt: null };
@@ -195,7 +206,7 @@ export class TriggerSystem {
       return;
     }
 
-    if (door.isSecret) {
+    if (door.kind === 'secret') {
       if (!door.wasUsed) {
         door.wasUsed = true;
         this.host.effects.burst('sparkle', door.x, door.y - 50, 30);
@@ -203,6 +214,13 @@ export class TriggerSystem {
       }
 
       return;
+    }
+
+    // A recompensa da dourada vem mesmo sem par: a criança nunca abre uma porta à toa.
+    if (door.kind === 'golden' && !door.wasUsed) {
+      door.wasUsed = true;
+      this.host.effects.burst('sparkle', door.x, door.y - 50, 30);
+      this.host.onGoldenDoorOpened(door.x, door.y - 50);
     }
 
     const destination = this.doors.find((candidate) => candidate !== door && candidate.pair !== null && candidate.pair === door.pair);

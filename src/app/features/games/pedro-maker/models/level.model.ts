@@ -26,18 +26,36 @@ export type LevelTheme =
  * cano, sobe e desce, e só cai com fogo ou estrela. O pinguim patrulha
  * ligeiro; a bolinha de lava salta da lava e não se apaga com fogo. A abelha
  * voa de um lado para o outro e pode ser pisada.
+ *
+ * Dos jogos clássicos de encanador vêm o goomba, que anda e cai com um pisão;
+ * a bala de canhão, que cruza a fase voando reto e não se apaga com fogo; e o
+ * thwomp, o bloco de pedra que despenca quando o herói passa embaixo. O Rei
+ * Slime é o slime grandão de coroa: pisado, se divide em dois slimes.
  */
-export type EnemyKind =
-  | 'slime'
-  | 'spiky'
-  | 'bat'
-  | 'robot'
-  | 'ghost'
-  | 'turtle'
-  | 'piranha'
-  | 'penguin'
-  | 'lava-bubble'
-  | 'bee';
+export const ENEMY_KINDS = [
+  'slime',
+  'spiky',
+  'bat',
+  'robot',
+  'ghost',
+  'turtle',
+  'piranha',
+  'penguin',
+  'lava-bubble',
+  'bee',
+  'goomba',
+  'bullet',
+  'thwomp',
+  'king-slime',
+] as const;
+
+export type EnemyKind = (typeof ENEMY_KINDS)[number];
+
+const ENEMY_KIND_SET: ReadonlySet<string> = new Set(ENEMY_KINDS);
+
+export function isEnemyKind(type: string): type is EnemyKind {
+  return ENEMY_KIND_SET.has(type);
+}
 
 /**
  * Poderes que o Pedro pode pegar.
@@ -103,7 +121,11 @@ export type BlockType =
 /** As moedas gigantes valem várias moedas de uma vez: 10 e 50. */
 export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'crystal' | 'heart' | 'power-up';
 
-export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'secret-door';
+/**
+ * A porta dourada leva à porta do mesmo par, como a de madeira, e na
+ * primeira passagem ainda dá um punhado de moedas.
+ */
+export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'golden-door' | 'secret-door';
 
 export type DecorType =
   | 'tree'

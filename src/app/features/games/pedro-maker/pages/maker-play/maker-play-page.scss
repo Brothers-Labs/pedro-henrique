@@ -15,6 +15,16 @@
   text-align: center;
 }
 
+.message--choosing {
+  place-content: start center;
+  overflow-y: auto;
+}
+
+.message__picker {
+  width: min(48rem, 100%);
+  text-align: left;
+}
+
 .message__emoji {
   font-size: 3.5rem;
   line-height: 1;
