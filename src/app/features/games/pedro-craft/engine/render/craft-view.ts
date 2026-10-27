@@ -5,6 +5,11 @@ import { nextTask } from '../next-task';
 import type { CraftSimulation } from '../simulation/craft-simulation';
 import { BlockAtlas } from './block-atlas';
 import type { CraftStage } from './craft-stage';
+import { DropsView } from './drops-view';
+import { HandView } from './hand-view';
+import { ItemTextures } from './item-textures';
+import { ParticlesView } from './particles-view';
+import { TargetView } from './target-view';
 import { createDaylightUniform, type DaylightUniform } from './voxel-material';
 import { WorldView } from './world-view';
 
@@ -14,7 +19,7 @@ const CHUNKS_PER_LOADING_BATCH = 4;
 const UNDERWATER_COLOR = new Color('#1f5f9e');
 
 /**
- * Tudo o que se vê: o mundo de blocos e a câmera nos olhos do herói.
+ * Tudo o que se vê: o mundo de blocos, os itens caídos, a mira e a mão.
  *
  * Só lê a simulação. A câmera fica entre a posição do passo anterior e a do
  * atual (`alpha`), o que deixa o movimento liso mesmo com a tela mais rápida
@@ -25,7 +30,13 @@ export class CraftView {
 
   private readonly atlas: BlockAtlas;
   private readonly worldView: WorldView;
+  private readonly itemTextures: ItemTextures;
+  private readonly dropsView: DropsView;
+  private readonly targetView: TargetView;
+  private readonly handView: HandView;
+  private readonly particles: ParticlesView;
   private wasUnderwater = false;
+  private effectsEnabled = true;
 
   constructor(
     private readonly stage: CraftStage,
@@ -41,6 +52,11 @@ export class CraftView {
       simulation.catalog.world.chunkSize,
       () => 0,
     );
+    this.itemTextures = new ItemTextures(simulation.catalog);
+    this.dropsView = new DropsView(stage.scene, this.itemTextures);
+    this.targetView = new TargetView(stage.scene);
+    this.handView = new HandView(stage.camera, this.itemTextures);
+    this.particles = new ParticlesView(stage.scene);
   }
 
   /** Monta todas as malhas, avisando o progresso de 0 a 1 e cedendo a vez à página entre lotes. */
@@ -55,8 +71,14 @@ export class CraftView {
     onProgress(1);
   }
 
-  render(alpha: number): void {
-    const hero = this.simulation.hero;
+  /** Modo calmo e movimento reduzido apagam a poeira dos blocos. */
+  setEffectsEnabled(isEnabled: boolean): void {
+    this.effectsEnabled = isEnabled;
+  }
+
+  render(alpha: number, frameMs: number): void {
+    const simulation = this.simulation;
+    const hero = simulation.hero;
     const body = hero.body;
     const camera = this.stage.camera;
 
@@ -67,8 +89,13 @@ export class CraftView {
     );
     camera.rotation.set(hero.pitch, hero.yaw, 0);
 
+    this.applyVisualEvents();
     this.updateUnderwater();
     this.worldView.rebuild();
+    this.dropsView.update(simulation.drops.list);
+    this.targetView.update(simulation.target, simulation.miningProgress);
+    this.handView.update(simulation.selectedItem?.id ?? null, simulation.mining !== null, frameMs);
+    this.particles.update(frameMs);
     this.stage.render();
   }
 
@@ -79,7 +106,29 @@ export class CraftView {
 
   dispose(): void {
     this.worldView.dispose();
+    this.dropsView.dispose();
+    this.targetView.dispose();
+    this.handView.dispose();
+    this.particles.dispose();
+    this.itemTextures.dispose();
     this.atlas.dispose();
+  }
+
+  private applyVisualEvents(): void {
+    for (const event of this.simulation.drainVisualEvents()) {
+      switch (event.type) {
+        case 'swing':
+          this.handView.swing();
+          break;
+        case 'block-broken':
+          if (this.effectsEnabled) {
+            const block = this.simulation.catalog.blockAt(event.block);
+
+            this.particles.burst(event.x, event.y, event.z, block?.mapColor ?? '#8f969e');
+          }
+          break;
+      }
+    }
   }
 
   /** Debaixo d'água o mundo fica azul e a vista curta, como num mergulho de verdade. */

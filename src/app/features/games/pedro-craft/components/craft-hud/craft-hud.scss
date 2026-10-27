@@ -1,0 +1,134 @@
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  --slot-size: clamp(2.6rem, 9vmin, 3.4rem);
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.goal {
+  @include maker.panel(rgb(255 255 255 / 92%));
+
+  position: absolute;
+  top: calc(3.6rem + var(--safe-top));
+  left: calc(0.75rem + var(--safe-left));
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(22rem, calc(100% - 1.5rem));
+  padding: 0.45rem 0.8rem;
+  border-width: 3px;
+  border-radius: 1rem;
+  box-shadow: 0 4px 0 rgb(42 35 80 / 30%);
+
+  &--done {
+    background: #d3f7ea;
+  }
+}
+
+.goal__emoji {
+  font-size: 1.8rem;
+}
+
+.goal__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: maker.$ink;
+}
+
+.goal__hint {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #4b4470;
+}
+
+.goal__count {
+  @include maker.pill;
+
+  margin-left: auto;
+  background: #ffcf3f;
+}
+
+.hotbar {
+  position: absolute;
+  bottom: calc(0.75rem + var(--safe-bottom));
+  left: 50%;
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  translate: -50% 0;
+  border: 3px solid maker.$ink;
+  border-radius: 0.9rem;
+  background: rgb(42 35 80 / 55%);
+  pointer-events: auto;
+}
+
+.hotbar__slot {
+  position: relative;
+  width: var(--slot-size);
+  height: var(--slot-size);
+  padding: 0;
+  border: 3px solid rgb(255 255 255 / 35%);
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 18%);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  &--selected {
+    border-color: #ffcf3f;
+    background: rgb(255 207 63 / 35%);
+    box-shadow: 0 0 0 2px maker.$ink;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #ffcf3f;
+    outline-offset: 2px;
+  }
+}
+
+.hotbar__key {
+  position: absolute;
+  top: 0.05rem;
+  left: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgb(255 255 255 / 80%);
+}
+
+.pickups {
+  position: absolute;
+  top: calc(3.6rem + var(--safe-top));
+  right: calc(0.75rem + var(--safe-right));
+  display: grid;
+  justify-items: end;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pickups__item {
+  @include maker.pill;
+
+  font-size: var(--text-sm);
+}
+
+.pickups__icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  image-rendering: pixelated;
+}
+
+/* Em telas baixas a barra encolhe para não cobrir os controles de toque. */
+@media (max-height: 30rem) {
+  :host {
+    --slot-size: 2.4rem;
+  }
+
+  .goal__hint {
+    display: none;
+  }
+}

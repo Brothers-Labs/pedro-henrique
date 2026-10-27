@@ -40,8 +40,13 @@
   @default {
     <span class="crosshair" aria-hidden="true"></span>
 
+    <app-craft-hud [hud]="hud()" [icons]="icons()" [pickups]="pickups()" (slotSelected)="selectSlot($event)" />
+
     <div class="bar">
       <p class="bar__title">{{ worldName() }}</p>
+      <button type="button" class="bar__button" aria-label="Abrir a mochila" (click)="openInventory()">
+        <span aria-hidden="true">🎒</span>
+      </button>
       @if (canFullscreen) {
         <button type="button" class="bar__button" [attr.aria-label]="isFullscreen() ? 'Sair da tela cheia' : 'Tela cheia'" (click)="toggleFullscreen()">
           <span aria-hidden="true">{{ isFullscreen() ? '🗗' : '⛶' }}</span>
@@ -58,9 +63,21 @@
 
     @if (showsMouseHint()) {
       <p class="hint" role="status">
-        Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula e <strong>Esc</strong> pausa.
+        Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula,
+        <strong>clique</strong> quebra, <strong>botão direito</strong> coloca, <strong>E</strong> abre a mochila e
+        <strong>Esc</strong> pausa.
       </p>
     }
+
+    @if (toast(); as message) {
+      <p class="toast" role="status">{{ message }}</p>
+    }
+  }
+}
+
+@if (phase() === 'inventory') {
+  @if (inventory(); as view) {
+    <app-craft-inventory [view]="view" [icons]="icons()" (slotClicked)="clickSlot($event)" (closed)="closeInventory()" />
   }
 }
 

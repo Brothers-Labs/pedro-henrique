@@ -1,12 +1,13 @@
 import { GameLoop } from '../../pedro-maker/engine/game-loop';
 import { FrameBudgetMonitor, initialQualityTier } from '../../pedro-maker/engine/render/quality';
 import { STEP_MS } from '../config/craft-physics.config';
-import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions } from '../models/craft-session.model';
+import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions, InventoryView } from '../models/craft-session.model';
 import { generateWorld } from '../world/world-generator';
 import { CraftInputReader } from './input/craft-input-reader';
 import { nextTask } from './next-task';
 import { CraftStage } from './render/craft-stage';
 import { CraftView } from './render/craft-view';
+import { hudState, inventoryView } from './session-views';
 import { CraftSimulation } from './simulation/craft-simulation';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
@@ -19,7 +20,7 @@ const GENERATION_SHARE = 0.25;
  * Cria uma partida do PedroCraft dentro de um elemento da página.
  *
  * É a única porta de entrada do motor 3D: quem chama recebe uma sessão com
- * pausa, retomada, preferências e `destroy`, e nunca toca no motor
+ * pausa, retomada, mochila, preferências e `destroy`, e nunca toca no motor
  * diretamente. Este módulo só é baixado quando um mundo abre.
  */
 export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
@@ -33,6 +34,19 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   let input: CraftInputReader | null = null;
   let isDestroyed = false;
   let wasPointerLocked = false;
+  let reportedHudVersion = -1;
+
+  /** Repassa à tela o que a simulação anotou desde o último quadro. */
+  const publish = (running: CraftSimulation): void => {
+    for (const event of running.drainEvents()) {
+      listener(event);
+    }
+
+    if (running.hudVersion !== reportedHudVersion) {
+      reportedHudVersion = running.hudVersion;
+      listener({ type: 'hud', hud: hudState(running) });
+    }
+  };
 
   const loop = new GameLoop((steps, alpha, frameMs) => {
     if (!simulation || !view || !input) {
@@ -51,7 +65,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       simulation.step(snapshot);
     }
 
-    view.render(alpha);
+    publish(simulation);
+    view.render(alpha, frameMs);
 
     const lower = monitor.sample(frameMs);
 
@@ -76,6 +91,33 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     listener({ type: 'error', message });
   };
 
+  const stop = (): void => {
+    loop.stop();
+    input?.setCapturing(false);
+  };
+
+  const start = (): void => {
+    if (isDestroyed || !simulation) {
+      return;
+    }
+
+    input?.reset();
+    input?.setCapturing(true);
+    monitor.reset();
+    loop.start();
+  };
+
+  const withSimulation = (action: (running: CraftSimulation) => void): InventoryView | null => {
+    if (!simulation) {
+      return null;
+    }
+
+    action(simulation);
+    publish(simulation);
+
+    return inventoryView(simulation);
+  };
+
   const build = async (activeStage: CraftStage): Promise<void> => {
     listener({ type: 'loading', progress: 0 });
     await nextTask();
@@ -86,9 +128,11 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       world: generated.world,
       spawn: generated.layout.spawn,
       autoJump: settings.autoJump,
+      randomSeed: options.seed,
     });
     const nextView = new CraftView(activeStage, nextSimulation);
 
+    nextView.setEffectsEnabled(settings.effectsEnabled);
     listener({ type: 'loading', progress: GENERATION_SHARE });
 
     try {
@@ -112,6 +156,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     input = new CraftInputReader(options.input, window, activeStage.canvas, () => settings.lookSensitivity);
     input.reset();
     document.addEventListener('pointerlockchange', onPointerLockChange);
+    publish(nextSimulation);
     listener({ type: 'ready' });
     monitor.reset();
     loop.start();
@@ -126,23 +171,25 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   }
 
   return {
-    pause: () => {
-      loop.stop();
-      input?.setCapturing(false);
-    },
-    resume: () => {
-      if (isDestroyed || !simulation) {
-        return;
-      }
-
-      input?.reset();
-      input?.setCapturing(true);
-      monitor.reset();
-      loop.start();
-    },
+    pause: stop,
+    resume: start,
     updateSettings: (next) => {
       settings = next;
       simulation?.setAutoJump(next.autoJump);
+      view?.setEffectsEnabled(next.effectsEnabled);
+    },
+    selectSlot: (index) => {
+      withSimulation((running) => running.selectSlot(index));
+    },
+    openScreen: () => {
+      stop();
+
+      return withSimulation(() => undefined);
+    },
+    clickSlot: (index, mode) => withSimulation((running) => running.clickSlot(index, mode)),
+    closeScreen: () => {
+      withSimulation((running) => running.closeScreen());
+      start();
     },
     destroy: () => {
       if (isDestroyed) {

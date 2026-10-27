@@ -1,0 +1,93 @@
+import type { CraftCatalog } from '../../content/craft-catalog';
+import type { ToolStats } from '../../models/content.model';
+import { loadTestCatalog } from '../../testing/craft-test-content';
+import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
+
+describe('Regras de quebra do PedroCraft', () => {
+  let catalog: CraftCatalog;
+
+  beforeAll(async () => {
+    catalog = await loadTestCatalog();
+  });
+
+  const tool = (id: string): ToolStats => {
+    const stats = catalog.item(id).tool;
+
+    if (!stats) {
+      throw new Error(`${id} não é ferramenta`);
+    }
+
+    return stats;
+  };
+
+  it('deixa pegar terra e tronco com a mão', () => {
+    expect(canHarvest(catalog.block('dirt'), null)).toBeTrue();
+    expect(canHarvest(catalog.block('oak-log'), null)).toBeTrue();
+  });
+
+  it('exige picareta para a pedra e o nível certo para cada minério', () => {
+    expect(canHarvest(catalog.block('stone'), null)).toBeFalse();
+    expect(canHarvest(catalog.block('stone'), tool('wooden-pickaxe'))).toBeTrue();
+    expect(canHarvest(catalog.block('iron-ore'), tool('wooden-pickaxe'))).toBeFalse();
+    expect(canHarvest(catalog.block('iron-ore'), tool('stone-pickaxe'))).toBeTrue();
+    expect(canHarvest(catalog.block('gold-ore'), tool('stone-pickaxe'))).toBeFalse();
+    expect(canHarvest(catalog.block('gold-ore'), tool('iron-pickaxe'))).toBeTrue();
+  });
+
+  it('não deixa um machado fazer o papel da picareta', () => {
+    expect(canHarvest(catalog.block('stone'), tool('golden-axe'))).toBeFalse();
+  });
+
+  it('quebra mais rápido com a ferramenta certa', () => {
+    const log = catalog.block('oak-log');
+    const byHand = breakDurationMs(log, null) ?? 0;
+    const withAxe = breakDurationMs(log, tool('stone-axe')) ?? 0;
+
+    expect(withAxe).toBeLessThan(byHand);
+    expect(breakDurationMs(log, tool('wooden-pickaxe'))).toBe(byHand);
+  });
+
+  it('demora mais quando falta a ferramenta mínima', () => {
+    const stone = catalog.block('stone');
+
+    expect(breakDurationMs(stone, null) ?? 0).toBeGreaterThan(breakDurationMs(stone, tool('wooden-pickaxe')) ?? 0);
+  });
+
+  it('não quebra a rocha-mãe nem a água', () => {
+    expect(breakDurationMs(catalog.block('bedrock'), tool('golden-pickaxe'))).toBeNull();
+    expect(breakDurationMs(catalog.block('water'), null)).toBeNull();
+  });
+
+  it('quebra o capim quase na hora, mas não em tempo zero', () => {
+    expect(breakDurationMs(catalog.block('tall-grass'), null)).toBe(50);
+  });
+
+  it('explica para a criança qual ferramenta falta', () => {
+    expect(missingToolHint(catalog.block('iron-ore'))).toBe('Para pegar minério de ferro, use uma picareta de pedra ou melhor.');
+    expect(missingToolHint(catalog.block('dirt'))).toBeNull();
+  });
+
+  it('sorteia cada entrada da tabela sozinha', () => {
+    const table = catalog.lootTable('wheat-harvest');
+    const always = (): number => 0;
+    const never = (): number => 0.999;
+
+    expect(rollLoot(table, always)).toEqual([
+      { item: 'wheat', count: 1 },
+      { item: 'wheat-seeds', count: 1 },
+    ]);
+    expect(rollLoot(catalog.lootTable('oak-leaves'), never)).toEqual([]);
+  });
+
+  it('respeita o mínimo e o máximo de cada entrada', () => {
+    const table = catalog.lootTable('carrot-harvest');
+    const counts = new Set<number>();
+
+    for (let roll = 0; roll < 50; roll += 1) {
+      const value = roll / 50;
+      counts.add(rollLoot(table, () => value)[0]?.count ?? 0);
+    }
+
+    expect([...counts].sort()).toEqual([2, 3]);
+  });
+});

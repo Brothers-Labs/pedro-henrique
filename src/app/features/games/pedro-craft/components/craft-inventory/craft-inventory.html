@@ -1,0 +1,36 @@
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mochila-titulo">
+  <header class="sheet__top">
+    <h2 id="mochila-titulo" class="sheet__title"><span aria-hidden="true">🎒</span> Mochila</h2>
+    <button type="button" class="sheet__close" (click)="closed.emit()">
+      <span aria-hidden="true">✓</span> Fechar
+    </button>
+  </header>
+
+  <div class="hand" aria-live="polite">
+    @if (view().cursor; as held) {
+      <span class="hand__slot"><app-craft-slot [slot]="held" [icons]="icons()" /></span>
+      <span>Na mão: <strong>{{ icons().describe(held) }}</strong>. Toque num espaço para soltar.</span>
+    } @else {
+      <span>Toque num item para pegar. Segure o dedo para pegar a metade.</span>
+    }
+  </div>
+
+  <div class="grid" role="group" aria-label="Mochila e, na última linha, a barra de itens">
+    @for (entry of slots(); track entry.index) {
+      <button
+        type="button"
+        class="slot"
+        [class.slot--hotbar]="entry.isHotbar"
+        [attr.aria-label]="icons().describe(entry.slot)"
+        (click)="click(entry.index)"
+        (contextmenu)="clickOne(entry.index, $event)"
+        (pointerdown)="startPress(entry.index, $event)"
+        (pointerup)="cancelPress()"
+        (pointerleave)="cancelPress()"
+        (pointercancel)="cancelPress()"
+      >
+        <app-craft-slot [slot]="entry.slot" [icons]="icons()" />
+      </button>
+    }
+  </div>
+</div>

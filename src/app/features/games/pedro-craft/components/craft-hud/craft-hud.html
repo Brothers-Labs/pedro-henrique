@@ -1,0 +1,44 @@
+@if (hud(); as state) {
+  @if (state.goal; as current) {
+    <aside class="goal" aria-live="polite" aria-label="Missão da vez">
+      <span class="goal__emoji" aria-hidden="true">{{ current.goal.emoji }}</span>
+      <div class="goal__text">
+        <p class="goal__title">{{ current.goal.title }}</p>
+        <p class="goal__hint">{{ current.goal.hint }}</p>
+      </div>
+      @if (current.goal.count > 1) {
+        <span class="goal__count">{{ current.amount }}/{{ current.goal.count }}</span>
+      }
+    </aside>
+  } @else if (state.goalsTotal > 0) {
+    <aside class="goal goal--done">
+      <span class="goal__emoji" aria-hidden="true">🏆</span>
+      <p class="goal__title">Todas as missões cumpridas!</p>
+    </aside>
+  }
+
+  <nav class="hotbar" aria-label="Barra de itens">
+    @for (slot of state.hotbar; track $index) {
+      <button
+        type="button"
+        class="hotbar__slot"
+        [class.hotbar__slot--selected]="$index === state.selected"
+        [attr.aria-pressed]="$index === state.selected"
+        [attr.aria-label]="icons().describe(slot)"
+        (click)="slotSelected.emit($index)"
+      >
+        <app-craft-slot [slot]="slot" [icons]="icons()" />
+        <span class="hotbar__key" aria-hidden="true">{{ $index + 1 }}</span>
+      </button>
+    }
+  </nav>
+}
+
+<ul class="pickups" aria-live="polite">
+  @for (pickup of pickups(); track pickup.key) {
+    <li class="pickups__item">
+      <img class="pickups__icon" [src]="icons().url(pickup.item)" alt="" />
+      +{{ pickup.count }} {{ icons().name(pickup.item) }}
+    </li>
+  }
+</ul>
