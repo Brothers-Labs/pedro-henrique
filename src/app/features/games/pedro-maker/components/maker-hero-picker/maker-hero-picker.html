@@ -1,0 +1,30 @@
+<section class="heroes" aria-labelledby="heroes-title">
+  <h2 id="heroes-title" class="heroes__title">{{ heading() }}</h2>
+  <ul class="heroes__list">
+    @for (card of cards(); track card.hero.id) {
+      <li>
+        <button
+          type="button"
+          class="hero"
+          [class.hero--selected]="selected() === card.hero.id"
+          [attr.aria-pressed]="selected() === card.hero.id"
+          (click)="chose.emit(card.hero.id)"
+        >
+          <app-pedro-figure class="hero__figure" [character]="card.character" label="" />
+          <span class="hero__text">
+            <strong class="hero__name">{{ card.hero.name }}</strong>
+            <span class="hero__description">{{ card.hero.description }}</span>
+            <span class="hero__traits">
+              @for (trait of card.hero.traits; track trait.label) {
+                <span class="hero__trait"><span aria-hidden="true">{{ trait.emoji }}</span> {{ trait.label }}</span>
+              }
+            </span>
+          </span>
+          @if (selected() === card.hero.id) {
+            <span class="hero__badge">{{ badge() }}</span>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+</section>

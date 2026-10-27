@@ -1,35 +1,12 @@
 <app-maker-page-frame heading="Meu personagem" emoji="👤">
   <div class="layout">
-    <section class="heroes" aria-labelledby="heroes-title">
-      <h2 id="heroes-title" class="heroes__title">Quem vai jogar?</h2>
-      <ul class="heroes__list">
-        @for (card of heroCards(); track card.hero.id) {
-          <li>
-            <button
-              type="button"
-              class="hero"
-              [class.hero--selected]="selectedHero().id === card.hero.id"
-              [attr.aria-pressed]="selectedHero().id === card.hero.id"
-              (click)="chooseHero(card.hero.id)"
-            >
-              <app-pedro-figure class="hero__figure" [character]="card.character" label="" />
-              <span class="hero__text">
-                <strong class="hero__name">{{ card.hero.name }}</strong>
-                <span class="hero__description">{{ card.hero.description }}</span>
-                <span class="hero__traits">
-                  @for (trait of card.hero.traits; track trait.label) {
-                    <span class="hero__trait"><span aria-hidden="true">{{ trait.emoji }}</span> {{ trait.label }}</span>
-                  }
-                </span>
-              </span>
-              @if (selectedHero().id === card.hero.id) {
-                <span class="hero__badge">Jogando</span>
-              }
-            </button>
-          </li>
-        }
-      </ul>
-    </section>
+    <app-maker-hero-picker
+      class="heroes"
+      heading="Quem vai jogar?"
+      [selected]="selectedHero().id"
+      [look]="look()"
+      (chose)="chooseHero($event)"
+    />
 
     <nav class="categories" aria-label="Partes do visual">
       @if (canCustomize()) {

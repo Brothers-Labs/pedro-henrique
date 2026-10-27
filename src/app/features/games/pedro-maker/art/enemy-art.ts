@@ -5,8 +5,10 @@ import {
   ellipse,
   eye,
   fillAndOutline,
+  lighten,
   OUTLINE,
   type Painter,
+  type Point,
   roundedRect,
   shine,
 } from './canvas';
@@ -22,6 +24,10 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   penguin: paintPenguin,
   'lava-bubble': paintLavaBubble,
   bee: paintBee,
+  goomba: paintGoomba,
+  bullet: paintBullet,
+  thwomp: paintThwomp,
+  'king-slime': paintKingSlime,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -342,6 +348,159 @@ function paintBee(context: CanvasRenderingContext2D): void {
   context.fill();
 
   eye(context, 35, 27, 3.4, 0.3);
+}
+
+function paintGoomba(context: CanvasRenderingContext2D): void {
+  const cap = '#9a5a2e';
+
+  for (const footX of [15, 33]) {
+    ellipse(context, footX, 44, 7, 3.5);
+    fillAndOutline(context, '#2a1a10', 2);
+  }
+
+  roundedRect(context, 15, 28, 18, 14, 5);
+  fillAndOutline(context, '#f2d3a0');
+
+  // Cabeça de cogumelo larga, com as sobrancelhas bravas e os dentinhos.
+  context.beginPath();
+  context.moveTo(4, 32);
+  context.bezierCurveTo(4, 6, 44, 6, 44, 32);
+  context.closePath();
+  fillAndOutline(context, cap);
+  shine(context, 15, 15, 5, 3);
+
+  eye(context, 19, 23, 4, 0);
+  eye(context, 29, 23, 4, 0);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2.5;
+  context.beginPath();
+  context.moveTo(14, 15);
+  context.lineTo(22, 18);
+  context.moveTo(34, 15);
+  context.lineTo(26, 18);
+  context.stroke();
+
+  context.fillStyle = '#ffffff';
+
+  for (const toothX of [20, 28]) {
+    context.beginPath();
+    context.moveTo(toothX - 2, 30);
+    context.lineTo(toothX, 34);
+    context.lineTo(toothX + 2, 30);
+    context.closePath();
+    context.fill();
+  }
+}
+
+function paintBullet(context: CanvasRenderingContext2D): void {
+  const metal = '#2a2f3a';
+
+  // Corpo de lado, nariz redondo para a esquerda e a base mais escura atrás.
+  context.beginPath();
+  context.moveTo(36, 12);
+  context.lineTo(18, 12);
+  context.arc(18, 25, 13, Math.PI * 1.5, Math.PI * 0.5, true);
+  context.lineTo(36, 38);
+  context.closePath();
+  fillAndOutline(context, metal);
+  shine(context, 16, 17, 6, 2.5);
+
+  roundedRect(context, 35, 9, 8, 32, 2);
+  fillAndOutline(context, darken(metal, 0.3));
+
+  eye(context, 17, 22, 4, -0.3);
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 2.5;
+  context.beginPath();
+  context.moveTo(11, 16);
+  context.lineTo(20, 18);
+  context.stroke();
+
+  ellipse(context, 27, 36, 4, 3);
+  fillAndOutline(context, '#ffffff', 2);
+}
+
+function paintThwomp(context: CanvasRenderingContext2D): void {
+  const stone = '#8f9bb0';
+
+  // Pontas de pedra em volta: é para fugir, não para pisar.
+  context.fillStyle = '#cfd6e3';
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2;
+
+  const spikes: readonly (readonly Point[])[] = [
+    ...[14, 24, 34].map((x): readonly Point[] => [[x - 4, 7], [x, 1], [x + 4, 7]]),
+    ...[18, 32].flatMap((y): (readonly Point[])[] => [
+      [[6, y - 4], [1, y], [6, y + 4]],
+      [[42, y - 4], [47, y], [42, y + 4]],
+    ]),
+  ];
+
+  for (const [first, ...rest] of spikes) {
+    context.beginPath();
+    context.moveTo(first[0], first[1]);
+
+    for (const [x, y] of rest) {
+      context.lineTo(x, y);
+    }
+
+    context.closePath();
+    context.fill();
+    context.stroke();
+  }
+
+  roundedRect(context, 5, 6, 38, 40, 4);
+  fillAndOutline(context, stone);
+  roundedRect(context, 10, 11, 28, 30, 3);
+  fillAndOutline(context, lighten(stone, 0.15), 1.5);
+
+  eye(context, 18, 21, 4.2, 0);
+  eye(context, 30, 21, 4.2, 0);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(12, 13);
+  context.lineTo(22, 16);
+  context.moveTo(36, 13);
+  context.lineTo(26, 16);
+  context.stroke();
+
+  roundedRect(context, 14, 31, 20, 7, 2);
+  fillAndOutline(context, OUTLINE, 1.5);
+  context.fillStyle = '#ffffff';
+
+  for (const toothX of [17, 22, 27, 32]) {
+    context.fillRect(toothX - 1.5, 32, 3, 3);
+  }
+}
+
+function paintKingSlime(context: CanvasRenderingContext2D): void {
+  const color = '#4f9be8';
+
+  context.beginPath();
+  context.moveTo(2, 46);
+  context.bezierCurveTo(1, 12, 47, 12, 46, 46);
+  context.closePath();
+  fillAndOutline(context, color);
+  shine(context, 14, 26, 6, 3.5);
+
+  eye(context, 18, 32, 4.5, 0);
+  eye(context, 30, 32, 4.5, 0);
+  smile(context, 24.5, 39, 4);
+
+  // Coroa dourada com três pontas e a pedra vermelha.
+  context.beginPath();
+  context.moveTo(14, 18);
+  context.lineTo(14, 6);
+  context.lineTo(19, 11);
+  context.lineTo(24, 3);
+  context.lineTo(29, 11);
+  context.lineTo(34, 6);
+  context.lineTo(34, 18);
+  context.closePath();
+  fillAndOutline(context, '#ffc629', 2.5);
+  circle(context, 24, 14, 2.5);
+  fillAndOutline(context, '#e8343f', 1.5);
 }
 
 function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {

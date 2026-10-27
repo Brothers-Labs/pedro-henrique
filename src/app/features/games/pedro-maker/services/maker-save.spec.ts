@@ -17,7 +17,8 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
 
     it('mantém o herói escolhido e volta ao Pedro quando o herói não existe ou falta no save antigo', () => {
       expect(reconcile({ hero: 'gui' }).hero).toBe('gui');
-      expect(reconcile({ hero: 'mario' }).hero).toBe('pedro');
+      expect(reconcile({ hero: 'mario' }).hero).toBe('mario');
+      expect(reconcile({ hero: 'bowser' }).hero).toBe('pedro');
       expect(reconcile({ hero: 7 }).hero).toBe('pedro');
       expect(reconcile({ coins: 10 }).hero).toBe('pedro');
     });

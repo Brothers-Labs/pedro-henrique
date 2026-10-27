@@ -133,6 +133,16 @@ describe('Simulação do Pedro Maker', () => {
     expect(guiApex / pedroApex).toBeCloseTo(expectedRatio, 1);
   });
 
+  it('faz o Mario e o Luigi pularem mais alto que o Pedro, e o Luigi mais que todos', () => {
+    const pedroApex = jumpApex(start(flatLevel().build(META), 'pedro'));
+    const marioApex = jumpApex(start(flatLevel().build(META), 'mario'));
+    const luigiApex = jumpApex(start(flatLevel().build(META), 'luigi'));
+
+    expect(marioApex).toBeGreaterThan(pedroApex);
+    expect(luigiApex).toBeGreaterThan(marioApex);
+    expect(luigiApex / pedroApex).toBeCloseTo(heroDefinition('luigi').abilities.jumpMultiplier ** 2, 1);
+  });
+
   it('faz o Gui escorregar mais que o Pedro ao frear', () => {
     const pedro = start(flatLevel().build(META), 'pedro');
     const gui = start(flatLevel().build(META), 'gui');
@@ -654,6 +664,99 @@ describe('Simulação do Pedro Maker', () => {
 
     expect(player.isSliding).toBeFalse();
     expect(player.body.vy).toBeLessThan(0);
+  });
+
+  it('derrota o goomba com um pisão', () => {
+    const harness = start(flatLevel().add('goomba', 12, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    const goomba = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(goomba.body), goomba.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    expect(goomba.isDefeated).toBeTrue();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  it('divide o Rei Slime em dois slimes no pisão, sem machucar quem pisou', () => {
+    const harness = start(flatLevel().add('king-slime', 12, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    const king = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(king.body), king.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    const slimes = harness.simulation.enemies.filter((enemy) => enemy.kind === 'slime');
+
+    expect(king.isDefeated).toBeTrue();
+    expect(slimes.length).toBe(2);
+    expect(new Set(slimes.map((slime) => slime.direction))).toEqual(new Set([-1, 1]));
+    expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  it('faz o thwomp despencar quando o Pedro passa embaixo e voltar para o alto', () => {
+    const harness = start(flatLevel().add('thwomp', 12, SURFACE - 4).build(META));
+    const thwomp = harness.simulation.enemies[0];
+    const homeY = thwomp.body.y;
+
+    run(harness, 0.5);
+    expect(thwomp.body.y).toBe(homeY);
+
+    // Um passo embaixo dele basta para a queda; depois o Pedro sai da frente.
+    harness.simulation.player.placeFeetAt(centerX(thwomp.body), SURFACE * TILE_SIZE);
+    harness.simulation.step(IDLE_INPUT);
+    harness.simulation.player.placeFeetAt(centerX(thwomp.body) + TILE_SIZE * 6, SURFACE * TILE_SIZE);
+    run(harness, 0.6);
+
+    expect(bottom(thwomp.body)).toBeCloseTo(SURFACE * TILE_SIZE, 0);
+    expect(thwomp.canBeStomped).toBeFalse();
+
+    run(harness, 4);
+
+    expect(thwomp.body.y).toBeCloseTo(homeY, 0);
+  });
+
+  it('dispara a bala de canhão de novo do ponto de partida quando ela bate na parede', () => {
+    const harness = start(flatLevel().fill('stone', 8, 8, SURFACE - 3, SURFACE - 1).add('bullet', 14, SURFACE - 2).build(META));
+    const bullet = harness.simulation.enemies[0];
+    const homeX = centerX(bullet.body);
+    let closest = homeX;
+
+    for (let step = 0; step < 240; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      closest = Math.min(closest, centerX(bullet.body));
+    }
+
+    expect(closest).toBeLessThan(homeX - TILE_SIZE * 4);
+    expect(centerX(bullet.body)).toBeGreaterThan(9 * TILE_SIZE);
+    expect(bullet.isFireproof).toBeTrue();
+  });
+
+  it('leva à outra porta dourada e dá moedas só na primeira passagem', () => {
+    const harness = start(
+      flatLevel().add('golden-door', 6, SURFACE - 1, { pair: 'C' }).add('golden-door', 30, SURFACE - 1, { pair: 'C' }).build(META),
+    );
+    const player = harness.simulation.player;
+    run(harness, 0.2);
+
+    player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 0.1);
+
+    expect(Math.round(centerX(player.body) / TILE_SIZE - 0.5)).toBe(30);
+    expect(lastHud(harness.events)?.coins).toBe(10);
+
+    player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 0.1);
+
+    expect(lastHud(harness.events)?.coins).toBe(10);
   });
 
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {

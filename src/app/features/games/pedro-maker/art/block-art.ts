@@ -426,6 +426,42 @@ export function paintDoor(context: CanvasRenderingContext2D): void {
   context.fill();
 }
 
+/** Porta dourada: tábuas de ouro com um diamante no alto — leva a outra porta e dá moedas. */
+export function paintGoldenDoor(context: CanvasRenderingContext2D): void {
+  const gold = '#f2b705';
+
+  context.beginPath();
+  context.moveTo(4, 95);
+  context.lineTo(4, 28);
+  context.arc(24, 28, 20, Math.PI, 0);
+  context.lineTo(44, 95);
+  context.closePath();
+  fillAndOutline(context, gold, 3);
+
+  context.strokeStyle = darken(gold, 0.25);
+  context.lineWidth = 2;
+  context.beginPath();
+
+  for (const x of [17, 31]) {
+    context.moveTo(x, 30);
+    context.lineTo(x, 95);
+  }
+
+  context.stroke();
+
+  context.beginPath();
+  context.moveTo(24, 10);
+  context.lineTo(31, 19);
+  context.lineTo(24, 28);
+  context.lineTo(17, 19);
+  context.closePath();
+  fillAndOutline(context, '#6fe3ff', 2);
+  context.fillStyle = '#ffffff';
+  circle(context, 36, 60, 3);
+  context.fill();
+  shine(context, 12, 40, 3, 8);
+}
+
 /** Porta secreta: dourada, com brilho — difícil de achar, fácil de reconhecer. */
 export function paintSecretDoor(context: CanvasRenderingContext2D): void {
   const gold = '#ffcf3f';

@@ -26,6 +26,10 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   penguin: { speed: 95, bodyWidth: 30, bodyHeight: 34, flies: false, isStompable: true, isFireproof: false },
   'lava-bubble': { speed: 0, bodyWidth: 26, bodyHeight: 26, flies: true, isStompable: false, isFireproof: true },
   bee: { speed: 85, bodyWidth: 28, bodyHeight: 24, flies: true, isStompable: true, isFireproof: false },
+  goomba: { speed: 55, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true, isFireproof: false },
+  bullet: { speed: 150, bodyWidth: 40, bodyHeight: 28, flies: true, isStompable: true, isFireproof: true },
+  thwomp: { speed: 0, bodyWidth: 44, bodyHeight: 46, flies: true, isStompable: false, isFireproof: true },
+  'king-slime': { speed: 40, bodyWidth: 58, bodyHeight: 46, flies: false, isStompable: true, isFireproof: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -59,6 +63,19 @@ const LAVA_BUBBLE_HEIGHT = TILE_SIZE * 4.2;
 /** Quão rápido o corpo persegue o ponto do salto: alto para seguir a curva de perto. */
 const LAVA_BUBBLE_STEERING = 12;
 
+/** Distância que a bala de canhão voa antes de ser disparada de novo do ponto de partida. */
+const BULLET_RANGE = TILE_SIZE * 12;
+
+/** O thwomp despenca quando o herói passa embaixo dele, perto assim na horizontal. */
+const THWOMP_REACH_X = TILE_SIZE * 1.4;
+const THWOMP_FALL_SPEED = 720;
+const THWOMP_RISE_SPEED = 110;
+/** Tempo no chão depois da pancada: a janela para passar por ele. */
+const THWOMP_REST_MS = 900;
+
+/** `waiting` no alto, `falling` despencando, `resting` no chão e `rising` voltando para cima. */
+type ThwompState = 'waiting' | 'falling' | 'resting' | 'rising';
+
 /** Tempo da animação de derrota antes de o inimigo sair da partida. */
 export const ENEMY_DEFEAT_MS = 280;
 
@@ -75,6 +92,11 @@ export const ENEMY_DEFEAT_MS = 280;
  * lava e mergulha de volta, sem machucar enquanto está lá dentro. A abelha
  * voa de um lado para o outro, subindo e descendo de leve.
  *
+ * O goomba e o Rei Slime patrulham como o slime. A bala de canhão voa reto e,
+ * ao bater numa parede ou ir longe demais, é disparada de novo do ponto de
+ * partida, na direção do herói. O thwomp espera no alto, despenca quando o
+ * herói passa embaixo, descansa um pouco no chão e sobe devagar.
+ *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
  * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
  */
@@ -90,6 +112,8 @@ export class Enemy {
   direction: 1 | -1 = -1;
   /** Preso num bloco de gelo da Flor de Gelo. */
   isFrozen = false;
+  /** Até quando o inimigo recém-nascido não machuca: os slimes do Rei Slime nascem colados no herói. */
+  harmlessUntil = 0;
 
   private readonly profile: EnemyProfile;
   private frozenUntil = 0;
@@ -98,6 +122,8 @@ export class Enemy {
   private pausedUntil = 0;
   private piranhaCycleMs: number;
   private lastStepAt: number | null = null;
+  private thwompState: ThwompState = 'waiting';
+  private hasLanded = false;
 
   constructor(
     readonly id: number,
@@ -171,6 +197,8 @@ export class Enemy {
       case 'spiky':
       case 'turtle':
       case 'penguin':
+      case 'goomba':
+      case 'king-slime':
         this.patrolLedges();
         return;
       case 'robot':
@@ -191,7 +219,22 @@ export class Enemy {
       case 'bee':
         this.buzzAround(now);
         return;
+      case 'bullet':
+        this.cruise(targetX);
+        return;
+      case 'thwomp':
+        this.slam(now, targetX, targetY);
+        return;
     }
+  }
+
+  /** Verdadeiro uma única vez a cada pancada do thwomp no chão, para a partida tremer a tela. */
+  takeLanding(): boolean {
+    const hasLanded = this.hasLanded;
+
+    this.hasLanded = false;
+
+    return hasLanded;
   }
 
   /** Longe do Pedro, o inimigo espera: poupa processamento e não foge da fase. */
@@ -344,6 +387,79 @@ export class Enemy {
     this.body.vy = (this.homeY - height - centerY(this.body)) * LAVA_BUBBLE_STEERING;
     this.isHidden = progress === 0;
     this.emergence = this.isHidden ? 0 : 1;
+  }
+
+  private cruise(targetX: number): void {
+    const body = this.body;
+    const isTooFar = Math.abs(centerX(body) - this.homeX) > BULLET_RANGE;
+
+    if (body.blockedLeft || body.blockedRight || isTooFar) {
+      this.relaunch(targetX);
+      return;
+    }
+
+    body.vx = this.direction * this.profile.speed * this.speedMultiplier;
+    body.vy = 0;
+  }
+
+  /** Volta ao ponto de partida sem deslizar até lá: a tela não desenha o caminho de volta. */
+  private relaunch(targetX: number): void {
+    const body = this.body;
+
+    body.x = this.homeX - body.width / 2;
+    body.previousX = body.x;
+    body.vx = 0;
+    this.direction = targetX >= this.homeX ? 1 : -1;
+  }
+
+  private slam(now: number, targetX: number, targetY: number): void {
+    const body = this.body;
+
+    body.vx = 0;
+
+    switch (this.thwompState) {
+      case 'waiting': {
+        const isHeroBelow = Math.abs(targetX - centerX(body)) < THWOMP_REACH_X && targetY > centerY(body);
+
+        body.vy = 0;
+        this.direction = targetX > centerX(body) ? 1 : -1;
+
+        if (isHeroBelow) {
+          this.thwompState = 'falling';
+        }
+
+        return;
+      }
+      case 'falling':
+        if (body.blockedDown) {
+          this.thwompState = 'resting';
+          this.pausedUntil = now + THWOMP_REST_MS;
+          this.hasLanded = true;
+          body.vy = 0;
+          return;
+        }
+
+        body.vy = THWOMP_FALL_SPEED * this.speedMultiplier;
+        return;
+      case 'resting':
+        body.vy = 0;
+
+        if (now >= this.pausedUntil) {
+          this.thwompState = 'rising';
+        }
+
+        return;
+      case 'rising':
+        if (centerY(body) <= this.homeY) {
+          body.y = this.homeY - body.height / 2;
+          body.vy = 0;
+          this.thwompState = 'waiting';
+          return;
+        }
+
+        body.vy = -THWOMP_RISE_SPEED * this.speedMultiplier;
+        return;
+    }
   }
 
   private hasGroundAhead(): boolean {

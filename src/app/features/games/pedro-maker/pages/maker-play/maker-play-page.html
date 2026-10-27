@@ -14,6 +14,23 @@
     }
   }
 
+  @case ('choosing') {
+    @if (blueprint(); as level) {
+      <div class="message message--choosing">
+        <p class="message__text">{{ label() }} · {{ level.name }}</p>
+        <app-maker-hero-picker
+          class="message__picker"
+          heading="Quem vai jogar esta fase?"
+          badge="Último a jogar"
+          [selected]="hero()"
+          [look]="look()"
+          (chose)="playAs($event)"
+        />
+        <button type="button" class="message__button" data-tone="orange" (click)="exit()">{{ exitLabel }}</button>
+      </div>
+    }
+  }
+
   @case ('loading') {
     <div class="message" role="status">
       <p class="message__emoji" aria-hidden="true">🚀</p>

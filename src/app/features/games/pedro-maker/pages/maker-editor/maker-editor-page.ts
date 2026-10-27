@@ -198,6 +198,13 @@ export class MakerEditorPage {
     return cell ? (objectAt(this.level(), cell.x, cell.y) ?? null) : null;
   });
 
+  /** Porta de madeira ou dourada: as duas escolhem a qual porta levam. */
+  protected readonly isSelectedDoor = computed(() => {
+    const type = this.selectedObject()?.type;
+
+    return type === 'door' || type === 'golden-door';
+  });
+
   protected readonly selectedLabel = computed(() => {
     const object = this.selectedObject();
 

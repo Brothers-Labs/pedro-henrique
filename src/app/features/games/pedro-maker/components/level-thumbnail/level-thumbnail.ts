@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { THEME_PALETTES } from '../../art/palettes';
 import { paint } from '../../art/canvas';
-import type { CustomLevel, LevelObjectType } from '../../models/level.model';
+import { type CustomLevel, isEnemyKind, type LevelObjectType } from '../../models/level.model';
 
 /** Pixels por célula na miniatura. */
 const CELL = 3;
@@ -29,8 +29,6 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   portal: '#9a6cf0',
   checkpoint: '#ff4f9a',
 };
-
-const ENEMIES = new Set<LevelObjectType>(['slime', 'spiky', 'bat', 'robot', 'ghost', 'turtle', 'piranha', 'penguin', 'lava-bubble', 'bee']);
 
 /**
  * Miniatura de uma fase criada: a planta vista de longe.
@@ -78,7 +76,7 @@ export class LevelThumbnail {
         }
 
         const color =
-          object.type === 'ground' ? palette.surface : ENEMIES.has(object.type) ? '#2a2350' : COLORS[object.type];
+          object.type === 'ground' ? palette.surface : isEnemyKind(object.type) ? '#2a2350' : COLORS[object.type];
 
         if (color) {
           context.fillStyle = color;

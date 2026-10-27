@@ -61,8 +61,10 @@ export class EnemyMaterials {
  * O slime quica amassando, o morcego bate as asas, o robô balança a antena, o
  * fantasma flutua e fica transparente quando some, a tartaruga balança o casco
  * e a planta carnívora sobe do cano mordendo, o pinguim gingando e a bolinha de
- * lava pula girando. Congelado, para dentro de um bloco de gelo. Derrotado,
- * achata e some.
+ * lava pula girando. O goomba marcha balançando, a bala de canhão voa de lado
+ * com o nariz para a frente, o thwomp treme de raiva e o Rei Slime quica como
+ * o slime. Congelado, para dentro de um bloco de gelo. Derrotado, achata e
+ * some.
  */
 export class EnemyModel {
   readonly root = new Group();
@@ -129,7 +131,8 @@ export class EnemyModel {
     const time = now / 1000 + this.phase;
 
     switch (this.kind) {
-      case 'slime': {
+      case 'slime':
+      case 'king-slime': {
         const hop = Math.abs(Math.sin(time * 6));
 
         this.body.scale.set(1 + (1 - hop) * 0.12, 0.88 + hop * 0.2, 1 + (1 - hop) * 0.12);
@@ -175,14 +178,29 @@ export class EnemyModel {
         this.body.scale.setScalar(pose.emergence === 0 ? 0.001 : 1 + Math.sin(time * 20) * 0.06);
         this.body.rotation.z = time * 6;
         return;
+      case 'goomba':
+        this.body.rotation.z = pose.isMoving ? Math.sin(time * 12) * 0.1 : 0;
+        return;
+      case 'bullet':
+        // De perfil, com o nariz apontado para onde voa.
+        this.body.rotation.y = pose.direction * (Math.PI / 2);
+        this.body.position.y = Math.sin(time * 6) * 0.02;
+        return;
+      case 'thwomp':
+        // Sempre de frente para a tela, tremendo de leve enquanto espera.
+        this.body.rotation.y = this.heading * 0.3;
+        this.body.position.x = pose.isMoving ? 0 : Math.sin(time * 40) * 0.01;
+        return;
     }
   }
 
   private showIce(isFrozen: boolean): void {
     if (isFrozen && !this.iceBlock) {
-      this.iceBlock = new Mesh(new BoxGeometry(ICE_BLOCK_SIZE, ICE_BLOCK_SIZE, ICE_BLOCK_SIZE), this.materials.ice);
+      const size = this.kind === 'king-slime' ? KING_ICE_BLOCK_SIZE : ICE_BLOCK_SIZE;
+
+      this.iceBlock = new Mesh(new BoxGeometry(size, size, size), this.materials.ice);
       // O morcego é desenhado a partir do centro; os outros, a partir dos pés.
-      this.iceBlock.position.y = this.kind === 'bat' ? 0 : ICE_BLOCK_SIZE / 2;
+      this.iceBlock.position.y = this.kind === 'bat' ? 0 : size / 2;
       this.root.add(this.iceBlock);
     }
 
@@ -231,6 +249,8 @@ export class EnemyModel {
 
 /** Lado do bloco de gelo, em blocos: cobre qualquer inimigo comum. */
 const ICE_BLOCK_SIZE = 0.82;
+/** O Rei Slime é largo demais para o bloco comum. */
+const KING_ICE_BLOCK_SIZE = 1.3;
 
 /** Altura da planta carnívora fora do cano, em blocos. */
 const PIRANHA_HEIGHT = 1.0;
@@ -327,6 +347,50 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(-0.12, 0.56, 0, 0.12, 0.14, 0.12, '#ffb020'),
     box(0.1, 0.6, 0.04, 0.1, 0.12, 0.1, '#ffd23f'),
     ...eyes(0.3, 0.255, 0.1, 0.1),
+  ],
+  goomba: [
+    box(-0.17, 0.05, 0.04, 0.2, 0.1, 0.26, '#2a1a10'),
+    box(0.17, 0.05, 0.04, 0.2, 0.1, 0.26, '#2a1a10'),
+    box(0, 0.2, 0, 0.38, 0.22, 0.32, '#f2d3a0'),
+    box(0, 0.43, 0, 0.76, 0.3, 0.62, '#9a5a2e'),
+    box(0, 0.62, 0, 0.56, 0.1, 0.48, '#b06a38'),
+    // Sobrancelhas bravas e os dois dentinhos para fora.
+    box(-0.14, 0.53, 0.315, 0.16, 0.04, 0.02, '#2a1a10'),
+    box(0.14, 0.53, 0.315, 0.16, 0.04, 0.02, '#2a1a10'),
+    box(-0.1, 0.31, 0.315, 0.05, 0.06, 0.02, '#ffffff'),
+    box(0.1, 0.31, 0.315, 0.05, 0.06, 0.02, '#ffffff'),
+    ...eyes(0.42, 0.315, 0.13, 0.11),
+  ],
+  bullet: [
+    box(0, 0.29, 0, 0.52, 0.52, 0.66, '#2a2f3a'),
+    box(0, 0.29, 0.37, 0.44, 0.44, 0.08, '#3a4050'),
+    box(0, 0.29, 0.43, 0.3, 0.3, 0.04, '#3a4050'),
+    box(0, 0.29, -0.37, 0.58, 0.58, 0.08, '#1a1d26'),
+    box(-0.28, 0.18, 0.06, 0.06, 0.1, 0.16, '#ffffff'),
+    box(0.28, 0.18, 0.06, 0.06, 0.1, 0.16, '#ffffff'),
+    ...eyes(0.38, 0.452, 0.1, 0.1),
+  ],
+  thwomp: [
+    box(0, 0.48, 0, 0.9, 0.92, 0.6, '#8f9bb0'),
+    box(0, 0.48, 0.305, 0.74, 0.76, 0.02, '#a7b2c6'),
+    ...[-0.3, 0, 0.3].map((x) => box(x, 0.98, 0, 0.14, 0.12, 0.3, '#cfd6e3')),
+    ...[0.25, 0.7].flatMap((y) => [box(-0.5, y, 0, 0.12, 0.14, 0.3, '#cfd6e3'), box(0.5, y, 0, 0.12, 0.14, 0.3, '#cfd6e3')]),
+    box(-0.18, 0.78, 0.32, 0.24, 0.05, 0.02, '#2a2350'),
+    box(0.18, 0.78, 0.32, 0.24, 0.05, 0.02, '#2a2350'),
+    box(0, 0.28, 0.32, 0.48, 0.14, 0.02, '#2a2350'),
+    ...[-0.15, 0, 0.15].map((x) => box(x, 0.31, 0.332, 0.07, 0.07, 0.01, '#ffffff')),
+    ...eyes(0.62, 0.32, 0.18, 0.13),
+  ],
+  'king-slime': [
+    box(0, 0.26, 0, 1.18, 0.52, 0.96, '#3f8fe0'),
+    box(0, 0.6, 0, 0.92, 0.18, 0.76, '#5aa6f0'),
+    box(0, 0.74, 0, 0.52, 0.1, 0.46, '#78bbf5'),
+    box(0.3, 0.5, 0.36, 0.14, 0.08, 0.14, '#cfe8ff'),
+    ...eyes(0.44, 0.485, 0.22, 0.17),
+    // Coroa dourada com a pedra vermelha na frente.
+    box(0, 0.86, 0, 0.5, 0.14, 0.4, '#ffc629'),
+    ...[-0.18, 0, 0.18].map((x) => box(x, 0.98, 0, 0.1, 0.12, 0.1, '#ffc629')),
+    box(0, 0.86, 0.205, 0.1, 0.08, 0.02, '#e8343f'),
   ],
   piranha: [
     box(0, 0.2, 0, 0.12, 0.4, 0.12, '#2f8f47'),

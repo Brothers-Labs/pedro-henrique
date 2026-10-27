@@ -27,8 +27,9 @@ export interface HeroDefinition {
  *
  * O Gui é o melhor amigo do Pedro, inspirado no irmão de boné verde dos jogos
  * clássicos de plataforma: mais alto, pula mais alto e escorrega um pouquinho
- * ao frear. As fases continuam justas para os dois, porque o validador mede
- * os pulos pelo Pedro, que pula menos.
+ * ao frear. Mario e Luigi, os encanadores dos jogos clássicos, também pulam
+ * mais que o Pedro. As fases continuam justas para todos, porque o validador
+ * mede os pulos pelo Pedro, que pula menos.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -52,6 +53,28 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: Math.sqrt(1.2), brakingMultiplier: 0.55 },
     outfit: { cap: '#2fae4e', shirt: '#2fae4e', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'mario',
+    name: 'Mario',
+    description: 'O encanador de boné vermelho e bigodão.',
+    traits: [
+      { emoji: '⬆️', label: 'Pula um pouquinho mais alto' },
+      { emoji: '🎯', label: 'Freia quase sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.1), brakingMultiplier: 0.85 },
+    outfit: { cap: '#e52521', shirt: '#e52521', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'luigi',
+    name: 'Luigi',
+    description: 'O irmão alto do Mario, de boné verde.',
+    traits: [
+      { emoji: '🚀', label: 'O pulo mais alto de todos' },
+      { emoji: '🧊', label: 'Escorrega bastante ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.3), brakingMultiplier: 0.45 },
+    outfit: { cap: '#1f9e3a', shirt: '#1f9e3a', backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 
