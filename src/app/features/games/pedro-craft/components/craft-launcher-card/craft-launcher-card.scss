@@ -1,0 +1,10 @@
+/* Chão de blocos: faixa de grama em cima de quadrados de terra, como um corte no mundo. */
+.launcher__ground--blocks {
+  background:
+    linear-gradient(180deg, #5bbf3e 0 30%, transparent 30%),
+    repeating-linear-gradient(90deg, #8a5a32 0 1.5rem, #9b6a3f 1.5rem 3rem);
+}
+
+.launcher__title--craft {
+  color: #2f8a3a;
+}

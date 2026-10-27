@@ -11,6 +11,7 @@ import { EnglishGame } from './english-game/english-game';
 import { IqGame } from './iq-game/iq-game';
 import { MathGame } from './math-game/math-game';
 import { MemoryGame } from './memory-game/memory-game';
+import { CraftLauncherCard } from './pedro-craft/components/craft-launcher-card/craft-launcher-card';
 import { FlashLauncherCard } from './pedro-flash/components/flash-launcher-card/flash-launcher-card';
 import { KartLauncherCard } from './pedro-kart/components/kart-launcher-card/kart-launcher-card';
 import { MakerLauncherCard } from './pedro-maker/components/maker-launcher-card/maker-launcher-card';
@@ -57,6 +58,7 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
     MakerLauncherCard,
     KartLauncherCard,
     FlashLauncherCard,
+    CraftLauncherCard,
   ],
   templateUrl: './games-page.html',
   styleUrl: './games-page.scss',

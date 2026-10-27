@@ -91,6 +91,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'purple',
   },
   {
+    id: 'pedro-craft',
+    label: 'PedroCraft',
+    route: '/jogos/pedro-craft',
+    emoji: '⛏️',
+    description: 'Meu mundo de blocos: colho madeira e pedra, construo, fabrico ferramentas e cuido da fazenda.',
+    color: 'mint',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',
@@ -137,7 +145,7 @@ export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   {
     id: 'brincar',
     label: 'Brincar',
-    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'mascote'].map(findSection),
+    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'pedro-craft', 'mascote'].map(findSection),
   },
   { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
 ];

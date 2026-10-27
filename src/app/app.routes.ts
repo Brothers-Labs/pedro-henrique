@@ -83,6 +83,15 @@ export const routes: Routes = [
       import('./features/games/pedro-flash/pedro-flash.routes').then((m) => m.PEDRO_FLASH_ROUTES),
   },
   {
+    path: 'jogos/pedro-craft',
+    data: {
+      description:
+        'PedroCraft: o jogo de blocos do Pedro Henrique. Colha madeira, pedra e água, construa, fabrique ferramentas e cuide da fazenda.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-craft/pedro-craft.routes').then((m) => m.PEDRO_CRAFT_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

@@ -152,6 +152,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-craft',
+    label: 'PedroCraft',
+    emoji: '⛏️',
+    color: 'mint',
+    /** Cada missão cumprida no mundo de blocos conta como um desafio da jornada. */
+    tagline: 'Colha, construa, fabrique ferramentas e cuide da fazenda.',
+    unit: 'desafio',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));
