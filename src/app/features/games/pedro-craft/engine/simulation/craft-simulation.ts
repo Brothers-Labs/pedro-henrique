@@ -11,9 +11,11 @@ import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint } from './block-rules';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
 import { HeroMotion } from './hero-motion';
+import { tickFurnace } from './furnace';
 import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 import { type DropCollector, ItemDrops } from './item-drops';
 import { castRay, type RayHit } from './raycast';
+import { type CraftScreen, ScreenController, type SlotRef } from './screens';
 import type { SimulationEvent, VisualEvent } from './simulation-events';
 
 /** Folga entre dois blocos quebrados segurando o botão: dá para ver um sumir antes do outro. */
@@ -56,6 +58,7 @@ export class CraftSimulation {
   readonly inventory: Inventory;
   readonly drops = new ItemDrops();
   readonly goals: GoalTracker;
+  readonly screens: ScreenController;
 
   selectedSlot = 0;
   target: RayHit | null = null;
@@ -98,7 +101,19 @@ export class CraftSimulation {
       random: this.random,
       visual: (event) => this.visualEvents.push(event),
       placed: (block) => this.recordGoal({ trigger: 'place', target: block.id, count: 1 }),
+      removed: (x, y, z) => {
+        for (const stack of this.screens.remove(this.world.indexOf(x, y, z))) {
+          this.drops.spawn(x + 0.5, y + 0.5, z + 0.5, stack, this.random);
+        }
+      },
       bodies: () => [this.hero.body],
+    });
+
+    this.screens = new ScreenController({
+      catalog: this.catalog,
+      inventory: this.inventory,
+      receive: (stack) => this.receive(stack),
+      dropNearHero: (stack) => this.drops.spawn(this.hero.body.x, this.hero.body.y + 1, this.hero.body.z, stack, this.random),
     });
 
     const body = this.hero.body;
@@ -151,6 +166,11 @@ export class CraftSimulation {
   }
 
   step(input: CraftInputSnapshot): void {
+    // Com uma tela aberta o mundo espera a criança; quem para o relógio é a sessão.
+    if (this.screens.screen) {
+      return;
+    }
+
     this.applySelection(input);
     this.hero.step(this.terrain, input, this.autoJump);
     this.target = this.findTarget();
@@ -165,9 +185,17 @@ export class CraftSimulation {
     }
 
     this.drops.step(this.terrain, this.collector);
+    this.tickFurnaces(STEP_MS);
 
     if (input.inventoryPressed) {
-      this.events.push({ type: 'open-screen', screen: 'inventory' });
+      this.openScreen('inventory');
+    }
+  }
+
+  /** As fornalhas assam mesmo com a tela delas aberta: a criança gosta de ver o pão ficar pronto. */
+  tickFurnaces(elapsedMs: number): void {
+    for (const furnace of this.screens.furnaces.values()) {
+      tickFurnace(furnace, this.catalog, elapsedMs);
     }
   }
 
@@ -179,21 +207,43 @@ export class CraftSimulation {
     }
   }
 
-  /** Toque num espaço da tela da mochila. */
-  clickSlot(index: number, mode: SlotClick): void {
-    this.inventory.click(index, mode);
+  /**
+   * Abre uma tela por cima do mundo. Quando quem abriu foi o próprio jogo (a
+   * tecla, a mesa tocada), a tela de fora é avisada; quando foi a tela de fora
+   * (o botão da mochila), ela já sabe.
+   */
+  openScreen(kind: CraftScreen, options: { readonly cell?: number; readonly announce?: boolean } = {}): void {
+    this.screens.open(kind, options.cell ?? -1);
+    this.mining = null;
+
+    if (options.announce ?? true) {
+      this.events.push({ type: 'open-screen', screen: kind });
+    }
+  }
+
+  /** Toque num espaço de qualquer área da tela aberta. */
+  clickSlot(ref: SlotRef, mode: SlotClick): void {
+    this.screens.click(ref, mode);
     this.version += 1;
   }
 
-  /** Fecha a tela: o que estava na mão volta à mochila, e o que não couber cai no chão. */
-  closeScreen(): void {
-    const leftover = this.inventory.returnCursor();
-
-    if (leftover) {
-      const body = this.hero.body;
-      this.drops.spawn(body.x, body.y + 1, body.z, leftover, this.random);
+  /** Pega o que a grade de fabricar montou. */
+  takeGridResult(): void {
+    if (this.screens.takeGridResult()) {
+      this.celebrateCraft();
     }
+  }
 
+  /** Fabrica pelo livro de receitas, direto da mochila. */
+  craftRecipe(recipeId: string): void {
+    if (this.screens.craftRecipe(recipeId)) {
+      this.celebrateCraft();
+    }
+  }
+
+  /** Fecha a tela: a grade e a mão voltam à mochila, e o que não couber cai no chão. */
+  closeScreen(): void {
+    this.screens.close();
     this.version += 1;
   }
 
@@ -308,11 +358,18 @@ export class CraftSimulation {
     this.version += 1;
   }
 
-  /** Botão de usar: abre ou fecha a porta; senão, coloca o bloco da mão. */
+  /** Botão de usar: abre a mesa, o baú ou a fornalha; abre a porta; senão, coloca o bloco da mão. */
   private use(): void {
     const target = this.target;
 
     if (!target) {
+      return;
+    }
+
+    const interaction = this.catalog.blockAt(this.world.get(target.x, target.y, target.z))?.interaction ?? null;
+
+    if (interaction && interaction !== 'bed') {
+      this.openScreen(interaction, { cell: this.world.indexOf(target.x, target.y, target.z) });
       return;
     }
 
@@ -342,14 +399,30 @@ export class CraftSimulation {
     this.version += 1;
   }
 
+  private celebrateCraft(): void {
+    this.events.push({ type: 'sound', cue: 'powerup' });
+    this.version += 1;
+  }
+
   /** Recolhe uma pilha do chão: guarda, avisa a tela e conta para a missão. */
   private collect(stack: ItemStack): number {
-    const left = this.inventory.add(stack.item, stack.count, stack.durability);
+    const left = this.receive(stack);
     const stored = stack.count - left;
 
     if (stored > 0) {
       this.events.push({ type: 'pickup', item: stack.item, count: stored });
       this.events.push({ type: 'sound', cue: 'coin' });
+    }
+
+    return left;
+  }
+
+  /** Guarda algo que acabou de chegar à mochila (recolhido, fabricado, assado) e conta para a missão. */
+  private receive(stack: ItemStack): number {
+    const left = this.inventory.add(stack.item, stack.count, stack.durability);
+    const stored = stack.count - left;
+
+    if (stored > 0) {
       this.recordGoal({ trigger: 'obtain', target: stack.item, count: stored });
     }
 

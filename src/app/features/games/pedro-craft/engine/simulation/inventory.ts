@@ -144,15 +144,21 @@ export class Inventory {
     return left <= 0;
   }
 
+  /** Toque num espaço da mochila. */
+  click(index: number, mode: SlotClick): void {
+    this.clickIn(this.slots, index, mode);
+  }
+
   /**
-   * Toque num espaço da tela da mochila.
+   * Toque num espaço de qualquer lugar da tela — mochila, grade de fabricar,
+   * baú, fornalha. A mão é uma só, então a regra mora aqui.
    *
    * Mão vazia: pega a pilha (ou metade, no toque de "um"). Mão cheia num
    * espaço vazio: solta tudo (ou uma unidade). Mesma coisa nos dois: junta.
    * Coisas diferentes: troca a mão com o espaço.
    */
-  click(index: number, mode: SlotClick): void {
-    const slot = this.slots[index];
+  clickIn(container: SlotContent[], index: number, mode: SlotClick): void {
+    const slot = container[index];
     const held = this.cursor;
 
     if (!held) {
@@ -163,14 +169,14 @@ export class Inventory {
       const taken = mode === 'one' ? Math.ceil(slot.count / 2) : slot.count;
 
       this.cursor = { ...slot, count: taken };
-      this.slots[index] = slot.count === taken ? null : { ...slot, count: slot.count - taken };
+      container[index] = slot.count === taken ? null : { ...slot, count: slot.count - taken };
       return;
     }
 
     if (!slot) {
       const placed = mode === 'one' ? 1 : held.count;
 
-      this.slots[index] = { ...held, count: placed };
+      container[index] = { ...held, count: placed };
       this.cursor = held.count === placed ? null : { ...held, count: held.count - placed };
       return;
     }
@@ -179,12 +185,12 @@ export class Inventory {
       const room = this.catalog.item(slot.item).maxStack - slot.count;
       const moved = Math.min(room, mode === 'one' ? 1 : held.count);
 
-      this.slots[index] = { ...slot, count: slot.count + moved };
+      container[index] = { ...slot, count: slot.count + moved };
       this.cursor = held.count === moved ? null : { ...held, count: held.count - moved };
       return;
     }
 
-    this.slots[index] = held;
+    container[index] = held;
     this.cursor = slot;
   }
 

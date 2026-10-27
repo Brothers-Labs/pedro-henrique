@@ -20,6 +20,8 @@ export interface BlockActionsContext {
   visual(event: VisualEvent): void;
   /** Avisado quando um bloco é colocado: alimenta as missões. */
   placed(block: BlockDefinition): void;
+  /** Avisado quando um bloco sai do mundo: o baú e a fornalha soltam o que guardavam. */
+  removed(x: number, y: number, z: number): void;
   /** Corpos que não podem ficar dentro de um bloco novo (o herói, as criaturas). */
   bodies(): readonly PhysicsBody[];
 }
@@ -48,6 +50,7 @@ export class BlockActions {
 
     world.set(x, y, z, AIR);
     this.context.visual({ type: 'block-broken', x, y, z, block: number });
+    this.context.removed(x, y, z);
 
     if (block.pairsVertically) {
       this.removePartner(x, y, z, block);

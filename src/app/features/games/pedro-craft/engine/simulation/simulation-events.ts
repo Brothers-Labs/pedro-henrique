@@ -1,8 +1,6 @@
 import type { MakerSoundCue } from '../../../pedro-maker/models/session.model';
 import type { GoalDefinition } from '../../models/content.model';
-
-/** Tela que o jogo pede para abrir por cima do mundo. */
-export type CraftScreen = 'inventory';
+import type { CraftScreen } from './screens';
 
 /**
  * O que a simulação conta para fora num passo.

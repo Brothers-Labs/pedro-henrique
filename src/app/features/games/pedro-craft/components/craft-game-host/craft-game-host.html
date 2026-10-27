@@ -75,9 +75,16 @@
   }
 }
 
-@if (phase() === 'inventory') {
-  @if (inventory(); as view) {
-    <app-craft-inventory [view]="view" [icons]="icons()" (slotClicked)="clickSlot($event)" (closed)="closeInventory()" />
+@if (phase() === 'screen') {
+  @if (screen(); as view) {
+    <app-craft-screen-panel
+      [view]="view"
+      [icons]="icons()"
+      (slotPressed)="clickSlot($event)"
+      (resultTaken)="takeGridResult()"
+      (recipeCrafted)="craftRecipe($event)"
+      (closed)="closeScreen()"
+    />
   }
 }
 

@@ -25,15 +25,15 @@ import type {
   CraftGameSession,
   CraftHudState,
   CraftSessionEvent,
-  InventoryView,
+  ScreenView,
 } from '../../models/craft-session.model';
 import { ItemIconCache } from '../../presentation/item-icon-cache';
 import { CraftSettingsService } from '../../services/craft-settings.service';
 import { CraftHud, type PickupNotice } from '../craft-hud/craft-hud';
-import { CraftInventory, type SlotClickRequest } from '../craft-inventory/craft-inventory';
+import { CraftScreenPanel, type SlotRequest } from '../craft-screen-panel/craft-screen-panel';
 import { CraftTouchControls } from '../craft-touch-controls/craft-touch-controls';
 
-type HostPhase = 'loading' | 'playing' | 'inventory' | 'paused' | 'error';
+type HostPhase = 'loading' | 'playing' | 'screen' | 'paused' | 'error';
 
 const TOAST_VISIBLE_MS = 2600;
 const PICKUP_VISIBLE_MS = 1800;
@@ -50,14 +50,14 @@ const MAX_PICKUPS = 3;
 @Component({
   selector: 'app-craft-game-host',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CraftTouchControls, CraftHud, CraftInventory],
+  imports: [CraftTouchControls, CraftHud, CraftScreenPanel],
   templateUrl: './craft-game-host.html',
   styleUrl: './craft-game-host.scss',
   host: {
     '(document:visibilitychange)': 'pauseWhenHidden()',
     '(document:fullscreenchange)': 'syncFullscreen()',
     '(document:pointerlockchange)': 'syncPointerLock()',
-    '(document:keydown)': 'closeInventoryWithKey($event)',
+    '(document:keydown)': 'closeScreenWithKey($event)',
   },
 })
 export class CraftGameHost {
@@ -87,7 +87,7 @@ export class CraftGameHost {
   protected readonly loadingProgress = signal(0);
   protected readonly errorMessage = signal('');
   protected readonly hud = signal<CraftHudState | null>(null);
-  protected readonly inventory = signal<InventoryView | null>(null);
+  protected readonly screen = signal<ScreenView | null>(null);
   protected readonly toast = signal<string | null>(null);
   protected readonly pickups = signal<readonly PickupNotice[]>([]);
   protected readonly isFullscreen = signal(false);
@@ -161,41 +161,37 @@ export class CraftGameHost {
   }
 
   protected openInventory(): void {
-    if (this.phase() !== 'playing') {
-      return;
-    }
-
-    const view = this.session?.openScreen() ?? null;
-
-    if (view) {
-      this.inventory.set(view);
-      this.phase.set('inventory');
-      this.audio.play('button');
+    if (this.phase() === 'playing') {
+      this.showScreen(this.session?.openInventory() ?? null);
     }
   }
 
-  protected clickSlot(request: SlotClickRequest): void {
-    const view = this.session?.clickSlot(request.index, request.mode) ?? null;
-
-    if (view) {
-      this.inventory.set(view);
-    }
+  protected clickSlot(request: SlotRequest): void {
+    this.updateScreen(this.session?.clickSlot(request.ref, request.mode) ?? null);
   }
 
-  protected closeInventory(): void {
-    if (this.phase() !== 'inventory') {
+  protected takeGridResult(): void {
+    this.updateScreen(this.session?.takeGridResult() ?? null);
+  }
+
+  protected craftRecipe(recipeId: string): void {
+    this.updateScreen(this.session?.craftRecipe(recipeId) ?? null);
+  }
+
+  protected closeScreen(): void {
+    if (this.phase() !== 'screen') {
       return;
     }
 
     this.session?.closeScreen();
-    this.inventory.set(null);
+    this.screen.set(null);
     this.phase.set('playing');
     this.audio.play('button');
   }
 
-  protected closeInventoryWithKey(event: KeyboardEvent): void {
-    if (this.phase() === 'inventory' && (event.code === 'KeyE' || event.code === 'KeyI')) {
-      this.closeInventory();
+  protected closeScreenWithKey(event: KeyboardEvent): void {
+    if (this.phase() === 'screen' && (event.code === 'KeyE' || event.code === 'KeyI')) {
+      this.closeScreen();
     }
   }
 
@@ -315,7 +311,12 @@ export class CraftGameHost {
         this.showToast(`${event.goal.emoji} Missão cumprida: ${event.goal.title}!`);
         return;
       case 'open-screen':
-        this.openInventory();
+        if (this.phase() === 'playing') {
+          this.showScreen(this.session?.showScreen() ?? null);
+        }
+        return;
+      case 'screen':
+        this.updateScreen(event.view);
         return;
       case 'pause-requested':
         this.pause();
@@ -324,6 +325,20 @@ export class CraftGameHost {
         this.errorMessage.set(event.message);
         this.phase.set('error');
         return;
+    }
+  }
+
+  private showScreen(view: ScreenView | null): void {
+    if (view) {
+      this.screen.set(view);
+      this.phase.set('screen');
+      this.audio.play('button');
+    }
+  }
+
+  private updateScreen(view: ScreenView | null): void {
+    if (view && this.phase() === 'screen') {
+      this.screen.set(view);
     }
   }
 

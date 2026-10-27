@@ -1,13 +1,13 @@
 import { GameLoop } from '../../pedro-maker/engine/game-loop';
 import { FrameBudgetMonitor, initialQualityTier } from '../../pedro-maker/engine/render/quality';
 import { STEP_MS } from '../config/craft-physics.config';
-import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions, InventoryView } from '../models/craft-session.model';
+import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions, ScreenView } from '../models/craft-session.model';
 import { generateWorld } from '../world/world-generator';
 import { CraftInputReader } from './input/craft-input-reader';
 import { nextTask } from './next-task';
 import { CraftStage } from './render/craft-stage';
 import { CraftView } from './render/craft-view';
-import { hudState, inventoryView } from './session-views';
+import { hudState, screenView } from './session-views';
 import { CraftSimulation } from './simulation/craft-simulation';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
@@ -15,6 +15,9 @@ const BUILD_FAILED_MESSAGE = 'Não foi possível montar este mundo.';
 
 /** Fração da barra de carga gasta gerando o mundo; o resto é a malha. */
 const GENERATION_SHARE = 0.25;
+
+/** Com uma tela aberta o mundo para, mas as fornalhas seguem assando neste ritmo. */
+const SCREEN_TICK_MS = 200;
 
 /**
  * Cria uma partida do PedroCraft dentro de um elemento da página.
@@ -35,6 +38,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   let isDestroyed = false;
   let wasPointerLocked = false;
   let reportedHudVersion = -1;
+  let screenTimer: ReturnType<typeof setInterval> | null = null;
 
   /** Repassa à tela o que a simulação anotou desde o último quadro. */
   const publish = (running: CraftSimulation): void => {
@@ -107,7 +111,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     loop.start();
   };
 
-  const withSimulation = (action: (running: CraftSimulation) => void): InventoryView | null => {
+  const withSimulation = (action: (running: CraftSimulation) => void): ScreenView | null => {
     if (!simulation) {
       return null;
     }
@@ -115,7 +119,33 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     action(simulation);
     publish(simulation);
 
-    return inventoryView(simulation);
+    return screenView(simulation);
+  };
+
+  /** Para o mundo para a tela aberta e deixa as fornalhas assando enquanto ela estiver na frente. */
+  const holdForScreen = (): ScreenView | null => {
+    stop();
+    stopScreenTimer();
+    screenTimer = setInterval(() => {
+      if (simulation?.screens.screen?.kind === 'furnace') {
+        simulation.tickFurnaces(SCREEN_TICK_MS);
+
+        const view = screenView(simulation);
+
+        if (view) {
+          listener({ type: 'screen', view });
+        }
+      }
+    }, SCREEN_TICK_MS);
+
+    return withSimulation(() => undefined);
+  };
+
+  const stopScreenTimer = (): void => {
+    if (screenTimer !== null) {
+      clearInterval(screenTimer);
+      screenTimer = null;
+    }
   };
 
   const build = async (activeStage: CraftStage): Promise<void> => {
@@ -181,13 +211,21 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     selectSlot: (index) => {
       withSimulation((running) => running.selectSlot(index));
     },
-    openScreen: () => {
-      stop();
+    openInventory: () => {
+      if (!simulation || simulation.screens.screen) {
+        return null;
+      }
 
-      return withSimulation(() => undefined);
+      simulation.openScreen('inventory', { announce: false });
+
+      return holdForScreen();
     },
-    clickSlot: (index, mode) => withSimulation((running) => running.clickSlot(index, mode)),
+    showScreen: holdForScreen,
+    clickSlot: (ref, mode) => withSimulation((running) => running.clickSlot(ref, mode)),
+    takeGridResult: () => withSimulation((running) => running.takeGridResult()),
+    craftRecipe: (recipeId) => withSimulation((running) => running.craftRecipe(recipeId)),
     closeScreen: () => {
+      stopScreenTimer();
       withSimulation((running) => running.closeScreen());
       start();
     },
@@ -198,6 +236,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
       isDestroyed = true;
       loop.stop();
+      stopScreenTimer();
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       input?.dispose();
       input = null;

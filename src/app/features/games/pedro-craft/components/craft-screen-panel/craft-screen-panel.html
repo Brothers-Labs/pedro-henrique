@@ -1,0 +1,95 @@
+@let current = view();
+
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tela-titulo">
+  <header class="sheet__top">
+    <h2 id="tela-titulo" class="sheet__title"><span aria-hidden="true">{{ title().emoji }}</span> {{ title().text }}</h2>
+    <button type="button" class="sheet__close" (click)="closed.emit()"><span aria-hidden="true">✓</span> Fechar</button>
+  </header>
+
+  <div class="hand" aria-live="polite">
+    @if (current.cursor; as held) {
+      <span class="hand__slot"><app-craft-slot [slot]="held" [icons]="icons()" /></span>
+      <span>Na mão: <strong>{{ icons().describe(held) }}</strong>. Toque num espaço para soltar.</span>
+    } @else {
+      <span>Toque num item para pegar e noutro espaço para soltar. Segure o dedo para pegar a metade.</span>
+    }
+  </div>
+
+  <div class="top">
+    @if (current.grid; as grid) {
+      <section class="craft" aria-label="Fabricar">
+        <app-craft-slot-grid
+          [entries]="gridEntries()"
+          [columns]="grid.size"
+          label="Grade de fabricar"
+          [icons]="icons()"
+          (pressed)="press('grid', $event)"
+        />
+        <span class="craft__arrow" aria-hidden="true">➜</span>
+        <button
+          type="button"
+          class="craft__result"
+          [disabled]="!grid.result"
+          [attr.aria-label]="grid.result ? 'Pegar ' + icons().describe(grid.result) : 'Nada para pegar ainda'"
+          (click)="resultTaken.emit()"
+        >
+          <app-craft-slot [slot]="grid.result" [icons]="icons()" />
+        </button>
+      </section>
+
+      <app-craft-recipe-book class="book" [recipes]="current.recipes" [icons]="icons()" (crafted)="recipeCrafted.emit($event)" />
+    }
+
+    @if (current.chest) {
+      <app-craft-slot-grid [entries]="chestEntries()" [columns]="9" label="Baú" [icons]="icons()" (pressed)="press('container', $event)" />
+    }
+
+    @if (current.furnace; as furnace) {
+      <section class="furnace" aria-label="Fornalha">
+        <div class="furnace__column">
+          <app-craft-slot-grid
+            [entries]="furnaceEntries().input"
+            [columns]="1"
+            label="O que vai assar"
+            [icons]="icons()"
+            (pressed)="press('container', $event)"
+          />
+          <span class="furnace__flame" aria-hidden="true" [style.opacity]="0.25 + furnace.burn * 0.75">🔥</span>
+          <app-craft-slot-grid
+            [entries]="furnaceEntries().fuel"
+            [columns]="1"
+            label="Combustível"
+            [icons]="icons()"
+            (pressed)="press('container', $event)"
+          />
+        </div>
+        <div
+          class="furnace__progress"
+          role="progressbar"
+          aria-label="Assando"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="furnace.progress * 100"
+        >
+          <span class="furnace__fill" [style.width.%]="furnace.progress * 100"></span>
+        </div>
+        <app-craft-slot-grid
+          [entries]="furnaceEntries().output"
+          [columns]="1"
+          label="Pronto: toque para pegar"
+          [icons]="icons()"
+          (pressed)="press('container', $event)"
+        />
+        <p class="furnace__tip">Em cima, o que vai assar. Embaixo, carvão ou madeira para o fogo.</p>
+      </section>
+    }
+  </div>
+
+  <app-craft-slot-grid
+    [entries]="inventoryEntries()"
+    [columns]="9"
+    label="Mochila e, na última linha, a barra de itens"
+    [icons]="icons()"
+    (pressed)="press('inventory', $event)"
+  />
+</div>

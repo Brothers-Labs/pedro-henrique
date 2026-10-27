@@ -2,7 +2,7 @@ import type { MakerSoundCue } from '../../pedro-maker/models/session.model';
 import type { CraftCatalog } from '../content/craft-catalog';
 import type { VirtualCraftInput } from '../engine/input/craft-input';
 import type { SlotClick } from '../engine/simulation/inventory';
-import type { CraftScreen } from '../engine/simulation/simulation-events';
+import type { CraftScreen, SlotRef } from '../engine/simulation/screens';
 import type { GoalDefinition } from './content.model';
 
 /**
@@ -41,10 +41,47 @@ export interface CraftHudState {
   readonly goalsTotal: number;
 }
 
-export interface InventoryView {
+export interface IngredientView {
+  readonly item: string;
+  readonly count: number;
+  /** Quanto disso a criança tem na mochila agora. */
+  readonly have: number;
+}
+
+/** Uma página do livro de receitas. */
+export interface RecipeView {
+  readonly id: string;
+  readonly output: SlotView;
+  readonly ingredients: readonly IngredientView[];
+  readonly canCraft: boolean;
+}
+
+export interface CraftingGridView {
+  readonly size: number;
+  readonly cells: readonly (SlotView | null)[];
+  /** O que a grade monta agora; `null` quando não forma receita nenhuma. */
+  readonly result: SlotView | null;
+}
+
+export interface FurnaceView {
+  /** Assar, combustível e pronto, nessa ordem. */
   readonly slots: readonly (SlotView | null)[];
+  /** Quanto resta do fogo, de 0 a 1. */
+  readonly burn: number;
+  /** Quanto falta para o item ficar pronto, de 0 a 1. */
+  readonly progress: number;
+}
+
+/** A tela aberta por cima do mundo, como a criança a vê. */
+export interface ScreenView {
+  readonly kind: CraftScreen;
+  readonly inventory: readonly (SlotView | null)[];
   /** O que está "na mão", pego na tela e ainda não solto. */
   readonly cursor: SlotView | null;
+  readonly grid: CraftingGridView | null;
+  readonly recipes: readonly RecipeView[];
+  readonly chest: readonly (SlotView | null)[] | null;
+  readonly furnace: FurnaceView | null;
 }
 
 export type CraftSessionEvent =
@@ -57,6 +94,8 @@ export type CraftSessionEvent =
   | { readonly type: 'tool-broke'; readonly item: string }
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }
   | { readonly type: 'open-screen'; readonly screen: CraftScreen }
+  /** A tela aberta mudou sozinha (a fornalha assando). */
+  | { readonly type: 'screen'; readonly view: ScreenView }
   | { readonly type: 'pause-requested' }
   | { readonly type: 'error'; readonly message: string };
 
@@ -77,10 +116,14 @@ export interface CraftGameSession {
   resume(): void;
   updateSettings(settings: CraftEngineSettings): void;
   selectSlot(index: number): void;
-  /** Para o mundo e devolve a mochila para a tela mostrar. */
-  openScreen(): InventoryView | null;
-  clickSlot(index: number, mode: SlotClick): InventoryView | null;
-  /** Devolve a pilha da mão à mochila e solta o mundo de novo. */
+  /** Abre a mochila (o botão 🎒 da tela), para o mundo e devolve o que mostrar. */
+  openInventory(): ScreenView | null;
+  /** Para o mundo e devolve a tela que o jogo acabou de abrir (mesa, baú, fornalha). */
+  showScreen(): ScreenView | null;
+  clickSlot(ref: SlotRef, mode: SlotClick): ScreenView | null;
+  takeGridResult(): ScreenView | null;
+  craftRecipe(recipeId: string): ScreenView | null;
+  /** Devolve a grade e a mão à mochila e solta o mundo de novo. */
   closeScreen(): void;
   destroy(): void;
 }
