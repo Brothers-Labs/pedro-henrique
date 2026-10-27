@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/loot-tables.schema.json",
+  "title": "PedroCraft — tabelas de drop",
+  "type": "object",
+  "required": ["schemaVersion", "lootTables"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "lootTables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "entries"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "entries": {
+            "type": "array",
+            "description": "Cada entrada é sorteada sozinha; uma tabela vazia não dá nada.",
+            "items": {
+              "type": "object",
+              "required": ["item"],
+              "additionalProperties": false,
+              "properties": {
+                "item": { "$ref": "common.schema.json#/$defs/id" },
+                "min": { "type": "integer", "minimum": 1, "maximum": 64, "default": 1 },
+                "max": { "type": "integer", "minimum": 1, "maximum": 64, "description": "Padrão: igual a min." },
+                "chance": { "type": "number", "minimum": 0, "maximum": 1, "default": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

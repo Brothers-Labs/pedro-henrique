@@ -1,0 +1,63 @@
+{
+  "$schema": "../../../docs/pedro-craft/schemas/recipes.schema.json",
+  "schemaVersion": 1,
+  "crafting": [
+    { "id": "oak-planks", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "oak-log" }], "output": { "item": "oak-planks", "count": 4 } },
+    { "id": "stick", "type": "shaped", "station": "hand", "pattern": ["P", "P"], "key": { "P": "oak-planks" }, "output": { "item": "stick", "count": 4 } },
+    { "id": "workbench", "type": "shaped", "station": "hand", "pattern": ["PP", "PP"], "key": { "P": "oak-planks" }, "output": { "item": "workbench" } },
+    { "id": "torch", "type": "shaped", "station": "hand", "pattern": ["C", "S"], "key": { "C": "coal", "S": "stick" }, "output": { "item": "torch", "count": 4 } },
+    { "id": "stone-bricks", "type": "shaped", "station": "hand", "pattern": ["SS", "SS"], "key": { "S": "stone" }, "output": { "item": "stone-bricks", "count": 4 } },
+    { "id": "shears", "type": "shaped", "station": "hand", "pattern": [" I", "I "], "key": { "I": "iron-ingot" }, "output": { "item": "shears" } },
+    { "id": "string", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool" }], "output": { "item": "string", "count": 4 } },
+
+    { "id": "wooden-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-pickaxe" } },
+    { "id": "stone-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-pickaxe" } },
+    { "id": "iron-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-pickaxe" } },
+    { "id": "golden-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-pickaxe" } },
+
+    { "id": "wooden-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-axe" } },
+    { "id": "stone-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-axe" } },
+    { "id": "iron-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-axe" } },
+    { "id": "golden-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-axe" } },
+
+    { "id": "wooden-shovel", "type": "shaped", "station": "workbench", "pattern": ["M", "S", "S"], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-shovel" } },
+    { "id": "stone-shovel", "type": "shaped", "station": "workbench", "pattern": ["M", "S", "S"], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-shovel" } },
+    { "id": "iron-shovel", "type": "shaped", "station": "workbench", "pattern": ["M", "S", "S"], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-shovel" } },
+    { "id": "golden-shovel", "type": "shaped", "station": "workbench", "pattern": ["M", "S", "S"], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-shovel" } },
+
+    { "id": "wooden-hoe", "type": "shaped", "station": "workbench", "pattern": ["MM", " S", " S"], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-hoe" } },
+    { "id": "stone-hoe", "type": "shaped", "station": "workbench", "pattern": ["MM", " S", " S"], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-hoe" } },
+    { "id": "iron-hoe", "type": "shaped", "station": "workbench", "pattern": ["MM", " S", " S"], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-hoe" } },
+    { "id": "golden-hoe", "type": "shaped", "station": "workbench", "pattern": ["MM", " S", " S"], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-hoe" } },
+
+    { "id": "wooden-sword", "type": "shaped", "station": "workbench", "pattern": ["M", "M", "S"], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-sword" } },
+    { "id": "stone-sword", "type": "shaped", "station": "workbench", "pattern": ["M", "M", "S"], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-sword" } },
+    { "id": "iron-sword", "type": "shaped", "station": "workbench", "pattern": ["M", "M", "S"], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-sword" } },
+    { "id": "golden-sword", "type": "shaped", "station": "workbench", "pattern": ["M", "M", "S"], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-sword" } },
+
+    { "id": "furnace", "type": "shaped", "station": "workbench", "pattern": ["CCC", "C C", "CCC"], "key": { "C": "cobblestone" }, "output": { "item": "furnace" } },
+    { "id": "chest", "type": "shaped", "station": "workbench", "pattern": ["PPP", "P P", "PPP"], "key": { "P": "oak-planks" }, "output": { "item": "chest" } },
+    { "id": "bed", "type": "shaped", "station": "workbench", "pattern": ["WWW", "PPP"], "key": { "W": "wool", "P": "oak-planks" }, "output": { "item": "bed" } },
+    { "id": "door", "type": "shaped", "station": "workbench", "pattern": ["PP", "PP", "PP"], "key": { "P": "oak-planks" }, "output": { "item": "door" } },
+    { "id": "fence", "type": "shaped", "station": "workbench", "pattern": ["PSP", "PSP"], "key": { "P": "oak-planks", "S": "stick" }, "output": { "item": "fence", "count": 3 } },
+    { "id": "bow", "type": "shaped", "station": "workbench", "pattern": [" ST", "S T", " ST"], "key": { "S": "stick", "T": "string" }, "output": { "item": "bow" } },
+    { "id": "arrow", "type": "shaped", "station": "workbench", "pattern": ["C", "S", "F"], "key": { "C": "cobblestone", "S": "stick", "F": "feather" }, "output": { "item": "arrow", "count": 4 } },
+    { "id": "bucket", "type": "shaped", "station": "workbench", "pattern": ["I I", " I "], "key": { "I": "iron-ingot" }, "output": { "item": "bucket" } },
+    { "id": "bread", "type": "shaped", "station": "workbench", "pattern": ["WWW"], "key": { "W": "wheat" }, "output": { "item": "bread" } }
+  ],
+  "smelting": [
+    { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },
+    { "id": "smelt-stone", "input": "cobblestone", "output": { "item": "stone" }, "timeMs": 4000 },
+    { "id": "smelt-iron", "input": "iron-ore", "output": { "item": "iron-ingot" }, "timeMs": 5000 },
+    { "id": "smelt-gold", "input": "gold-ore", "output": { "item": "gold-ingot" }, "timeMs": 5000 },
+    { "id": "smelt-egg", "input": "egg", "output": { "item": "fried-egg" }, "timeMs": 3000 },
+    { "id": "smelt-charcoal", "input": "oak-log", "output": { "item": "coal" }, "timeMs": 5000 }
+  ],
+  "fuels": [
+    { "item": "coal", "burnMs": 40000 },
+    { "item": "oak-log", "burnMs": 15000 },
+    { "item": "oak-planks", "burnMs": 7500 },
+    { "item": "stick", "burnMs": 2500 },
+    { "item": "oak-sapling", "burnMs": 2500 }
+  ]
+}

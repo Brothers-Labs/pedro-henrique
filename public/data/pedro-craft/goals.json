@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../docs/pedro-craft/schemas/goals.schema.json",
+  "schemaVersion": 1,
+  "goals": [
+    { "id": "get-wood", "title": "Quebre 3 troncos", "emoji": "🪵", "hint": "Mire numa árvore e segure o botão de quebrar.", "trigger": "obtain", "target": "oak-log", "count": 3 },
+    { "id": "make-planks", "title": "Transforme troncos em tábuas", "emoji": "🟫", "hint": "Abra a mochila e toque na receita das tábuas.", "trigger": "obtain", "target": "oak-planks", "count": 4 },
+    { "id": "make-workbench", "title": "Faça uma mesa de trabalho", "emoji": "🛠️", "hint": "Quatro tábuas viram uma mesa.", "trigger": "obtain", "target": "workbench" },
+    { "id": "place-workbench", "title": "Coloque a mesa no chão", "emoji": "📦", "hint": "Escolha a mesa na barra e toque em colocar.", "trigger": "place", "target": "workbench" },
+    { "id": "make-pickaxe", "title": "Faça uma picareta de madeira", "emoji": "⛏️", "hint": "Use a mesa: três tábuas em cima e dois gravetos no meio.", "trigger": "obtain", "target": "wooden-pickaxe" },
+    { "id": "get-stone", "title": "Junte 8 pedregulhos", "emoji": "🪨", "hint": "Com a picareta, quebre as pedras da pedreira.", "trigger": "obtain", "target": "cobblestone", "count": 8 },
+    { "id": "stone-pickaxe", "title": "Faça uma picareta de pedra", "emoji": "⛏️", "hint": "A mesma receita, com pedregulhos no lugar das tábuas.", "trigger": "obtain", "target": "stone-pickaxe" },
+    { "id": "make-furnace", "title": "Faça uma fornalha", "emoji": "🔥", "hint": "Oito pedregulhos em volta da grade da mesa.", "trigger": "obtain", "target": "furnace" },
+    { "id": "make-torches", "title": "Faça 4 tochas", "emoji": "🕯️", "hint": "Carvão em cima de um graveto. As tochas espantam os inimigos!", "trigger": "obtain", "target": "torch", "count": 4 },
+    { "id": "make-hoe", "title": "Faça uma enxada", "emoji": "🌱", "hint": "A enxada transforma terra em terra arada.", "trigger": "obtain", "target": "wooden-hoe" },
+    { "id": "harvest-wheat", "title": "Colha 3 trigos", "emoji": "🌾", "hint": "Plante sementes na terra arada. Com água por perto, cresce mais rápido!", "trigger": "harvest", "target": "wheat", "count": 3 },
+    { "id": "bake-bread", "title": "Faça um pão", "emoji": "🍞", "hint": "Três trigos lado a lado na mesa viram um pão.", "trigger": "obtain", "target": "bread" },
+    { "id": "smelt-iron", "title": "Derreta 3 barras de ferro", "emoji": "⚙️", "hint": "Minério de ferro na fornalha, com carvão embaixo.", "trigger": "obtain", "target": "iron-ingot", "count": 3 },
+    { "id": "fill-bucket", "title": "Pegue água com o balde", "emoji": "🪣", "hint": "Três barras de ferro fazem um balde.", "trigger": "obtain", "target": "water-bucket" },
+    { "id": "shear-sheep", "title": "Tosquie uma ovelha", "emoji": "🐑", "hint": "Faça uma tesoura e use na ovelha. A lã cresce de novo!", "trigger": "obtain", "target": "wool" },
+    { "id": "sleep", "title": "Durma na cama", "emoji": "🛏️", "hint": "À noite, toque na cama da casa para dormir até de manhã.", "trigger": "sleep" },
+    { "id": "golden-pickaxe", "title": "Faça uma picareta de ouro", "emoji": "🏆", "hint": "O ouro só sai com picareta de ferro.", "trigger": "obtain", "target": "golden-pickaxe" }
+  ]
+}

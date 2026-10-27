@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/goals.schema.json",
+  "title": "PedroCraft — missões",
+  "description": "Missões em sequência: uma de cada vez, na ordem da lista.",
+  "type": "object",
+  "required": ["schemaVersion", "goals"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "emoji", "hint", "trigger"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "title": { "type": "string", "minLength": 1 },
+          "emoji": { "type": "string", "minLength": 1 },
+          "hint": { "type": "string", "minLength": 1 },
+          "trigger": {
+            "enum": ["obtain", "place", "harvest", "defeat", "sleep"],
+            "description": "obtain = item entra no inventário; place = bloco colocado; harvest = plantação colhida; defeat = criatura derrotada; sleep = dormir na cama."
+          },
+          "target": {
+            "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }],
+            "description": "Obrigatório em todos os gatilhos menos sleep."
+          },
+          "count": { "type": "integer", "minimum": 1, "maximum": 999, "default": 1 }
+        }
+      }
+    }
+  }
+}
