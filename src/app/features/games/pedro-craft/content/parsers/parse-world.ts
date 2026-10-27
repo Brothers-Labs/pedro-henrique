@@ -121,6 +121,7 @@ function parseWorldBlocks(blocks: JsonObjectReader): WorldBlocks {
     sand: blocks.field('sand').id(),
     gravel: blocks.field('gravel').id(),
     water: blocks.field('water').id(),
+    flowingWater: blocks.field('flowingWater').id(),
     bedrock: blocks.field('bedrock').id(),
     log: blocks.field('log').id(),
     leaves: blocks.field('leaves').id(),

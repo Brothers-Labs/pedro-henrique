@@ -15,7 +15,7 @@ import { MAX_TOOL_TIER } from './parse-blocks';
 /** Golpe com a mão vazia, ou com um item que não é arma. */
 export const HAND_DAMAGE = 1;
 export const HAND_ATTACK_COOLDOWN_MS = 400;
-const HAND_KNOCKBACK = 3;
+export const HAND_KNOCKBACK = 3;
 
 export function parseItems(value: unknown): readonly ItemDefinition[] {
   const root = JsonReader.root('items', value).object();

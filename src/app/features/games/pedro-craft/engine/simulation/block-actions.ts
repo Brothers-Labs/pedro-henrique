@@ -22,6 +22,8 @@ export interface BlockActionsContext {
   placed(block: BlockDefinition): void;
   /** Avisado quando um bloco sai do mundo: o baú e a fornalha soltam o que guardavam. */
   removed(x: number, y: number, z: number): void;
+  /** A planta madura da célula foi colhida: devolve a tabela da colheita, ou `null` se não havia o que colher. */
+  harvest(x: number, y: number, z: number): string | null;
   /** Corpos que não podem ficar dentro de um bloco novo (o herói, as criaturas). */
   bodies(): readonly PhysicsBody[];
 }
@@ -48,6 +50,8 @@ export class BlockActions {
       return;
     }
 
+    const harvest = this.context.harvest(x, y, z);
+
     world.set(x, y, z, AIR);
     this.context.visual({ type: 'block-broken', x, y, z, block: number });
     this.context.removed(x, y, z);
@@ -56,28 +60,54 @@ export class BlockActions {
       this.removePartner(x, y, z, block);
     }
 
-    this.dropFrom(block, x, y, z, held);
+    this.dropFrom(block, x, y, z, held, harvest);
     this.breakUnsupported(x, y + 1, z);
   }
 
+  /** Coloca o bloco do item da mão na face mirada. Devolve se colocou. */
+  place(hit: RayHit, item: ItemDefinition): boolean {
+    return item.places ? this.placeBlock(hit, this.context.catalog.block(item.places)) : false;
+  }
+
   /**
-   * Coloca o bloco do item da mão na face mirada. Devolve se colocou.
+   * Coloca um bloco na face mirada: o do item da mão, a água do balde.
    *
    * Capim e água são substituíveis: mirar neles coloca o bloco no lugar deles.
    */
-  place(hit: RayHit, item: ItemDefinition): boolean {
-    const { world, catalog, properties } = this.context;
-
-    if (!item.places) {
-      return false;
-    }
-
-    const block = catalog.block(item.places);
-    const number = catalog.blockNumber(block.id);
+  placeBlock(hit: RayHit, block: BlockDefinition): boolean {
+    const { world, properties } = this.context;
     const hitIsReplaceable = properties.isReplaceable[world.get(hit.x, hit.y, hit.z)] === 1;
-    const x = hitIsReplaceable ? hit.x : hit.x + hit.normalX;
-    const y = hitIsReplaceable ? hit.y : hit.y + hit.normalY;
-    const z = hitIsReplaceable ? hit.z : hit.z + hit.normalZ;
+
+    return hitIsReplaceable
+      ? this.putBlock(hit.x, hit.y, hit.z, block)
+      : this.putBlock(hit.x + hit.normalX, hit.y + hit.normalY, hit.z + hit.normalZ, block);
+  }
+
+  /** Planta em cima do solo da célula. Devolve se plantou. */
+  plant(x: number, y: number, z: number, block: BlockDefinition): boolean {
+    return this.putBlock(x, y + 1, z, block);
+  }
+
+  /** Passa a enxada: grama ou terra com ar em cima vira terra arada. Devolve se arou. */
+  till(x: number, y: number, z: number): boolean {
+    const { world, catalog } = this.context;
+    const names = catalog.world.blocks;
+    const ground = world.get(x, y, z);
+    const isTillable = ground === catalog.blockNumber(names.surface) || ground === catalog.blockNumber(names.soil);
+
+    return isTillable && world.get(x, y + 1, z) === AIR && world.set(x, y, z, catalog.blockNumber(names.farmland));
+  }
+
+  /** O balde recolhe o bloco da célula, se for o que ele pega (a nascente de água). Devolve se recolheu. */
+  scoop(x: number, y: number, z: number, blockId: string): boolean {
+    const { world, catalog } = this.context;
+
+    return world.get(x, y, z) === catalog.blockNumber(blockId) && world.set(x, y, z, AIR);
+  }
+
+  private putBlock(x: number, y: number, z: number, block: BlockDefinition): boolean {
+    const { world, catalog, properties } = this.context;
+    const number = catalog.blockNumber(block.id);
 
     if (!this.isFree(x, y, z) || (block.pairsVertically && !this.isFree(x, y + 1, z))) {
       return false;
@@ -127,7 +157,8 @@ export class BlockActions {
     return true;
   }
 
-  private dropFrom(block: BlockDefinition, x: number, y: number, z: number, held: ItemDefinition | null): void {
+  /** Solta o que o bloco dá; a planta madura solta a colheita (`harvest`) no lugar do drop de sempre. */
+  private dropFrom(block: BlockDefinition, x: number, y: number, z: number, held: ItemDefinition | null, harvest: string | null): void {
     const { catalog, drops, random } = this.context;
     const tool = held?.tool ?? null;
 
@@ -137,7 +168,8 @@ export class BlockActions {
 
     // A tesoura colhe o próprio bloco (folhas, lã), em vez do que ele costuma soltar.
     const sheared = tool?.type === 'shears' && block.tool === 'shears' ? this.itemPlacing(block.id) : null;
-    const loot = sheared ? [{ item: sheared, count: 1 }] : block.drops ? rollLoot(catalog.lootTable(block.drops), random) : [];
+    const table = harvest ?? block.drops;
+    const loot = sheared ? [{ item: sheared, count: 1 }] : table ? rollLoot(catalog.lootTable(table), random) : [];
 
     for (const entry of loot) {
       drops.spawn(x + 0.5, y + 0.3, z + 0.5, { item: entry.item, count: entry.count, durability: null }, random);
@@ -167,11 +199,12 @@ export class BlockActions {
     }
 
     const block = catalog.blockAt(number);
+    const harvest = this.context.harvest(x, y, z);
 
     world.set(x, y, z, AIR);
 
     if (block) {
-      this.dropFrom(block, x, y, z, null);
+      this.dropFrom(block, x, y, z, null, harvest);
     }
   }
 
@@ -192,14 +225,6 @@ export class BlockActions {
 
   /** Alguém ficaria preso dentro do bloco novo? */
   private blocksSomeone(x: number, y: number, z: number, height: number): boolean {
-    return this.context.bodies().some(
-      (body) =>
-        body.x + body.halfWidth > x &&
-        body.x - body.halfWidth < x + 1 &&
-        body.z + body.halfWidth > z &&
-        body.z - body.halfWidth < z + 1 &&
-        body.y + body.height > y &&
-        body.y < y + height,
-    );
+    return this.context.bodies().some((body) => body.occupies(x, y, z, x + 1, y + height, z + 1));
   }
 }
