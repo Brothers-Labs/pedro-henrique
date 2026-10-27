@@ -1,0 +1,105 @@
+import { Color } from 'three';
+
+import type { QualityTier } from '../../../pedro-maker/engine/render/quality';
+import { nextTask } from '../next-task';
+import type { CraftSimulation } from '../simulation/craft-simulation';
+import { BlockAtlas } from './block-atlas';
+import type { CraftStage } from './craft-stage';
+import { createDaylightUniform, type DaylightUniform } from './voxel-material';
+import { WorldView } from './world-view';
+
+/** Chunks montados de uma vez na carga, entre uma pausa e outra para a barra de progresso andar. */
+const CHUNKS_PER_LOADING_BATCH = 4;
+
+const UNDERWATER_COLOR = new Color('#1f5f9e');
+
+/**
+ * Tudo o que se vê: o mundo de blocos e a câmera nos olhos do herói.
+ *
+ * Só lê a simulação. A câmera fica entre a posição do passo anterior e a do
+ * atual (`alpha`), o que deixa o movimento liso mesmo com a tela mais rápida
+ * que a física.
+ */
+export class CraftView {
+  readonly daylight: DaylightUniform = createDaylightUniform();
+
+  private readonly atlas: BlockAtlas;
+  private readonly worldView: WorldView;
+  private wasUnderwater = false;
+
+  constructor(
+    private readonly stage: CraftStage,
+    private readonly simulation: CraftSimulation,
+  ) {
+    this.atlas = new BlockAtlas(simulation.catalog);
+    this.worldView = new WorldView(
+      stage.scene,
+      simulation.world,
+      simulation.properties,
+      this.atlas,
+      this.daylight,
+      simulation.catalog.world.chunkSize,
+      () => 0,
+    );
+  }
+
+  /** Monta todas as malhas, avisando o progresso de 0 a 1 e cedendo a vez à página entre lotes. */
+  async build(onProgress: (progress: number) => void): Promise<void> {
+    const total = this.worldView.chunkCount;
+
+    while (this.worldView.rebuild(CHUNKS_PER_LOADING_BATCH) > 0) {
+      onProgress(1 - this.worldView.pendingChunks / total);
+      await nextTask();
+    }
+
+    onProgress(1);
+  }
+
+  render(alpha: number): void {
+    const hero = this.simulation.hero;
+    const body = hero.body;
+    const camera = this.stage.camera;
+
+    camera.position.set(
+      lerp(hero.previousX, body.x, alpha),
+      lerp(hero.previousY, body.y, alpha) + (hero.eyeY - body.y),
+      lerp(hero.previousZ, body.z, alpha),
+    );
+    camera.rotation.set(hero.pitch, hero.yaw, 0);
+
+    this.updateUnderwater();
+    this.worldView.rebuild();
+    this.stage.render();
+  }
+
+  applyQuality(tier: QualityTier): void {
+    this.stage.applyQuality(tier);
+    this.wasUnderwater = false;
+  }
+
+  dispose(): void {
+    this.worldView.dispose();
+    this.atlas.dispose();
+  }
+
+  /** Debaixo d'água o mundo fica azul e a vista curta, como num mergulho de verdade. */
+  private updateUnderwater(): void {
+    const isUnderwater = this.simulation.isEyeUnderwater;
+
+    if (isUnderwater === this.wasUnderwater) {
+      return;
+    }
+
+    this.wasUnderwater = isUnderwater;
+
+    if (isUnderwater) {
+      this.stage.setFog(UNDERWATER_COLOR, 0, 0.18);
+    } else {
+      this.stage.setFog(this.stage.sky, 0.55, 1);
+    }
+  }
+}
+
+function lerp(from: number, to: number, t: number): number {
+  return from + (to - from) * t;
+}

@@ -124,6 +124,7 @@ function parseWorldBlocks(blocks: JsonObjectReader): WorldBlocks {
     bedrock: blocks.field('bedrock').id(),
     log: blocks.field('log').id(),
     leaves: blocks.field('leaves').id(),
+    farmland: blocks.field('farmland').id(),
     decorations: blocks.field('decorations').array().map((block) => block.id()),
   };
 }

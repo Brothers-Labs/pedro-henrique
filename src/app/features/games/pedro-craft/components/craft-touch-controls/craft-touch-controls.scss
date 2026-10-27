@@ -1,0 +1,106 @@
+@use '../../../pedro-maker/maker' as maker;
+
+/*
+ * Tamanhos presos ao lado menor da tela: no celular deitado os botões não
+ * engolem o mundo, no tablet não ficam pequenos para o polegar.
+ */
+:host {
+  --stick-size: clamp(7.5rem, 30vmin, 10rem);
+  --button-size: clamp(3.6rem, 15vmin, 4.75rem);
+
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding:
+    0
+    calc(1rem + var(--safe-right))
+    calc(1rem + var(--safe-bottom))
+    calc(1rem + var(--safe-left));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+:host([data-size='grande']) {
+  --stick-size: clamp(9rem, 36vmin, 12rem);
+  --button-size: clamp(4.4rem, 19vmin, 5.75rem);
+}
+
+.stick,
+.button {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--stick-size);
+  height: var(--stick-size);
+  border: 4px solid maker.$ink;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 28%);
+  backdrop-filter: blur(2px);
+}
+
+.stick__knob {
+  width: 46%;
+  height: 46%;
+  border: 4px solid maker.$ink;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: inset 0 -5px 0 rgb(42 35 80 / 25%);
+}
+
+.buttons {
+  display: grid;
+  grid-template-areas:
+    'use break'
+    '. jump';
+  gap: 0.6rem;
+}
+
+.button {
+  display: grid;
+  place-items: center;
+  width: var(--button-size);
+  height: var(--button-size);
+  border: 4px solid maker.$ink;
+  border-radius: 50%;
+  font-size: calc(var(--button-size) * 0.42);
+  color: #ffffff;
+  box-shadow: inset 0 -6px 0 rgb(0 0 0 / 22%), 0 4px 0 maker.$ink;
+
+  &:active {
+    transform: translateY(4px) scale(0.96);
+    box-shadow: inset 0 -2px 0 rgb(0 0 0 / 22%), 0 0 0 maker.$ink;
+  }
+
+  &--use {
+    grid-area: use;
+    background: #ff9d2e;
+  }
+
+  &--break {
+    grid-area: break;
+    background: #9a6cf0;
+  }
+
+  &--jump {
+    grid-area: jump;
+    background: #3fa3f5;
+    font-weight: 800;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:active {
+    transform: none;
+  }
+}

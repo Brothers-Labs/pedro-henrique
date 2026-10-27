@@ -16,6 +16,7 @@
     "bedrock": "bedrock",
     "log": "oak-log",
     "leaves": "oak-leaves",
+    "farmland": "farmland",
     "decorations": ["tall-grass", "tall-grass", "tall-grass", "flower-red", "flower-yellow"]
   },
   "terrain": { "baseHeight": 17, "hillAmplitude": 6, "hillScale": 26, "edgeWidth": 6 },

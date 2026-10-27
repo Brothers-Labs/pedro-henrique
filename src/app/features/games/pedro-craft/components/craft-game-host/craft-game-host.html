@@ -1,0 +1,85 @@
+<div
+  #stage
+  class="stage"
+  aria-label="Mundo do PedroCraft"
+  (pointerdown)="startLook($event)"
+  (pointermove)="moveLook($event)"
+  (pointerup)="endLook($event)"
+  (pointercancel)="endLook($event)"
+></div>
+
+@switch (phase()) {
+  @case ('loading') {
+    <div class="loading" role="status" aria-live="polite">
+      <p class="loading__title">PEDROCRAFT</p>
+      <span class="loading__icon" aria-hidden="true">🧱</span>
+      <p class="loading__text">Montando o mundo bloco por bloco…</p>
+      <div
+        class="loading__bar"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="loadingProgress()"
+        aria-label="Carregando o mundo"
+      >
+        <span class="loading__fill" [style.width.%]="loadingProgress()"></span>
+      </div>
+      <p class="loading__percent">{{ loadingProgress() }}%</p>
+    </div>
+  }
+
+  @case ('error') {
+    <div class="card" role="alert">
+      <p class="card__emoji" aria-hidden="true">🧰</p>
+      <h2 class="card__title">Ops!</h2>
+      <p class="card__text">{{ errorMessage() }}</p>
+      <button type="button" class="card__button" data-tone="orange" (click)="exit()">Voltar</button>
+    </div>
+  }
+
+  @default {
+    <span class="crosshair" aria-hidden="true"></span>
+
+    <div class="bar">
+      <p class="bar__title">{{ worldName() }}</p>
+      @if (canFullscreen) {
+        <button type="button" class="bar__button" [attr.aria-label]="isFullscreen() ? 'Sair da tela cheia' : 'Tela cheia'" (click)="toggleFullscreen()">
+          <span aria-hidden="true">{{ isFullscreen() ? '🗗' : '⛶' }}</span>
+        </button>
+      }
+      <button type="button" class="bar__button" aria-label="Pausar" (click)="pause()">
+        <span aria-hidden="true">⏸</span>
+      </button>
+    </div>
+
+    @if (showsTouchControls() && phase() === 'playing') {
+      <app-craft-touch-controls [state]="virtualInput" [size]="buttonSize()" />
+    }
+
+    @if (showsMouseHint()) {
+      <p class="hint" role="status">
+        Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula e <strong>Esc</strong> pausa.
+      </p>
+    }
+  }
+}
+
+@if (phase() === 'paused') {
+  <div class="overlay">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="pausa-titulo">
+      <p class="card__emoji" aria-hidden="true">⏸</p>
+      <h2 id="pausa-titulo" class="card__title">Pausa</h2>
+      <button type="button" class="card__button" data-tone="green" (click)="resume()">
+        <span aria-hidden="true">▶</span> Continuar
+      </button>
+      @if (canFullscreen) {
+        <button type="button" class="card__button" data-tone="blue" (click)="toggleFullscreen()">
+          <span aria-hidden="true">⛶</span> {{ isFullscreen() ? 'Sair da tela cheia' : 'Tela cheia' }}
+        </button>
+      }
+      <button type="button" class="card__button" data-tone="orange" (click)="exit()">
+        <span aria-hidden="true">🏠</span> Sair do mundo
+      </button>
+    </div>
+  </div>
+}

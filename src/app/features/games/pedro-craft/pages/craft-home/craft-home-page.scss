@@ -19,6 +19,15 @@
   color: maker.$ink;
 }
 
+.home__play {
+  @include maker.game-button;
+
+  & {
+    font-size: var(--text-xl);
+    padding-block: 0.9rem;
+  }
+}
+
 .notice {
   @include maker.panel;
 

@@ -1,20 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CONTENT_FILES, type ContentFile, type CraftContent } from '../models/content.model';
+import type { ContentFile, CraftContent } from '../models/content.model';
 import { CraftContentService } from '../services/craft-content.service';
+import {
+  type ContentFiles as MutableFiles,
+  fetchPublishedContentFiles,
+  type JsonRecord,
+  type JsonValue,
+} from '../testing/craft-test-content';
 import { ContentIntegrityError } from './content-integrity';
 import { AIR, CraftCatalog } from './craft-catalog';
-import { CRAFT_CONTENT_GATEWAY, STATIC_CONTENT_BASE_URL, StaticCraftContentGateway } from './craft-content.gateway';
+import { CRAFT_CONTENT_GATEWAY, StaticCraftContentGateway } from './craft-content.gateway';
 import { ContentError } from './json-reader';
 import { parseCraftContent } from './parse-content';
-
-type JsonValue = null | boolean | number | string | JsonValue[] | JsonRecord;
-
-interface JsonRecord {
-  [key: string]: JsonValue;
-}
-
-type MutableFiles = Record<ContentFile, JsonValue>;
 
 function record(value: JsonValue | undefined): JsonRecord {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -43,22 +41,6 @@ function entry(files: MutableFiles, file: ContentFile, listName: string, id: str
   return found;
 }
 
-async function fetchPublishedFiles(): Promise<MutableFiles> {
-  const entries = await Promise.all(
-    CONTENT_FILES.map(async (file) => {
-      const response = await fetch(`${STATIC_CONTENT_BASE_URL}/${file}.json`);
-
-      if (!response.ok) {
-        throw new Error(`O teste não conseguiu ler ${file}.json (${response.status}).`);
-      }
-
-      return [file, (await response.json()) as JsonValue] as const;
-    }),
-  );
-
-  return Object.fromEntries(entries) as MutableFiles;
-}
-
 function errorOf(action: () => unknown): Error {
   try {
     action();
@@ -72,15 +54,10 @@ function errorOf(action: () => unknown): Error {
 }
 
 describe('Conteúdo do PedroCraft', () => {
-  let published: MutableFiles;
   let files: MutableFiles;
 
-  beforeAll(async () => {
-    published = await fetchPublishedFiles();
-  });
-
-  beforeEach(() => {
-    files = structuredClone(published);
+  beforeEach(async () => {
+    files = await fetchPublishedContentFiles();
   });
 
   describe('arquivos publicados', () => {

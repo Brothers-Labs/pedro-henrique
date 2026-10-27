@@ -19,7 +19,7 @@
     "seaLevel": { "type": "integer", "minimum": 2 },
     "blocks": {
       "type": "object",
-      "required": ["surface", "soil", "stone", "sand", "gravel", "water", "bedrock", "log", "leaves", "decorations"],
+      "required": ["surface", "soil", "stone", "sand", "gravel", "water", "bedrock", "log", "leaves", "farmland", "decorations"],
       "additionalProperties": false,
       "properties": {
         "surface": { "$ref": "common.schema.json#/$defs/id" },
@@ -31,6 +31,7 @@
         "bedrock": { "$ref": "common.schema.json#/$defs/id" },
         "log": { "$ref": "common.schema.json#/$defs/id" },
         "leaves": { "$ref": "common.schema.json#/$defs/id" },
+        "farmland": { "$ref": "common.schema.json#/$defs/id" },
         "decorations": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" }, "description": "Repetir um id aumenta a chance dele." }
       }
     },

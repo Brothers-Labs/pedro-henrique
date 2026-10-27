@@ -378,6 +378,8 @@ export interface WorldBlocks {
   readonly bedrock: string;
   readonly log: string;
   readonly leaves: string;
+  /** O que a enxada faz da grama e da terra. */
+  readonly farmland: string;
   readonly decorations: readonly string[];
 }
 

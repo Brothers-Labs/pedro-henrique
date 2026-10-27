@@ -69,7 +69,7 @@ export const VOXEL_ATLAS_PADDING = 1;
 
 const SLOT = VOXEL_TILE_SIZE + VOXEL_ATLAS_PADDING * 2;
 
-type SetPixel = (x: number, y: number, color: string) => void;
+export type SetPixel = (x: number, y: number, color: string) => void;
 
 interface TilePainterContext {
   readonly set: SetPixel;
@@ -312,7 +312,7 @@ export function paintVoxelIcon(
   context.drawImage(face, 0, topHeight, size, size - topHeight);
 }
 
-function fill(set: SetPixel, color: string): void {
+export function fill(set: SetPixel, color: string): void {
   for (let y = 0; y < VOXEL_TILE_SIZE; y += 1) {
     for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
       set(x, y, color);
@@ -321,7 +321,7 @@ function fill(set: SetPixel, color: string): void {
 }
 
 /** Cor de fundo com pontinhos de outras cores: terra, pedra, areia. */
-function speckle(set: SetPixel, random: () => number, base: string, accents: readonly string[], density: number): void {
+export function speckle(set: SetPixel, random: () => number, base: string, accents: readonly string[], density: number): void {
   for (let y = 0; y < VOXEL_TILE_SIZE; y += 1) {
     for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
       const accent = random() < density ? accents[Math.floor(random() * accents.length)] : undefined;
@@ -331,7 +331,7 @@ function speckle(set: SetPixel, random: () => number, base: string, accents: rea
   }
 }
 
-function frame(set: SetPixel, color: string, inset: number): void {
+export function frame(set: SetPixel, color: string, inset: number): void {
   const last = VOXEL_TILE_SIZE - 1 - inset;
 
   for (let step = inset; step <= last; step += 1) {
@@ -373,7 +373,7 @@ function rivets(set: SetPixel, color: string): void {
 }
 
 /** Rachaduras em zigue-zague a partir de pontos sorteados. */
-function crack(set: SetPixel, random: () => number, color: string, count: number): void {
+export function crack(set: SetPixel, random: () => number, color: string, count: number): void {
   for (let index = 0; index < count; index += 1) {
     let x = Math.floor(random() * VOXEL_TILE_SIZE);
     let y = Math.floor(random() * VOXEL_TILE_SIZE);
@@ -387,7 +387,7 @@ function crack(set: SetPixel, random: () => number, color: string, count: number
 }
 
 /** Tábuas horizontais com emendas desencontradas, como um piso de madeira. */
-function planks(set: SetPixel, random: () => number, base: string): void {
+export function planks(set: SetPixel, random: () => number, base: string): void {
   const seam = darken(base, 0.35);
 
   for (let row = 0; row < 4; row += 1) {
