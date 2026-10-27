@@ -1,0 +1,35 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  display: block;
+}
+
+.message {
+  @include maker.sky-scene;
+
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
+  min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height));
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.message__emoji {
+  font-size: 3rem;
+}
+
+.message__title {
+  @include maker.title-text(clamp(1.6rem, 1.2rem + 2vw, 2.4rem));
+}
+
+.message__text {
+  font-weight: 700;
+  color: maker.$ink;
+}
+
+.message__button {
+  @include maker.game-button;
+}

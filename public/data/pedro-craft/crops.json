@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../docs/pedro-craft/schemas/crops.schema.json",
+  "schemaVersion": 1,
+  "crops": [
+    {
+      "id": "wheat",
+      "name": "Trigo",
+      "block": "wheat-crop",
+      "seed": "wheat-seeds",
+      "stages": 4,
+      "stageMs": 40000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "wheat-harvest" }
+    },
+    {
+      "id": "carrot",
+      "name": "Cenoura",
+      "block": "carrot-crop",
+      "seed": "carrot",
+      "stages": 4,
+      "stageMs": 45000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "carrot-harvest" }
+    },
+    {
+      "id": "oak-tree",
+      "name": "Carvalho",
+      "block": "oak-sapling",
+      "seed": "oak-sapling",
+      "stages": 2,
+      "stageMs": 50000,
+      "wateredSpeedup": 1.5,
+      "soil": ["grass", "dirt"],
+      "mature": { "type": "tree", "log": "oak-log", "leaves": "oak-leaves", "minHeight": 4, "maxHeight": 6 }
+    }
+  ]
+}

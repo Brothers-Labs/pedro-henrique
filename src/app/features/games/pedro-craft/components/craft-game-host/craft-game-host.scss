@@ -1,0 +1,175 @@
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  position: relative;
+  display: block;
+  height: calc(100dvh - var(--header-height) - var(--bottom-nav-height));
+  min-height: 22rem;
+  overflow: hidden;
+  background: #8fd0ff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:host:fullscreen {
+  height: 100dvh;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+/* Mira: uma cruzinha branca com contorno, visível em qualquer fundo. */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  translate: -50% -50%;
+  pointer-events: none;
+  background:
+    linear-gradient(#ffffff, #ffffff) center / 100% 3px no-repeat,
+    linear-gradient(#ffffff, #ffffff) center / 3px 100% no-repeat;
+  filter: drop-shadow(0 0 1px maker.$ink) drop-shadow(0 0 1px maker.$ink);
+}
+
+.bar {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: calc(0.6rem + var(--safe-top)) calc(0.75rem + var(--safe-right)) 0 calc(0.75rem + var(--safe-left));
+  pointer-events: none;
+}
+
+.bar__title {
+  @include maker.pill;
+
+  margin-right: auto;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar__button {
+  @include maker.game-button;
+
+  & {
+    min-width: 3rem;
+    padding: 0.35rem 0.75rem;
+    pointer-events: auto;
+  }
+}
+
+.hint {
+  @include maker.panel(rgb(255 255 255 / 92%));
+
+  position: absolute;
+  bottom: 5.5rem;
+  left: 50%;
+  width: min(32rem, calc(100% - 2rem));
+  padding: 0.6rem 1rem;
+  translate: -50% 0;
+  text-align: center;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.toast {
+  @include maker.pill;
+
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  max-width: min(30rem, calc(100% - 2rem));
+  padding: 0.5rem 1rem;
+  translate: -50% 0;
+  justify-content: center;
+  text-align: center;
+  background: #fff6d6;
+  box-shadow: 0 4px 0 rgb(42 35 80 / 30%);
+  pointer-events: none;
+}
+
+.loading,
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+}
+
+.loading {
+  @include maker.sky-scene;
+
+  text-align: center;
+}
+
+.loading__title {
+  @include maker.title-text(clamp(2rem, 1.4rem + 3vw, 3.4rem));
+}
+
+.loading__icon {
+  font-size: 3rem;
+}
+
+.loading__text,
+.loading__percent {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: maker.$ink;
+}
+
+.loading__bar {
+  width: min(22rem, 80vw);
+  height: 1.4rem;
+  overflow: hidden;
+  border: 4px solid maker.$ink;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.loading__fill {
+  display: block;
+  height: 100%;
+  background: #5bbf3e;
+}
+
+.overlay {
+  background: rgb(42 35 80 / 45%);
+}
+
+.card {
+  @include maker.panel;
+
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.card__emoji {
+  font-size: 2.6rem;
+}
+
+.card__title {
+  font-size: var(--text-2xl);
+}
+
+.card__button {
+  @include maker.game-button;
+
+  & {
+    width: 100%;
+  }
+}

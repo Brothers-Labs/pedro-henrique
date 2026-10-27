@@ -1,0 +1,87 @@
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-lg);
+}
+
+.pages {
+  display: grid;
+  gap: 0.35rem;
+  max-height: min(18rem, 40vh);
+  margin: 0;
+  padding: 0 0.25rem 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 3px solid rgb(42 35 80 / 30%);
+  border-radius: 0.8rem;
+  background: #ffffff;
+
+  &--locked {
+    background: #ede6d8;
+  }
+}
+
+.page__output {
+  display: block;
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+}
+
+.page__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.page__name {
+  font-weight: 800;
+  color: maker.$ink;
+}
+
+.page__needs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.need {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+
+  &--missing {
+    color: #c23b48;
+  }
+}
+
+.need__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  image-rendering: pixelated;
+}
+
+.page__make {
+  @include maker.game-button;
+
+  & {
+    min-height: 2.6rem;
+    padding: 0.25rem 0.8rem;
+    font-size: var(--text-md);
+  }
+}

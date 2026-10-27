@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/creatures.schema.json",
+  "title": "PedroCraft — criaturas",
+  "type": "object",
+  "required": ["schemaVersion", "creatures"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "creatures": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/creature" } }
+  },
+  "$defs": {
+    "creature": {
+      "type": "object",
+      "required": ["id", "name", "temperament", "health", "speed", "behavior", "model", "colors", "width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "temperament": { "enum": ["passive", "hostile"] },
+        "health": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "speed": { "type": "number", "minimum": 0.1, "maximum": 10, "description": "Blocos por segundo." },
+        "damage": { "type": "integer", "minimum": 0, "maximum": 10, "default": 0, "description": "Corações por ataque." },
+        "attackCooldownMs": { "type": "integer", "minimum": 200, "default": 1000 },
+        "behavior": { "enum": ["grazer", "chaser", "hopper", "archer"] },
+        "model": { "enum": ["chicken", "cow", "sheep", "slime", "scarecrow", "spider", "skeleton"] },
+        "colors": { "$ref": "common.schema.json#/$defs/colors" },
+        "width": { "type": "number", "minimum": 0.2, "maximum": 2 },
+        "height": { "type": "number", "minimum": 0.2, "maximum": 2.5 },
+        "drops": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }] },
+        "spawn": {
+          "type": ["object", "null"],
+          "required": ["period", "on", "groupMin", "groupMax", "weight"],
+          "additionalProperties": false,
+          "properties": {
+            "period": { "enum": ["day", "night"] },
+            "on": { "type": "array", "minItems": 1, "items": { "$ref": "common.schema.json#/$defs/id" } },
+            "groupMin": { "type": "integer", "minimum": 1, "maximum": 6 },
+            "groupMax": { "type": "integer", "minimum": 1, "maximum": 6 },
+            "weight": { "type": "number", "minimum": 0.1, "maximum": 100 }
+          }
+        },
+        "splitInto": {
+          "type": ["object", "null"],
+          "required": ["creature", "count"],
+          "additionalProperties": false,
+          "properties": {
+            "creature": { "$ref": "common.schema.json#/$defs/id" },
+            "count": { "type": "integer", "minimum": 1, "maximum": 4 }
+          }
+        },
+        "interactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["item"],
+            "additionalProperties": false,
+            "properties": {
+              "item": { "$ref": "common.schema.json#/$defs/id" },
+              "loot": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }] },
+              "convertsItemTo": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }] },
+              "cooldownMs": { "type": "integer", "minimum": 0, "default": 0 }
+            },
+            "anyOf": [{ "required": ["loot"] }, { "required": ["convertsItemTo"] }]
+          }
+        },
+        "lays": {
+          "type": ["object", "null"],
+          "required": ["item", "everyMs"],
+          "additionalProperties": false,
+          "properties": {
+            "item": { "$ref": "common.schema.json#/$defs/id" },
+            "everyMs": { "type": "integer", "minimum": 1000 }
+          }
+        }
+      }
+    }
+  }
+}

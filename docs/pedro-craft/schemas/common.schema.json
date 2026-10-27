@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/common.schema.json",
+  "title": "PedroCraft — definições comuns",
+  "$defs": {
+    "schemaVersion": { "const": 1, "description": "Versão do formato. Muda só com migração." },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Id estável em kebab-case. Referências entre arquivos usam sempre o id, nunca a posição na lista."
+    },
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "colors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/color" } },
+    "itemAmount": {
+      "type": "object",
+      "required": ["item"],
+      "additionalProperties": false,
+      "properties": {
+        "item": { "$ref": "#/$defs/id" },
+        "count": { "type": "integer", "minimum": 1, "maximum": 64, "default": 1 }
+      }
+    },
+    "texture": {
+      "type": "object",
+      "required": ["pattern", "colors"],
+      "additionalProperties": false,
+      "description": "Face de bloco pintada em código: um padrão de pixels e as cores dele.",
+      "properties": {
+        "pattern": {
+          "enum": ["speckle", "cobble", "grass-side", "planks", "log-side", "log-top", "leaves", "ore", "bricks", "glass", "farmland", "water", "plant", "crop", "torch", "panel"]
+        },
+        "colors": { "$ref": "#/$defs/colors" },
+        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain"] }
+      }
+    },
+    "toolType": { "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "shears"] }
+  }
+}

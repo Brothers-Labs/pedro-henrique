@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/items.schema.json",
+  "title": "PedroCraft — itens",
+  "type": "object",
+  "required": ["schemaVersion", "items"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item" } }
+  },
+  "$defs": {
+    "optionalId": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }] },
+    "item": {
+      "type": "object",
+      "required": ["id", "name", "kind", "maxStack", "icon"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["block", "tool", "weapon", "food", "material", "seed", "bucket", "ammo"] },
+        "maxStack": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "icon": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["type", "block"],
+              "additionalProperties": false,
+              "properties": { "type": { "const": "block" }, "block": { "$ref": "common.schema.json#/$defs/id" } }
+            },
+            {
+              "type": "object",
+              "required": ["type", "shape", "colors"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "const": "sprite" },
+                "shape": {
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string"]
+                },
+                "colors": { "$ref": "common.schema.json#/$defs/colors" }
+              }
+            }
+          ]
+        },
+        "places": { "$ref": "#/$defs/optionalId", "description": "Id de bloco." },
+        "plants": { "$ref": "#/$defs/optionalId", "description": "Id em crops.json." },
+        "tool": {
+          "type": "object",
+          "required": ["type", "tier", "speed"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "common.schema.json#/$defs/toolType" },
+            "tier": { "type": "integer", "minimum": 1, "maximum": 4 },
+            "speed": { "type": "number", "minimum": 1, "maximum": 20 }
+          }
+        },
+        "durability": { "type": ["integer", "null"], "minimum": 1, "description": "Exige maxStack 1." },
+        "damage": { "type": "number", "minimum": 0, "maximum": 20, "default": 1 },
+        "attackCooldownMs": { "type": "integer", "minimum": 100, "default": 400 },
+        "knockback": { "type": "number", "minimum": 0, "maximum": 20, "default": 3 },
+        "ranged": {
+          "type": "object",
+          "required": ["ammo", "damage", "speed"],
+          "additionalProperties": false,
+          "properties": {
+            "ammo": { "$ref": "common.schema.json#/$defs/id" },
+            "damage": { "type": "number", "minimum": 1, "maximum": 20 },
+            "speed": { "type": "number", "minimum": 1, "maximum": 60 }
+          }
+        },
+        "heal": { "type": ["integer", "null"], "minimum": 1, "maximum": 20 },
+        "leftover": { "$ref": "#/$defs/optionalId" },
+        "bucket": {
+          "type": "object",
+          "required": ["becomes"],
+          "additionalProperties": false,
+          "properties": {
+            "places": { "$ref": "#/$defs/optionalId" },
+            "collects": { "$ref": "#/$defs/optionalId" },
+            "becomes": { "$ref": "common.schema.json#/$defs/id" }
+          },
+          "oneOf": [{ "required": ["places"] }, { "required": ["collects"] }]
+        }
+      }
+    }
+  }
+}

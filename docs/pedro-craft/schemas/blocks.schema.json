@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/blocks.schema.json",
+  "title": "PedroCraft — blocos",
+  "type": "object",
+  "required": ["schemaVersion", "blocks"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "blocks": { "type": "array", "minItems": 1, "maxItems": 255, "items": { "$ref": "#/$defs/block" } }
+  },
+  "$defs": {
+    "block": {
+      "type": "object",
+      "required": ["id", "name", "shape", "solid", "transparent", "mapColor", "textures"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id", "not": { "const": "air" } },
+        "name": { "type": "string", "minLength": 1, "description": "Nome mostrado na tela, em português." },
+        "shape": { "enum": ["cube", "cross", "liquid", "torch", "fence", "slab"] },
+        "solid": { "type": "boolean" },
+        "transparent": { "type": "boolean", "description": "Tem partes vazadas e não esconde as faces dos vizinhos." },
+        "hardness": { "type": ["number", "null"], "minimum": 0, "maximum": 60, "description": "Segundos com a mão; null = não quebra." },
+        "tool": { "anyOf": [{ "$ref": "common.schema.json#/$defs/toolType" }, { "type": "null" }] },
+        "minTier": { "type": "integer", "minimum": 0, "maximum": 4, "default": 0 },
+        "drops": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }], "description": "Id em loot-tables.json." },
+        "light": { "type": "integer", "minimum": 0, "maximum": 15, "default": 0 },
+        "collisionHeight": { "type": "number", "minimum": 0.1, "maximum": 1.5, "default": 1 },
+        "replaceable": { "type": "boolean", "default": false },
+        "pairsVertically": { "type": "boolean", "default": false },
+        "toggleInto": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }], "description": "Id de bloco." },
+        "interaction": { "enum": ["workbench", "furnace", "chest", "bed", null] },
+        "mapColor": { "$ref": "common.schema.json#/$defs/color" },
+        "textures": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "all": { "$ref": "common.schema.json#/$defs/texture" },
+            "top": { "$ref": "common.schema.json#/$defs/texture" },
+            "side": { "$ref": "common.schema.json#/$defs/texture" },
+            "bottom": { "$ref": "common.schema.json#/$defs/texture" }
+          },
+          "anyOf": [{ "required": ["all"] }, { "required": ["top", "side", "bottom"] }]
+        }
+      }
+    }
+  }
+}

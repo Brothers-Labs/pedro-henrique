@@ -1,0 +1,38 @@
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  display: block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), var(--slot-size, 3rem));
+  gap: 0.25rem;
+}
+
+.slot {
+  width: var(--slot-size, 3rem);
+  height: var(--slot-size, 3rem);
+  padding: 0;
+  border: 3px solid rgb(42 35 80 / 45%);
+  border-radius: 0.6rem;
+  background: #d9cdb8;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+
+  &:hover {
+    background: #e8dcc6;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #3fa3f5;
+    outline-offset: 2px;
+  }
+
+  &--highlighted {
+    background: #c9e7c2;
+  }
+}

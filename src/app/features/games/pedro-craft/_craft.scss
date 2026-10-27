@@ -1,0 +1,29 @@
+@use '../pedro-maker/maker' as maker;
+
+/**
+ * Peças visuais do PedroCraft.
+ *
+ * Herda os botões, painéis e títulos do Pedro Maker; acrescenta só o que é
+ * do jogo de blocos: o logo de pedra e grama.
+ */
+
+/** Logo em duas linhas, inclinado, como o do Pedro Maker, nas cores de pedra e grama. */
+@mixin logo {
+  display: grid;
+  justify-items: center;
+  line-height: 0.9;
+  transform: rotate(-3deg);
+
+  .logo__top,
+  .logo__bottom {
+    @include maker.title-text(clamp(2.8rem, 1.8rem + 5vw, 5.2rem));
+  }
+
+  .logo__top {
+    color: #b9c3cf;
+  }
+
+  .logo__bottom {
+    color: #5bbf3e;
+  }
+}

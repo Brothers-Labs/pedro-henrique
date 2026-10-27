@@ -1,0 +1,65 @@
+{
+  "$schema": "../../../docs/pedro-craft/schemas/world.schema.json",
+  "schemaVersion": 1,
+  "width": 96,
+  "depth": 96,
+  "height": 48,
+  "chunkSize": 16,
+  "seaLevel": 14,
+  "blocks": {
+    "surface": "grass",
+    "soil": "dirt",
+    "stone": "stone",
+    "sand": "sand",
+    "gravel": "gravel",
+    "water": "water",
+    "bedrock": "bedrock",
+    "log": "oak-log",
+    "leaves": "oak-leaves",
+    "farmland": "farmland",
+    "decorations": ["tall-grass", "tall-grass", "tall-grass", "flower-red", "flower-yellow"]
+  },
+  "terrain": { "baseHeight": 17, "hillAmplitude": 6, "hillScale": 26, "edgeWidth": 6 },
+  "lake": { "radius": 9, "depth": 4 },
+  "river": { "width": 2, "meander": 6 },
+  "forest": { "radius": 16, "treeChance": 0.06 },
+  "quarry": {
+    "radius": 10,
+    "height": 6,
+    "ores": [
+      { "block": "coal-ore", "chance": 0.07, "maxY": 30 },
+      { "block": "iron-ore", "chance": 0.04, "maxY": 26 },
+      { "block": "gold-ore", "chance": 0.018, "maxY": 22 }
+    ]
+  },
+  "farm": { "radius": 9 },
+  "tree": { "minHeight": 4, "maxHeight": 6 },
+  "decorationChance": 0.08,
+  "house": {
+    "palette": { "P": "oak-planks", "L": "oak-log", "G": "glass", "D": "door", "B": "bed", "C": "chest", "X": "torch" },
+    "layers": [
+      ["PPPPPPP", "PPPPPPP", "PPPPPPP", "PPPPPPP", "PPPPPPP", "PPPPPPP", "PPPPPPP"],
+      ["LPPPPPL", "PB...CP", "P.....P", "P.....P", "P.....P", "PX...XP", "LPPDPPL"],
+      ["LPGGGPL", "P.....P", "G.....G", "G.....G", "G.....G", "P.....P", "LPPDPPL"],
+      ["LPPPPPL", "P.....P", "P.....P", "P.....P", "P.....P", "P.....P", "LPPPPPL"],
+      ["LLLLLLL", "LLLLLLL", "LLLLLLL", "LLLLLLL", "LLLLLLL", "LLLLLLL", "LLLLLLL"]
+    ]
+  },
+  "clock": { "dayMs": 600000, "nightMs": 180000 },
+  "water": { "maxSpread": 4, "tickMs": 250 },
+  "creatures": {
+    "passiveCap": 10,
+    "hostileCap": 6,
+    "spawnIntervalMs": 2500,
+    "minSpawnDistance": 14,
+    "maxSpawnDistance": 36,
+    "torchSafeRadius": 8
+  },
+  "hero": {
+    "maxHealth": 10,
+    "regenEveryMs": 5000,
+    "reach": 5,
+    "invulnerableMs": 800,
+    "startingInventory": [{ "item": "apple", "count": 3 }]
+  }
+}

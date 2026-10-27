@@ -1,0 +1,26 @@
+ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
+
+na venda o vendedor consegue add o veiculo da troca, quero fazer melhorias:
+1 - Poder adicionar o carro por documento do Veiculo
+2 - Deve ter um campo checkbox, dar entrada do veiculo da troca no Estoque, se marcado ja deve adicionar o veiculo direto automaticamente no estoque da loja, com os dados e o documento salvo, só deve dar pra add no estoque se tiver o documento, então deve ficar claro essa regra ali na tela tbm
+
+
+ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
+
+desenvolver senior master arquiteto de sfotware completo de ponta a ponta
+pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
+deve passar no vtest e no git actions completo
+
+pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
+
+
+    
+
+
+me de um resumo das novidades que subiram hoje para main por perfil para lança no grupo de novidades com todos os clietnes e representantes e parceiros
+quero enviar varias mensagens uma com cada perfil e as novidades do perfil
+
+
+
+o que mais podemos fazer de melhorias e ajustes evoluções com base em todas alterações de hoje para melhorar ainda mais a usabilidade e o sistema no geral, me de uma analise por ordem de prioridade de ideias das mais uteis e melhores para plataforma premium executive
+
