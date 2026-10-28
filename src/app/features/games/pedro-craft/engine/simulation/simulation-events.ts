@@ -25,6 +25,8 @@ export type VisualEvent =
   | { readonly type: 'block-broken'; readonly x: number; readonly y: number; readonly z: number; readonly block: number }
   | { readonly type: 'crop-grew'; readonly x: number; readonly y: number; readonly z: number }
   | { readonly type: 'creature-poof'; readonly x: number; readonly y: number; readonly z: number; readonly color: string }
+  /** A estação mudou: as cores do mundo mudam junto. */
+  | { readonly type: 'season-changed' }
   /** Brilhinho: o adubo na planta, os corações do animal alimentado. Posição do centro. */
   | { readonly type: 'sparkle'; readonly x: number; readonly y: number; readonly z: number; readonly color: string }
   | { readonly type: 'swing' };

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
+import type { PartOfDay } from '../../engine/simulation/day-clock';
 import type { FirstStep } from '../../engine/simulation/first-steps';
+import type { WeatherKind } from '../../engine/simulation/weather';
 import type { CraftHudState } from '../../models/craft-session.model';
 import { HELP_CONTROLS, type HelpControl } from '../../presentation/help-topics';
 import type { ItemIconCache } from '../../presentation/item-icon-cache';
@@ -12,6 +14,18 @@ export interface PickupNotice {
   readonly item: string;
   readonly count: number;
 }
+
+const PARTS_OF_DAY: Readonly<Record<PartOfDay, { readonly label: string; readonly emoji: string }>> = {
+  morning: { label: 'Manhã', emoji: '🌅' },
+  afternoon: { label: 'Tarde', emoji: '☀️' },
+  night: { label: 'Noite', emoji: '🌙' },
+};
+
+const WEATHERS: Readonly<Record<WeatherKind, { readonly label: string; readonly emoji: string }>> = {
+  clear: { label: '', emoji: '' },
+  rain: { label: 'chovendo', emoji: '🌧️' },
+  snow: { label: 'nevando', emoji: '🌨️' },
+};
 
 /** O cartão de cada gesto do guia do primeiro minuto. */
 const FIRST_STEP_CARDS: Readonly<Record<FirstStep, { readonly emoji: string; readonly text: string; readonly control: HelpControl }>> = {
@@ -46,6 +60,24 @@ export class CraftHud {
   /** Tocar no cartão da missão pede para ouvir a missão. */
   readonly goalPressed = output<void>();
   readonly firstStepsSkipped = output<void>();
+
+  /** "🌸 Dia 3 · Tarde ☀️ 🌧️" e a frase inteira para o leitor de tela. */
+  protected readonly calendarLine = computed(() => {
+    const calendar = this.hud()?.calendar;
+
+    if (!calendar) {
+      return null;
+    }
+
+    const part = PARTS_OF_DAY[calendar.partOfDay];
+    const weather = WEATHERS[calendar.weather];
+    const spoken = [`${calendar.seasonName}, dia ${calendar.day}`, part.label.toLowerCase(), weather.label].filter(Boolean).join(', ');
+
+    return {
+      text: `${calendar.seasonEmoji} Dia ${calendar.day} · ${part.label} ${part.emoji} ${weather.emoji}`.trim(),
+      spoken,
+    };
+  });
 
   protected readonly firstStepCard = computed(() => {
     const step = this.hud()?.firstStep ?? null;

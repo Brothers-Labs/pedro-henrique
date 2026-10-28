@@ -148,6 +148,7 @@ function readState(root: JsonObjectReader): WorldState {
     hero: readHero(root.field('hero').object()),
     inventory: root.field('inventory').array().map(readSlot),
     clockMs: root.field('clockMs').number({ min: 0 }),
+    day: root.optionalField('day')?.number({ integer: true, min: 1 }) ?? 1,
     goals: {
       completed: goals.field('completed').array().map((id) => id.id()),
       amount: goals.field('amount').number({ integer: true, min: 0 }),

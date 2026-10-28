@@ -167,6 +167,7 @@ function checkWorld(content: CraftContent, block: Checker, item: Checker): void 
 
   decorations.forEach((id) => block('world', 'blocks.decorations', id));
   world.quarry.ores.forEach((ore) => block('world', 'quarry.ores', ore.block));
+  block('world', 'calendar.greenhouseBlock', world.calendar.greenhouseBlock);
   world.hero.startingInventory.forEach((entry) => item('world', 'hero.startingInventory', entry.item));
 
   for (const [symbol, id] of Object.entries(world.house.palette)) {

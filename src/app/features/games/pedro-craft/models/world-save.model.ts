@@ -101,6 +101,8 @@ export interface WorldState {
   readonly inventory: readonly SavedSlot[];
   /** Milissegundos desde o começo da manhã. */
   readonly clockMs: number;
+  /** Dia do calendário, a partir de 1. Ausente nos saves de antes das estações: vale o dia 1. */
+  readonly day?: number;
   readonly goals: SavedGoals;
   readonly chunks: readonly SavedChunk[];
   readonly plants: readonly SavedPlant[];

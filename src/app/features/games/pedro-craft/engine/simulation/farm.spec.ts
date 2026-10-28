@@ -16,6 +16,8 @@ describe('Fazenda do PedroCraft', () => {
   let farm: Farm;
   let grown: { x: number; y: number; z: number }[];
   let isOccupied: boolean;
+  let growth: number;
+  let isRaining: boolean;
 
   beforeAll(async () => {
     catalog = await loadTestCatalog();
@@ -34,9 +36,13 @@ describe('Fazenda do PedroCraft', () => {
 
     grown = [];
     isOccupied = false;
+    growth = 1;
+    isRaining = false;
     farm = new Farm(world, catalog, new BlockProperties(catalog), new SeededRandom(3), {
       isOccupied: () => isOccupied,
       grew: (x, y, z) => grown.push({ x, y, z }),
+      growthAt: () => growth,
+      isRainingOn: () => isRaining,
     });
   });
 
@@ -69,6 +75,38 @@ describe('Fazenda do PedroCraft', () => {
 
     expect(farm.stageAt(PLANT.x, PLANT.y, PLANT.z)).toBe(1);
     expect(farm.stageAt(dry.x, dry.y, dry.z)).toBe(0);
+  });
+
+  it('a chuva rega como a água por perto', () => {
+    const wheat = sow('wheat');
+
+    isRaining = true;
+    farm.step(wheat.stageMs / wheat.wateredSpeedup);
+
+    expect(farm.stageAt(PLANT.x, PLANT.y, PLANT.z)).toBe(1);
+  });
+
+  it('a estação muda a velocidade: no inverno, fora da estufa, a planta descansa', () => {
+    const wheat = sow('wheat');
+
+    growth = 0;
+    farm.step(wheat.stageMs * 3);
+
+    expect(farm.stageAt(PLANT.x, PLANT.y, PLANT.z)).toBe(0);
+
+    growth = 2;
+    farm.step(wheat.stageMs / 2);
+
+    expect(farm.stageAt(PLANT.x, PLANT.y, PLANT.z)).toBe(1);
+  });
+
+  it('o adubo pula um estágio, e na planta madura não é gasto', () => {
+    const wheat = sow('wheat');
+
+    expect(farm.fertilize(PLANT.x, PLANT.y, PLANT.z, 1)).toBeTrue();
+    expect(farm.stageAt(PLANT.x, PLANT.y, PLANT.z)).toBe(1);
+    expect(farm.fertilize(PLANT.x, PLANT.y, PLANT.z, wheat.stages)).toBeTrue();
+    expect(farm.fertilize(PLANT.x, PLANT.y, PLANT.z, 1)).toBeFalse();
   });
 
   it('só dá colheita quando está madura, e madura para de crescer', () => {

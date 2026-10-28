@@ -52,6 +52,7 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
   simulation.selectedSlot = state.hero.selectedSlot;
   simulation.respawnPoint = state.hero.respawn;
   simulation.health.set(state.hero.health);
+  simulation.setCalendarDay(state.day ?? 1);
   simulation.clock.setTime(state.clockMs);
 
   for (const plant of state.plants) {
@@ -113,6 +114,7 @@ function captureState(simulation: CraftSimulation): WorldState {
     },
     inventory: simulation.inventory.slots.map(copySlot),
     clockMs: clock.time,
+    day: simulation.calendar.day,
     goals: {
       completed: completedGoalIds(catalog.goals, simulation.goals.progress),
       amount: simulation.goals.progress.amount,

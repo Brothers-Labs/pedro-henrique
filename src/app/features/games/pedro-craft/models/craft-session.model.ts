@@ -3,7 +3,9 @@ import type { CraftCatalog } from '../content/craft-catalog';
 import type { VirtualCraftInput } from '../engine/input/craft-input';
 import type { SlotClick } from '../engine/simulation/inventory';
 import type { CraftScreen, SlotRef } from '../engine/simulation/screens';
+import type { PartOfDay } from '../engine/simulation/day-clock';
 import type { FirstStep } from '../engine/simulation/first-steps';
+import type { WeatherKind } from '../engine/simulation/weather';
 import type { GoalDefinition } from './content.model';
 import type { WorldSave } from './world-save.model';
 
@@ -38,6 +40,15 @@ export interface GoalView {
   readonly icon: string | null;
 }
 
+/** Dia, estação, parte do dia e clima, como o HUD mostra. */
+export interface CalendarView {
+  readonly day: number;
+  readonly seasonName: string;
+  readonly seasonEmoji: string;
+  readonly partOfDay: PartOfDay;
+  readonly weather: WeatherKind;
+}
+
 export interface CraftHudState {
   readonly hotbar: readonly (SlotView | null)[];
   readonly selected: number;
@@ -48,7 +59,7 @@ export interface CraftHudState {
   /** Corações do herói agora e no máximo. */
   readonly health: number;
   readonly maxHealth: number;
-  readonly isNight: boolean;
+  readonly calendar: CalendarView;
   /** O gesto da vez no guia do primeiro minuto; `null` sem guia. */
   readonly firstStep: FirstStep | null;
 }

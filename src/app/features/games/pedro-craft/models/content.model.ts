@@ -402,6 +402,33 @@ export interface WorldBlocks {
   readonly decorations: readonly string[];
 }
 
+/** Uma estação do ano: duração do dia, crescimento das plantas, clima e cores do mundo. */
+export interface SeasonDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly emoji: string;
+  /** O aviso quando a estação chega. */
+  readonly arrival: string;
+  /** Multiplica o dia e a noite do relógio: o verão tem dias longos, o inverno noites longas. */
+  readonly dayScale: number;
+  readonly nightScale: number;
+  /** Multiplica o crescimento das plantas; 0 é planta parada (fora da estufa). */
+  readonly growth: number;
+  /** Chance, a cada manhã, de chover e de nevar. */
+  readonly rain: number;
+  readonly snow: number;
+  /** Troca de cores no mundo: a cor de antes e a da estação (a grama branca de neve). */
+  readonly palette: Readonly<Record<string, string>>;
+}
+
+export interface CalendarDefinition {
+  readonly daysPerSeason: number;
+  /** Bloco de telhado que protege as plantas do inverno (a estufa). */
+  readonly greenhouseBlock: string;
+  /** Em ordem: o ano começa na primeira. */
+  readonly seasons: readonly SeasonDefinition[];
+}
+
 export interface WorldDefinition {
   readonly width: number;
   readonly depth: number;
@@ -425,6 +452,7 @@ export interface WorldDefinition {
   readonly decorationChance: number;
   readonly house: StructureTemplate;
   readonly clock: { readonly dayMs: number; readonly nightMs: number };
+  readonly calendar: CalendarDefinition;
   readonly water: { readonly maxSpread: number; readonly tickMs: number };
   readonly creatures: {
     readonly passiveCap: number;

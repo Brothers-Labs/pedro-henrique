@@ -1,6 +1,7 @@
 import {
   CONTENT_SCHEMA_VERSION,
   type OreVein,
+  type SeasonDefinition,
   type StructureTemplate,
   type WorldBlocks,
   type WorldDefinition,
@@ -37,6 +38,7 @@ export function parseWorld(value: unknown): WorldDefinition {
   const quarry = root.field('quarry').object();
   const tree = root.field('tree').object();
   const clock = root.field('clock').object();
+  const calendar = root.field('calendar').object();
   const water = root.field('water').object();
   const creatures = root.field('creatures').object();
   const hero = root.field('hero').object();
@@ -90,6 +92,11 @@ export function parseWorld(value: unknown): WorldDefinition {
     clock: {
       dayMs: clock.field('dayMs').number({ integer: true, min: 10_000 }),
       nightMs: clock.field('nightMs').number({ integer: true, min: 10_000 }),
+    },
+    calendar: {
+      daysPerSeason: calendar.field('daysPerSeason').number({ integer: true, min: 1, max: 60 }),
+      greenhouseBlock: calendar.field('greenhouseBlock').id(),
+      seasons: calendar.field('seasons').array({ minLength: 1 }).map((season) => parseSeason(season.object())),
     },
     water: {
       maxSpread: water.field('maxSpread').number({ integer: true, min: 1, max: 7 }),
@@ -172,4 +179,28 @@ function parseStructure(structure: JsonObjectReader): StructureTemplate {
   }
 
   return { palette, layers };
+}
+
+function parseSeason(season: JsonObjectReader): SeasonDefinition {
+  return {
+    id: season.field('id').id(),
+    name: season.field('name').string(),
+    emoji: season.field('emoji').string(),
+    arrival: season.field('arrival').string(),
+    dayScale: season.field('dayScale').number({ min: 0.3, max: 3 }),
+    nightScale: season.field('nightScale').number({ min: 0.3, max: 3 }),
+    growth: season.field('growth').number({ min: 0, max: 5 }),
+    rain: season.field('rain').number({ min: 0, max: 1 }),
+    snow: season.field('snow').number({ min: 0, max: 1 }),
+    palette: Object.fromEntries(season.field('palette').object().entries().map(([from, to]) => [checkColor(season, from), to.color()])),
+  };
+}
+
+/** A chave da paleta também é uma cor: a que existe hoje nas texturas. */
+function checkColor(season: JsonObjectReader, color: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) {
+    season.fail(`a cor "${color}" da paleta não está no formato #rrggbb`);
+  }
+
+  return color.toLowerCase();
 }

@@ -129,8 +129,12 @@
   filter: grayscale(1);
 }
 
-.status__moon {
-  margin-left: 0.4rem;
+.status__calendar {
+  @include maker.pill;
+
+  margin-left: 0.5rem;
+  font-size: calc(var(--slot-size) * 0.26);
+  white-space: nowrap;
 }
 
 .hotbar {

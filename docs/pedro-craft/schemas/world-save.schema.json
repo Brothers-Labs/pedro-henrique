@@ -67,6 +67,7 @@
         },
         "inventory": { "type": "array", "maxItems": 36, "items": { "$ref": "#/$defs/slot" }, "description": "Barra (0 a 8) e mochila (9 a 35)." },
         "clockMs": { "type": "number", "minimum": 0, "description": "Milissegundos desde o começo da manhã." },
+        "day": { "type": "integer", "minimum": 1, "default": 1, "description": "Dia do calendário. A estação sai dele." },
         "goals": {
           "type": "object",
           "required": ["completed", "amount"],

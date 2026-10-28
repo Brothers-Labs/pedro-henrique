@@ -24,7 +24,13 @@ export function hudState(simulation: CraftSimulation): CraftHudState {
     goalsTotal: simulation.catalog.goals.length,
     health: simulation.health.value,
     maxHealth: simulation.health.max,
-    isNight: simulation.clock.isNight,
+    calendar: {
+      day: simulation.calendar.day,
+      seasonName: simulation.calendar.season.name,
+      seasonEmoji: simulation.calendar.season.emoji,
+      partOfDay: simulation.clock.partOfDay,
+      weather: simulation.weather.current,
+    },
     firstStep: simulation.firstSteps?.current ?? null,
   };
 }

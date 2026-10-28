@@ -32,12 +32,14 @@
     </aside>
   }
 
-  <div class="status" role="img" [attr.aria-label]="'Vida: ' + state.health + ' de ' + state.maxHealth + (state.isNight ? '. É noite.' : '.')">
-    @for (isFull of hearts(); track $index) {
-      <span class="status__heart" [class.status__heart--empty]="!isFull" aria-hidden="true">❤️</span>
-    }
-    @if (state.isNight) {
-      <span class="status__moon" aria-hidden="true">🌙</span>
+  <div class="status">
+    <span class="status__hearts" role="img" [attr.aria-label]="'Vida: ' + state.health + ' de ' + state.maxHealth">
+      @for (isFull of hearts(); track $index) {
+        <span class="status__heart" [class.status__heart--empty]="!isFull" aria-hidden="true">❤️</span>
+      }
+    </span>
+    @if (calendarLine(); as line) {
+      <span class="status__calendar" role="img" [attr.aria-label]="line.spoken">{{ line.text }}</span>
     }
   </div>
 

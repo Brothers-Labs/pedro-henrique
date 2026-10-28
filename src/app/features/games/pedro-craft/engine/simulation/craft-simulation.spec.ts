@@ -406,7 +406,9 @@ describe('Simulação do PedroCraft: colher e construir', () => {
   });
 
   describe('sobreviver', () => {
-    const makeNight = (): void => simulation.clock.advance(catalog.world.clock.dayMs);
+    const makeNight = (): void => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+    };
 
     it('comer a maçã recupera vida e gasta uma', () => {
       simulation.health.damage(4);
@@ -484,6 +486,44 @@ describe('Simulação do PedroCraft: colher e construir', () => {
 
       expect(simulation.projectiles.list.length).toBe(0);
       expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('a manhã nova vira o dia do calendário, e dormir também', () => {
+      // Perto do fim da noite: poucos passos atravessam a virada da manhã.
+      simulation.clock.setTime(simulation.clock.cycleMs - 50);
+      run(10);
+
+      expect(simulation.calendar.day).toBe(2);
+
+      put('bed');
+      makeNight();
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.calendar.day).toBe(3);
+    });
+
+    it('no inverno, só a planta debaixo do vidro cresce', () => {
+      const definition = catalog.world.calendar;
+      const winterDay = definition.daysPerSeason * definition.seasons.findIndex((season) => season.id === 'winter') + 1;
+
+      simulation.setCalendarDay(winterDay);
+      expect(simulation.calendar.season.id).toBe('winter');
+
+      const wheat = catalog.crop('wheat');
+      const open = { x: 2, z: 2 } as const;
+      const covered = { x: 12, z: 12 } as const;
+
+      for (const cell of [open, covered]) {
+        put('farmland', cell.x, FLOOR_TOP - 1, cell.z);
+        put('wheat-crop', cell.x, FLOOR_TOP, cell.z);
+        simulation.farm.plant(cell.x, FLOOR_TOP, cell.z, wheat);
+      }
+
+      put('glass', covered.x, FLOOR_TOP + 3, covered.z);
+      simulation.farm.step(wheat.stageMs * 1.1);
+
+      expect(simulation.farm.stageAt(open.x, FLOOR_TOP, open.z)).toBe(0);
+      expect(simulation.farm.stageAt(covered.x, FLOOR_TOP, covered.z)).toBe(1);
     });
 
     it('ligar o Modo Paz manda os inimigos embora na hora', () => {

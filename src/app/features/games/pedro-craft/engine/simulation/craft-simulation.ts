@@ -10,6 +10,7 @@ import type { CraftInputSnapshot } from '../input/craft-input';
 import type { LookDelta } from '../input/craft-input-reader';
 import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
+import { Calendar } from './calendar';
 import { Combat } from './combat';
 import { type Creature, Creatures } from './creatures';
 import { DayClock } from './day-clock';
@@ -23,6 +24,7 @@ import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotConten
 import { type DropCollector, ItemDrops } from './item-drops';
 import { Projectiles } from './projectiles';
 import { castRay, type RayHit } from './raycast';
+import { Weather } from './weather';
 import { type CraftScreen, ScreenController, type SlotRef } from './screens';
 import type { SimulationEvent, VisualEvent } from './simulation-events';
 import { WaterFlow } from './water-flow';
@@ -88,6 +90,8 @@ export class CraftSimulation {
   readonly creatures: Creatures;
   readonly projectiles = new Projectiles();
   readonly clock: DayClock;
+  readonly calendar: Calendar;
+  readonly weather: Weather;
   readonly health: HeroHealth;
   /** O guia do primeiro minuto; `null` quando não foi pedido. */
   readonly firstSteps: FirstStepsGuide | null;
@@ -108,7 +112,9 @@ export class CraftSimulation {
   private readonly visualEvents: VisualEvent[] = [];
   private autoJump: boolean;
   private isPeaceful: boolean;
-  private wasNight: boolean;
+  /** O que o HUD mostra do tempo (dia, parte do dia, clima): mudou, a tela redesenha. */
+  private timeLabel = '';
+  private readonly greenhouseBlock: number;
   private breakCooldownMs = 0;
   private hintedCell = -1;
   private version = 0;
@@ -126,16 +132,21 @@ export class CraftSimulation {
     this.inventory = new Inventory(options.catalog);
     this.goals = new GoalTracker(options.catalog.goals, options.goals);
     this.clock = new DayClock(options.catalog.world.clock.dayMs, options.catalog.world.clock.nightMs);
-    this.wasNight = this.clock.isNight;
+    this.calendar = new Calendar(options.catalog.world.calendar);
+    this.greenhouseBlock = options.catalog.blockNumber(options.catalog.world.calendar.greenhouseBlock);
+    this.applySeasonDurations();
     this.health = new HeroHealth(options.catalog.world.hero);
     this.firstSteps = options.guideFirstSteps ? new FirstStepsGuide() : null;
 
     const seeded = new SeededRandom(options.randomSeed);
     this.random = () => seeded.next();
+    this.weather = new Weather(this.random);
     this.water = new WaterFlow(this.world, this.catalog);
     this.farm = new Farm(this.world, this.catalog, this.properties, seeded, {
       isOccupied: (minX, minY, minZ, maxX, maxY, maxZ) => this.hero.body.occupies(minX, minY, minZ, maxX, maxY, maxZ),
       grew: (x, y, z) => this.visualEvents.push({ type: 'crop-grew', x, y, z }),
+      growthAt: (x, y, z) => this.growthAt(x, y, z),
+      isRainingOn: (x, y, z) => this.weather.isRaining && this.isOpenSky(x, y, z),
     });
     this.creatures = new Creatures(this.world, this.catalog, this.properties, seeded, {
       hero: () => this.hero.body,
@@ -266,6 +277,13 @@ export class CraftSimulation {
 
   setAutoJump(isEnabled: boolean): void {
     this.autoJump = isEnabled;
+  }
+
+  /** Volta o dia do calendário guardado no save, com a duração do dia da estação dele. */
+  setCalendarDay(day: number): void {
+    this.calendar.setDay(day);
+    this.applySeasonDurations();
+    this.visualEvents.push({ type: 'season-changed' });
   }
 
   /** Ligar o Modo Paz no meio da noite manda os inimigos para casa no mesmo passo. */
@@ -422,16 +440,68 @@ export class CraftSimulation {
     }
   }
 
-  /** O relógio anda e a vida volta aos poucos; o HUD redesenha quando o dia vira noite ou um coração volta. */
+  /** O relógio anda, o clima muda e a vida volta aos poucos; o HUD redesenha quando algo disso aparece na tela. */
   private passTime(): void {
-    this.clock.advance(STEP_MS);
+    const mornings = this.clock.advance(STEP_MS);
 
-    const isNight = this.clock.isNight;
+    for (let morning = 0; morning < mornings; morning += 1) {
+      this.startNewDay();
+    }
 
-    if (this.health.step(STEP_MS) || isNight !== this.wasNight) {
-      this.wasNight = isNight;
+    this.weather.step(STEP_MS);
+
+    const timeLabel = `${this.calendar.day}|${this.clock.partOfDay}|${this.weather.current}`;
+
+    if (this.health.step(STEP_MS) || timeLabel !== this.timeLabel) {
+      this.timeLabel = timeLabel;
       this.version += 1;
     }
+  }
+
+  /** Bom dia: o calendário vira, o clima é sorteado e, na estação nova, o mundo muda de cor. */
+  private startNewDay(): void {
+    const hasSeasonChanged = this.calendar.nextDay();
+    const season = this.calendar.season;
+
+    this.applySeasonDurations();
+    this.weather.newDay(season);
+
+    if (hasSeasonChanged) {
+      this.visualEvents.push({ type: 'season-changed' });
+      this.events.push({ type: 'hint', text: `${season.emoji} ${season.arrival}` });
+      this.events.push({ type: 'sound', cue: 'checkpoint' });
+    }
+  }
+
+  private applySeasonDurations(): void {
+    const { clock: base } = this.catalog.world;
+    const season = this.calendar.season;
+
+    this.clock.setDurations(base.dayMs * season.dayScale, base.nightMs * season.nightScale);
+  }
+
+  /** Crescimento pela estação; debaixo do telhado de vidro, a planta cresce no ritmo normal mesmo no inverno. */
+  private growthAt(x: number, y: number, z: number): number {
+    const growth = this.calendar.season.growth;
+
+    return growth < 1 && this.firstRoofAbove(x, y, z) === this.greenhouseBlock ? 1 : growth;
+  }
+
+  private isOpenSky(x: number, y: number, z: number): boolean {
+    return this.firstRoofAbove(x, y, z) === AIR;
+  }
+
+  /** O primeiro bloco acima da célula; ar quando é céu aberto. */
+  private firstRoofAbove(x: number, y: number, z: number): number {
+    for (let above = y + 1; above < this.world.height; above += 1) {
+      const block = this.world.get(x, above, z);
+
+      if (block !== AIR) {
+        return block;
+      }
+    }
+
+    return AIR;
   }
 
   /** A vida acabou: sem perder nada, o herói acorda na cama (ou no começo do mundo) com a vida cheia. */
@@ -465,6 +535,7 @@ export class CraftSimulation {
     }
 
     this.clock.skipToMorning();
+    this.startNewDay();
     this.creatures.sendHostilesHome();
     this.projectiles.clear();
     this.health.restore();

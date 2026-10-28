@@ -250,6 +250,22 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Tochas iluminam a noite. Faça com carvão e graveto.',
   },
   {
+    id: 'estacoes',
+    emoji: '🍂',
+    title: 'Estações e clima',
+    summary: 'O ano tem primavera, verão, outono e inverno. Cada estação dura 7 dias.',
+    steps: [
+      { text: 'Embaixo dos corações aparecem a estação, o dia e se é manhã, tarde ou noite.' },
+      { text: 'Primavera 🌸: as plantas crescem mais rápido e chove de vez em quando.' },
+      { text: 'Verão ☀️: os dias ficam longos e as noites curtinhas.' },
+      { text: 'Outono 🍂: as folhas das árvores ficam laranjas.' },
+      { text: 'Inverno ❄️: neva, a grama fica branca e as plantas descansam.' },
+      { text: 'A chuva rega a plantação que está a céu aberto. Que ajuda!' },
+      { text: 'Para plantar no inverno, faça um telhado de vidro em cima da plantação: é a estufa!', items: ['glass', 'wheat-seeds'] },
+    ],
+    tip: 'Vidro sai da areia assada na fornalha.',
+  },
+  {
     id: 'inimigos',
     emoji: '🛡️',
     title: 'Inimigos da noite',

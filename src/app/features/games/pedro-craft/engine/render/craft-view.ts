@@ -13,6 +13,7 @@ import { ParticlesView } from './particles-view';
 import { ProjectilesView } from './projectiles-view';
 import { TargetView } from './target-view';
 import { createDaylightUniform, type DaylightUniform } from './voxel-material';
+import { WeatherView } from './weather-view';
 import { WorldView } from './world-view';
 
 /** Chunks montados de uma vez na carga, entre uma pausa e outra para a barra de progresso andar. */
@@ -27,6 +28,11 @@ const NIGHT_SKY = new Color('#1e2a5c');
 /** A noite é azulada e enxergável de propósito: escuridão total assusta. */
 const DAY_LIGHT = new Color(1, 1, 1);
 const NIGHT_LIGHT = new Color(0.42, 0.48, 0.72);
+
+/** Com chuva, o céu fica cinza-azulado e o mundo um pouco mais escuro, sem ficar triste. */
+const RAIN_SKY = new Color('#8c9db3');
+const RAIN_DIMMING = 0.85;
+const RAIN_SKY_MIX = 0.55;
 
 /**
  * Tudo o que se vê: o céu, o mundo de blocos, os bichos, as flechas, os itens caídos, a mira e a mão.
@@ -44,6 +50,7 @@ export class CraftView {
   private readonly dropsView: DropsView;
   private readonly creaturesView: CreaturesView;
   private readonly projectilesView: ProjectilesView;
+  private readonly weatherView: WeatherView;
   private readonly targetView: TargetView;
   private readonly handView: HandView;
   private readonly particles: ParticlesView;
@@ -67,6 +74,8 @@ export class CraftView {
     this.dropsView = new DropsView(stage.scene, this.itemTextures);
     this.creaturesView = new CreaturesView(stage.scene, this.daylight);
     this.projectilesView = new ProjectilesView(stage.scene);
+    this.weatherView = new WeatherView(stage.scene);
+    this.atlas.applyPalette(simulation.calendar.season.palette);
     this.targetView = new TargetView(stage.scene);
     this.handView = new HandView(stage.camera, this.itemTextures);
     this.particles = new ParticlesView(stage.scene);
@@ -108,6 +117,7 @@ export class CraftView {
     this.dropsView.update(simulation.drops.list);
     this.creaturesView.update(simulation.creatures.list, alpha, frameMs);
     this.projectilesView.update(simulation.projectiles.list, alpha);
+    this.weatherView.update(simulation.weather.current, camera.position, frameMs, !this.effectsEnabled);
     this.targetView.update(simulation.target, simulation.miningProgress);
     this.handView.update(simulation.selectedItem?.id ?? null, simulation.mining !== null, frameMs);
     this.particles.update(frameMs);
@@ -123,6 +133,7 @@ export class CraftView {
     this.dropsView.dispose();
     this.creaturesView.dispose();
     this.projectilesView.dispose();
+    this.weatherView.dispose();
     this.targetView.dispose();
     this.handView.dispose();
     this.particles.dispose();
@@ -146,6 +157,9 @@ export class CraftView {
         case 'crop-grew':
           this.worldView.markCell(event.x, event.y, event.z);
           break;
+        case 'season-changed':
+          this.atlas.applyPalette(this.simulation.calendar.season.palette);
+          break;
         case 'sparkle':
         case 'creature-poof':
           if (this.effectsEnabled) {
@@ -166,6 +180,11 @@ export class CraftView {
 
     this.daylight.value.copy(NIGHT_LIGHT).lerp(DAY_LIGHT, daylight);
     this.stage.sky.copy(NIGHT_SKY).lerp(DAY_SKY, daylight);
+
+    if (this.simulation.weather.isRaining) {
+      this.daylight.value.multiplyScalar(RAIN_DIMMING);
+      this.stage.sky.lerp(RAIN_SKY, RAIN_SKY_MIX * daylight);
+    }
 
     if (this.simulation.isEyeUnderwater) {
       this.stage.setFog(UNDERWATER_COLOR, 0, 0.18);

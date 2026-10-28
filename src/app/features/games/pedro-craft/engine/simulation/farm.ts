@@ -33,6 +33,10 @@ export interface FarmHost {
   isOccupied(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number): boolean;
   /** A planta mudou de estágio: o desenho dela precisa ser refeito. */
   grew(x: number, y: number, z: number): void;
+  /** Quanto a planta cresce agora, pela estação e pela estufa; 0 é planta parada. */
+  growthAt(x: number, y: number, z: number): number;
+  /** Está chovendo em cima da planta (a céu aberto)? A chuva rega como a água por perto. */
+  isRainingOn(x: number, y: number, z: number): boolean;
 }
 
 /**
@@ -126,9 +130,15 @@ export class Farm {
       }
 
       const { x, y, z } = this.world.positionOf(cell);
-      const speed = this.isWatered(x, y, z) ? crop.wateredSpeedup : 1;
+      const growth = this.host.growthAt(x, y, z);
 
-      plant.elapsedMs += elapsedMs * speed;
+      if (growth <= 0) {
+        continue;
+      }
+
+      const isWatered = this.isWatered(x, y, z) || this.host.isRainingOn(x, y, z);
+
+      plant.elapsedMs += elapsedMs * growth * (isWatered ? crop.wateredSpeedup : 1);
 
       if (plant.elapsedMs < crop.stageMs) {
         continue;

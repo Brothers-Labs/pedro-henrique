@@ -85,6 +85,7 @@ describe('Mundo salvo do PedroCraft', () => {
     simulation.hero.teleport(12.25, FLOOR_TOP, 9.75);
     simulation.health.damage(3);
     simulation.clock.advance(12_345);
+    simulation.setCalendarDay(9);
     simulation.creatures.spawn(catalog.creature('sheep'), 14.5, FLOOR_TOP, 14.5).setCooldown('shears', 20_000);
 
     const state = roundTrip(simulation);
@@ -99,6 +100,7 @@ describe('Mundo salvo do PedroCraft', () => {
     expect(restored.hero.body.z).toBe(9.75);
     expect(restored.health.value).toBe(simulation.health.value);
     expect(restored.clock.time).toBe(simulation.clock.time);
+    expect(restored.calendar.day).toBe(9);
     expect(restored.farm.stageAt(8, FLOOR_TOP, 8)).toBe(1);
     expect(restored.screens.containers.get(restoredWorld.indexOf(10, FLOOR_TOP, 10))?.[0]).toEqual({
       item: 'wool',
