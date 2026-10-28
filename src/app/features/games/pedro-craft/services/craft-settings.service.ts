@@ -39,7 +39,15 @@ export class CraftSettingsService {
 }
 
 function defaults(isCalm: boolean): CraftSettings {
-  return { peaceful: isCalm, lookSensitivity: 1, autoJump: true, touchControls: 'automatico', buttonSize: 'normal' };
+  return {
+    peaceful: isCalm,
+    lookSensitivity: 1,
+    autoJump: true,
+    touchControls: 'automatico',
+    buttonSize: 'normal',
+    readAloud: false,
+    hasSeenFirstSteps: false,
+  };
 }
 
 function loadSettings(isCalm: boolean): CraftSettings {
@@ -73,5 +81,7 @@ export function sanitize(value: unknown, fallback: CraftSettings): CraftSettings
     autoJump: typeof stored.autoJump === 'boolean' ? stored.autoJump : fallback.autoJump,
     touchControls: TOUCH_MODES.find((mode) => mode === stored.touchControls) ?? fallback.touchControls,
     buttonSize: BUTTON_SIZES.find((size) => size === stored.buttonSize) ?? fallback.buttonSize,
+    readAloud: typeof stored.readAloud === 'boolean' ? stored.readAloud : fallback.readAloud,
+    hasSeenFirstSteps: typeof stored.hasSeenFirstSteps === 'boolean' ? stored.hasSeenFirstSteps : fallback.hasSeenFirstSteps,
   };
 }

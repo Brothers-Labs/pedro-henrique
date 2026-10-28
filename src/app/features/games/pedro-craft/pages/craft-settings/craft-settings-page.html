@@ -19,6 +19,15 @@
       </p>
     </section>
 
+    <section class="section" aria-labelledby="guia-titulo">
+      <h2 id="guia-titulo" class="section__title"><span aria-hidden="true">🧭</span> Primeiros passos</h2>
+      <p>O guia que ensina a andar, olhar, pular e quebrar o primeiro bloco.</p>
+      <button type="button" class="danger" data-tone="blue" (click)="replayFirstSteps()">Mostrar o guia de novo</button>
+      @if (isFirstStepsReset()) {
+        <p class="section__hint" role="status">Pronto! O guia aparece quando você abrir um mundo.</p>
+      }
+    </section>
+
     <section class="section" aria-labelledby="olhar-titulo">
       <h2 id="olhar-titulo" class="section__title"><span aria-hidden="true">👀</span> Velocidade do olhar</h2>
       <div class="choices choices--compact" role="radiogroup" aria-labelledby="olhar-titulo">

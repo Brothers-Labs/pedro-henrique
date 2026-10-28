@@ -165,6 +165,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       autoJump: settings.autoJump,
       randomSeed: options.world.seed,
       peaceful: settings.peaceful,
+      guideFirstSteps: options.guideFirstSteps,
       inventory: state?.inventory,
       goals: state ? progressFromCompleted(catalog.goals, state.goals.completed, state.goals.amount) : undefined,
     });
@@ -242,6 +243,9 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       stopScreenTimer();
       withSimulation((running) => running.closeScreen());
       start();
+    },
+    skipFirstSteps: () => {
+      withSimulation((running) => running.skipFirstSteps());
     },
     capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString()) : null),
     destroy: () => {

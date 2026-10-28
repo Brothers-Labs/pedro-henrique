@@ -13,6 +13,10 @@ export interface CraftSettings {
   readonly autoJump: boolean;
   readonly touchControls: CraftTouchMode;
   readonly buttonSize: CraftButtonSize;
+  /** Lê em voz alta as missões e os avisos, para quem ainda não lê. */
+  readonly readAloud: boolean;
+  /** Os primeiros passos guiados já foram vistos neste aparelho. */
+  readonly hasSeenFirstSteps: boolean;
 }
 
 export const LOOK_SENSITIVITY_RANGE = { min: 0.5, max: 2, step: 0.25 } as const;

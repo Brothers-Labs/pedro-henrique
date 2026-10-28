@@ -4,6 +4,7 @@ import { VoxelWorld } from '../../world/voxel-world';
 import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
 import { CraftSimulation } from './craft-simulation';
 import type { Creature } from './creatures';
+import { goalIcon } from '../session-views';
 import type { SimulationEvent } from './simulation-events';
 
 /** Olhando para +x, na altura dos olhos: a mira cai no bloco (7, 4, 5). */
@@ -442,6 +443,52 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       simulation.setPeaceful(true);
 
       expect(simulation.creatures.list).not.toContain(spider);
+    });
+  });
+  describe('primeiros passos e missões', () => {
+    it('o guia acompanha os gestos e avisa quando acaba', () => {
+      const guided = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        guideFirstSteps: true,
+      });
+      const go = (steps: number, input: Partial<CraftInputSnapshot>): void => {
+        for (let step = 0; step < steps; step += 1) {
+          guided.step({ ...IDLE_CRAFT_INPUT, ...input });
+        }
+      };
+
+      world.fill(TARGET.x, TARGET.y, TARGET.z, catalog.blockNumber('dirt'));
+      go(60, { strafe: 1 });
+      expect(guided.firstSteps?.current).toBe('look');
+
+      guided.look({ yaw: 1.2, pitch: 0 });
+      guided.look({ yaw: -1.2, pitch: 0 });
+      expect(guided.firstSteps?.current).toBe('jump');
+
+      go(1, { jumpHeld: true });
+      expect(guided.firstSteps?.current).toBe('break');
+
+      guided.drainEvents();
+      guided.skipFirstSteps();
+      expect(guided.drainEvents()).toContain({ type: 'first-steps-done' });
+    });
+
+    it('sem o pedido, não há guia', () => {
+      expect(simulation.firstSteps).toBeNull();
+    });
+
+    it('a missão mostra a figura do item: o tronco, a mesa colocada, o trigo colhido, a cama', () => {
+      const icon = (id: string): string | null => goalIcon(catalog.goals.find((goal) => goal.id === id) ?? catalog.goals[0], catalog);
+
+      expect(icon('get-wood')).toBe('oak-log');
+      expect(icon('place-workbench')).toBe('workbench');
+      expect(icon('harvest-wheat')).toBe('wheat');
+      expect(icon('sleep')).toBe('bed');
     });
   });
 });

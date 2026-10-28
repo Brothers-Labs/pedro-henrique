@@ -14,6 +14,7 @@ import { Combat } from './combat';
 import { type Creature, Creatures } from './creatures';
 import { DayClock } from './day-clock';
 import { Farm } from './farm';
+import { FirstStepsGuide } from './first-steps';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
 import { HeroHealth } from './hero-health';
 import { HeroMotion } from './hero-motion';
@@ -47,6 +48,8 @@ export interface CraftSimulationOptions {
   readonly goals?: GoalProgress;
   /** Modo Paz: nenhum inimigo nasce. */
   readonly peaceful?: boolean;
+  /** Mostra o guia do primeiro minuto (andar, olhar, pular, quebrar). */
+  readonly guideFirstSteps?: boolean;
 }
 
 /** Bloco sendo quebrado e quanto já foi. */
@@ -83,6 +86,8 @@ export class CraftSimulation {
   readonly projectiles = new Projectiles();
   readonly clock: DayClock;
   readonly health: HeroHealth;
+  /** O guia do primeiro minuto; `null` quando não foi pedido. */
+  readonly firstSteps: FirstStepsGuide | null;
 
   /** Onde o herói volta depois de desmaiar: o começo do mundo, até a criança usar uma cama. */
   respawnPoint: SpawnPoint;
@@ -120,6 +125,7 @@ export class CraftSimulation {
     this.clock = new DayClock(options.catalog.world.clock.dayMs, options.catalog.world.clock.nightMs);
     this.wasNight = this.clock.isNight;
     this.health = new HeroHealth(options.catalog.world.hero);
+    this.firstSteps = options.guideFirstSteps ? new FirstStepsGuide() : null;
 
     const seeded = new SeededRandom(options.randomSeed);
     this.random = () => seeded.next();
@@ -264,6 +270,15 @@ export class CraftSimulation {
 
   look(delta: LookDelta): void {
     this.hero.look(delta.yaw, delta.pitch);
+    this.noteFirstStep(this.firstSteps?.look(Math.abs(delta.yaw) + Math.abs(delta.pitch)) ?? false);
+  }
+
+  /** "Pular guia": a criança já sabe jogar. */
+  skipFirstSteps(): void {
+    if (this.firstSteps && !this.firstSteps.isDone) {
+      this.firstSteps.skip();
+      this.noteFirstStep(true);
+    }
   }
 
   step(input: CraftInputSnapshot): void {
@@ -274,6 +289,7 @@ export class CraftSimulation {
 
     this.applySelection(input);
     this.hero.step(this.terrain, input, this.autoJump);
+    this.observeFirstSteps(input);
     this.target = this.findTarget();
     this.targetCreature = this.findCreature(this.target?.distance ?? this.catalog.world.hero.reach);
 
@@ -367,6 +383,33 @@ export class CraftSimulation {
 
   drainVisualEvents(): readonly VisualEvent[] {
     return this.visualEvents.splice(0, this.visualEvents.length);
+  }
+
+  private observeFirstSteps(input: CraftInputSnapshot): void {
+    const guide = this.firstSteps;
+
+    if (!guide || guide.isDone) {
+      return;
+    }
+
+    const hero = this.hero;
+    const walked = Math.hypot(hero.body.x - hero.previousX, hero.body.z - hero.previousZ);
+
+    this.noteFirstStep(guide.walk(walked) || (input.jumpHeld && guide.jump()));
+  }
+
+  /** O guia avançou: a tela troca o cartão; acabou, a tela guarda que já foi visto. */
+  private noteFirstStep(hasAdvanced: boolean): void {
+    if (!hasAdvanced) {
+      return;
+    }
+
+    this.version += 1;
+
+    if (this.firstSteps?.isDone) {
+      this.events.push({ type: 'first-steps-done' });
+      this.events.push({ type: 'sound', cue: 'checkpoint' });
+    }
   }
 
   /** O relógio anda e a vida volta aos poucos; o HUD redesenha quando o dia vira noite ou um coração volta. */
@@ -535,6 +578,7 @@ export class CraftSimulation {
 
     this.actions.breakBlock(mining.x, mining.y, mining.z, held);
     this.events.push({ type: 'sound', cue: 'break' });
+    this.noteFirstStep(this.firstSteps?.breakBlock() ?? false);
 
     if (held?.tool && held.tool.type === block.tool && (block.hardness ?? 0) > 0) {
       this.wearSelected(held);

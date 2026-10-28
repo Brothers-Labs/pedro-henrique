@@ -57,7 +57,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { text: 'Para pular, toque no botão de pular. Na água, segure para nadar para cima.', control: 'jump' },
       { text: 'A cruzinha branca no meio da tela é a sua mira. Ela mostra o que você vai pegar.' },
     ],
-    tip: 'O pulo automático sobe um degrau sozinho. Ele liga e desliga nas Configurações.',
+    tip: 'Nas Configurações dá para ligar a leitura em voz alta e ver de novo o guia dos primeiros passos.',
   },
   {
     id: 'quebrar',
@@ -225,7 +225,8 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     title: 'Missões',
     summary: 'O jogo dá uma missão de cada vez, para você saber o que fazer.',
     steps: [
-      { text: 'A missão da vez fica no cartão lá em cima, com uma dica embaixo.' },
+      { text: 'A missão da vez fica no cartão lá em cima, com a figura do que você precisa.' },
+      { text: 'Toque no cartão da missão para ouvir o que fazer.' },
       { text: 'Quando você cumpre, aparece uma comemoração e vem a próxima.' },
       { text: 'Cada missão cumprida também vale um desafio na sua jornada do site.' },
     ],
@@ -236,7 +237,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     title: 'Mundos e salvar',
     summary: 'O seu mundo fica guardado no aparelho.',
     steps: [
-      { text: 'O jogo salva sozinho enquanto você brinca, quando pausa e quando sai.' },
+      { text: 'O jogo salva sozinho enquanto você brinca, quando pausa e quando sai. Aparece "Salvo ✓" lá em cima.' },
       { text: 'Na tela do PedroCraft, toque em Continuar para voltar ao último mundo.' },
       { text: 'Em Novo mundo, dê um nome e toque em Criar mundo. Cada mundo é diferente!' },
       { text: 'Para pausar o jogo a qualquer hora, use o botão de pausa.', control: 'pause' },

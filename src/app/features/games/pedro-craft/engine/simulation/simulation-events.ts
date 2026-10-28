@@ -16,7 +16,9 @@ export type SimulationEvent =
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }
   | { readonly type: 'open-screen'; readonly screen: CraftScreen }
   /** O herói levou um golpe: a tela mostra a borda vermelha suave. */
-  | { readonly type: 'hero-hurt' };
+  | { readonly type: 'hero-hurt' }
+  /** O guia do primeiro minuto acabou (ou foi pulado): não aparece de novo neste aparelho. */
+  | { readonly type: 'first-steps-done' };
 
 /** O que só o desenho precisa saber: a poeira do bloco quebrado, o braço que balança, a planta que cresceu, o bicho que vira nuvem. */
 export type VisualEvent =

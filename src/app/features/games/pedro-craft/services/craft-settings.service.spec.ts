@@ -13,6 +13,8 @@ const FALLBACK: CraftSettings = {
   autoJump: true,
   touchControls: 'automatico',
   buttonSize: 'normal',
+  readAloud: false,
+  hasSeenFirstSteps: false,
 };
 
 describe('Preferências do PedroCraft', () => {

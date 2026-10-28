@@ -3,6 +3,7 @@ import type { CraftCatalog } from '../content/craft-catalog';
 import type { VirtualCraftInput } from '../engine/input/craft-input';
 import type { SlotClick } from '../engine/simulation/inventory';
 import type { CraftScreen, SlotRef } from '../engine/simulation/screens';
+import type { FirstStep } from '../engine/simulation/first-steps';
 import type { GoalDefinition } from './content.model';
 import type { WorldSave } from './world-save.model';
 
@@ -33,6 +34,8 @@ export interface SlotView {
 export interface GoalView {
   readonly goal: GoalDefinition;
   readonly amount: number;
+  /** Figura do item da missão (o tronco, a picareta); `null` quando a missão não tem item. */
+  readonly icon: string | null;
 }
 
 export interface CraftHudState {
@@ -46,6 +49,8 @@ export interface CraftHudState {
   readonly health: number;
   readonly maxHealth: number;
   readonly isNight: boolean;
+  /** O gesto da vez no guia do primeiro minuto; `null` sem guia. */
+  readonly firstStep: FirstStep | null;
 }
 
 export interface IngredientView {
@@ -102,6 +107,7 @@ export type CraftSessionEvent =
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }
   | { readonly type: 'open-screen'; readonly screen: CraftScreen }
   | { readonly type: 'hero-hurt' }
+  | { readonly type: 'first-steps-done' }
   /** A tela aberta mudou sozinha (a fornalha assando). */
   | { readonly type: 'screen'; readonly view: ScreenView }
   | { readonly type: 'pause-requested' }
@@ -115,6 +121,8 @@ export interface CraftLaunchOptions {
   /** O mundo a abrir: a semente e o que já mudou nele (`state` vazio num mundo novo). */
   readonly world: WorldSave;
   readonly settings: CraftEngineSettings;
+  /** Mostra o guia do primeiro minuto neste mundo. */
+  readonly guideFirstSteps: boolean;
   readonly input: VirtualCraftInput;
   readonly listener: CraftSessionListener;
 }
@@ -134,6 +142,8 @@ export interface CraftGameSession {
   craftRecipe(recipeId: string): ScreenView | null;
   /** Devolve a grade e a mão à mochila e solta o mundo de novo. */
   closeScreen(): void;
+  /** Termina o guia do primeiro minuto. */
+  skipFirstSteps(): void;
   /** O mundo como está agora, pronto para guardar; `null` enquanto ainda carrega. */
   capture(): WorldSave | null;
   destroy(): void;

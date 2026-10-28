@@ -41,10 +41,23 @@
     <span class="hurt" [class.hurt--visible]="isHurt()" aria-hidden="true"></span>
     <span class="crosshair" aria-hidden="true"></span>
 
-    <app-craft-hud [hud]="hud()" [icons]="icons()" [pickups]="pickups()" (slotSelected)="selectSlot($event)" />
+    <app-craft-hud
+      [hud]="hud()"
+      [icons]="icons()"
+      [pickups]="pickups()"
+      [isTouch]="showsTouchControls()"
+      (slotSelected)="selectSlot($event)"
+      (goalPressed)="readGoal()"
+      (firstStepsSkipped)="skipFirstSteps()"
+    />
 
     <div class="bar">
       <p class="bar__title">{{ world().name }}</p>
+      <span class="bar__saved" [class.bar__saved--visible]="isSaved()" role="status">
+        @if (isSaved()) {
+          <span aria-hidden="true">💾</span> Salvo ✓
+        }
+      </span>
       <button type="button" class="bar__button" aria-label="Abrir a mochila" (click)="openInventory()">
         <span aria-hidden="true">🎒</span>
       </button>

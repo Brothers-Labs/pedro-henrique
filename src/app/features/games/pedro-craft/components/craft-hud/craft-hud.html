@@ -1,7 +1,11 @@
 @if (hud(); as state) {
   @if (state.goal; as current) {
-    <aside class="goal" aria-live="polite" aria-label="Missão da vez">
-      <span class="goal__emoji" aria-hidden="true">{{ current.goal.emoji }}</span>
+    <button type="button" class="goal" aria-live="polite" [attr.aria-label]="'Missão da vez: ' + current.goal.title + '. Toque para ouvir.'" (click)="goalPressed.emit()">
+      @if (current.icon; as icon) {
+        <img class="goal__icon" [src]="icons().url(icon)" alt="" />
+      } @else {
+        <span class="goal__emoji" aria-hidden="true">{{ current.goal.emoji }}</span>
+      }
       <div class="goal__text">
         <p class="goal__title">{{ current.goal.title }}</p>
         <p class="goal__hint">{{ current.goal.hint }}</p>
@@ -9,11 +13,22 @@
       @if (current.goal.count > 1) {
         <span class="goal__count">{{ current.amount }}/{{ current.goal.count }}</span>
       }
-    </aside>
+    </button>
   } @else if (state.goalsTotal > 0) {
     <aside class="goal goal--done">
       <span class="goal__emoji" aria-hidden="true">🏆</span>
       <p class="goal__title">Todas as missões cumpridas!</p>
+    </aside>
+  }
+
+  @if (firstStepCard(); as card) {
+    <aside class="coach" aria-live="polite" aria-label="Primeiros passos">
+      <span class="coach__emoji" aria-hidden="true">{{ card.emoji }}</span>
+      <div class="coach__text">
+        <p class="coach__title">{{ card.text }}</p>
+        <p class="coach__how">{{ card.how }}</p>
+      </div>
+      <button type="button" class="coach__skip" (click)="firstStepsSkipped.emit()">Pular guia</button>
     </aside>
   }
 

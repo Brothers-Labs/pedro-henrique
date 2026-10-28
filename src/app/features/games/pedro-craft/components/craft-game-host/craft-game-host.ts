@@ -15,8 +15,10 @@ import {
   viewChild,
 } from '@angular/core';
 
+import { CalmModeService } from '../../../../../core/services/calm-mode.service';
 import { GameProgressService } from '../../../../../core/services/game-progress.service';
 import { MotionPreferenceService } from '../../../../../core/services/motion-preference.service';
+import { CALM_SPEECH_RATE, DEFAULT_SPEECH_RATE, SpeechService } from '../../../../../core/services/speech.service';
 import { MakerAudioService } from '../../../pedro-maker/services/maker-audio.service';
 import type { CraftCatalog } from '../../content/craft-catalog';
 import { createVirtualCraftInput } from '../../engine/input/craft-input';
@@ -40,6 +42,7 @@ type HostPhase = 'loading' | 'playing' | 'screen' | 'help' | 'paused' | 'error';
 
 const TOAST_VISIBLE_MS = 2600;
 const HURT_VISIBLE_MS = 350;
+const SAVED_VISIBLE_MS = 1600;
 
 /** De quanto em quanto tempo o mundo se salva sozinho enquanto se joga. */
 const AUTOSAVE_EVERY_MS = 20_000;
@@ -82,6 +85,8 @@ export class CraftGameHost {
   private readonly audio = inject(MakerAudioService);
   private readonly settingsService = inject(CraftSettingsService);
   private readonly worlds = inject(CraftWorldsService);
+  private readonly speech = inject(SpeechService);
+  private readonly calmMode = inject(CalmModeService);
   private readonly siteProgress = inject(GameProgressService);
   private readonly motion = inject(MotionPreferenceService);
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -93,6 +98,7 @@ export class CraftGameHost {
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private autosaveTimer: ReturnType<typeof setInterval> | null = null;
   private helpReturnsTo: 'playing' | 'paused' = 'playing';
+  private announcedGoalId: string | null = null;
 
   /** Estado dos controles de toque, lido pelo motor a cada passo. */
   protected readonly virtualInput = createVirtualCraftInput();
@@ -104,6 +110,7 @@ export class CraftGameHost {
   protected readonly screen = signal<ScreenView | null>(null);
   protected readonly toast = signal<string | null>(null);
   protected readonly isHurt = signal(false);
+  protected readonly isSaved = signal(false);
   protected readonly pickups = signal<readonly PickupNotice[]>([]);
   protected readonly isFullscreen = signal(false);
   protected readonly isPointerLocked = signal(false);
@@ -179,6 +186,20 @@ export class CraftGameHost {
     this.audio.play('button');
     this.saveNow();
     this.exited.emit();
+  }
+
+  /** Tocar no cartão da missão lê a missão em voz alta, mesmo com a leitura automática desligada. */
+  protected readGoal(): void {
+    const goal = this.hud()?.goal?.goal;
+
+    if (goal) {
+      this.speak(`Missão: ${goal.title}. ${goal.hint}`);
+    }
+  }
+
+  protected skipFirstSteps(): void {
+    this.audio.play('button');
+    this.session?.skipFirstSteps();
   }
 
   protected selectSlot(index: number): void {
@@ -331,6 +352,7 @@ export class CraftGameHost {
           catalog: this.catalog(),
           world: this.world(),
           settings: this.engineSettings(),
+          guideFirstSteps: !this.settingsService.settings().hasSeenFirstSteps,
           input: this.virtualInput,
           listener: (event) => this.receive(event),
         }),
@@ -363,19 +385,24 @@ export class CraftGameHost {
         return;
       case 'hud':
         this.hud.set(event.hud);
+        this.announceNewGoal(event.hud);
         return;
       case 'hint':
-        this.showToast(event.text);
+        this.announce(event.text);
         return;
       case 'pickup':
         this.notifyPickup(event.item, event.count);
         return;
       case 'tool-broke':
-        this.showToast(`Ops! ${this.icons().name(event.item)} quebrou. Que tal fazer outra?`);
+        this.announce(`Ops! ${this.icons().name(event.item)} quebrou. Que tal fazer outra?`);
         return;
       case 'goal-completed':
         this.siteProgress.registerChallenge('pedro-craft', true);
-        this.showToast(`${event.goal.emoji} Missão cumprida: ${event.goal.title}!`);
+        this.announce(`${event.goal.emoji} Missão cumprida: ${event.goal.title}!`);
+        return;
+      case 'first-steps-done':
+        this.settingsService.update({ hasSeenFirstSteps: true });
+        this.announce('Muito bem! Agora você já sabe jogar.');
         return;
       case 'hero-hurt':
         this.isHurt.set(true);
@@ -411,6 +438,37 @@ export class CraftGameHost {
     if (view && this.phase() === 'screen') {
       this.screen.set(view);
     }
+  }
+
+  /** Aviso na tela e, com a leitura ligada, em voz alta. */
+  private announce(text: string): void {
+    this.showToast(text);
+
+    if (this.settingsService.settings().readAloud) {
+      this.speak(text);
+    }
+  }
+
+  /** Missão nova (ou a primeira ao abrir o mundo): com a leitura ligada, ela é lida. */
+  private announceNewGoal(hud: CraftHudState): void {
+    const goal = hud.goal?.goal ?? null;
+
+    if (!goal || goal.id === this.announcedGoalId) {
+      return;
+    }
+
+    this.announcedGoalId = goal.id;
+
+    if (this.settingsService.settings().readAloud) {
+      this.speak(`Missão: ${goal.title}. ${goal.hint}`);
+    }
+  }
+
+  private speak(text: string): void {
+    // Os emojis não se leem bem em voz alta: fica só o texto.
+    const spoken = text.replace(/\p{Extended_Pictographic}\uFE0F?/gu, '').trim();
+
+    this.speech.speak(spoken, { language: 'pt-BR', rate: this.calmMode.isEnabled() ? CALM_SPEECH_RATE : DEFAULT_SPEECH_RATE });
   }
 
   private showToast(text: string): void {
@@ -451,10 +509,19 @@ export class CraftGameHost {
       return;
     }
 
-    this.worlds.save(save).catch((error: unknown) => {
-      console.error('PedroCraft: o mundo não pôde ser salvo.', error);
-      this.zone.run(() => this.showToast(SAVE_FAILED_MESSAGE));
-    });
+    this.worlds
+      .save(save)
+      .then(() => this.zone.run(() => this.flashSaved()))
+      .catch((error: unknown) => {
+        console.error('PedroCraft: o mundo não pôde ser salvo.', error);
+        this.zone.run(() => this.announce(SAVE_FAILED_MESSAGE));
+      });
+  }
+
+  /** "Salvo ✓" discreto ao lado do nome do mundo: a criança e o pai sabem que nada se perde. */
+  private flashSaved(): void {
+    this.isSaved.set(true);
+    this.later(SAVED_VISIBLE_MS, () => this.isSaved.set(false));
   }
 
   private teardown(): void {
@@ -469,6 +536,7 @@ export class CraftGameHost {
 
     this.timers.clear();
     this.saveNow();
+    this.speech.stop();
     this.session?.destroy();
     this.session = null;
 

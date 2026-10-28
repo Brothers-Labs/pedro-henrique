@@ -1,5 +1,6 @@
 import { GRID_SIZE } from '../content/parsers/parse-recipes';
-import type { CraftingStation } from '../models/content.model';
+import type { CraftCatalog } from '../content/craft-catalog';
+import type { CraftingStation, GoalDefinition } from '../models/content.model';
 import type { CraftHudState, RecipeView, ScreenView, SlotView } from '../models/craft-session.model';
 import { canCraftFrom, fitsStation, recipeRequirements } from './simulation/crafting';
 import type { CraftSimulation } from './simulation/craft-simulation';
@@ -18,13 +19,38 @@ export function hudState(simulation: CraftSimulation): CraftHudState {
   return {
     hotbar: simulation.inventory.slots.slice(0, HOTBAR_SIZE).map((slot) => slotView(simulation, slot)),
     selected: simulation.selectedSlot,
-    goal: goal ? { goal, amount: simulation.goals.progress.amount } : null,
+    goal: goal ? { goal, amount: simulation.goals.progress.amount, icon: goalIcon(goal, simulation.catalog) } : null,
     goalsDone: simulation.goals.completedCount,
     goalsTotal: simulation.catalog.goals.length,
     health: simulation.health.value,
     maxHealth: simulation.health.max,
     isNight: simulation.clock.isNight,
+    firstStep: simulation.firstSteps?.current ?? null,
   };
+}
+
+/**
+ * O item que representa a missão, para a criança reconhecer pela figura: o
+ * próprio item, o bloco colocado, o que a plantação dá, a cama para dormir.
+ */
+export function goalIcon(goal: GoalDefinition, catalog: CraftCatalog): string | null {
+  const target = goal.target;
+
+  switch (goal.trigger) {
+    case 'obtain':
+      return target && catalog.hasItem(target) ? target : null;
+    case 'place':
+      return catalog.items.find((item) => item.places === target)?.id ?? null;
+    case 'harvest': {
+      const crop = target && catalog.hasCrop(target) ? catalog.crop(target) : null;
+
+      return crop?.mature.type === 'harvest' ? (catalog.lootTable(crop.mature.loot).entries[0]?.item ?? null) : null;
+    }
+    case 'sleep':
+      return catalog.items.find((item) => item.places !== null && catalog.block(item.places).interaction === 'bed')?.id ?? null;
+    case 'defeat':
+      return null;
+  }
 }
 
 /** A tela aberta; `null` quando nenhuma está aberta. */

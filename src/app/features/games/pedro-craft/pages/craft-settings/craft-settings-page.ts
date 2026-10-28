@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { MakerAudioService } from '../../../pedro-maker/services/maker-audio.service';
 import { CraftPageFrame } from '../../components/craft-page-frame/craft-page-frame';
@@ -10,11 +10,12 @@ import {
 } from '../../models/craft-settings.model';
 import { CraftSettingsService } from '../../services/craft-settings.service';
 
-type Toggle = keyof Pick<CraftSettings, 'peaceful' | 'autoJump'>;
+type Toggle = keyof Pick<CraftSettings, 'peaceful' | 'autoJump' | 'readAloud'>;
 
 const TOGGLES: readonly { readonly id: Toggle; readonly label: string; readonly emoji: string }[] = [
   { id: 'peaceful', label: 'Modo Paz (sem inimigos)', emoji: '🕊️' },
   { id: 'autoJump', label: 'Pulo automático', emoji: '🦘' },
+  { id: 'readAloud', label: 'Ler missões e avisos em voz alta', emoji: '🔊' },
 ];
 
 const TOUCH_MODES: readonly { readonly id: CraftTouchMode; readonly label: string }[] = [
@@ -64,6 +65,7 @@ export class CraftSettingsPage {
   protected readonly buttonSizes = BUTTON_SIZES;
   protected readonly keyboard = KEYBOARD;
   protected readonly sensitivities = sensitivitySteps();
+  protected readonly isFirstStepsReset = signal(false);
 
   protected toggle(id: Toggle): void {
     this.change({ [id]: !this.settings()[id] });
@@ -79,6 +81,12 @@ export class CraftSettingsPage {
 
   protected chooseButtonSize(size: CraftButtonSize): void {
     this.change({ buttonSize: size });
+  }
+
+  /** O guia do primeiro minuto aparece de novo na próxima vez que um mundo abrir. */
+  protected replayFirstSteps(): void {
+    this.change({ hasSeenFirstSteps: false });
+    this.isFirstStepsReset.set(true);
   }
 
   private change(changes: Partial<CraftSettings>): void {
