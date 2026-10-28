@@ -92,6 +92,13 @@ export class CraftHud {
     return { ...card, how: this.isTouch() ? control.touch : control.keyboard };
   });
 
+  /** Um pedaço de energia por ponto, no modo Sobrevivência gentil. */
+  protected readonly energyBits = computed<readonly boolean[]>(() => {
+    const energy = this.hud()?.energy;
+
+    return energy ? Array.from({ length: energy.max }, (_, index) => index < energy.value) : [];
+  });
+
   /** Um coração por ponto de vida: cheio ou vazio. */
   protected readonly hearts = computed<readonly boolean[]>(() => {
     const state = this.hud();

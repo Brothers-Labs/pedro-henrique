@@ -115,6 +115,7 @@ export function parseWorld(value: unknown): WorldDefinition {
       regenEveryMs: hero.field('regenEveryMs').number({ integer: true, min: 500 }),
       reach: hero.field('reach').number({ min: 2, max: 8 }),
       invulnerableMs: hero.field('invulnerableMs').number({ integer: true, min: 0, max: 5000 }),
+      energy: parseEnergy(hero.field('energy').object()),
       startingInventory: hero.field('startingInventory').array().map((entry) => parseAmount(entry.object())),
     },
   };
@@ -203,4 +204,14 @@ function checkColor(season: JsonObjectReader, color: string): string {
   }
 
   return color.toLowerCase();
+}
+
+function parseEnergy(energy: JsonObjectReader): WorldDefinition['hero']['energy'] {
+  const max = energy.field('max').number({ integer: true, min: 1, max: 20 });
+
+  return {
+    max,
+    drainEveryMs: energy.field('drainEveryMs').number({ integer: true, min: 10_000 }),
+    lowAt: energy.field('lowAt').number({ integer: true, min: 0, max }),
+  };
 }

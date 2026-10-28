@@ -127,6 +127,7 @@
     "regenEveryMs": 5000,
     "reach": 5,
     "invulnerableMs": 800,
+    "energy": { "max": 10, "drainEveryMs": 120000, "lowAt": 3 },
     "startingInventory": [{ "item": "apple", "count": 3 }]
   }
 }

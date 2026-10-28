@@ -10,7 +10,13 @@ import { cleanWorldSave, normalizeWorldName, parseWorldSave } from './world-save
 
 const SIZE = 32;
 const FLOOR_TOP = 3;
-const IDENTITY: WorldIdentity = { id: 'mundo-teste', name: 'Fazenda de teste', seed: 42, createdAt: '2026-10-27T10:00:00.000Z' };
+const IDENTITY: WorldIdentity = {
+  id: 'mundo-teste',
+  name: 'Fazenda de teste',
+  seed: 42,
+  mode: 'adventure',
+  createdAt: '2026-10-27T10:00:00.000Z',
+};
 const SAVED_AT = '2026-10-27T11:00:00.000Z';
 
 describe('Mundo salvo do PedroCraft', () => {

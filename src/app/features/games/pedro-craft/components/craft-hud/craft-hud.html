@@ -38,6 +38,13 @@
         <span class="status__heart" [class.status__heart--empty]="!isFull" aria-hidden="true">❤️</span>
       }
     </span>
+    @if (state.energy; as energy) {
+      <span class="status__energy" role="img" [attr.aria-label]="'Energia: ' + energy.value + ' de ' + energy.max">
+        @for (isFull of energyBits(); track $index) {
+          <span class="status__bit" [class.status__bit--empty]="!isFull" aria-hidden="true">🍗</span>
+        }
+      </span>
+    }
     @if (calendarLine(); as line) {
       <span class="status__calendar" role="img" [attr.aria-label]="line.spoken">{{ line.text }}</span>
     }

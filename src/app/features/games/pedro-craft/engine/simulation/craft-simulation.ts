@@ -2,6 +2,7 @@ import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import type { BucketStats, ItemDefinition } from '../../models/content.model';
+import type { GameMode } from '../../models/world-save.model';
 import type { SpawnPoint } from '../../world/world-generator';
 import { BlockChangeLog } from '../../world/block-change-log';
 import type { VoxelWorld } from '../../world/voxel-world';
@@ -17,6 +18,7 @@ import { DayClock } from './day-clock';
 import { Farm } from './farm';
 import { FirstStepsGuide } from './first-steps';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
+import { HeroEnergy } from './hero-energy';
 import { HeroHealth } from './hero-health';
 import { HeroMotion } from './hero-motion';
 import { tickFurnace } from './furnace';
@@ -32,12 +34,17 @@ import { WaterFlow } from './water-flow';
 /** Folga entre dois blocos quebrados segurando o botão: dá para ver um sumir antes do outro. */
 const BREAK_COOLDOWN_MS = 150;
 
+/** Quebra quase na hora, no Criativo: ainda dá para ver o bloco sumir. */
+const CREATIVE_BREAK_MS = 50;
+
 const SOIL_LIST = new Intl.ListFormat('pt-BR', { type: 'disjunction' });
 
 const FAINTED_HINT = 'Ufa! Você descansou e acordou em casa, com todos os seus itens.';
 const SLEPT_HINT = 'Bom dia! Você dormiu até de manhã.';
 const BED_DAY_HINT = 'A cama agora é a sua casa. À noite, use a cama para dormir até de manhã.';
 const FERTILIZER_HINT = 'Use o adubo numa planta que ainda está crescendo.';
+const HUNGRY_HINT = '🍎 Seu estômago roncou! Que tal comer alguma coisa?';
+const FULL_HINT = 'Você já está cheio de energia e de vida. Guarde a comida para depois.';
 const FERTILIZER_COLOR = '#b6f56b';
 const LOVE_COLOR = '#ff7aa8';
 
@@ -55,6 +62,8 @@ export interface CraftSimulationOptions {
   readonly peaceful?: boolean;
   /** Mostra o guia do primeiro minuto (andar, olhar, pular, quebrar). */
   readonly guideFirstSteps?: boolean;
+  /** Como o mundo se joga; sem ele, aventura. */
+  readonly mode?: GameMode;
 }
 
 /** Bloco sendo quebrado e quanto já foi. */
@@ -93,6 +102,9 @@ export class CraftSimulation {
   readonly calendar: Calendar;
   readonly weather: Weather;
   readonly health: HeroHealth;
+  /** A energia do modo Sobrevivência gentil; `null` nos outros modos. */
+  readonly energy: HeroEnergy | null;
+  readonly mode: GameMode;
   /** O guia do primeiro minuto; `null` quando não foi pedido. */
   readonly firstSteps: FirstStepsGuide | null;
 
@@ -136,6 +148,8 @@ export class CraftSimulation {
     this.greenhouseBlock = options.catalog.blockNumber(options.catalog.world.calendar.greenhouseBlock);
     this.applySeasonDurations();
     this.health = new HeroHealth(options.catalog.world.hero);
+    this.mode = options.mode ?? 'adventure';
+    this.energy = this.mode === 'survival' ? new HeroEnergy(options.catalog.world.hero.energy) : null;
     this.firstSteps = options.guideFirstSteps ? new FirstStepsGuide() : null;
 
     const seeded = new SeededRandom(options.randomSeed);
@@ -151,7 +165,7 @@ export class CraftSimulation {
     this.creatures = new Creatures(this.world, this.catalog, this.properties, seeded, {
       hero: () => this.hero.body,
       period: () => this.clock.period,
-      allowsHostiles: () => !this.isPeaceful,
+      allowsHostiles: () => !this.isPeaceful && this.mode !== 'creative',
       laid: (creature, item) => {
         const body = creature.body;
 
@@ -194,6 +208,7 @@ export class CraftSimulation {
       },
       wearHeld: (held) => this.wearSelected(held),
       fainted: () => this.faint(),
+      isInvulnerable: () => this.mode === 'creative',
     });
 
     if (options.inventory) {
@@ -279,6 +294,19 @@ export class CraftSimulation {
     this.autoJump = isEnabled;
   }
 
+  /** Criativo: a pilha cheia do item escolhido vai para a mochila. */
+  giveCreativeItem(itemId: string): void {
+    if (this.mode !== 'creative' || !this.catalog.hasItem(itemId)) {
+      return;
+    }
+
+    const item = this.catalog.item(itemId);
+
+    this.inventory.add(itemId, item.maxStack, item.durability);
+    this.events.push({ type: 'sound', cue: 'coin' });
+    this.version += 1;
+  }
+
   /** Volta o dia do calendário guardado no save, com a duração do dia da estação dele. */
   setCalendarDay(day: number): void {
     this.calendar.setDay(day);
@@ -316,7 +344,7 @@ export class CraftSimulation {
     }
 
     this.applySelection(input);
-    this.hero.step(this.terrain, input, this.autoJump);
+    this.hero.step(this.terrain, input, this.autoJump, this.mode === 'creative');
     this.observeFirstSteps(input);
     this.target = this.findTarget();
     this.targetCreature = this.findCreature(this.target?.distance ?? this.catalog.world.hero.reach);
@@ -450,12 +478,31 @@ export class CraftSimulation {
 
     this.weather.step(STEP_MS);
 
+    const hasEnergyChanged = this.drainEnergy();
     const timeLabel = `${this.calendar.day}|${this.clock.partOfDay}|${this.weather.current}`;
 
-    if (this.health.step(STEP_MS) || timeLabel !== this.timeLabel) {
+    if (this.health.step(STEP_MS, !this.energy?.isEmpty) || hasEnergyChanged || timeLabel !== this.timeLabel) {
       this.timeLabel = timeLabel;
       this.version += 1;
     }
+  }
+
+  /** A energia desce devagar; ao ficar baixa, o jogo lembra de comer uma vez. Devolve se mudou. */
+  private drainEnergy(): boolean {
+    const energy = this.energy;
+
+    if (!energy) {
+      return false;
+    }
+
+    const wasLow = energy.isLow;
+    const hasChanged = energy.step(STEP_MS);
+
+    if (hasChanged && energy.isLow && !wasLow) {
+      this.events.push({ type: 'hint', text: HUNGRY_HINT });
+    }
+
+    return hasChanged;
   }
 
   /** Bom dia: o calendário vira, o clima é sorteado e, na estação nova, o mundo muda de cor. */
@@ -511,6 +558,7 @@ export class CraftSimulation {
     this.hero.teleport(point.x, point.y, point.z);
     this.hero.yaw = point.yaw;
     this.health.restore();
+    this.energy?.restore();
     this.mining = null;
     this.projectiles.clear();
     this.events.push({ type: 'hint', text: FAINTED_HINT });
@@ -544,14 +592,17 @@ export class CraftSimulation {
     this.confirmUse();
   }
 
-  /** Comer recupera vida; com a vida cheia, a comida fica guardada. */
+  /** Comer recupera vida (e energia, na sobrevivência); cheio de tudo, a comida fica guardada. */
   private eat(held: ItemDefinition, heal: number): void {
-    if (this.health.isFull) {
-      this.events.push({ type: 'hint', text: `Sua vida já está cheia. Guarde ${held.name.toLowerCase()} para depois.` });
+    const energy = this.energy;
+
+    if (this.health.isFull && (!energy || energy.isFull)) {
+      this.events.push({ type: 'hint', text: energy ? FULL_HINT : `Sua vida já está cheia. Guarde ${held.name.toLowerCase()} para depois.` });
       return;
     }
 
     this.health.heal(heal);
+    energy?.eat(heal);
 
     if (held.leftover) {
       this.exchangeSelected(held.leftover);
@@ -629,7 +680,9 @@ export class CraftSimulation {
   private startMining(target: RayHit): MiningState | null {
     const block = this.catalog.blockAt(this.world.get(target.x, target.y, target.z));
     const tool = this.selectedItem?.tool ?? null;
-    const durationMs = block ? breakDurationMs(block, tool) : null;
+    const naturalMs = block ? breakDurationMs(block, tool) : null;
+    // No Criativo, tudo que quebra quebra na hora.
+    const durationMs = naturalMs !== null && this.mode === 'creative' ? CREATIVE_BREAK_MS : naturalMs;
 
     if (!block || durationMs === null) {
       return null;
@@ -666,7 +719,18 @@ export class CraftSimulation {
     }
   }
 
+  /** Gasta uma unidade do item da mão: o bloco colocado, a semente, o adubo. No Criativo, nada acaba. */
+  private useUpSelected(): void {
+    if (this.mode !== 'creative') {
+      this.inventory.consume(this.selectedSlot);
+    }
+  }
+
   private wearSelected(held: ItemDefinition): void {
+    if (this.mode === 'creative') {
+      return;
+    }
+
     if (this.inventory.wear(this.selectedSlot)) {
       this.events.push({ type: 'tool-broke', item: held.id });
     }
@@ -730,7 +794,7 @@ export class CraftSimulation {
       return;
     }
 
-    this.inventory.consume(this.selectedSlot);
+    this.useUpSelected();
     this.visualEvents.push({ type: 'sparkle', x: body.x, y: body.y + body.height, z: body.z, color: LOVE_COLOR });
     this.confirmUse();
   }
@@ -745,7 +809,7 @@ export class CraftSimulation {
       return;
     }
 
-    this.inventory.consume(this.selectedSlot);
+    this.useUpSelected();
     this.visualEvents.push({ type: 'sparkle', x: cell.x + 0.5, y: cell.y + 0.5, z: cell.z + 0.5, color: FERTILIZER_COLOR });
     this.confirmUse();
   }
@@ -826,7 +890,7 @@ export class CraftSimulation {
     }
 
     if (this.actions.place(target, held)) {
-      this.inventory.consume(this.selectedSlot);
+      this.useUpSelected();
       this.confirmUse();
     }
   }
@@ -870,7 +934,7 @@ export class CraftSimulation {
 
     if (this.actions.plant(target.x, target.y, target.z, this.catalog.block(crop.block))) {
       this.farm.plant(target.x, target.y + 1, target.z, crop);
-      this.inventory.consume(this.selectedSlot);
+      this.useUpSelected();
       this.confirmUse();
     }
   }

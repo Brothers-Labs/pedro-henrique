@@ -468,6 +468,8 @@ export interface WorldDefinition {
     readonly regenEveryMs: number;
     readonly reach: number;
     readonly invulnerableMs: number;
+    /** Energia do modo Sobrevivência gentil. */
+    readonly energy: { readonly max: number; readonly drainEveryMs: number; readonly lowAt: number };
     readonly startingInventory: readonly ItemAmount[];
   };
 }

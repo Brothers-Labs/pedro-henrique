@@ -224,6 +224,10 @@ export class CraftGameHost {
     this.updateScreen(this.session?.craftRecipe(recipeId) ?? null);
   }
 
+  protected takeCreativeItem(itemId: string): void {
+    this.updateScreen(this.session?.takeCreativeItem(itemId) ?? null);
+  }
+
   protected closeScreen(): void {
     if (this.phase() !== 'screen') {
       return;

@@ -45,6 +45,8 @@ export interface CombatContext {
   wearHeld(held: ItemDefinition): void;
   /** A vida acabou: o herói volta para casa. */
   fainted(): void;
+  /** O herói não leva dano (modo Criativo). */
+  isInvulnerable(): boolean;
 }
 
 /**
@@ -107,7 +109,7 @@ export class Combat {
   hurtHero(amount: number, fromX: number, fromZ: number): void {
     const { health, hero } = this.context;
 
-    if (!health.damage(amount)) {
+    if (this.context.isInvulnerable() || !health.damage(amount)) {
       return;
     }
 

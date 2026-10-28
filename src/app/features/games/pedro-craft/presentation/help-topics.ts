@@ -281,6 +281,21 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Não quer inimigos? Ligue o Modo Paz 🕊️ na pausa ou nas Configurações.',
   },
   {
+    id: 'modos',
+    emoji: '🎮',
+    title: 'Modos de jogo',
+    summary: 'Cada mundo tem um modo, escolhido quando você cria o mundo.',
+    steps: [
+      { text: 'Aventura 🗺️: o jogo de sempre. Colha, construa, cuide da fazenda e da noite.' },
+      { text: 'Criativo 🎨: você não perde vida e não aparecem inimigos. Os blocos nunca acabam e tudo quebra na hora.' },
+      { text: 'No Criativo, abra a mochila e toque em qualquer item para pegar um monte dele.', control: 'backpack' },
+      { text: 'No Criativo, segure o pulo no ar para voar para cima.', control: 'jump' },
+      { text: 'Sobrevivência 🍎: além dos corações, tem a energia 🍗. Ela desce devagar.', items: ['bread'] },
+      { text: 'Comer enche a energia. Se a energia acabar, a vida para de voltar sozinha, mas você nunca perde coração por fome.', control: 'use' },
+    ],
+    tip: 'Comidas feitas, como o bolo e a sopa, enchem mais energia.',
+  },
+  {
     id: 'missoes',
     emoji: '🏆',
     title: 'Missões',

@@ -11,6 +11,16 @@
 /** Versão deste formato. Cada versão nova ganha uma migração em `world/world-save.ts`. */
 export const WORLD_SAVE_VERSION = 1;
 
+/**
+ * Como o mundo se joga, escolhido ao criar:
+ * - `creative`: sem perder vida e sem inimigos, blocos infinitos, voo;
+ * - `adventure`: o jogo de sempre;
+ * - `survival`: com a energia, que pede comida mas nunca tira vida.
+ */
+export const GAME_MODES = ['creative', 'adventure', 'survival'] as const;
+
+export type GameMode = (typeof GAME_MODES)[number];
+
 export interface SavedStack {
   readonly item: string;
   readonly count: number;
@@ -40,6 +50,8 @@ export interface SavedPoint {
 export interface SavedHero extends SavedPoint {
   readonly pitch: number;
   readonly health: number;
+  /** Energia, só no modo Sobrevivência gentil. */
+  readonly energy?: number;
   readonly selectedSlot: number;
   /** Onde volta depois de desmaiar: a cama usada por último, ou o começo do mundo. */
   readonly respawn: SavedPoint;
@@ -116,6 +128,7 @@ export interface WorldIdentity {
   readonly id: string;
   readonly name: string;
   readonly seed: number;
+  readonly mode: GameMode;
   readonly createdAt: string;
 }
 

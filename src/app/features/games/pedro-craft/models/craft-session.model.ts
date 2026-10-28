@@ -60,6 +60,8 @@ export interface CraftHudState {
   readonly health: number;
   readonly maxHealth: number;
   readonly calendar: CalendarView;
+  /** Energia do modo Sobrevivência gentil; `null` nos outros modos. */
+  readonly energy: { readonly value: number; readonly max: number } | null;
   /** O gesto da vez no guia do primeiro minuto; `null` sem guia. */
   readonly firstStep: FirstStep | null;
 }
@@ -105,6 +107,8 @@ export interface ScreenView {
   readonly recipes: readonly RecipeView[];
   readonly chest: readonly (SlotView | null)[] | null;
   readonly furnace: FurnaceView | null;
+  /** Modo Criativo, na mochila: todos os itens do jogo para pegar com um toque. Vazio nos outros casos. */
+  readonly creativeItems: readonly string[];
 }
 
 export type CraftSessionEvent =
@@ -153,6 +157,8 @@ export interface CraftGameSession {
   craftRecipe(recipeId: string): ScreenView | null;
   /** Devolve a grade e a mão à mochila e solta o mundo de novo. */
   closeScreen(): void;
+  /** Modo Criativo: põe uma pilha cheia do item na mochila e devolve a tela atualizada. */
+  takeCreativeItem(itemId: string): ScreenView | null;
   /** Termina o guia do primeiro minuto. */
   skipFirstSteps(): void;
   /** O mundo como está agora, pronto para guardar; `null` enquanto ainda carrega. */

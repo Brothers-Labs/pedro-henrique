@@ -139,3 +139,53 @@
   font-weight: 700;
   color: #4b4470;
 }
+
+/* Modo Criativo: todos os itens numa grade rolável, um toque e a pilha vai para a mochila. */
+.creative {
+  display: grid;
+  gap: 0.4rem;
+  max-width: min(36rem, 100%);
+}
+
+.creative__title {
+  font-size: var(--text-md);
+  color: maker.$ink;
+}
+
+.creative__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--slot-size));
+  gap: 0.25rem;
+  max-height: calc(var(--slot-size) * 3.6);
+  margin: 0;
+  padding: 0.25rem;
+  overflow: auto;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  background: #ffffff;
+  list-style: none;
+}
+
+.creative__item {
+  display: grid;
+  place-items: center;
+  width: var(--slot-size);
+  height: var(--slot-size);
+  padding: 0;
+  border: 2px solid rgb(42 35 80 / 25%);
+  border-radius: 0.5rem;
+  background: #f6efe2;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  &:focus-visible {
+    outline: 3px solid #ffcf3f;
+    outline-offset: 1px;
+  }
+}
+
+.creative__icon {
+  width: 80%;
+  height: 80%;
+  image-rendering: pixelated;
+}

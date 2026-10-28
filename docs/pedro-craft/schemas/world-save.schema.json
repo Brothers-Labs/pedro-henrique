@@ -11,6 +11,11 @@
     "id": { "type": "string", "minLength": 1, "maxLength": 64, "description": "Id do mundo, gerado no aparelho (mundo-<uuid>) ou fixo na Fazenda do Pedro (fazenda)." },
     "name": { "type": "string", "minLength": 1, "maxLength": 32 },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295, "description": "Semente da geração: a mesma semente gera o mesmo mundo, bloco a bloco." },
+    "mode": {
+      "enum": ["creative", "adventure", "survival"],
+      "default": "adventure",
+      "description": "creative = sem perder vida e sem inimigos; adventure = o jogo de sempre; survival = com energia, que nunca tira vida."
+    },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time", "description": "Última vez que o mundo foi salvo. Resolve conflito entre aparelhos: vence o mais recente." },
     "state": {
@@ -61,6 +66,7 @@
           "properties": {
             "pitch": { "type": "number" },
             "health": { "type": "integer", "minimum": 0 },
+            "energy": { "type": "integer", "minimum": 0, "description": "Só no modo Sobrevivência gentil." },
             "selectedSlot": { "type": "integer", "minimum": 0, "maximum": 8 },
             "respawn": { "$ref": "#/$defs/point", "description": "Onde volta depois de desmaiar: a cama usada por último, ou o começo do mundo." }
           }

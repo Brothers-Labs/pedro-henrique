@@ -27,6 +27,7 @@ const savedWorld = (id: string, updatedAt: string): WorldSave => ({
   id,
   name: `Mundo ${id}`,
   seed: 7,
+  mode: 'adventure',
   createdAt: '2026-10-01T10:00:00.000Z',
   updatedAt,
   state: null,
@@ -67,6 +68,21 @@ describe('Mundos guardados do PedroCraft', () => {
     expect(world.state).toBeNull();
     expect(gateway.records.has(world.id)).toBeTrue();
     expect(service.worlds()[0]).toEqual(world);
+  });
+
+  it('guarda o modo escolhido ao criar o mundo', async () => {
+    const world = await service.create('Ilha criativa', 'creative');
+
+    expect(world.mode).toBe('creative');
+  });
+
+  it('um mundo salvo antes dos modos abre como aventura', async () => {
+    const { mode: _mode, ...withoutMode } = savedWorld('antigo', '2026-10-01T10:00:00.000Z');
+
+    gateway.records.set('antigo', withoutMode);
+    await service.load();
+
+    expect(service.worlds()[0].mode).toBe('adventure');
   });
 
   it('não passa do limite de mundos', async () => {

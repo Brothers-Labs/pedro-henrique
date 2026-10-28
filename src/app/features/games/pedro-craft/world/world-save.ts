@@ -12,6 +12,7 @@ import {
   type SavedPlant,
   type SavedPoint,
   type SavedSlot,
+  GAME_MODES,
   WORLD_SAVE_VERSION,
   type WorldSave,
   type WorldState,
@@ -135,6 +136,8 @@ function readSave(root: JsonObjectReader): WorldSave {
     id: root.field('id').string(),
     name: root.field('name').string(),
     seed: root.field('seed').number({ integer: true }),
+    // Mundos de antes dos modos são de aventura, que é o jogo que eles sempre foram.
+    mode: root.optionalField('mode')?.oneOf(GAME_MODES) ?? 'adventure',
     createdAt: readDate(root, 'createdAt'),
     updatedAt: readDate(root, 'updatedAt'),
     state: state ? readState(state.object()) : null,
@@ -185,6 +188,7 @@ function readHero(hero: JsonObjectReader): SavedHero {
     ...readPoint(hero),
     pitch: hero.field('pitch').number({ min: -Math.PI, max: Math.PI }),
     health: hero.field('health').number({ integer: true, min: 0 }),
+    energy: hero.optionalField('energy')?.number({ integer: true, min: 0 }),
     selectedSlot: hero.field('selectedSlot').number({ integer: true, min: 0 }),
     respawn: readPoint(hero.field('respawn').object()),
   };

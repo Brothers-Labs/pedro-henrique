@@ -32,6 +32,7 @@ export function hudState(simulation: CraftSimulation): CraftHudState {
       weather: simulation.weather.current,
     },
     firstStep: simulation.firstSteps?.current ?? null,
+    energy: simulation.energy ? { value: simulation.energy.value, max: simulation.energy.max } : null,
   };
 }
 
@@ -86,6 +87,7 @@ export function screenView(simulation: CraftSimulation): ScreenView | null {
         : null,
     recipes: station ? recipeBook(simulation, station) : [],
     chest: screen.kind === 'chest' ? slots(screen.slots) : null,
+    creativeItems: simulation.mode === 'creative' && screen.kind === 'inventory' ? simulation.catalog.items.map((item) => item.id) : [],
     furnace:
       screen.kind === 'furnace'
         ? {

@@ -40,6 +40,21 @@
       <app-craft-recipe-book class="book" [recipes]="current.recipes" [icons]="icons()" (crafted)="recipeCrafted.emit($event)" />
     }
 
+    @if (current.creativeItems.length > 0) {
+      <section class="creative" aria-labelledby="criativo-titulo">
+        <h3 id="criativo-titulo" class="creative__title"><span aria-hidden="true">🎨</span> Todos os itens: toque para pegar</h3>
+        <ul class="creative__items">
+          @for (item of current.creativeItems; track item) {
+            <li>
+              <button type="button" class="creative__item" [attr.aria-label]="'Pegar ' + icons().name(item)" (click)="creativeTaken.emit(item)">
+                <img class="creative__icon" [src]="icons().url(item)" alt="" />
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     @if (current.chest) {
       <app-craft-slot-grid [entries]="chestEntries()" [columns]="9" label="Baú" [icons]="icons()" (pressed)="press('container', $event)" />
     }

@@ -25,9 +25,9 @@ import type { SlotContent } from './simulation/inventory';
  * já "voltaram para casa".
  */
 export function captureWorld(simulation: CraftSimulation, identity: WorldIdentity, updatedAt: string): WorldSave {
-  const { id, name, seed, createdAt } = identity;
+  const { id, name, seed, mode, createdAt } = identity;
 
-  return { version: WORLD_SAVE_VERSION, id, name, seed, createdAt, updatedAt, state: captureState(simulation) };
+  return { version: WORLD_SAVE_VERSION, id, name, seed, mode, createdAt, updatedAt, state: captureState(simulation) };
 }
 
 /**
@@ -52,6 +52,11 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
   simulation.selectedSlot = state.hero.selectedSlot;
   simulation.respawnPoint = state.hero.respawn;
   simulation.health.set(state.hero.health);
+
+  if (state.hero.energy !== undefined) {
+    simulation.energy?.set(state.hero.energy);
+  }
+
   simulation.setCalendarDay(state.day ?? 1);
   simulation.clock.setTime(state.clockMs);
 
@@ -109,6 +114,7 @@ function captureState(simulation: CraftSimulation): WorldState {
       yaw: hero.yaw,
       pitch: hero.pitch,
       health: health.value,
+      energy: simulation.energy?.value,
       selectedSlot: simulation.selectedSlot,
       respawn: { x: respawn.x, y: respawn.y, z: respawn.z, yaw: respawn.yaw },
     },

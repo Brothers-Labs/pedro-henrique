@@ -71,11 +71,14 @@ export class HeroHealth {
     this.regenLeftMs = this.settings.regenEveryMs;
   }
 
-  /** Passa o tempo; devolve se a vida mudou (para a tela redesenhar os corações). */
-  step(elapsedMs: number): boolean {
+  /**
+   * Passa o tempo; devolve se a vida mudou (para a tela redesenhar os
+   * corações). Sem `canRegenerate` (a energia acabou), a vida só não volta.
+   */
+  step(elapsedMs: number, canRegenerate = true): boolean {
     this.invulnerableLeftMs = Math.max(0, this.invulnerableLeftMs - elapsedMs);
 
-    if (this.isFull || this.isDepleted) {
+    if (!canRegenerate || this.isFull || this.isDepleted) {
       return false;
     }
 

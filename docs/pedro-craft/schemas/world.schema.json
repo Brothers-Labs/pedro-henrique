@@ -152,13 +152,24 @@
     },
     "hero": {
       "type": "object",
-      "required": ["maxHealth", "regenEveryMs", "reach", "invulnerableMs", "startingInventory"],
+      "required": ["maxHealth", "regenEveryMs", "reach", "invulnerableMs", "energy", "startingInventory"],
       "additionalProperties": false,
       "properties": {
         "maxHealth": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Em corações." },
         "regenEveryMs": { "type": "integer", "minimum": 500 },
         "reach": { "type": "number", "minimum": 2, "maximum": 8 },
         "invulnerableMs": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "energy": {
+          "type": "object",
+          "required": ["max", "drainEveryMs", "lowAt"],
+          "additionalProperties": false,
+          "description": "Energia do modo Sobrevivência gentil: desce com o tempo, sobe comendo e nunca tira vida.",
+          "properties": {
+            "max": { "type": "integer", "minimum": 1, "maximum": 20 },
+            "drainEveryMs": { "type": "integer", "minimum": 10000 },
+            "lowAt": { "type": "integer", "minimum": 0 }
+          }
+        },
         "startingInventory": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/itemAmount" } }
       }
     }

@@ -93,6 +93,56 @@
   }
 }
 
+.modes {
+  display: grid;
+  flex-basis: 100%;
+  gap: 0.5rem;
+
+  @include from($breakpoint-md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mode {
+  @include touch-target(3rem);
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  font: inherit;
+  text-align: left;
+  color: maker.$ink;
+  cursor: pointer;
+
+  &--active {
+    background: #ffcf3f;
+    box-shadow: 0 0 0 2px maker.$ink;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.mode__emoji {
+  grid-row: span 2;
+  align-self: center;
+  font-size: 1.8rem;
+}
+
+.mode__name {
+  font-weight: 800;
+}
+
+.mode__summary {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 .worlds {
   display: grid;
   gap: 0.75rem;

@@ -2,9 +2,18 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink } from '@angular/router';
 
 import { CraftPageFrame } from '../../components/craft-page-frame/craft-page-frame';
-import type { WorldSave } from '../../models/world-save.model';
+import type { GameMode, WorldSave } from '../../models/world-save.model';
 import { CraftWorldsService, EXPLORATION_WORLD, MAX_WORLDS } from '../../services/craft-worlds.service';
 import { WORLD_NAME_MAX_LENGTH } from '../../world/world-save';
+
+/** Os modos como a criança escolhe: figura, nome e o que muda, em uma frase. */
+const MODES: readonly { readonly id: GameMode; readonly emoji: string; readonly name: string; readonly summary: string }[] = [
+  { id: 'adventure', emoji: '🗺️', name: 'Aventura', summary: 'O jogo de sempre: colher, construir e cuidar da fazenda.' },
+  { id: 'creative', emoji: '🎨', name: 'Criativo', summary: 'Todos os blocos, sem inimigos e dá para voar. Só construir!' },
+  { id: 'survival', emoji: '🍎', name: 'Sobrevivência', summary: 'Com energia: lembre de comer. A energia nunca tira vida.' },
+];
+
+const MODE_NAMES: Readonly<Record<GameMode, string>> = { adventure: '🗺️ Aventura', creative: '🎨 Criativo', survival: '🍎 Sobrevivência' };
 
 const SAVED_AT = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
@@ -36,7 +45,10 @@ export class CraftHomePage {
   protected readonly latest = computed<WorldSave | null>(() => this.worlds()[0] ?? null);
   protected readonly suggestedName = computed(() => this.worldsService.suggestedName());
 
+  protected readonly modes = MODES;
+  protected readonly modeNames = MODE_NAMES;
   protected readonly newName = signal('');
+  protected readonly newMode = signal<GameMode>('adventure');
   protected readonly isCreating = signal(false);
   protected readonly pendingDeletion = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
@@ -64,7 +76,7 @@ export class CraftHomePage {
     this.problem.set(null);
 
     try {
-      const world = await this.worldsService.create(this.newName());
+      const world = await this.worldsService.create(this.newName(), this.newMode());
 
       await this.router.navigate(['/jogos/pedro-craft/jogar', world.id]);
     } catch (error) {

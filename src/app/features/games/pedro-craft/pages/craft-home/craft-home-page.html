@@ -37,6 +37,22 @@
           [value]="newName()"
           (input)="updateName($event)"
         />
+        <div class="modes" role="radiogroup" aria-label="Modo de jogo">
+          @for (mode of modes; track mode.id) {
+            <button
+              type="button"
+              class="mode"
+              role="radio"
+              [attr.aria-checked]="newMode() === mode.id"
+              [class.mode--active]="newMode() === mode.id"
+              (click)="newMode.set(mode.id)"
+            >
+              <span class="mode__emoji" aria-hidden="true">{{ mode.emoji }}</span>
+              <span class="mode__name">{{ mode.name }}</span>
+              <span class="mode__summary">{{ mode.summary }}</span>
+            </button>
+          }
+        </div>
         <button type="submit" class="create__button" data-tone="orange" [disabled]="isCreating()">
           <span aria-hidden="true">🌱</span> Criar mundo
         </button>
@@ -69,7 +85,7 @@
               <li class="world">
                 <div class="world__body">
                   <h3 class="world__name">{{ world.name }}</h3>
-                  <p class="world__meta">{{ savedAt(world) }}</p>
+                  <p class="world__meta">{{ modeNames[world.mode] }} · {{ savedAt(world) }}</p>
                 </div>
 
                 @if (pendingDeletion() === world.id) {

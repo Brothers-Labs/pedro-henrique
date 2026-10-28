@@ -2,7 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { createId } from '../../../../core/utils/format';
 import { seedFromText } from '../../pedro-maker/levels/seeded-random';
-import { WORLD_SAVE_VERSION, type WorldSave } from '../models/world-save.model';
+import { type GameMode, WORLD_SAVE_VERSION, type WorldSave } from '../models/world-save.model';
 import { normalizeWorldName, parseWorldSave } from '../world/world-save';
 import { WORLD_SAVE_GATEWAY } from './world-save.gateway';
 
@@ -74,14 +74,14 @@ export class CraftWorldsService {
   }
 
   /** Um mundo novo, de semente sorteada, ainda sem nada jogado. */
-  async create(name: string): Promise<WorldSave> {
+  async create(name: string, mode: GameMode = 'adventure'): Promise<WorldSave> {
     await this.load();
 
     if (!this.canCreate()) {
       throw new Error(`PedroCraft: o aparelho já guarda ${MAX_WORLDS} mundos.`);
     }
 
-    return this.store(newWorld(createId('mundo'), normalizeWorldName(name, this.suggestedName()), randomSeed()));
+    return this.store(newWorld(createId('mundo'), normalizeWorldName(name, this.suggestedName()), randomSeed(), mode));
   }
 
   /** A Fazenda do Pedro: abre a que existe, ou nasce de novo com a mesma semente de sempre. */
@@ -92,7 +92,7 @@ export class CraftWorldsService {
       return lookup.save;
     }
 
-    return this.store(newWorld(EXPLORATION_WORLD.id, EXPLORATION_WORLD.name, seedFromText(EXPLORATION_WORLD.id)));
+    return this.store(newWorld(EXPLORATION_WORLD.id, EXPLORATION_WORLD.name, seedFromText(EXPLORATION_WORLD.id), 'adventure'));
   }
 
   /** Guarda o mundo e o põe no topo da lista. */
@@ -141,10 +141,10 @@ export class CraftWorldsService {
   }
 }
 
-function newWorld(id: string, name: string, seed: number): WorldSave {
+function newWorld(id: string, name: string, seed: number, mode: GameMode): WorldSave {
   const now = new Date().toISOString();
 
-  return { version: WORLD_SAVE_VERSION, id, name, seed, createdAt: now, updatedAt: now, state: null };
+  return { version: WORLD_SAVE_VERSION, id, name, seed, mode, createdAt: now, updatedAt: now, state: null };
 }
 
 /** Semente de 32 bits do gerador do navegador: dois mundos novos quase nunca saem iguais. */

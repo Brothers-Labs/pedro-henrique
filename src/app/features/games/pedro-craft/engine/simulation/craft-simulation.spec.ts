@@ -580,4 +580,88 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(icon('sleep')).toBe('bed');
     });
   });
+  describe('modos de jogo', () => {
+    const withMode = (mode: 'creative' | 'survival'): CraftSimulation =>
+      new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        mode,
+      });
+
+    const steps = (running: CraftSimulation, count: number, input: Partial<CraftInputSnapshot> = {}): void => {
+      for (let step = 0; step < count; step += 1) {
+        running.step({ ...IDLE_CRAFT_INPUT, ...input });
+      }
+    };
+
+    it('criativo: o bloco colocado não acaba e quebrar é na hora', () => {
+      const creative = withMode('creative');
+
+      put('stone');
+      creative.inventory.slots[0] = { item: 'oak-planks', count: 1, durability: null };
+      steps(creative, 1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('oak-planks'));
+      expect(creative.inventory.slots[0]?.count).toBe(1);
+
+      steps(creative, 5, { primaryHeld: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+    });
+
+    it('criativo: o espantalho não tira vida, e pegar item da lista enche a mochila', () => {
+      const creative = withMode('creative');
+
+      creative.clock.advance(catalog.world.clock.dayMs);
+      creative.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      steps(creative, 120);
+
+      expect(creative.health.isFull).toBeTrue();
+
+      creative.giveCreativeItem('diamond-que-nao-existe');
+      creative.giveCreativeItem('glass');
+
+      expect(creative.inventory.count('glass')).toBe(catalog.item('glass').maxStack);
+    });
+
+    it('criativo: segurar o pulo no ar faz voar', () => {
+      const creative = withMode('creative');
+
+      steps(creative, 60, { jumpHeld: true });
+
+      expect(creative.hero.body.y).toBeGreaterThan(FLOOR_TOP + 2);
+    });
+
+    it('sobrevivência: sem energia a vida não volta, mas nunca diminui', () => {
+      const survival = withMode('survival');
+      const energy = survival.energy;
+
+      expect(energy).not.toBeNull();
+      energy?.set(0);
+      survival.health.damage(2);
+      steps(survival, Math.ceil(catalog.world.hero.regenEveryMs / (1000 / 60)) * 2);
+
+      expect(survival.health.value).toBe(catalog.world.hero.maxHealth - 2);
+    });
+
+    it('sobrevivência: comer enche a energia mesmo com a vida cheia', () => {
+      const survival = withMode('survival');
+
+      survival.energy?.set(4);
+      survival.inventory.slots[0] = { item: 'bread', count: 2, durability: null };
+      steps(survival, 1, { secondaryPressed: true });
+
+      expect(survival.energy?.value).toBe(4 + (catalog.item('bread').heal ?? 0));
+      expect(survival.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('aventura: não há energia', () => {
+      expect(simulation.energy).toBeNull();
+      expect(simulation.mode).toBe('adventure');
+    });
+  });
 });
