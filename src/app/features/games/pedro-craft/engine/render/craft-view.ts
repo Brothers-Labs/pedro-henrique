@@ -5,6 +5,7 @@ import { nextTask } from '../next-task';
 import type { CraftSimulation } from '../simulation/craft-simulation';
 import { BlockAtlas } from './block-atlas';
 import type { CraftStage } from './craft-stage';
+import { CreaturesView } from './creatures-view';
 import { DropsView } from './drops-view';
 import { HandView } from './hand-view';
 import { ItemTextures } from './item-textures';
@@ -19,7 +20,7 @@ const CHUNKS_PER_LOADING_BATCH = 4;
 const UNDERWATER_COLOR = new Color('#1f5f9e');
 
 /**
- * Tudo o que se vê: o mundo de blocos, os itens caídos, a mira e a mão.
+ * Tudo o que se vê: o mundo de blocos, os animais, os itens caídos, a mira e a mão.
  *
  * Só lê a simulação. A câmera fica entre a posição do passo anterior e a do
  * atual (`alpha`), o que deixa o movimento liso mesmo com a tela mais rápida
@@ -32,6 +33,7 @@ export class CraftView {
   private readonly worldView: WorldView;
   private readonly itemTextures: ItemTextures;
   private readonly dropsView: DropsView;
+  private readonly creaturesView: CreaturesView;
   private readonly targetView: TargetView;
   private readonly handView: HandView;
   private readonly particles: ParticlesView;
@@ -50,10 +52,11 @@ export class CraftView {
       this.atlas,
       this.daylight,
       simulation.catalog.world.chunkSize,
-      () => 0,
+      (x, y, z) => simulation.farm.stageAt(x, y, z),
     );
     this.itemTextures = new ItemTextures(simulation.catalog);
     this.dropsView = new DropsView(stage.scene, this.itemTextures);
+    this.creaturesView = new CreaturesView(stage.scene, this.daylight);
     this.targetView = new TargetView(stage.scene);
     this.handView = new HandView(stage.camera, this.itemTextures);
     this.particles = new ParticlesView(stage.scene);
@@ -93,6 +96,7 @@ export class CraftView {
     this.updateUnderwater();
     this.worldView.rebuild();
     this.dropsView.update(simulation.drops.list);
+    this.creaturesView.update(simulation.creatures.list, alpha, frameMs);
     this.targetView.update(simulation.target, simulation.miningProgress);
     this.handView.update(simulation.selectedItem?.id ?? null, simulation.mining !== null, frameMs);
     this.particles.update(frameMs);
@@ -107,6 +111,7 @@ export class CraftView {
   dispose(): void {
     this.worldView.dispose();
     this.dropsView.dispose();
+    this.creaturesView.dispose();
     this.targetView.dispose();
     this.handView.dispose();
     this.particles.dispose();
@@ -125,6 +130,15 @@ export class CraftView {
             const block = this.simulation.catalog.blockAt(event.block);
 
             this.particles.burst(event.x, event.y, event.z, block?.mapColor ?? '#8f969e');
+          }
+          break;
+        case 'crop-grew':
+          this.worldView.markCell(event.x, event.y, event.z);
+          break;
+        case 'creature-defeated':
+          if (this.effectsEnabled) {
+            // A nuvem nasce centrada no animal; `burst` espalha a partir do canto de uma célula.
+            this.particles.burst(event.x - 0.5, event.y, event.z - 0.5, event.color);
           }
           break;
       }

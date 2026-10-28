@@ -13,6 +13,7 @@
     "sand": "sand",
     "gravel": "gravel",
     "water": "water",
+    "flowingWater": "flowing-water",
     "bedrock": "bedrock",
     "log": "oak-log",
     "leaves": "oak-leaves",

@@ -19,7 +19,7 @@
     "seaLevel": { "type": "integer", "minimum": 2 },
     "blocks": {
       "type": "object",
-      "required": ["surface", "soil", "stone", "sand", "gravel", "water", "bedrock", "log", "leaves", "farmland", "decorations"],
+      "required": ["surface", "soil", "stone", "sand", "gravel", "water", "flowingWater", "bedrock", "log", "leaves", "farmland", "decorations"],
       "additionalProperties": false,
       "properties": {
         "surface": { "$ref": "common.schema.json#/$defs/id" },
@@ -28,6 +28,7 @@
         "sand": { "$ref": "common.schema.json#/$defs/id" },
         "gravel": { "$ref": "common.schema.json#/$defs/id" },
         "water": { "$ref": "common.schema.json#/$defs/id" },
+        "flowingWater": { "$ref": "common.schema.json#/$defs/id", "description": "Água que escorreu de uma nascente; o balde não a pega e o save não a guarda." },
         "bedrock": { "$ref": "common.schema.json#/$defs/id" },
         "log": { "$ref": "common.schema.json#/$defs/id" },
         "leaves": { "$ref": "common.schema.json#/$defs/id" },

@@ -333,6 +333,17 @@
       "textures": { "all": { "pattern": "water", "colors": ["#2f8fe0", "#7cc6ff"] } }
     },
     {
+      "id": "flowing-water",
+      "name": "Água corrente",
+      "shape": "liquid",
+      "solid": false,
+      "transparent": true,
+      "hardness": null,
+      "replaceable": true,
+      "mapColor": "#2f8fe0",
+      "textures": { "all": { "pattern": "water", "colors": ["#2f8fe0", "#7cc6ff"] } }
+    },
+    {
       "id": "bedrock",
       "name": "Rocha-mãe",
       "shape": "cube",

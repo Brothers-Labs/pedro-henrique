@@ -41,6 +41,11 @@ export class VoxelWorld {
     return y * this.layerSize + z * this.width + x;
   }
 
+  /** O caminho de volta de `indexOf`: a posição de uma célula guardada pelo número. */
+  positionOf(index: number): { readonly x: number; readonly y: number; readonly z: number } {
+    return { x: index % this.width, y: Math.floor(index / this.layerSize), z: Math.floor(index / this.width) % this.depth };
+  }
+
   get(x: number, y: number, z: number): number {
     return this.contains(x, y, z) ? this.cells[this.indexOf(x, y, z)] : AIR;
   }

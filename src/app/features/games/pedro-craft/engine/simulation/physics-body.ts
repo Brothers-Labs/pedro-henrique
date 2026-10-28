@@ -51,6 +51,18 @@ export class PhysicsBody {
     this.velocityZ = 0;
   }
 
+  /** O corpo invade a caixa? Um bloco novo ou uma árvore que cresce ali o prenderiam. */
+  occupies(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number): boolean {
+    return (
+      this.x + this.halfWidth > minX &&
+      this.x - this.halfWidth < maxX &&
+      this.z + this.halfWidth > minZ &&
+      this.z - this.halfWidth < maxZ &&
+      this.y + this.height > minY &&
+      this.y < maxY
+    );
+  }
+
   /** Anda o quanto der em cada eixo e conta o que bateu. */
   move(terrain: PhysicsTerrain, deltaX: number, deltaY: number, deltaZ: number): MoveResult {
     const movedY = this.sweep(terrain, 1, deltaY);

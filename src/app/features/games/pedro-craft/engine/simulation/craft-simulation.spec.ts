@@ -3,6 +3,7 @@ import { loadTestCatalog } from '../../testing/craft-test-content';
 import { VoxelWorld } from '../../world/voxel-world';
 import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
 import { CraftSimulation } from './craft-simulation';
+import type { Creature } from './creatures';
 import type { SimulationEvent } from './simulation-events';
 
 /** Olhando para +x, na altura dos olhos: a mira cai no bloco (7, 4, 5). */
@@ -186,5 +187,172 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     for (const entry of catalog.world.hero.startingInventory) {
       expect(fresh.inventory.count(entry.item)).toBe(entry.count);
     }
+  });
+
+  describe('água e fazenda', () => {
+    const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
+
+    it('a enxada ara a grama e gasta um uso', () => {
+      put('grass');
+      hold('wooden-hoe');
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('farmland'));
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('wooden-hoe').durability ?? 0) - 1);
+    });
+
+    it('a enxada não ara a grama coberta', () => {
+      put('grass');
+      put('stone', TARGET.x, TARGET.y + 1);
+      hold('wooden-hoe');
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('grass'));
+    });
+
+    it('planta a semente na terra arada e gasta uma', () => {
+      put('farmland');
+      simulation.inventory.slots[0] = { item: 'wheat-seeds', count: 3, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(above()).toBe(catalog.blockNumber('wheat-crop'));
+      expect(simulation.farm.plants.size).toBe(1);
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+    });
+
+    it('no solo errado, não planta e conta onde a semente cresce', () => {
+      put('stone');
+      simulation.inventory.slots[0] = { item: 'wheat-seeds', count: 3, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(above()).toBe(AIR);
+      expect(events).toContain({ type: 'hint', text: 'Sementes de trigo: plante em terra arada.' });
+    });
+
+    it('colhe o trigo maduro e conta para a missão', () => {
+      put('farmland', TARGET.x, TARGET.y - 1);
+      put('wheat-crop');
+      simulation.farm.plant(TARGET.x, TARGET.y, TARGET.z, catalog.crop('wheat'));
+      simulation.farm.step(catalog.crop('wheat').stageMs * catalog.crop('wheat').stages);
+      const record = spyOn(simulation.goals, 'record').and.callThrough();
+      run(10, { primaryHeld: true });
+      // A colheita pula longe do ímã de quem está parado: o herói anda até ela.
+      run(90, { forward: 1 });
+
+      expect(simulation.inventory.count('wheat')).toBe(1);
+      expect(record).toHaveBeenCalledWith({ trigger: 'harvest', target: 'wheat', count: 1 });
+    });
+
+    it('o trigo verde só devolve a semente', () => {
+      put('farmland', TARGET.x, TARGET.y - 1);
+      put('wheat-crop');
+      simulation.farm.plant(TARGET.x, TARGET.y, TARGET.z, catalog.crop('wheat'));
+      run(200, { primaryHeld: true });
+
+      expect(simulation.inventory.count('wheat')).toBe(0);
+      expect(simulation.inventory.count('wheat-seeds')).toBe(1);
+    });
+
+    it('o balde vazio pega a água parada e continua na mão, cheio', () => {
+      put('water');
+      hold('bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x, TARGET.y, TARGET.z)).not.toBe(catalog.blockNumber('water'));
+      expect(simulation.inventory.slots[0]?.item).toBe('water-bucket');
+    });
+
+    it('de uma pilha de baldes, o balde cheio vai para a mochila', () => {
+      put('water');
+      simulation.inventory.slots[0] = { item: 'bucket', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]).toEqual({ item: 'bucket', count: 1, durability: null });
+      expect(simulation.inventory.count('water-bucket')).toBe(1);
+    });
+
+    it('o balde não pega água corrente e explica o porquê', () => {
+      put('flowing-water');
+      hold('bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.item).toBe('bucket');
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('o balde cheio despeja uma nascente na face mirada e volta a ser balde', () => {
+      put('stone');
+      hold('water-bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('water'));
+      expect(simulation.inventory.slots[0]?.item).toBe('bucket');
+    });
+  });
+
+  describe('animais', () => {
+    /** Um animal parado logo à frente, com o olhar um pouco para baixo para mirar nele. */
+    const placeAnimal = (id: string): Creature => {
+      const creature = simulation.creatures.spawn(catalog.creature(id), TARGET.x + 0.5, FLOOR_TOP, TARGET.z + 0.5);
+
+      creature.moodLeftMs = 60_000;
+      simulation.hero.look(0, -0.3);
+
+      return creature;
+    };
+
+    const droppedCount = (item: string): number =>
+      simulation.drops.list.filter((drop) => drop.stack.item === item).reduce((sum, drop) => sum + drop.stack.count, 0);
+
+    it('mira o animal à frente em vez do chão', () => {
+      const sheep = placeAnimal('sheep');
+      run(1);
+
+      expect(simulation.targetCreature).toBe(sheep);
+      expect(simulation.target).toBeNull();
+    });
+
+    it('a tesoura tosquia a ovelha: cai lã, a tesoura gasta e a lã some até crescer de novo', () => {
+      const sheep = placeAnimal('sheep');
+      hold('shears');
+      run(1, { secondaryPressed: true });
+
+      expect(droppedCount('wool')).toBeGreaterThanOrEqual(1);
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('shears').durability ?? 0) - 1);
+      expect(sheep.isCoolingDown).toBeTrue();
+
+      run(1, { secondaryPressed: true });
+
+      expect(events).toContain({ type: 'hint', text: 'Ovelha: espere um pouquinho e tente de novo.' });
+    });
+
+    it('o balde vazio na vaca vira balde de leite', () => {
+      placeAnimal('cow');
+      hold('bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.item).toBe('milk-bucket');
+    });
+
+    it('a mão tira um pouco de vida, e o animal foge', () => {
+      const sheep = placeAnimal('sheep');
+      run(1, { primaryPressed: true, primaryHeld: true });
+
+      expect(sheep.health).toBe(catalog.creature('sheep').health - 1);
+      expect(sheep.mood).toBe('flee');
+      expect(simulation.mining).toBeNull();
+    });
+
+    it('a espada derrota a ovelha: ela solta lã, a espada gasta e a missão conta', () => {
+      const sheep = placeAnimal('sheep');
+      const record = spyOn(simulation.goals, 'record').and.callThrough();
+      hold('iron-sword');
+      run(1, { primaryPressed: true });
+
+      expect(simulation.creatures.list).not.toContain(sheep);
+      expect(droppedCount('wool')).toBe(1);
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('iron-sword').durability ?? 0) - 1);
+      expect(record).toHaveBeenCalledWith({ trigger: 'defeat', target: 'sheep', count: 1 });
+    });
   });
 });

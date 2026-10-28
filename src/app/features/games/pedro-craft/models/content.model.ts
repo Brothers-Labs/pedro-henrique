@@ -374,7 +374,10 @@ export interface WorldBlocks {
   readonly stone: string;
   readonly sand: string;
   readonly gravel: string;
+  /** A nascente: a água do lago, do riacho e do balde. */
   readonly water: string;
+  /** Água que escorreu de uma nascente; nasce e some sozinha, sem ir para o save. */
+  readonly flowingWater: string;
   readonly bedrock: string;
   readonly log: string;
   readonly leaves: string;
