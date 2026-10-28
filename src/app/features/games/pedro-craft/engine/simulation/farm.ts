@@ -85,6 +85,28 @@ export class Farm {
     return { crop: plant.crop, loot: plant.crop.mature.loot };
   }
 
+  /**
+   * O adubo: a planta da célula pula `stages` estágios; a muda pronta vira
+   * árvore na hora. Devolve se havia o que adubar — planta pronta para colher
+   * não gasta adubo.
+   */
+  fertilize(x: number, y: number, z: number, stages: number): boolean {
+    const plant = this.plants.get(this.world.indexOf(x, y, z));
+
+    if (!plant) {
+      return false;
+    }
+
+    if (!isLastStage(plant)) {
+      plant.stage = Math.min(plant.crop.stages - 1, plant.stage + stages);
+      plant.elapsedMs = 0;
+      this.host.grew(x, y, z);
+      return true;
+    }
+
+    return plant.crop.mature.type === 'tree' && this.growTree(x, y, z, plant.crop.mature);
+  }
+
   step(elapsedMs: number): void {
     this.elapsedMs += elapsedMs;
 
@@ -122,8 +144,8 @@ export class Farm {
     }
   }
 
-  /** A muda vira árvore. Com alguém no caminho, ela tenta de novo na próxima vez. */
-  private growTree(x: number, y: number, z: number, tree: Extract<CropMaturity, { type: 'tree' }>): void {
+  /** A muda vira árvore. Com alguém no caminho, ela tenta de novo na próxima vez. Devolve se cresceu. */
+  private growTree(x: number, y: number, z: number, tree: Extract<CropMaturity, { type: 'tree' }>): boolean {
     const height = this.random.integer(tree.minHeight, tree.maxHeight);
     const isBlocked = this.host.isOccupied(
       x - CANOPY_RADIUS,
@@ -135,7 +157,7 @@ export class Farm {
     );
 
     if (isBlocked) {
-      return;
+      return false;
     }
 
     const world = this.world;
@@ -150,6 +172,8 @@ export class Farm {
       { log: this.catalog.blockNumber(tree.log), leaves: this.catalog.blockNumber(tree.leaves), height },
       this.random,
     );
+
+    return true;
   }
 
   private isWatered(x: number, y: number, z: number): boolean {

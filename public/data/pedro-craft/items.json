@@ -26,6 +26,10 @@
     { "id": "flower-yellow", "name": "Flor amarela", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "flower-yellow" }, "places": "flower-yellow" },
     { "id": "oak-sapling", "name": "Muda de carvalho", "kind": "seed", "maxStack": 64, "icon": { "type": "block", "block": "oak-sapling" }, "plants": "oak-tree" },
     { "id": "wheat-seeds", "name": "Sementes de trigo", "kind": "seed", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#7cbf3a", "#c9a54a"] }, "plants": "wheat" },
+    { "id": "beetroot-seeds", "name": "Sementes de beterraba", "kind": "seed", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#b8344a", "#7a2235"] }, "plants": "beetroot" },
+    { "id": "pumpkin-seeds", "name": "Sementes de abóbora", "kind": "seed", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#f0d9a0", "#e5c44a"] }, "plants": "pumpkin" },
+    { "id": "melon-seeds", "name": "Sementes de melancia", "kind": "seed", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#2b2b2b", "#5b4326"] }, "plants": "melon" },
+    { "id": "sugar-cane", "name": "Cana-de-açúcar", "kind": "seed", "maxStack": 64, "icon": { "type": "sprite", "shape": "cane", "colors": ["#9ccc65", "#6b9b37"] }, "plants": "sugar-cane" },
 
     { "id": "wooden-pickaxe", "name": "Picareta de madeira", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#c08a50"] }, "tool": { "type": "pickaxe", "tier": 1, "speed": 2 }, "durability": 60, "damage": 2, "attackCooldownMs": 600 },
     { "id": "stone-pickaxe", "name": "Picareta de pedra", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#8f969e"] }, "tool": { "type": "pickaxe", "tier": 2, "speed": 4 }, "durability": 132, "damage": 3, "attackCooldownMs": 600 },
@@ -63,6 +67,14 @@
     { "id": "bread", "name": "Pão", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "bread", "colors": ["#d9953f", "#b5702a"] }, "heal": 5 },
     { "id": "carrot", "name": "Cenoura", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "carrot", "colors": ["#ff8c1a", "#4caf50"] }, "heal": 3, "plants": "carrot" },
     { "id": "fried-egg", "name": "Ovo frito", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "fried-egg", "colors": ["#ffffff", "#ffc629"] }, "heal": 3 },
+    { "id": "potato", "name": "Batata", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "potato", "colors": ["#c9a063", "#a07a45"] }, "heal": 1, "plants": "potato" },
+    { "id": "baked-potato", "name": "Batata assada", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "potato", "colors": ["#e0b25a", "#a0682a"] }, "heal": 4 },
+    { "id": "beetroot", "name": "Beterraba", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "beetroot", "colors": ["#b8344a", "#4caf50"] }, "heal": 1 },
+    { "id": "beetroot-soup", "name": "Sopa de beterraba", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "bowl", "colors": ["#8a5a32", "#b8344a"] }, "heal": 6, "leftover": "bowl" },
+    { "id": "melon-slice", "name": "Fatia de melancia", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "melon-slice", "colors": ["#e53935", "#4caf50"] }, "heal": 2 },
+    { "id": "sunflower-seeds", "name": "Sementes de girassol", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#3d3d3d", "#f4f1e8"] }, "heal": 1, "plants": "sunflower" },
+    { "id": "pumpkin-pie", "name": "Torta de abóbora", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "pie", "colors": ["#d9953f", "#ff8c1a"] }, "heal": 6 },
+    { "id": "cake", "name": "Bolo", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "cake", "colors": ["#fff5e6", "#ff7aa8"] }, "heal": 8 },
 
     { "id": "wheat", "name": "Trigo", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "wheat", "colors": ["#e5c44a", "#c9a03a"] } },
     { "id": "egg", "name": "Ovo", "kind": "material", "maxStack": 16, "icon": { "type": "sprite", "shape": "egg", "colors": ["#f7efe0"] } },
@@ -71,6 +83,11 @@
     { "id": "iron-ingot", "name": "Barra de ferro", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "ingot", "colors": ["#e6e9ee", "#b9c0c8"] } },
     { "id": "gold-ingot", "name": "Barra de ouro", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "ingot", "colors": ["#f5c542", "#d9a21f"] } },
     { "id": "feather", "name": "Pena", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "feather", "colors": ["#ffffff", "#d9d9d9"] } },
-    { "id": "string", "name": "Linha", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "string", "colors": ["#f4f4f4"] } }
+    { "id": "string", "name": "Linha", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "string", "colors": ["#f4f4f4"] } },
+    { "id": "pumpkin", "name": "Abóbora", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "pumpkin", "colors": ["#ff8c1a", "#4caf50"] } },
+    { "id": "sugar", "name": "Açúcar", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "powder", "colors": ["#ffffff", "#d9dde3"] } },
+    { "id": "bowl", "name": "Tigela", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "bowl", "colors": ["#8a5a32"] } },
+    { "id": "bone", "name": "Osso", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "bone", "colors": ["#f4f1e8"] } },
+    { "id": "fertilizer", "name": "Adubo", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "powder", "colors": ["#9c7a4a", "#7cbf3a"] }, "fertilizer": 1 }
   ]
 }

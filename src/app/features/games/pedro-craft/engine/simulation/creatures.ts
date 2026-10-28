@@ -56,6 +56,18 @@ const FALLOUT_Y = -8;
 /** Um golpe joga o bicho um pouco para cima, além de para trás. */
 const KNOCKBACK_LIFT = 4;
 
+/** Quanto tempo o animal alimentado fica procurando par para ter filhote. */
+const LOVE_MS = 30_000;
+
+/** Distância em que dois animais apaixonados se encontram. */
+const LOVE_RANGE = 8;
+
+/** Depois de um filhote, o casal descansa este tanto antes de outro. */
+const BREED_REST_MS = 5 * 60 * 1000;
+
+/** Teto de animais com os filhotes: o dobro do que nasce sozinho, para o mundo não lotar. */
+const BREED_CAP_FACTOR = 2;
+
 export type CreatureMood = 'idle' | 'wander' | 'flee' | 'chase';
 
 /** Um bicho no mundo: corpo, vida, humor e o que ele ainda está esperando para repetir. */
@@ -74,6 +86,12 @@ export class Creature {
   attackLeftMs = 0;
   /** Tempo de descanso no chão entre dois pulos. */
   hopLeftMs = 0;
+  /** Filhote enquanto for maior que zero: o tempo que falta para crescer. */
+  growLeftMs = 0;
+  /** Alimentado e procurando par. */
+  loveLeftMs = 0;
+  /** Descanso depois de ter um filhote. */
+  breedRestMs = 0;
 
   /** Espera de cada interação, pelo item usado (a lã crescendo de volta). */
   private readonly cooldowns = new Map<string, number>();
@@ -97,6 +115,15 @@ export class Creature {
 
   get isHostile(): boolean {
     return this.definition.temperament === 'hostile';
+  }
+
+  get isBaby(): boolean {
+    return this.growLeftMs > 0;
+  }
+
+  /** Pode comer para ter filhote agora? Precisa ser adulto, sem estar descansando nem já apaixonado. */
+  get canBreed(): boolean {
+    return this.definition.breedsWith !== null && !this.isBaby && this.loveLeftMs === 0 && this.breedRestMs === 0;
   }
 
   /** Alguma interação ainda está esperando: a ovelha tosquiada fica sem lã até lá. */
@@ -127,6 +154,9 @@ export class Creature {
   tickCooldowns(elapsedMs: number): void {
     this.attackLeftMs = Math.max(0, this.attackLeftMs - elapsedMs);
     this.hopLeftMs = Math.max(0, this.hopLeftMs - elapsedMs);
+    this.growLeftMs = Math.max(0, this.growLeftMs - elapsedMs);
+    this.loveLeftMs = Math.max(0, this.loveLeftMs - elapsedMs);
+    this.breedRestMs = Math.max(0, this.breedRestMs - elapsedMs);
 
     for (const [item, leftMs] of this.cooldowns) {
       if (leftMs <= elapsedMs) {
@@ -158,6 +188,8 @@ export interface CreaturesHost {
   shoot(launch: ProjectileLaunch): void;
   /** O inimigo foi embora numa nuvem de fumaça (o dia chegou, o Modo Paz ligou). */
   vanished(creature: Creature): void;
+  /** Nasceu um filhote. */
+  born(baby: Creature): void;
 }
 
 /**
@@ -208,6 +240,18 @@ export class Creatures {
     if (index >= 0) {
       this.creatures.splice(index, 1);
     }
+  }
+
+  /** O animal comeu a comida dele e vai procurar par. Devolve se ele aceitou a comida. */
+  feed(creature: Creature): boolean {
+    if (!creature.canBreed) {
+      return false;
+    }
+
+    creature.loveLeftMs = LOVE_MS;
+    this.findPartner(creature);
+
+    return true;
   }
 
   /** Todos os inimigos vão embora numa nuvem: amanheceu, o herói dormiu ou o Modo Paz ligou. */
@@ -301,6 +345,38 @@ export class Creatures {
     }
 
     return nearest;
+  }
+
+  /** Dois animais iguais e apaixonados, perto um do outro, têm um filhote entre eles. */
+  private findPartner(creature: Creature): void {
+    const partner = this.creatures.find(
+      (other) =>
+        other !== creature &&
+        other.definition === creature.definition &&
+        other.loveLeftMs > 0 &&
+        distanceBetween(other.body, creature.body) <= LOVE_RANGE,
+    );
+    const passives = this.creatures.filter((other) => !other.isHostile).length;
+
+    if (!partner || passives >= this.catalog.world.creatures.passiveCap * BREED_CAP_FACTOR) {
+      return;
+    }
+
+    const baby = this.spawn(
+      creature.definition,
+      (creature.body.x + partner.body.x) / 2,
+      Math.max(creature.body.y, partner.body.y),
+      (creature.body.z + partner.body.z) / 2,
+    );
+
+    baby.growLeftMs = creature.definition.babyGrowMs;
+
+    for (const parent of [creature, partner]) {
+      parent.loveLeftMs = 0;
+      parent.breedRestMs = BREED_REST_MS;
+    }
+
+    this.host.born(baby);
   }
 
   private think(creature: Creature, hero: PhysicsBody): void {
@@ -532,7 +608,7 @@ export class Creatures {
   private layEgg(creature: Creature): void {
     const lays = creature.definition.lays;
 
-    if (!lays || creature.layLeftMs === null) {
+    if (!lays || creature.layLeftMs === null || creature.isBaby) {
       return;
     }
 

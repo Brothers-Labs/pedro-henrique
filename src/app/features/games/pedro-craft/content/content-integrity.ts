@@ -100,6 +100,7 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     definition.spawn?.on.forEach((ground) => block('creatures', owner, ground));
     check('creatures', owner, 'criatura', definition.splitInto?.creature ?? null, creatures);
     item('creatures', owner, definition.lays?.item ?? null);
+    item('creatures', owner, definition.breedsWith);
 
     if (definition.splitInto?.creature === definition.id) {
       problems.push({ file: 'creatures', message: `${owner}: não pode se dividir em si mesma` });

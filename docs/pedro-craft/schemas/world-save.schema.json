@@ -147,6 +147,8 @@
               "z": { "type": "number" },
               "yaw": { "type": "number" },
               "health": { "type": "integer", "minimum": 1 },
+              "growLeftMs": { "type": "number", "minimum": 0, "description": "Filhote: o tempo que falta para crescer. Ausente ou 0 num adulto." },
+              "breedRestMs": { "type": "number", "minimum": 0, "description": "Descanso depois de ter um filhote." },
               "layLeftMs": { "type": ["number", "null"], "minimum": 0, "description": "Tempo até o próximo ovo; null para quem não bota nada." },
               "cooldowns": {
                 "type": "array",

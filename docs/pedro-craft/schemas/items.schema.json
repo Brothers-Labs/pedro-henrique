@@ -35,7 +35,7 @@
               "properties": {
                 "type": { "const": "sprite" },
                 "shape": {
-                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string"]
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane"]
                 },
                 "colors": { "$ref": "common.schema.json#/$defs/colors" }
               }
@@ -70,6 +70,7 @@
         },
         "heal": { "type": ["integer", "null"], "minimum": 1, "maximum": 20 },
         "leftover": { "$ref": "#/$defs/optionalId" },
+        "fertilizer": { "type": ["integer", "null"], "minimum": 1, "maximum": 3, "description": "Estágios que o adubo faz uma planta crescer de uma vez." },
         "bucket": {
           "type": "object",
           "required": ["becomes"],

@@ -72,7 +72,9 @@
             "item": { "$ref": "common.schema.json#/$defs/id" },
             "everyMs": { "type": "integer", "minimum": 1000 }
           }
-        }
+        },
+        "breedsWith": { "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/id" }], "description": "Comida que faz dois animais iguais terem um filhote." },
+        "babyGrowMs": { "type": "integer", "minimum": 10000, "default": 300000, "description": "Quanto o filhote leva para crescer." }
       }
     }
   }

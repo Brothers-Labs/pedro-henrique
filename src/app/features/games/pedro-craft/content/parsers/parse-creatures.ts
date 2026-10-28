@@ -11,6 +11,9 @@ import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optional
 
 const TEMPERAMENTS: readonly Temperament[] = ['passive', 'hostile'];
 
+/** Filhote vira adulto em cinco minutos de jogo, se o JSON não disser outra coisa. */
+const DEFAULT_BABY_GROW_MS = 5 * 60 * 1000;
+
 export function parseCreatures(value: unknown): readonly CreatureDefinition[] {
   const root = JsonReader.root('creatures', value).object();
 
@@ -48,6 +51,8 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
       : null,
     interactions: (creature.optionalField('interactions')?.array() ?? []).map((entry) => parseInteraction(entry.object())),
     lays: lays ? { item: lays.field('item').id(), everyMs: lays.field('everyMs').number({ integer: true, min: 1000 }) } : null,
+    breedsWith: optionalId(creature, 'breedsWith'),
+    babyGrowMs: creature.optionalField('babyGrowMs')?.number({ integer: true, min: 10000 }) ?? DEFAULT_BABY_GROW_MS,
   };
 }
 

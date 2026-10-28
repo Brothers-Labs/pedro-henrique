@@ -335,6 +335,21 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(simulation.inventory.slots[0]?.item).toBe('milk-bucket');
     });
 
+    it('o trigo na mão alimenta as ovelhas, e nasce um filhote que ainda não dá lã', () => {
+      const first = placeAnimal('sheep');
+      simulation.creatures.spawn(catalog.creature('sheep'), TARGET.x + 1.5, FLOOR_TOP, TARGET.z + 0.5).loveLeftMs = 10_000;
+      simulation.inventory.slots[0] = { item: 'wheat', count: 3, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(first.breedRestMs).toBeGreaterThan(0);
+
+      const baby = simulation.creatures.list.find((creature) => creature.isBaby);
+
+      expect(baby).toBeDefined();
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('filhote'))).toBeTrue();
+    });
+
     it('a mão tira um pouco de vida, e o animal foge', () => {
       const sheep = placeAnimal('sheep');
       run(1, { primaryPressed: true, primaryHeld: true });
@@ -356,6 +371,40 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(record).toHaveBeenCalledWith({ trigger: 'defeat', target: 'sheep', count: 1 });
     });
   });
+  describe('adubo', () => {
+    const plantWheat = (): void => {
+      put('farmland', TARGET.x, TARGET.y - 1);
+      put('wheat-crop');
+      simulation.farm.plant(TARGET.x, TARGET.y, TARGET.z, catalog.crop('wheat'));
+    };
+
+    it('o adubo faz a planta crescer um estágio e gasta um', () => {
+      plantWheat();
+      simulation.inventory.slots[0] = { item: 'fertilizer', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.farm.stageAt(TARGET.x, TARGET.y, TARGET.z)).toBe(1);
+      expect(simulation.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('sem planta crescendo, o adubo não é gasto e o jogo explica', () => {
+      put('stone');
+      simulation.inventory.slots[0] = { item: 'fertilizer', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('a batata planta na terra arada e, colhida madura, dá batatas', () => {
+      put('farmland');
+      simulation.inventory.slots[0] = { item: 'potato', count: 1, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x, TARGET.y + 1, TARGET.z)).toBe(catalog.blockNumber('potato-crop'));
+    });
+  });
+
   describe('sobreviver', () => {
     const makeNight = (): void => simulation.clock.advance(catalog.world.clock.dayMs);
 

@@ -83,6 +83,10 @@ export interface SavedCreature {
   readonly health: number;
   readonly layLeftMs: number | null;
   readonly cooldowns: readonly SavedCooldown[];
+  /** Filhote: o tempo que falta para crescer. Ausente (ou 0) num adulto. */
+  readonly growLeftMs?: number;
+  /** Descanso depois de ter um filhote. */
+  readonly breedRestMs?: number;
 }
 
 /** Missões: as cumpridas, pelo id, e quanto já foi feito da missão da vez. */

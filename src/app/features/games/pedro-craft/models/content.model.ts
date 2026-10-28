@@ -155,6 +155,16 @@ export const ICON_SHAPES = [
   'fried-egg',
   'feather',
   'string',
+  'potato',
+  'beetroot',
+  'bowl',
+  'pumpkin',
+  'pie',
+  'melon-slice',
+  'cake',
+  'bone',
+  'powder',
+  'cane',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -212,6 +222,8 @@ export interface ItemDefinition {
   /** Item devolvido depois de comer (o balde do leite). */
   readonly leftover: string | null;
   readonly bucket: BucketStats | null;
+  /** Estágios que o adubo faz uma planta crescer de uma vez; `null` para o que não aduba. */
+  readonly fertilizer: number | null;
 }
 
 /* Receitas ---------------------------------------------------------------------------- */
@@ -321,6 +333,10 @@ export interface CreatureDefinition {
   readonly interactions: readonly CreatureInteraction[];
   /** Item que a criatura deixa no chão de tempos em tempos (o ovo da galinha). */
   readonly lays: { readonly item: string; readonly everyMs: number } | null;
+  /** Comida que faz o animal querer ter filhote; `null` para quem não tem. */
+  readonly breedsWith: string | null;
+  /** Quanto o filhote leva para crescer. */
+  readonly babyGrowMs: number;
 }
 
 /* Plantações -------------------------------------------------------------------------- */

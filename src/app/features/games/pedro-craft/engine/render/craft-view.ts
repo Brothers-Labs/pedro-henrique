@@ -146,6 +146,7 @@ export class CraftView {
         case 'crop-grew':
           this.worldView.markCell(event.x, event.y, event.z);
           break;
+        case 'sparkle':
         case 'creature-poof':
           if (this.effectsEnabled) {
             // A nuvem nasce centrada no animal; `burst` espalha a partir do canto de uma célula.

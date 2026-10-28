@@ -431,6 +431,72 @@
       "drops": "wool",
       "mapColor": "#f4f4f4",
       "textures": { "all": { "pattern": "speckle", "colors": ["#f4f4f4", "#e2e2e2", "#ffffff"] } }
+    },
+    {
+      "id": "potato-crop",
+      "name": "Batata plantada",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "potato-return",
+      "mapColor": "#5f9e3a",
+      "textures": { "all": { "pattern": "crop", "colors": ["#5f9e3a", "#c9a063"] } }
+    },
+    {
+      "id": "beetroot-crop",
+      "name": "Beterraba plantada",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "beetroot-return",
+      "mapColor": "#4caf50",
+      "textures": { "all": { "pattern": "crop", "colors": ["#4caf50", "#b8344a"] } }
+    },
+    {
+      "id": "pumpkin-crop",
+      "name": "Abóbora plantada",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "pumpkin-return",
+      "mapColor": "#4caf50",
+      "textures": { "all": { "pattern": "crop", "colors": ["#4caf50", "#ff8c1a"] } }
+    },
+    {
+      "id": "melon-crop",
+      "name": "Melancia plantada",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "melon-return",
+      "mapColor": "#4caf50",
+      "textures": { "all": { "pattern": "crop", "colors": ["#4caf50", "#2e7d32"] } }
+    },
+    {
+      "id": "sunflower-crop",
+      "name": "Girassol plantado",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "sunflower-return",
+      "mapColor": "#6b9b37",
+      "textures": { "all": { "pattern": "crop", "colors": ["#6b9b37", "#ffcf3f"] } }
+    },
+    {
+      "id": "sugar-cane-crop",
+      "name": "Cana-de-açúcar plantada",
+      "shape": "cross",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "sugar-cane-return",
+      "mapColor": "#9ccc65",
+      "textures": { "all": { "pattern": "crop", "colors": ["#9ccc65", "#c5e1a5"] } }
     }
   ]
 }

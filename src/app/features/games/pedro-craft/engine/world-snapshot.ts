@@ -86,6 +86,8 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
     creature.health = Math.min(saved.health, creature.definition.health);
     creature.layLeftMs = creature.definition.lays ? (saved.layLeftMs ?? creature.definition.lays.everyMs) : null;
     saved.cooldowns.forEach((cooldown) => creature.setCooldown(cooldown.item, cooldown.leftMs));
+    creature.growLeftMs = Math.min(saved.growLeftMs ?? 0, creature.definition.babyGrowMs);
+    creature.breedRestMs = saved.breedRestMs ?? 0;
   }
 }
 
@@ -188,5 +190,7 @@ function captureCreatures(simulation: CraftSimulation): readonly SavedCreature[]
       health: creature.health,
       layLeftMs: creature.layLeftMs,
       cooldowns: creature.cooldownList,
+      growLeftMs: creature.growLeftMs,
+      breedRestMs: creature.breedRestMs,
     }));
 }

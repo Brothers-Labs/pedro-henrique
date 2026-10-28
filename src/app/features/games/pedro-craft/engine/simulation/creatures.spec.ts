@@ -24,6 +24,7 @@ describe('Bichos do PedroCraft', () => {
   let strikes: Creature[];
   let shots: ProjectileLaunch[];
   let vanished: Creature[];
+  let born: Creature[];
 
   beforeAll(async () => {
     catalog = await loadTestCatalog();
@@ -50,6 +51,7 @@ describe('Bichos do PedroCraft', () => {
     strikes = [];
     shots = [];
     vanished = [];
+    born = [];
     creatures = new Creatures(world, catalog, properties, new SeededRandom(7), {
       hero: () => hero,
       period: () => period,
@@ -58,6 +60,7 @@ describe('Bichos do PedroCraft', () => {
       strike: (creature) => strikes.push(creature),
       shoot: (launch) => shots.push(launch),
       vanished: (creature) => vanished.push(creature),
+      born: (baby) => born.push(baby),
     });
   });
 
@@ -171,6 +174,49 @@ describe('Bichos do PedroCraft', () => {
     expect(creatures.castRay(origin, { x: 0, y: 0, z: 1 }, 5)).toBeNull();
     expect(creatures.castRay(origin, { x: 1, y: 0, z: 0 }, 2)).toBeNull();
   });
+  describe('filhotes', () => {
+    it('duas ovelhas alimentadas perto uma da outra têm um filhote, que cresce', () => {
+      const first = creatures.spawn(catalog.creature('sheep'), 20.5, FLOOR_TOP, 20.5);
+      const second = creatures.spawn(catalog.creature('sheep'), 22.5, FLOOR_TOP, 20.5);
+
+      expect(creatures.feed(first)).toBeTrue();
+      expect(born).toEqual([]);
+      expect(creatures.feed(second)).toBeTrue();
+      expect(born.length).toBe(1);
+
+      const baby = born[0];
+
+      expect(baby.isBaby).toBeTrue();
+      expect(baby.definition.id).toBe('sheep');
+      expect(first.canBreed).toBeFalse();
+
+      baby.tickCooldowns(catalog.creature('sheep').babyGrowMs);
+
+      expect(baby.isBaby).toBeFalse();
+    });
+
+    it('longe demais, não há filhote', () => {
+      const first = creatures.spawn(catalog.creature('cow'), 10.5, FLOOR_TOP, 10.5);
+      const second = creatures.spawn(catalog.creature('cow'), 40.5, FLOOR_TOP, 40.5);
+
+      creatures.feed(first);
+      creatures.feed(second);
+
+      expect(born).toEqual([]);
+    });
+
+    it('filhote e animal descansando não aceitam comida', () => {
+      const first = creatures.spawn(catalog.creature('chicken'), 20.5, FLOOR_TOP, 20.5);
+      const second = creatures.spawn(catalog.creature('chicken'), 21.5, FLOOR_TOP, 20.5);
+
+      creatures.feed(first);
+      creatures.feed(second);
+
+      expect(creatures.feed(first)).toBeFalse();
+      expect(creatures.feed(born[0])).toBeFalse();
+    });
+  });
+
   describe('inimigos', () => {
     const fillTorches = (spacing: number): void => {
       for (let z = 0; z < SIZE; z += spacing) {

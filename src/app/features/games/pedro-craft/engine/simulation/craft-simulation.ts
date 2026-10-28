@@ -35,6 +35,9 @@ const SOIL_LIST = new Intl.ListFormat('pt-BR', { type: 'disjunction' });
 const FAINTED_HINT = 'Ufa! Você descansou e acordou em casa, com todos os seus itens.';
 const SLEPT_HINT = 'Bom dia! Você dormiu até de manhã.';
 const BED_DAY_HINT = 'A cama agora é a sua casa. À noite, use a cama para dormir até de manhã.';
+const FERTILIZER_HINT = 'Use o adubo numa planta que ainda está crescendo.';
+const FERTILIZER_COLOR = '#b6f56b';
+const LOVE_COLOR = '#ff7aa8';
 
 export interface CraftSimulationOptions {
   readonly catalog: CraftCatalog;
@@ -146,6 +149,13 @@ export class CraftSimulation {
       strike: (creature) => this.combat.hurtHero(creature.definition.damage, creature.body.x, creature.body.z),
       shoot: (launch) => this.projectiles.launch(launch),
       vanished: (creature) => this.combat.vanish(creature),
+      born: (baby) => {
+        const body = baby.body;
+
+        this.visualEvents.push({ type: 'sparkle', x: body.x, y: body.y + body.height, z: body.z, color: LOVE_COLOR });
+        this.events.push({ type: 'hint', text: `Nasceu um filhote de ${baby.definition.name.toLowerCase()}!` });
+        this.events.push({ type: 'sound', cue: 'powerup' });
+      },
     });
     this.combat = new Combat({
       catalog: this.catalog,
@@ -596,6 +606,17 @@ export class CraftSimulation {
   /** Item da mão usado no animal: a tesoura na ovelha dá lã, o balde na vaca vira leite. */
   private useOnCreature(creature: Creature): void {
     const held = this.selectedItem;
+
+    if (held && held.id === creature.definition.breedsWith) {
+      this.feedCreature(creature);
+      return;
+    }
+
+    if (creature.isBaby) {
+      this.events.push({ type: 'hint', text: `O filhote de ${creature.definition.name.toLowerCase()} ainda é pequeno. Espere ele crescer!` });
+      return;
+    }
+
     const interaction = held ? creature.definition.interactions.find((entry) => entry.item === held.id) : undefined;
 
     if (!held || !interaction) {
@@ -624,6 +645,37 @@ export class CraftSimulation {
       this.wearSelected(held);
     }
 
+    this.confirmUse();
+  }
+
+  /** A comida do animal: ele fica apaixonado e, com outro igual por perto, nasce um filhote. */
+  private feedCreature(creature: Creature): void {
+    const { body, definition } = creature;
+
+    if (!this.creatures.feed(creature)) {
+      const reason = creature.isBaby ? 'ainda é filhote' : 'está descansando. Tente daqui a pouco';
+
+      this.events.push({ type: 'hint', text: `${definition.name}: ${reason}.` });
+      return;
+    }
+
+    this.inventory.consume(this.selectedSlot);
+    this.visualEvents.push({ type: 'sparkle', x: body.x, y: body.y + body.height, z: body.z, color: LOVE_COLOR });
+    this.confirmUse();
+  }
+
+  /** O adubo vale na planta mirada ou na planta em cima do solo mirado. */
+  private fertilize(stages: number, target: RayHit): void {
+    const cells = [target, { x: target.x, y: target.y + 1, z: target.z }];
+    const cell = cells.find((candidate) => this.farm.fertilize(candidate.x, candidate.y, candidate.z, stages));
+
+    if (!cell) {
+      this.events.push({ type: 'hint', text: FERTILIZER_HINT });
+      return;
+    }
+
+    this.inventory.consume(this.selectedSlot);
+    this.visualEvents.push({ type: 'sparkle', x: cell.x + 0.5, y: cell.y + 0.5, z: cell.z + 0.5, color: FERTILIZER_COLOR });
     this.confirmUse();
   }
 
@@ -681,6 +733,11 @@ export class CraftSimulation {
     }
 
     if (!target) {
+      return;
+    }
+
+    if (held.fertilizer !== null) {
+      this.fertilize(held.fertilizer, target);
       return;
     }
 

@@ -142,6 +142,82 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
       brush.pixel(x, Math.round(8 + Math.sin(x * 0.9) * 3), color ?? '#f4f4f4');
     }
   },
+  potato: (brush, [skin, spot]) => {
+    brush.disc(7, 9, 4.5, skin ?? '#c9a063');
+    brush.disc(10, 7, 3.5, skin ?? '#c9a063');
+    for (const [x, y] of [[5, 8], [9, 6], [8, 11], [11, 9]] as const) {
+      brush.pixel(x, y, spot ?? '#a07a45');
+    }
+  },
+  beetroot: (brush, [root, leaves]) => {
+    brush.disc(8, 10, 4, root ?? '#b8344a');
+    brush.line(8, 14, 8, 15, root ?? '#b8344a', 1);
+    brush.pixel(6, 9, lighten(root ?? '#b8344a', 0.35));
+    brush.line(8, 6, 6, 2, leaves ?? '#4caf50', 1);
+    brush.line(8, 6, 10, 2, leaves ?? '#4caf50', 1);
+  },
+  bowl: (brush, [wood, soup]) => {
+    brush.rect(2, 8, 12, 2, wood ?? '#8a5a32');
+    brush.rect(3, 10, 10, 2, wood ?? '#8a5a32');
+    brush.rect(5, 12, 6, 1, darken(wood ?? '#8a5a32', 0.2));
+
+    if (soup) {
+      brush.rect(3, 7, 10, 1, soup);
+      brush.pixel(6, 7, lighten(soup, 0.35));
+    }
+  },
+  pumpkin: (brush, [skin, stem]) => {
+    brush.disc(8, 9, 5.5, skin ?? '#ff8c1a');
+    for (const x of [5, 8, 11]) {
+      brush.line(x, 5, x, 13, darken(skin ?? '#ff8c1a', 0.2), 1);
+    }
+    brush.rect(7, 2, 2, 3, stem ?? '#4caf50');
+  },
+  pie: (brush, [crust, filling]) => {
+    brush.rect(2, 8, 12, 5, crust ?? '#d9953f');
+    brush.rect(3, 7, 10, 1, filling ?? '#ff8c1a');
+    brush.rect(4, 9, 8, 2, filling ?? '#ff8c1a');
+    brush.rect(2, 12, 12, 1, darken(crust ?? '#d9953f', 0.25));
+  },
+  'melon-slice': (brush, [flesh, rind]) => {
+    for (let row = 0; row < 7; row += 1) {
+      brush.rect(8 - row, 4 + row, row * 2 + 1, 1, flesh ?? '#e53935');
+    }
+    brush.rect(1, 11, 15, 2, rind ?? '#4caf50');
+    for (const [x, y] of [[7, 7], [5, 9], [9, 9], [11, 10]] as const) {
+      brush.pixel(x, y, '#2b2b2b');
+    }
+  },
+  cake: (brush, [sponge, frosting]) => {
+    brush.rect(2, 7, 12, 7, sponge ?? '#fff5e6');
+    brush.rect(2, 6, 12, 2, frosting ?? '#ff7aa8');
+    brush.rect(4, 8, 1, 2, frosting ?? '#ff7aa8');
+    brush.rect(9, 8, 1, 3, frosting ?? '#ff7aa8');
+    brush.rect(7, 3, 2, 3, '#ffcf3f');
+  },
+  bone: (brush, [color]) => {
+    brush.line(4, 12, 12, 4, color ?? '#f4f1e8', 2);
+    for (const [x, y] of [[3, 11], [4, 13], [11, 3], [13, 4]] as const) {
+      brush.disc(x, y, 1.5, color ?? '#f4f1e8');
+    }
+  },
+  powder: (brush, [main, accent]) => {
+    for (let row = 0; row < 5; row += 1) {
+      brush.rect(8 - row - 1, 8 + row, (row + 1) * 2, 1, main ?? '#ffffff');
+    }
+    for (const [x, y] of [[6, 10], [9, 11], [7, 12], [10, 9]] as const) {
+      brush.pixel(x, y, accent ?? '#d9dde3');
+    }
+  },
+  cane: (brush, [stalk, leaf]) => {
+    for (const x of [5, 10]) {
+      brush.line(x, 14, x, 2, stalk ?? '#9ccc65', 2);
+      for (const y of [5, 9, 13]) {
+        brush.rect(x, y, 2, 1, darken(stalk ?? '#9ccc65', 0.25));
+      }
+    }
+    brush.line(7, 6, 9, 3, leaf ?? '#6b9b37', 1);
+  },
 };
 
 /** Pinta o ícone de um item num canvas quadrado de `size` pixels. */
