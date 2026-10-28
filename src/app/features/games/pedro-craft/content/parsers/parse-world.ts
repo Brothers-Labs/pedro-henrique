@@ -96,6 +96,8 @@ export function parseWorld(value: unknown): WorldDefinition {
     calendar: {
       daysPerSeason: calendar.field('daysPerSeason').number({ integer: true, min: 1, max: 60 }),
       greenhouseBlock: calendar.field('greenhouseBlock').id(),
+      fullMoonEvery: calendar.field('fullMoonEvery').number({ integer: true, min: 2, max: 60 }),
+      fullMoonVisitor: calendar.optionalField('fullMoonVisitor')?.id() ?? null,
       seasons: calendar.field('seasons').array({ minLength: 1 }).map((season) => parseSeason(season.object())),
     },
     water: {

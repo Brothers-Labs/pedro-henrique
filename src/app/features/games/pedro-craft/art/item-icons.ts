@@ -209,6 +209,29 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
       brush.pixel(x, y, accent ?? '#d9dde3');
     }
   },
+  armor: (brush, [plate, trim]) => {
+    brush.rect(3, 3, 3, 3, plate ?? '#e6e9ee');
+    brush.rect(10, 3, 3, 3, plate ?? '#e6e9ee');
+    brush.rect(4, 5, 8, 9, plate ?? '#e6e9ee');
+    brush.rect(4, 13, 8, 1, trim ?? '#b9c0c8');
+    brush.rect(7, 6, 2, 6, trim ?? '#b9c0c8');
+  },
+  shield: (brush, [wood, rim]) => {
+    brush.rect(3, 2, 10, 9, wood ?? '#c08a50');
+    for (let row = 0; row < 4; row += 1) {
+      brush.rect(4 + row, 11 + row, 8 - row * 2, 1, wood ?? '#c08a50');
+    }
+    brush.rect(3, 2, 10, 1, rim ?? '#8f969e');
+    brush.rect(7, 3, 2, 10, rim ?? '#8f969e');
+  },
+  crown: (brush, [gold, gem]) => {
+    brush.rect(2, 8, 12, 5, gold ?? '#f5c542');
+    for (const x of [2, 7, 12]) {
+      brush.rect(x, 4, 2, 4, gold ?? '#f5c542');
+    }
+    brush.rect(4, 10, 2, 2, gem ?? '#e53935');
+    brush.rect(10, 10, 2, 2, gem ?? '#3fa3f5');
+  },
   cane: (brush, [stalk, leaf]) => {
     for (const x of [5, 10]) {
       brush.line(x, 14, x, 2, stalk ?? '#9ccc65', 2);

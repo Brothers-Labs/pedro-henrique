@@ -103,6 +103,28 @@ export class CreatureSpawner {
     return null;
   }
 
+  /**
+   * Um lugar para um visitante especial: em qualquer chão firme, longe do
+   * herói como os outros inimigos e longe das tochas. `null` se não achou.
+   */
+  placeNear(heroX: number, heroZ: number): { readonly x: number; readonly y: number; readonly z: number } | null {
+    const settings = this.catalog.world.creatures;
+
+    for (let attempt = 0; attempt < SPAWN_TRIES * 2; attempt += 1) {
+      const angle = this.random.next() * Math.PI * 2;
+      const distance = settings.minSpawnDistance + this.random.next() * GROUP_SPREAD * 4;
+      const x = Math.floor(heroX + Math.cos(angle) * distance);
+      const z = Math.floor(heroZ + Math.sin(angle) * distance);
+      const y = this.standingY(x, z, null);
+
+      if (y !== null && !this.isNearLight(x, y, z)) {
+        return { x: x + 0.5, y, z: z + 0.5 };
+      }
+    }
+
+    return null;
+  }
+
   /** Há uma tocha (ou outra luz) perto? Ali inimigo nenhum nasce. */
   private isNearLight(x: number, y: number, z: number): boolean {
     const radius = this.catalog.world.creatures.torchSafeRadius;
@@ -123,10 +145,10 @@ export class CreatureSpawner {
 
   /**
    * Altura onde um bicho fica em pé na coluna: o chão mais alto tem que ser
-   * de um dos blocos permitidos, com dois blocos livres em cima. Capim e flor
-   * não contam como chão.
+   * de um dos blocos permitidos (`null` aceita qualquer chão firme), com dois
+   * blocos livres em cima. Capim e flor não contam como chão.
    */
-  private standingY(x: number, z: number, ground: ReadonlySet<number>): number | null {
+  private standingY(x: number, z: number, ground: ReadonlySet<number> | null): number | null {
     const { world, properties } = this;
 
     if (x < 0 || z < 0 || x >= world.width || z >= world.depth) {
@@ -146,7 +168,9 @@ export class CreatureSpawner {
         return properties.collisionHeight[cell] === 0 && properties.isLiquid[cell] === 0;
       });
 
-      return ground.has(block) && isClear ? y + 1 : null;
+      const isGround = ground ? ground.has(block) : properties.collisionHeight[block] > 0;
+
+      return isGround && isClear ? y + 1 : null;
     }
 
     return null;

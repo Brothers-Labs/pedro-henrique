@@ -30,9 +30,11 @@ export function hudState(simulation: CraftSimulation): CraftHudState {
       seasonEmoji: simulation.calendar.season.emoji,
       partOfDay: simulation.clock.partOfDay,
       weather: simulation.weather.current,
+      isFullMoon: simulation.calendar.isFullMoon,
     },
     firstStep: simulation.firstSteps?.current ?? null,
     energy: simulation.energy ? { value: simulation.energy.value, max: simulation.energy.max } : null,
+    armor: simulation.armorLeft,
   };
 }
 

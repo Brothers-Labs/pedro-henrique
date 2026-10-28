@@ -63,12 +63,15 @@
     { "id": "sugar-cane-return", "entries": [{ "item": "sugar-cane" }] },
     { "id": "sugar-cane-harvest", "entries": [{ "item": "sugar-cane", "min": 2, "max": 3 }] },
     { "id": "chicken", "entries": [{ "item": "feather", "min": 1, "max": 2 }] },
-    { "id": "cow", "entries": [] },
+    { "id": "cow", "entries": [{ "item": "leather", "min": 1, "max": 2 }] },
     { "id": "sheep", "entries": [{ "item": "wool" }] },
     { "id": "sheep-shear", "entries": [{ "item": "wool", "min": 1, "max": 3 }] },
     { "id": "slime", "entries": [{ "item": "string", "chance": 0.3 }] },
-    { "id": "scarecrow", "entries": [{ "item": "wheat", "min": 1, "max": 2 }, { "item": "carrot", "chance": 0.3 }] },
+    { "id": "scarecrow", "entries": [{ "item": "wheat", "min": 1, "max": 2 }, { "item": "carrot", "chance": 0.3 }, { "item": "pumpkin-seeds", "chance": 0.3 }] },
     { "id": "spider", "entries": [{ "item": "string", "min": 1, "max": 2 }] },
+    { "id": "king-slime", "entries": [{ "item": "slime-crown" }, { "item": "string", "min": 3, "max": 5 }] },
+    { "id": "lantern", "entries": [{ "item": "lantern" }] },
+    { "id": "campfire", "entries": [{ "item": "campfire" }] },
     { "id": "skeleton", "entries": [{ "item": "arrow", "min": 2, "max": 4 }, { "item": "bone", "min": 1, "max": 2 }] }
   ]
 }

@@ -14,6 +14,8 @@
     { "id": "stone-bricks", "name": "Tijolos de pedra", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "stone-bricks" }, "places": "stone-bricks" },
     { "id": "fence", "name": "Cerca", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "fence" }, "places": "fence" },
     { "id": "torch", "name": "Tocha", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "torch" }, "places": "torch" },
+    { "id": "lantern", "name": "Lanterna", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "lantern" }, "places": "lantern" },
+    { "id": "campfire", "name": "Fogueira", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "campfire" }, "places": "campfire" },
     { "id": "workbench", "name": "Mesa de trabalho", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "workbench" }, "places": "workbench" },
     { "id": "furnace", "name": "Fornalha", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "furnace" }, "places": "furnace" },
     { "id": "chest", "name": "Baú", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "chest" }, "places": "chest" },
@@ -56,6 +58,11 @@
     { "id": "iron-sword", "name": "Espada de ferro", "kind": "weapon", "maxStack": 1, "icon": { "type": "sprite", "shape": "sword", "colors": ["#e6e9ee"] }, "tool": { "type": "sword", "tier": 3, "speed": 1.5 }, "durability": 251, "damage": 6, "attackCooldownMs": 450, "knockback": 6 },
     { "id": "golden-sword", "name": "Espada de ouro", "kind": "weapon", "maxStack": 1, "icon": { "type": "sprite", "shape": "sword", "colors": ["#f5c542"] }, "tool": { "type": "sword", "tier": 4, "speed": 1.5 }, "durability": 400, "damage": 7, "attackCooldownMs": 450, "knockback": 6 },
 
+    { "id": "leather-armor", "name": "Armadura de couro", "kind": "armor", "maxStack": 1, "icon": { "type": "sprite", "shape": "armor", "colors": ["#a0682a", "#7a4e20"] }, "durability": 15 },
+    { "id": "iron-armor", "name": "Armadura de ferro", "kind": "armor", "maxStack": 1, "icon": { "type": "sprite", "shape": "armor", "colors": ["#e6e9ee", "#b9c0c8"] }, "durability": 40 },
+    { "id": "golden-armor", "name": "Armadura de ouro", "kind": "armor", "maxStack": 1, "icon": { "type": "sprite", "shape": "armor", "colors": ["#f5c542", "#d9a21f"] }, "durability": 70 },
+    { "id": "shield", "name": "Escudo", "kind": "shield", "maxStack": 1, "icon": { "type": "sprite", "shape": "shield", "colors": ["#c08a50", "#8f969e"] }, "durability": 150 },
+
     { "id": "bow", "name": "Arco", "kind": "weapon", "maxStack": 1, "icon": { "type": "sprite", "shape": "bow", "colors": ["#8a5a32", "#f4f4f4"] }, "durability": 120, "attackCooldownMs": 700, "ranged": { "ammo": "arrow", "damage": 4, "speed": 26 } },
     { "id": "arrow", "name": "Flecha", "kind": "ammo", "maxStack": 64, "icon": { "type": "sprite", "shape": "arrow", "colors": ["#8a5a32", "#bfc6cf", "#f4f4f4"] } },
     { "id": "shears", "name": "Tesoura", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "shears", "colors": ["#e6e9ee"] }, "tool": { "type": "shears", "tier": 1, "speed": 5 }, "durability": 200 },
@@ -87,6 +94,8 @@
     { "id": "pumpkin", "name": "Abóbora", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "pumpkin", "colors": ["#ff8c1a", "#4caf50"] } },
     { "id": "sugar", "name": "Açúcar", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "powder", "colors": ["#ffffff", "#d9dde3"] } },
     { "id": "bowl", "name": "Tigela", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "bowl", "colors": ["#8a5a32"] } },
+    { "id": "leather", "name": "Couro", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "lump", "colors": ["#a0682a", "#c08a50"] } },
+    { "id": "slime-crown", "name": "Coroa do Rei Slime", "kind": "material", "maxStack": 1, "icon": { "type": "sprite", "shape": "crown", "colors": ["#f5c542", "#e53935"] } },
     { "id": "bone", "name": "Osso", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "bone", "colors": ["#f4f1e8"] } },
     { "id": "fertilizer", "name": "Adubo", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "powder", "colors": ["#9c7a4a", "#7cbf3a"] }, "fertilizer": 1 }
   ]

@@ -173,6 +173,12 @@ export interface CreatureHit {
   readonly distance: number;
 }
 
+/** Quanto a dificuldade muda os inimigos: velocidade e espera entre golpes. */
+export interface CreatureDifficulty {
+  readonly speed: number;
+  readonly attackCooldown: number;
+}
+
 export interface CreaturesHost {
   /** O corpo do herói: os bichos nascem longe dele, fogem dele ou vão atrás dele. */
   hero(): PhysicsBody;
@@ -190,6 +196,8 @@ export interface CreaturesHost {
   vanished(creature: Creature): void;
   /** Nasceu um filhote. */
   born(baby: Creature): void;
+  /** No Fácil, os inimigos são mais lentos e atacam menos. */
+  difficulty(): CreatureDifficulty;
 }
 
 /**
@@ -240,6 +248,22 @@ export class Creatures {
     if (index >= 0) {
       this.creatures.splice(index, 1);
     }
+  }
+
+  /** Chama um visitante especial (o Rei Slime na lua cheia) para perto do herói, longe das tochas. */
+  summon(definition: CreatureDefinition): Creature | null {
+    const hero = this.host.hero();
+    const position = this.spawner.placeNear(hero.x, hero.z);
+
+    if (!position) {
+      return null;
+    }
+
+    const creature = this.spawn(definition, position.x, position.y, position.z);
+
+    creature.mood = 'chase';
+
+    return creature;
   }
 
   /** O animal comeu a comida dele e vai procurar par. Devolve se ele aceitou a comida. */
@@ -415,7 +439,7 @@ export class Creatures {
 
   /** Velocidade de andar neste passo; negativa é andar de costas (o esqueleto recuando). */
   private walkSpeed(creature: Creature, hero: PhysicsBody): number {
-    const speed = creature.definition.speed;
+    const speed = creature.definition.speed * (creature.isHostile ? this.host.difficulty().speed : 1);
 
     switch (creature.mood) {
       case 'idle':
@@ -513,14 +537,14 @@ export class Creatures {
       const distance = distanceBetween(creature.body, hero);
 
       if (distance <= ARCHER_SHOOT_RANGE && this.canSee(creature, hero)) {
-        creature.attackLeftMs = definition.attackCooldownMs;
+        creature.attackLeftMs = definition.attackCooldownMs * this.host.difficulty().attackCooldown;
         this.host.shoot(this.aimAt(creature, hero));
       }
       return;
     }
 
     if (isWithinReach(creature.body, hero)) {
-      creature.attackLeftMs = definition.attackCooldownMs;
+      creature.attackLeftMs = definition.attackCooldownMs * this.host.difficulty().attackCooldown;
       this.host.strike(creature);
     }
   }

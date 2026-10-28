@@ -38,6 +38,16 @@ export class HeroHealth {
     return this.current <= 0;
   }
 
+  /** Um golpe agora contaria? Logo depois de outro, não. */
+  get canBeHurt(): boolean {
+    return this.invulnerableLeftMs <= 0 && !this.isDepleted;
+  }
+
+  /** O golpe foi segurado (armadura, escudo): sem perder vida, mas com o mesmo respiro de depois de um golpe. */
+  protect(): void {
+    this.invulnerableLeftMs = this.settings.invulnerableMs;
+  }
+
   /** Tira vida, a não ser logo depois de outro golpe. Devolve se o golpe valeu. */
   damage(amount: number): boolean {
     if (amount <= 0 || this.invulnerableLeftMs > 0 || this.isDepleted) {

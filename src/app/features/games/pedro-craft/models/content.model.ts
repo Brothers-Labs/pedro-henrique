@@ -129,7 +129,8 @@ export interface BlockDefinition {
 
 /* Itens ------------------------------------------------------------------------------- */
 
-export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo'] as const;
+/** `armor` protege da mochila mesmo, gastando um uso por golpe; `shield` na mão segura as flechas. */
+export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo', 'armor', 'shield'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -165,6 +166,9 @@ export const ICON_SHAPES = [
   'bone',
   'powder',
   'cane',
+  'armor',
+  'shield',
+  'crown',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -281,7 +285,7 @@ export const CREATURE_BEHAVIORS = ['grazer', 'chaser', 'hopper', 'archer'] as co
 
 export type CreatureBehavior = (typeof CREATURE_BEHAVIORS)[number];
 
-export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'scarecrow', 'spider', 'skeleton'] as const;
+export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'king-slime', 'scarecrow', 'spider', 'skeleton'] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];
 
@@ -425,6 +429,10 @@ export interface CalendarDefinition {
   readonly daysPerSeason: number;
   /** Bloco de telhado que protege as plantas do inverno (a estufa). */
   readonly greenhouseBlock: string;
+  /** A cada quantas noites tem lua cheia. */
+  readonly fullMoonEvery: number;
+  /** Quem aparece na lua cheia (o Rei Slime); `null` para ninguém. */
+  readonly fullMoonVisitor: string | null;
   /** Em ordem: o ano começa na primeira. */
   readonly seasons: readonly SeasonDefinition[];
 }

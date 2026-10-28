@@ -45,6 +45,9 @@
         }
       </span>
     }
+    @if (state.armor !== null) {
+      <span class="status__armor" role="img" [attr.aria-label]="'Armadura: segura mais ' + state.armor + ' golpes'">🛡️ {{ state.armor }}</span>
+    }
     @if (calendarLine(); as line) {
       <span class="status__calendar" role="img" [attr.aria-label]="line.spoken">{{ line.text }}</span>
     }

@@ -25,6 +25,8 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
       return chicken(color(0), color(1), color(2));
     case 'slime':
       return slime(definition, color(0), color(1));
+    case 'king-slime':
+      return [...slime(definition, color(0), color(1)), ...crown(definition, color(2))];
     case 'scarecrow':
       return scarecrow(color(0), color(1), color(2), color(3));
     case 'spider':
@@ -86,6 +88,18 @@ function slime(definition: CreatureDefinition, body: string, mouth: string): rea
     box(0, definition.height / 2, 0, size, definition.height, size, body),
     ...eyes(size * 0.2, definition.height * 0.62, front - 0.01, size * 0.18),
     box(0, definition.height * 0.32, front - 0.005, size * 0.3, size * 0.06, 0.01, mouth),
+  ];
+}
+
+/** A coroa dourada do Rei Slime, em cima do cubo de lama. */
+function crown(definition: CreatureDefinition, gold: string): readonly VoxelBox[] {
+  const top = definition.height;
+  const size = definition.width * 0.55;
+  const spike = size * 0.22;
+
+  return [
+    box(0, top + 0.08, 0, size, 0.16, size, gold),
+    ...[-1, 0, 1].map((step) => box(step * (size / 2 - spike / 2), top + 0.24, 0, spike, 0.16, spike, gold)),
   ];
 }
 

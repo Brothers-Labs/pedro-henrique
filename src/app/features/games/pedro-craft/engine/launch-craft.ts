@@ -165,6 +165,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       autoJump: settings.autoJump,
       randomSeed: options.world.seed,
       peaceful: settings.peaceful,
+      difficulty: settings.difficulty,
       guideFirstSteps: options.guideFirstSteps,
       mode: options.world.mode,
       inventory: state?.inventory,
@@ -222,6 +223,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       settings = next;
       simulation?.setAutoJump(next.autoJump);
       simulation?.setPeaceful(next.peaceful);
+      simulation?.setDifficulty(next.difficulty);
       view?.setEffectsEnabled(next.effectsEnabled);
     },
     selectSlot: (index) => {

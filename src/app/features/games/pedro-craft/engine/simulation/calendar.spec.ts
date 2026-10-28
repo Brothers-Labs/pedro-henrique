@@ -41,6 +41,13 @@ describe('Calendário e clima do PedroCraft', () => {
     expect(calendar.season.id).toBe('spring');
   });
 
+  it('a lua cheia vem a cada tantas noites', () => {
+    const every = catalog.world.calendar.fullMoonEvery;
+
+    expect(new Calendar(catalog.world.calendar, every - 1).isFullMoon).toBeFalse();
+    expect(new Calendar(catalog.world.calendar, every).isFullMoon).toBeTrue();
+  });
+
   it('o relógio conta as manhãs e muda a duração do dia na estação nova', () => {
     const clock = new DayClock(1000, 500);
 

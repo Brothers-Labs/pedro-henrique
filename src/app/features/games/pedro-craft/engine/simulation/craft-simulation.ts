@@ -2,6 +2,7 @@ import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import type { BucketStats, ItemDefinition } from '../../models/content.model';
+import type { CraftDifficulty } from '../../models/craft-settings.model';
 import type { GameMode } from '../../models/world-save.model';
 import type { SpawnPoint } from '../../world/world-generator';
 import { BlockChangeLog } from '../../world/block-change-log';
@@ -13,7 +14,7 @@ import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
 import { Calendar } from './calendar';
 import { Combat } from './combat';
-import { type Creature, Creatures } from './creatures';
+import { type Creature, type CreatureDifficulty, Creatures } from './creatures';
 import { DayClock } from './day-clock';
 import { Farm } from './farm';
 import { FirstStepsGuide } from './first-steps';
@@ -45,6 +46,13 @@ const BED_DAY_HINT = 'A cama agora é a sua casa. À noite, use a cama para dorm
 const FERTILIZER_HINT = 'Use o adubo numa planta que ainda está crescendo.';
 const HUNGRY_HINT = '🍎 Seu estômago roncou! Que tal comer alguma coisa?';
 const FULL_HINT = 'Você já está cheio de energia e de vida. Guarde a comida para depois.';
+const DUSK_HINT = '🌇 O sol está se pondo. Hora de acender tochas ou voltar para casa!';
+
+/** No Fácil, os inimigos andam mais devagar e esperam mais entre um golpe e outro. */
+const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
+  facil: { speed: 0.7, attackCooldown: 1.6 },
+  normal: { speed: 1, attackCooldown: 1 },
+};
 const FERTILIZER_COLOR = '#b6f56b';
 const LOVE_COLOR = '#ff7aa8';
 
@@ -64,6 +72,7 @@ export interface CraftSimulationOptions {
   readonly guideFirstSteps?: boolean;
   /** Como o mundo se joga; sem ele, aventura. */
   readonly mode?: GameMode;
+  readonly difficulty?: CraftDifficulty;
 }
 
 /** Bloco sendo quebrado e quanto já foi. */
@@ -124,6 +133,9 @@ export class CraftSimulation {
   private readonly visualEvents: VisualEvent[] = [];
   private autoJump: boolean;
   private isPeaceful: boolean;
+  private difficulty: CraftDifficulty;
+  private wasNight = false;
+  private wasDusk = false;
   /** O que o HUD mostra do tempo (dia, parte do dia, clima): mudou, a tela redesenha. */
   private timeLabel = '';
   private readonly greenhouseBlock: number;
@@ -140,6 +152,7 @@ export class CraftSimulation {
     this.hero = new HeroMotion(options.spawn.x, options.spawn.y, options.spawn.z, options.spawn.yaw);
     this.autoJump = options.autoJump;
     this.isPeaceful = options.peaceful ?? false;
+    this.difficulty = options.difficulty ?? 'normal';
     this.respawnPoint = options.spawn;
     this.inventory = new Inventory(options.catalog);
     this.goals = new GoalTracker(options.catalog.goals, options.goals);
@@ -165,7 +178,8 @@ export class CraftSimulation {
     this.creatures = new Creatures(this.world, this.catalog, this.properties, seeded, {
       hero: () => this.hero.body,
       period: () => this.clock.period,
-      allowsHostiles: () => !this.isPeaceful && this.mode !== 'creative',
+      allowsHostiles: () => this.allowsHostiles,
+      difficulty: () => DIFFICULTIES[this.difficulty],
       laid: (creature, item) => {
         const body = creature.body;
 
@@ -209,6 +223,8 @@ export class CraftSimulation {
       wearHeld: (held) => this.wearSelected(held),
       fainted: () => this.faint(),
       isInvulnerable: () => this.mode === 'creative',
+      blocksArrow: () => this.blockWithShield(),
+      absorbWithArmor: () => this.absorbWithArmor(),
     });
 
     if (options.inventory) {
@@ -312,6 +328,22 @@ export class CraftSimulation {
     this.calendar.setDay(day);
     this.applySeasonDurations();
     this.visualEvents.push({ type: 'season-changed' });
+  }
+
+  setDifficulty(difficulty: CraftDifficulty): void {
+    this.difficulty = difficulty;
+  }
+
+  /** Golpes que as armaduras da mochila ainda seguram; `null` sem armadura. */
+  get armorLeft(): number | null {
+    const pieces = this.inventory.slots.filter((slot) => slot !== null && this.catalog.item(slot.item).kind === 'armor');
+
+    return pieces.length > 0 ? pieces.reduce((total, slot) => total + (slot?.durability ?? 0), 0) : null;
+  }
+
+  /** Inimigos podem aparecer: sem Modo Paz e fora do Criativo. */
+  private get allowsHostiles(): boolean {
+    return !this.isPeaceful && this.mode !== 'creative';
   }
 
   /** Ligar o Modo Paz no meio da noite manda os inimigos para casa no mesmo passo. */
@@ -479,12 +511,89 @@ export class CraftSimulation {
     this.weather.step(STEP_MS);
 
     const hasEnergyChanged = this.drainEnergy();
+
+    this.watchNightfall();
     const timeLabel = `${this.calendar.day}|${this.clock.partOfDay}|${this.weather.current}`;
 
     if (this.health.step(STEP_MS, !this.energy?.isEmpty) || hasEnergyChanged || timeLabel !== this.timeLabel) {
       this.timeLabel = timeLabel;
       this.version += 1;
     }
+  }
+
+  /**
+   * O pôr do sol avisa para acender tochas; a noite de lua cheia traz o
+   * visitante dela. Só quando inimigos podem aparecer.
+   */
+  private watchNightfall(): void {
+    const isNight = this.clock.isNight;
+    const isDusk = !isNight && this.clock.daylight < 1;
+
+    if (isDusk && !this.wasDusk && this.allowsHostiles) {
+      this.events.push({ type: 'hint', text: DUSK_HINT });
+    }
+
+    if (isNight && !this.wasNight) {
+      this.welcomeFullMoon();
+    }
+
+    this.wasDusk = isDusk;
+    this.wasNight = isNight;
+  }
+
+  private welcomeFullMoon(): void {
+    const visitorId = this.catalog.world.calendar.fullMoonVisitor;
+
+    if (!this.calendar.isFullMoon || !visitorId || !this.allowsHostiles) {
+      return;
+    }
+
+    const visitor = this.creatures.summon(this.catalog.creature(visitorId));
+
+    if (visitor) {
+      this.events.push({ type: 'hint', text: `🌕 Noite de lua cheia! O ${visitor.definition.name} veio passear. Ele é grande, mas é fofo!` });
+      this.events.push({ type: 'sound', cue: 'boss' });
+    }
+  }
+
+  /** O escudo na mão segura a flecha e gasta um uso. */
+  private blockWithShield(): boolean {
+    const held = this.selectedItem;
+
+    if (held?.kind !== 'shield') {
+      return false;
+    }
+
+    this.wearSelected(held);
+
+    return true;
+  }
+
+  /** A armadura mais inteira da mochila segura o golpe e gasta um uso. */
+  private absorbWithArmor(): boolean {
+    let best = -1;
+
+    this.inventory.slots.forEach((slot, index) => {
+      const bestSlot = best >= 0 ? this.inventory.slots[best] : null;
+
+      if (slot && this.catalog.item(slot.item).kind === 'armor' && (slot.durability ?? 0) > (bestSlot?.durability ?? 0)) {
+        best = index;
+      }
+    });
+
+    const piece = best >= 0 ? this.inventory.slots[best] : null;
+
+    if (!piece) {
+      return false;
+    }
+
+    if (this.inventory.wear(best)) {
+      this.events.push({ type: 'tool-broke', item: piece.item });
+    }
+
+    this.version += 1;
+
+    return true;
   }
 
   /** A energia desce devagar; ao ficar baixa, o jogo lembra de comer uma vez. Devolve se mudou. */

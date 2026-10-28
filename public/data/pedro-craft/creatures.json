@@ -67,6 +67,22 @@
       "splitInto": { "creature": "mud-slime-small", "count": 2 }
     },
     {
+      "id": "king-slime",
+      "name": "Rei Slime",
+      "temperament": "hostile",
+      "health": 30,
+      "speed": 1.2,
+      "damage": 1,
+      "attackCooldownMs": 1800,
+      "behavior": "hopper",
+      "model": "king-slime",
+      "colors": ["#7cbf3a", "#4a7a24", "#f5c542"],
+      "width": 1.8,
+      "height": 1.6,
+      "drops": "king-slime",
+      "splitInto": { "creature": "mud-slime", "count": 4 }
+    },
+    {
       "id": "mud-slime-small",
       "name": "Slimezinho de lama",
       "temperament": "hostile",

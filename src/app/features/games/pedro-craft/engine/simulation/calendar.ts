@@ -32,6 +32,11 @@ export class Calendar {
     return ((this.current - 1) % this.definition.daysPerSeason) + 1;
   }
 
+  /** Noite de lua cheia: a cada `fullMoonEvery` dias. */
+  get isFullMoon(): boolean {
+    return this.current % this.definition.fullMoonEvery === 0;
+  }
+
   setDay(day: number): void {
     this.current = Math.max(1, Math.floor(day));
   }

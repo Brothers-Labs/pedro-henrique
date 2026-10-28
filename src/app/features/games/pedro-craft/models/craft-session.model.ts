@@ -7,6 +7,7 @@ import type { PartOfDay } from '../engine/simulation/day-clock';
 import type { FirstStep } from '../engine/simulation/first-steps';
 import type { WeatherKind } from '../engine/simulation/weather';
 import type { GoalDefinition } from './content.model';
+import type { CraftDifficulty } from './craft-settings.model';
 import type { WorldSave } from './world-save.model';
 
 /**
@@ -21,6 +22,7 @@ import type { WorldSave } from './world-save.model';
 export interface CraftEngineSettings {
   /** Modo Paz: nenhum inimigo nasce. */
   readonly peaceful: boolean;
+  readonly difficulty: CraftDifficulty;
   readonly lookSensitivity: number;
   readonly autoJump: boolean;
   readonly effectsEnabled: boolean;
@@ -47,6 +49,7 @@ export interface CalendarView {
   readonly seasonEmoji: string;
   readonly partOfDay: PartOfDay;
   readonly weather: WeatherKind;
+  readonly isFullMoon: boolean;
 }
 
 export interface CraftHudState {
@@ -60,6 +63,8 @@ export interface CraftHudState {
   readonly health: number;
   readonly maxHealth: number;
   readonly calendar: CalendarView;
+  /** Golpes que as armaduras da mochila ainda seguram; `null` sem armadura. */
+  readonly armor: number | null;
   /** Energia do modo Sobrevivência gentil; `null` nos outros modos. */
   readonly energy: { readonly value: number; readonly max: number } | null;
   /** O gesto da vez no guia do primeiro minuto; `null` sem guia. */

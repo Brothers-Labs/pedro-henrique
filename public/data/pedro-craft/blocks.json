@@ -497,6 +497,36 @@
       "drops": "sugar-cane-return",
       "mapColor": "#9ccc65",
       "textures": { "all": { "pattern": "crop", "colors": ["#9ccc65", "#c5e1a5"] } }
+    },
+    {
+      "id": "lantern",
+      "name": "Lanterna",
+      "shape": "cube",
+      "solid": true,
+      "transparent": true,
+      "hardness": 0.5,
+      "drops": "lantern",
+      "light": 15,
+      "mapColor": "#ffd23f",
+      "textures": { "all": { "pattern": "glass", "colors": ["#3d3d3d", "#ffd23f"] } }
+    },
+    {
+      "id": "campfire",
+      "name": "Fogueira",
+      "shape": "slab",
+      "solid": true,
+      "transparent": true,
+      "hardness": 0.5,
+      "tool": "axe",
+      "drops": "campfire",
+      "light": 13,
+      "collisionHeight": 0.4,
+      "mapColor": "#ff8c1a",
+      "textures": {
+        "top": { "pattern": "log-top", "colors": ["#ff8c1a", "#ffd23f", "#8a5a32"] },
+        "side": { "pattern": "log-side", "colors": ["#6b4423", "#4a2f18"] },
+        "bottom": { "pattern": "log-side", "colors": ["#6b4423", "#4a2f18"] }
+      }
     }
   ]
 }

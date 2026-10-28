@@ -61,6 +61,7 @@ describe('Bichos do PedroCraft', () => {
       shoot: (launch) => shots.push(launch),
       vanished: (creature) => vanished.push(creature),
       born: (baby) => born.push(baby),
+      difficulty: () => ({ speed: 1, attackCooldown: 1 }),
     });
   });
 
@@ -313,6 +314,15 @@ describe('Bichos do PedroCraft', () => {
       run(60);
 
       expect(shots.length).toBe(0);
+    });
+
+    it('a lua cheia chama o Rei Slime para longe das tochas', () => {
+      const king = creatures.summon(catalog.creature('king-slime'));
+
+      expect(king?.definition.id).toBe('king-slime');
+      expect(Math.hypot((king?.body.x ?? 0) - HERO.x, (king?.body.z ?? 0) - HERO.z)).toBeGreaterThanOrEqual(
+        catalog.world.creatures.minSpawnDistance - 1,
+      );
     });
 
     it('golpeado, o inimigo não foge: fica bravo e vem atrás', () => {

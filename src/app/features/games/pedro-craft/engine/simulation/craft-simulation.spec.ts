@@ -4,7 +4,7 @@ import { VoxelWorld } from '../../world/voxel-world';
 import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
 import { CraftSimulation } from './craft-simulation';
 import type { Creature } from './creatures';
-import { goalIcon } from '../session-views';
+import { goalIcon, hudState as hudOf } from '../session-views';
 import type { SimulationEvent } from './simulation-events';
 
 /** Olhando para +x, na altura dos olhos: a mira cai no bloco (7, 4, 5). */
@@ -662,6 +662,73 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     it('aventura: não há energia', () => {
       expect(simulation.energy).toBeNull();
       expect(simulation.mode).toBe('adventure');
+    });
+  });
+  describe('noites mais justas', () => {
+    const makeNight = (): void => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+    };
+
+    it('a armadura na mochila segura o golpe: gasta um uso e não tira coração', () => {
+      makeNight();
+      simulation.inventory.slots[8] = { item: 'leather-armor', count: 1, durability: catalog.item('leather-armor').durability };
+      simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      run(20);
+
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.slots[8]?.durability).toBeLessThan(catalog.item('leather-armor').durability ?? 0);
+      expect(hudOf(simulation).armor).toBe(simulation.inventory.slots[8]?.durability ?? -1);
+    });
+
+    it('o escudo na mão segura a flecha', () => {
+      hold('shield');
+      simulation.projectiles.launch({
+        owner: 'creature',
+        damage: 1,
+        x: 9.5,
+        y: FLOOR_TOP + 1,
+        z: 5.5,
+        directionX: -1,
+        directionY: 0.05,
+        directionZ: 0,
+        speed: 16,
+      });
+      run(30);
+
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('shield').durability ?? 0) - 1);
+    });
+
+    it('sem escudo, a flecha tira coração', () => {
+      simulation.projectiles.launch({
+        owner: 'creature',
+        damage: 1,
+        x: 9.5,
+        y: FLOOR_TOP + 1,
+        z: 5.5,
+        directionX: -1,
+        directionY: 0.05,
+        directionZ: 0,
+        speed: 16,
+      });
+      run(30);
+
+      expect(simulation.health.value).toBe(catalog.world.hero.maxHealth - 1);
+    });
+
+    it('o pôr do sol avisa para acender tochas', () => {
+      simulation.clock.setTime(catalog.world.clock.dayMs - 10_000);
+      run(2);
+
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('sol está se pondo'))).toBeTrue();
+    });
+
+    it('com o Modo Paz, o pôr do sol não assusta ninguém', () => {
+      simulation.setPeaceful(true);
+      simulation.clock.setTime(catalog.world.clock.dayMs - 10_000);
+      run(2);
+
+      expect(events.some((event) => event.type === 'hint')).toBeFalse();
     });
   });
 });

@@ -69,7 +69,8 @@ export class CraftHud {
       return null;
     }
 
-    const part = PARTS_OF_DAY[calendar.partOfDay];
+    const part =
+      calendar.partOfDay === 'night' && calendar.isFullMoon ? { label: 'Lua cheia', emoji: '🌕' } : PARTS_OF_DAY[calendar.partOfDay];
     const weather = WEATHERS[calendar.weather];
     const spoken = [`${calendar.seasonName}, dia ${calendar.day}`, part.label.toLowerCase(), weather.label].filter(Boolean).join(', ');
 

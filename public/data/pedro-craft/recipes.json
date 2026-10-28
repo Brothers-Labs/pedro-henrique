@@ -49,6 +49,12 @@
     { "id": "arrow", "type": "shaped", "station": "workbench", "pattern": ["C", "S", "F"], "key": { "C": "cobblestone", "S": "stick", "F": "feather" }, "output": { "item": "arrow", "count": 4 } },
     { "id": "bucket", "type": "shaped", "station": "workbench", "pattern": ["I I", " I "], "key": { "I": "iron-ingot" }, "output": { "item": "bucket" } },
     { "id": "bread", "type": "shaped", "station": "workbench", "pattern": ["WWW"], "key": { "W": "wheat" }, "output": { "item": "bread" } },
+    { "id": "leather-armor", "type": "shaped", "station": "workbench", "pattern": ["L L", "LLL", "LLL"], "key": { "L": "leather" }, "output": { "item": "leather-armor" } },
+    { "id": "iron-armor", "type": "shaped", "station": "workbench", "pattern": ["I I", "III", "III"], "key": { "I": "iron-ingot" }, "output": { "item": "iron-armor" } },
+    { "id": "golden-armor", "type": "shaped", "station": "workbench", "pattern": ["G G", "GGG", "GGG"], "key": { "G": "gold-ingot" }, "output": { "item": "golden-armor" } },
+    { "id": "shield", "type": "shaped", "station": "workbench", "pattern": ["PIP", "PPP", " P "], "key": { "P": "oak-planks", "I": "iron-ingot" }, "output": { "item": "shield" } },
+    { "id": "lantern", "type": "shaped", "station": "workbench", "pattern": ["III", "ITI", "III"], "key": { "I": "iron-ingot", "T": "torch" }, "output": { "item": "lantern" } },
+    { "id": "campfire", "type": "shaped", "station": "workbench", "pattern": [" S ", "SCS", "LLL"], "key": { "S": "stick", "C": "coal", "L": "oak-log" }, "output": { "item": "campfire" } },
     { "id": "bowl", "type": "shaped", "station": "workbench", "pattern": ["P P", " P "], "key": { "P": "oak-planks" }, "output": { "item": "bowl", "count": 4 } },
     { "id": "cake", "type": "shaped", "station": "workbench", "pattern": ["WWW", "SES"], "key": { "W": "wheat", "S": "sugar", "E": "egg" }, "output": { "item": "cake" } }
   ],

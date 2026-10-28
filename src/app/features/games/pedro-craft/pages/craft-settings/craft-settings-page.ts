@@ -4,6 +4,7 @@ import { MakerAudioService } from '../../../pedro-maker/services/maker-audio.ser
 import { CraftPageFrame } from '../../components/craft-page-frame/craft-page-frame';
 import {
   type CraftButtonSize,
+  type CraftDifficulty,
   type CraftSettings,
   type CraftTouchMode,
   LOOK_SENSITIVITY_RANGE,
@@ -16,6 +17,11 @@ const TOGGLES: readonly { readonly id: Toggle; readonly label: string; readonly 
   { id: 'peaceful', label: 'Modo Paz (sem inimigos)', emoji: '🕊️' },
   { id: 'autoJump', label: 'Pulo automático', emoji: '🦘' },
   { id: 'readAloud', label: 'Ler missões e avisos em voz alta', emoji: '🔊' },
+];
+
+const DIFFICULTIES: readonly { readonly id: CraftDifficulty; readonly label: string; readonly emoji: string }[] = [
+  { id: 'facil', label: 'Fácil', emoji: '🐢' },
+  { id: 'normal', label: 'Normal', emoji: '⚔️' },
 ];
 
 const TOUCH_MODES: readonly { readonly id: CraftTouchMode; readonly label: string }[] = [
@@ -62,6 +68,7 @@ export class CraftSettingsPage {
   protected readonly settings = this.settingsService.settings;
   protected readonly toggles = TOGGLES;
   protected readonly touchModes = TOUCH_MODES;
+  protected readonly difficulties = DIFFICULTIES;
   protected readonly buttonSizes = BUTTON_SIZES;
   protected readonly keyboard = KEYBOARD;
   protected readonly sensitivities = sensitivitySteps();
@@ -73,6 +80,10 @@ export class CraftSettingsPage {
 
   protected chooseSensitivity(value: number): void {
     this.change({ lookSensitivity: value });
+  }
+
+  protected chooseDifficulty(difficulty: CraftDifficulty): void {
+    this.change({ difficulty });
   }
 
   protected chooseTouchMode(mode: CraftTouchMode): void {

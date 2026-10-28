@@ -47,7 +47,14 @@ export interface CombatContext {
   fainted(): void;
   /** O herói não leva dano (modo Criativo). */
   isInvulnerable(): boolean;
+  /** O escudo na mão segura a flecha (gastando um uso)? */
+  blocksArrow(): boolean;
+  /** Uma armadura na mochila segura o golpe (gastando um uso)? */
+  absorbWithArmor(): boolean;
 }
+
+/** De onde veio o golpe: o escudo só segura flecha. */
+export type HitSource = 'melee' | 'arrow';
 
 /**
  * Golpes e flechas, nos dois sentidos.
@@ -73,7 +80,7 @@ export class Combat {
       const fromZ = projectile.z - projectile.velocityZ;
 
       if (hit.target === 'hero') {
-        this.hurtHero(projectile.damage, fromX, fromZ);
+        this.hurtHero(projectile.damage, fromX, fromZ, 'arrow');
       } else {
         this.strike(hit.creature, projectile.damage, ARROW_KNOCKBACK, fromX, fromZ);
       }
@@ -105,11 +112,29 @@ export class Combat {
     }
   }
 
-  /** O herói leva um golpe vindo de (`fromX`, `fromZ`). */
-  hurtHero(amount: number, fromX: number, fromZ: number): void {
+  /**
+   * O herói leva um golpe vindo de (`fromX`, `fromZ`). O escudo segura a
+   * flecha e a armadura segura o golpe: nos dois casos o herói é empurrado,
+   * mas não perde coração.
+   */
+  hurtHero(amount: number, fromX: number, fromZ: number, source: HitSource = 'melee'): void {
     const { health, hero } = this.context;
 
-    if (this.context.isInvulnerable() || !health.damage(amount)) {
+    if (this.context.isInvulnerable() || !health.canBeHurt) {
+      return;
+    }
+
+    if (source === 'arrow' && this.context.blocksArrow()) {
+      health.protect();
+      this.context.event({ type: 'sound', cue: 'button' });
+      return;
+    }
+
+    const isAbsorbed = this.context.absorbWithArmor();
+
+    if (isAbsorbed) {
+      health.protect();
+    } else if (!health.damage(amount)) {
       return;
     }
 
@@ -121,6 +146,12 @@ export class Combat {
     body.velocityX = (awayX / length) * HERO_KNOCKBACK;
     body.velocityZ = (awayZ / length) * HERO_KNOCKBACK;
     body.velocityY = HERO_KNOCKBACK_LIFT;
+
+    if (isAbsorbed) {
+      this.context.event({ type: 'sound', cue: 'enemyHit' });
+      return;
+    }
+
     this.context.event({ type: 'sound', cue: 'damage' });
     this.context.event({ type: 'hero-hurt' });
 

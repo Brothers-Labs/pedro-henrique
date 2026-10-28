@@ -50,6 +50,8 @@
   "calendar": {
     "daysPerSeason": 7,
     "greenhouseBlock": "glass",
+    "fullMoonEvery": 8,
+    "fullMoonVisitor": "king-slime",
     "seasons": [
       {
         "id": "spring",

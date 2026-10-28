@@ -19,6 +19,24 @@
       </p>
     </section>
 
+    <section class="section" aria-labelledby="dificuldade-titulo">
+      <h2 id="dificuldade-titulo" class="section__title">Dificuldade da noite</h2>
+      <div class="choices choices--compact" role="radiogroup" aria-labelledby="dificuldade-titulo">
+        @for (option of difficulties; track option.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.difficulty === option.id"
+            (click)="chooseDifficulty(option.id)"
+          >
+            <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+          </button>
+        }
+      </div>
+      <p class="section__hint">No Fácil, os inimigos andam mais devagar e atacam menos.</p>
+    </section>
+
     <section class="section" aria-labelledby="guia-titulo">
       <h2 id="guia-titulo" class="section__title"><span aria-hidden="true">🧭</span> Primeiros passos</h2>
       <p>O guia que ensina a andar, olhar, pular e quebrar o primeiro bloco.</p>

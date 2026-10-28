@@ -18,7 +18,10 @@
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "name": { "type": "string", "minLength": 1 },
-        "kind": { "enum": ["block", "tool", "weapon", "food", "material", "seed", "bucket", "ammo"] },
+        "kind": {
+          "enum": ["block", "tool", "weapon", "food", "material", "seed", "bucket", "ammo", "armor", "shield"],
+          "description": "armor protege da mochila mesmo, gastando um uso por golpe; shield na mão segura as flechas."
+        },
         "maxStack": { "type": "integer", "minimum": 1, "maximum": 64 },
         "icon": {
           "oneOf": [
@@ -35,7 +38,7 @@
               "properties": {
                 "type": { "const": "sprite" },
                 "shape": {
-                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane"]
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown"]
                 },
                 "colors": { "$ref": "common.schema.json#/$defs/colors" }
               }

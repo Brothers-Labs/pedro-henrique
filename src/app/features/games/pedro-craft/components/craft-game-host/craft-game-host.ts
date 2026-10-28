@@ -134,6 +134,7 @@ export class CraftGameHost {
 
     return {
       peaceful: settings.peaceful,
+      difficulty: settings.difficulty,
       lookSensitivity: settings.lookSensitivity,
       autoJump: settings.autoJump,
       // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.

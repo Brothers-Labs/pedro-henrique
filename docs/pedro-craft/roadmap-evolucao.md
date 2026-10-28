@@ -11,6 +11,18 @@ Este documento faz duas coisas:
 
 Cada fase cabe numa demanda própria, com o mesmo processo dos marcos M0 a M7.
 
+## Situação das fases (atualizada em 2026-10-28)
+
+| Fase | Situação | Marco |
+| --- | --- | --- |
+| Ajuda ❓ (pedido à parte) | Entregue | M8 |
+| F0 — Firmar | Entregue, menos a conferência no tablet, que fica com o Pedro | M9 |
+| F1 — Fazenda viva | Entregue: 6 plantações, comidas, adubo e filhotes (regador e diário ficaram para depois) | M10 |
+| F2 — Calendário e estações | Entregue: calendário, 4 estações, clima, estufa (gelo no lago, arco-íris e aniversário ficaram para depois) | M11 |
+| F3 — Modos de jogo | Entregue: Criativo, Aventura e Sobrevivência gentil | M12 |
+| F4 — Noites mais justas | Entregue: armadura, escudo, dificuldade, aviso de anoitecer, Rei Slime, lanterna e fogueira | M13 |
+| F5 a F8 | Não começadas | — |
+
 ---
 
 ## 1. Onde o jogo está hoje
