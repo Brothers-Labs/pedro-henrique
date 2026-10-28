@@ -51,6 +51,27 @@
   background: #ffcf3f;
 }
 
+.status {
+  position: absolute;
+  bottom: calc(1.4rem + var(--slot-size) + var(--safe-bottom));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
+  translate: -50% 0;
+  font-size: calc(var(--slot-size) * 0.32);
+  filter: drop-shadow(0 1px 0 rgb(42 35 80 / 60%));
+}
+
+.status__heart--empty {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.status__moon {
+  margin-left: 0.4rem;
+}
+
 .hotbar {
   position: absolute;
   bottom: calc(0.75rem + var(--safe-bottom));

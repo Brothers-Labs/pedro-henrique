@@ -10,6 +10,7 @@ import { DropsView } from './drops-view';
 import { HandView } from './hand-view';
 import { ItemTextures } from './item-textures';
 import { ParticlesView } from './particles-view';
+import { ProjectilesView } from './projectiles-view';
 import { TargetView } from './target-view';
 import { createDaylightUniform, type DaylightUniform } from './voxel-material';
 import { WorldView } from './world-view';
@@ -19,8 +20,16 @@ const CHUNKS_PER_LOADING_BATCH = 4;
 
 const UNDERWATER_COLOR = new Color('#1f5f9e');
 
+/** O céu do meio do dia e o da noite funda; no crepúsculo, a cor passa de um para o outro. */
+const DAY_SKY = new Color('#8fd0ff');
+const NIGHT_SKY = new Color('#1e2a5c');
+
+/** A noite é azulada e enxergável de propósito: escuridão total assusta. */
+const DAY_LIGHT = new Color(1, 1, 1);
+const NIGHT_LIGHT = new Color(0.42, 0.48, 0.72);
+
 /**
- * Tudo o que se vê: o mundo de blocos, os animais, os itens caídos, a mira e a mão.
+ * Tudo o que se vê: o céu, o mundo de blocos, os bichos, as flechas, os itens caídos, a mira e a mão.
  *
  * Só lê a simulação. A câmera fica entre a posição do passo anterior e a do
  * atual (`alpha`), o que deixa o movimento liso mesmo com a tela mais rápida
@@ -34,10 +43,10 @@ export class CraftView {
   private readonly itemTextures: ItemTextures;
   private readonly dropsView: DropsView;
   private readonly creaturesView: CreaturesView;
+  private readonly projectilesView: ProjectilesView;
   private readonly targetView: TargetView;
   private readonly handView: HandView;
   private readonly particles: ParticlesView;
-  private wasUnderwater = false;
   private effectsEnabled = true;
 
   constructor(
@@ -57,6 +66,7 @@ export class CraftView {
     this.itemTextures = new ItemTextures(simulation.catalog);
     this.dropsView = new DropsView(stage.scene, this.itemTextures);
     this.creaturesView = new CreaturesView(stage.scene, this.daylight);
+    this.projectilesView = new ProjectilesView(stage.scene);
     this.targetView = new TargetView(stage.scene);
     this.handView = new HandView(stage.camera, this.itemTextures);
     this.particles = new ParticlesView(stage.scene);
@@ -93,10 +103,11 @@ export class CraftView {
     camera.rotation.set(hero.pitch, hero.yaw, 0);
 
     this.applyVisualEvents();
-    this.updateUnderwater();
+    this.updateSky();
     this.worldView.rebuild();
     this.dropsView.update(simulation.drops.list);
     this.creaturesView.update(simulation.creatures.list, alpha, frameMs);
+    this.projectilesView.update(simulation.projectiles.list, alpha);
     this.targetView.update(simulation.target, simulation.miningProgress);
     this.handView.update(simulation.selectedItem?.id ?? null, simulation.mining !== null, frameMs);
     this.particles.update(frameMs);
@@ -105,13 +116,13 @@ export class CraftView {
 
   applyQuality(tier: QualityTier): void {
     this.stage.applyQuality(tier);
-    this.wasUnderwater = false;
   }
 
   dispose(): void {
     this.worldView.dispose();
     this.dropsView.dispose();
     this.creaturesView.dispose();
+    this.projectilesView.dispose();
     this.targetView.dispose();
     this.handView.dispose();
     this.particles.dispose();
@@ -135,7 +146,7 @@ export class CraftView {
         case 'crop-grew':
           this.worldView.markCell(event.x, event.y, event.z);
           break;
-        case 'creature-defeated':
+        case 'creature-poof':
           if (this.effectsEnabled) {
             // A nuvem nasce centrada no animal; `burst` espalha a partir do canto de uma célula.
             this.particles.burst(event.x - 0.5, event.y, event.z - 0.5, event.color);
@@ -145,17 +156,17 @@ export class CraftView {
     }
   }
 
-  /** Debaixo d'água o mundo fica azul e a vista curta, como num mergulho de verdade. */
-  private updateUnderwater(): void {
-    const isUnderwater = this.simulation.isEyeUnderwater;
+  /**
+   * O céu e a luz seguem o relógio; debaixo d'água o mundo fica azul e a
+   * vista curta, como num mergulho de verdade.
+   */
+  private updateSky(): void {
+    const daylight = this.simulation.clock.daylight;
 
-    if (isUnderwater === this.wasUnderwater) {
-      return;
-    }
+    this.daylight.value.copy(NIGHT_LIGHT).lerp(DAY_LIGHT, daylight);
+    this.stage.sky.copy(NIGHT_SKY).lerp(DAY_SKY, daylight);
 
-    this.wasUnderwater = isUnderwater;
-
-    if (isUnderwater) {
+    if (this.simulation.isEyeUnderwater) {
       this.stage.setFog(UNDERWATER_COLOR, 0, 0.18);
     } else {
       this.stage.setFog(this.stage.sky, 0.55, 1);

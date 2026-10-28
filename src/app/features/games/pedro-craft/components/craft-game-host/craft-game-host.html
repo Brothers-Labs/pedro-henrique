@@ -38,6 +38,7 @@
   }
 
   @default {
+    <span class="hurt" [class.hurt--visible]="isHurt()" aria-hidden="true"></span>
     <span class="crosshair" aria-hidden="true"></span>
 
     <app-craft-hud [hud]="hud()" [icons]="icons()" [pickups]="pickups()" (slotSelected)="selectSlot($event)" />
@@ -64,7 +65,7 @@
     @if (showsMouseHint()) {
       <p class="hint" role="status">
         Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula,
-        <strong>clique</strong> quebra, <strong>botão direito</strong> coloca, <strong>E</strong> abre a mochila e
+        <strong>clique</strong> quebra e golpeia, <strong>botão direito</strong> coloca e usa, <strong>E</strong> abre a mochila e
         <strong>Esc</strong> pausa.
       </p>
     }
@@ -95,6 +96,9 @@
       <h2 id="pausa-titulo" class="card__title">Pausa</h2>
       <button type="button" class="card__button" data-tone="green" (click)="resume()">
         <span aria-hidden="true">▶</span> Continuar
+      </button>
+      <button type="button" class="card__button" data-tone="green" [attr.aria-pressed]="isPeaceful()" (click)="togglePeaceful()">
+        <span aria-hidden="true">🕊️</span> Modo Paz: {{ isPeaceful() ? 'ligado' : 'desligado' }}
       </button>
       @if (canFullscreen) {
         <button type="button" class="card__button" data-tone="blue" (click)="toggleFullscreen()">

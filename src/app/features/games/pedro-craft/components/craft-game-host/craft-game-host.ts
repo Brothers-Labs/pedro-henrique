@@ -36,6 +36,7 @@ import { CraftTouchControls } from '../craft-touch-controls/craft-touch-controls
 type HostPhase = 'loading' | 'playing' | 'screen' | 'paused' | 'error';
 
 const TOAST_VISIBLE_MS = 2600;
+const HURT_VISIBLE_MS = 350;
 const PICKUP_VISIBLE_MS = 1800;
 const MAX_PICKUPS = 3;
 
@@ -89,11 +90,13 @@ export class CraftGameHost {
   protected readonly hud = signal<CraftHudState | null>(null);
   protected readonly screen = signal<ScreenView | null>(null);
   protected readonly toast = signal<string | null>(null);
+  protected readonly isHurt = signal(false);
   protected readonly pickups = signal<readonly PickupNotice[]>([]);
   protected readonly isFullscreen = signal(false);
   protected readonly isPointerLocked = signal(false);
   protected readonly canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
   protected readonly buttonSize = computed(() => this.settingsService.settings().buttonSize);
+  protected readonly isPeaceful = computed(() => this.settingsService.settings().peaceful);
   protected readonly icons = computed(() => new ItemIconCache(this.catalog()));
 
   protected readonly showsTouchControls = computed(() => {
@@ -110,6 +113,7 @@ export class CraftGameHost {
     const settings = this.settingsService.settings();
 
     return {
+      peaceful: settings.peaceful,
       lookSensitivity: settings.lookSensitivity,
       autoJump: settings.autoJump,
       // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.
@@ -149,6 +153,12 @@ export class CraftGameHost {
     this.audio.play('button');
     this.session?.resume();
     this.phase.set('playing');
+  }
+
+  /** Liga ou desliga os inimigos; ligado no meio da noite, eles vão embora na hora. */
+  protected togglePeaceful(): void {
+    this.audio.play('button');
+    this.settingsService.update({ peaceful: !this.isPeaceful() });
   }
 
   protected exit(): void {
@@ -309,6 +319,10 @@ export class CraftGameHost {
       case 'goal-completed':
         this.siteProgress.registerChallenge('pedro-craft', true);
         this.showToast(`${event.goal.emoji} Missão cumprida: ${event.goal.title}!`);
+        return;
+      case 'hero-hurt':
+        this.isHurt.set(true);
+        this.later(HURT_VISIBLE_MS, () => this.isHurt.set(false));
         return;
       case 'open-screen':
         if (this.phase() === 'playing') {

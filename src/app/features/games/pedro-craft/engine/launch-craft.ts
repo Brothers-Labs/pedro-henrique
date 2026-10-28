@@ -159,6 +159,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       spawn: generated.layout.spawn,
       autoJump: settings.autoJump,
       randomSeed: options.seed,
+      peaceful: settings.peaceful,
     });
     const nextView = new CraftView(activeStage, nextSimulation);
 
@@ -206,6 +207,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     updateSettings: (next) => {
       settings = next;
       simulation?.setAutoJump(next.autoJump);
+      simulation?.setPeaceful(next.peaceful);
       view?.setEffectsEnabled(next.effectsEnabled);
     },
     selectSlot: (index) => {

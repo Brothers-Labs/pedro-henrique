@@ -21,6 +21,9 @@ export function hudState(simulation: CraftSimulation): CraftHudState {
     goal: goal ? { goal, amount: simulation.goals.progress.amount } : null,
     goalsDone: simulation.goals.completedCount,
     goalsTotal: simulation.catalog.goals.length,
+    health: simulation.health.value,
+    maxHealth: simulation.health.max,
+    isNight: simulation.clock.isNight,
   };
 }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import type { CraftHudState } from '../../models/craft-session.model';
 import type { ItemIconCache } from '../../presentation/item-icon-cache';
@@ -12,8 +12,8 @@ export interface PickupNotice {
 }
 
 /**
- * O que fica por cima do mundo enquanto se joga: a missão da vez, a barra de
- * itens e os itens que acabaram de entrar na mochila.
+ * O que fica por cima do mundo enquanto se joga: a missão da vez, os
+ * corações, a barra de itens e os itens que acabaram de entrar na mochila.
  *
  * A barra é tocável: no tablet, escolher a picareta é um toque nela.
  */
@@ -30,4 +30,11 @@ export class CraftHud {
   readonly pickups = input<readonly PickupNotice[]>([]);
 
   readonly slotSelected = output<number>();
+
+  /** Um coração por ponto de vida: cheio ou vazio. */
+  protected readonly hearts = computed<readonly boolean[]>(() => {
+    const state = this.hud();
+
+    return state ? Array.from({ length: state.maxHealth }, (_, index) => index < state.health) : [];
+  });
 }

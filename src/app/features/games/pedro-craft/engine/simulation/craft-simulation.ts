@@ -1,7 +1,6 @@
 import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
-import { HAND_ATTACK_COOLDOWN_MS, HAND_DAMAGE, HAND_KNOCKBACK } from '../../content/parsers/parse-items';
 import type { BucketStats, ItemDefinition } from '../../models/content.model';
 import type { SpawnPoint } from '../../world/world-generator';
 import type { VoxelWorld } from '../../world/voxel-world';
@@ -10,13 +9,17 @@ import type { CraftInputSnapshot } from '../input/craft-input';
 import type { LookDelta } from '../input/craft-input-reader';
 import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
+import { Combat } from './combat';
 import { type Creature, Creatures } from './creatures';
+import { DayClock } from './day-clock';
 import { Farm } from './farm';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
+import { HeroHealth } from './hero-health';
 import { HeroMotion } from './hero-motion';
 import { tickFurnace } from './furnace';
 import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 import { type DropCollector, ItemDrops } from './item-drops';
+import { Projectiles } from './projectiles';
 import { castRay, type RayHit } from './raycast';
 import { type CraftScreen, ScreenController, type SlotRef } from './screens';
 import type { SimulationEvent, VisualEvent } from './simulation-events';
@@ -26,6 +29,10 @@ import { WaterFlow } from './water-flow';
 const BREAK_COOLDOWN_MS = 150;
 
 const SOIL_LIST = new Intl.ListFormat('pt-BR', { type: 'disjunction' });
+
+const FAINTED_HINT = 'Ufa! Você descansou e acordou em casa, com todos os seus itens.';
+const SLEPT_HINT = 'Bom dia! Você dormiu até de manhã.';
+const BED_DAY_HINT = 'A cama agora é a sua casa. À noite, use a cama para dormir até de manhã.';
 
 export interface CraftSimulationOptions {
   readonly catalog: CraftCatalog;
@@ -37,6 +44,8 @@ export interface CraftSimulationOptions {
   /** Inventário guardado; sem ele, o herói começa com o `startingInventory` do mundo. */
   readonly inventory?: readonly SlotContent[];
   readonly goals?: GoalProgress;
+  /** Modo Paz: nenhum inimigo nasce. */
+  readonly peaceful?: boolean;
 }
 
 /** Bloco sendo quebrado e quanto já foi. */
@@ -68,7 +77,12 @@ export class CraftSimulation {
   readonly water: WaterFlow;
   readonly farm: Farm;
   readonly creatures: Creatures;
+  readonly projectiles = new Projectiles();
+  readonly clock: DayClock;
+  readonly health: HeroHealth;
 
+  /** Onde o herói volta depois de desmaiar: o começo do mundo, até a criança usar uma cama. */
+  respawnPoint: SpawnPoint;
   selectedSlot = 0;
   target: RayHit | null = null;
   /** Animal na mira, mais perto que qualquer bloco: o botão de quebrar vira golpe e o de usar vale para ele. */
@@ -76,13 +90,15 @@ export class CraftSimulation {
   mining: MiningState | null = null;
 
   private readonly actions: BlockActions;
+  private readonly combat: Combat;
   private readonly collector: DropCollector;
   private readonly random: () => number;
   private readonly events: SimulationEvent[] = [];
   private readonly visualEvents: VisualEvent[] = [];
   private autoJump: boolean;
+  private isPeaceful: boolean;
+  private wasNight: boolean;
   private breakCooldownMs = 0;
-  private attackCooldownMs = 0;
   private hintedCell = -1;
   private version = 0;
 
@@ -93,8 +109,13 @@ export class CraftSimulation {
     this.terrain = physicsTerrain(options.world, this.properties);
     this.hero = new HeroMotion(options.spawn.x, options.spawn.y, options.spawn.z, options.spawn.yaw);
     this.autoJump = options.autoJump;
+    this.isPeaceful = options.peaceful ?? false;
+    this.respawnPoint = options.spawn;
     this.inventory = new Inventory(options.catalog);
     this.goals = new GoalTracker(options.catalog.goals, options.goals);
+    this.clock = new DayClock(options.catalog.world.clock.dayMs, options.catalog.world.clock.nightMs);
+    this.wasNight = this.clock.isNight;
+    this.health = new HeroHealth(options.catalog.world.hero);
 
     const seeded = new SeededRandom(options.randomSeed);
     this.random = () => seeded.next();
@@ -105,11 +126,43 @@ export class CraftSimulation {
     });
     this.creatures = new Creatures(this.world, this.catalog, this.properties, seeded, {
       hero: () => this.hero.body,
+      period: () => this.clock.period,
+      allowsHostiles: () => !this.isPeaceful,
       laid: (creature, item) => {
         const body = creature.body;
 
         this.drops.spawn(body.x, body.y + body.height / 2, body.z, { item, count: 1, durability: null }, this.random);
       },
+      strike: (creature) => this.combat.hurtHero(creature.definition.damage, creature.body.x, creature.body.z),
+      shoot: (launch) => this.projectiles.launch(launch),
+      vanished: (creature) => this.combat.vanish(creature),
+    });
+    this.combat = new Combat({
+      catalog: this.catalog,
+      hero: this.hero,
+      health: this.health,
+      creatures: this.creatures,
+      projectiles: this.projectiles,
+      drops: this.drops,
+      random: this.random,
+      event: (event) => {
+        this.events.push(event);
+
+        if (event.type === 'hero-hurt') {
+          this.version += 1;
+        }
+      },
+      visual: (event) => this.visualEvents.push(event),
+      recordGoal: (event) => this.recordGoal(event),
+      takeAmmo: (item) => {
+        const hasAmmo = this.inventory.remove(item, 1);
+
+        this.version += hasAmmo ? 1 : 0;
+
+        return hasAmmo;
+      },
+      wearHeld: (held) => this.wearSelected(held),
+      fainted: () => this.faint(),
     });
 
     if (options.inventory) {
@@ -195,6 +248,16 @@ export class CraftSimulation {
     this.autoJump = isEnabled;
   }
 
+  /** Ligar o Modo Paz no meio da noite manda os inimigos para casa no mesmo passo. */
+  setPeaceful(isEnabled: boolean): void {
+    this.isPeaceful = isEnabled;
+
+    if (isEnabled) {
+      this.creatures.sendHostilesHome();
+      this.projectiles.clear();
+    }
+  }
+
   look(delta: LookDelta): void {
     this.hero.look(delta.yaw, delta.pitch);
   }
@@ -215,19 +278,20 @@ export class CraftSimulation {
     }
 
     this.updateMining(input);
-    this.attackCooldownMs = Math.max(0, this.attackCooldownMs - STEP_MS);
 
     if (input.primaryPressed) {
       this.visualEvents.push({ type: 'swing' });
-      this.attack();
+      this.combat.swing(this.selectedItem, this.targetCreature);
     }
 
     if (input.secondaryPressed) {
       this.use();
     }
 
+    this.passTime();
     this.drops.step(this.terrain, this.collector);
     this.creatures.step(this.terrain);
+    this.combat.step(this.terrain);
     this.water.step(STEP_MS);
     this.farm.step(STEP_MS);
     this.tickFurnaces(STEP_MS);
@@ -299,6 +363,77 @@ export class CraftSimulation {
 
   drainVisualEvents(): readonly VisualEvent[] {
     return this.visualEvents.splice(0, this.visualEvents.length);
+  }
+
+  /** O relógio anda e a vida volta aos poucos; o HUD redesenha quando o dia vira noite ou um coração volta. */
+  private passTime(): void {
+    this.clock.advance(STEP_MS);
+
+    const isNight = this.clock.isNight;
+
+    if (this.health.step(STEP_MS) || isNight !== this.wasNight) {
+      this.wasNight = isNight;
+      this.version += 1;
+    }
+  }
+
+  /** A vida acabou: sem perder nada, o herói acorda na cama (ou no começo do mundo) com a vida cheia. */
+  private faint(): void {
+    const point = this.respawnPoint;
+
+    this.hero.teleport(point.x, point.y, point.z);
+    this.hero.yaw = point.yaw;
+    this.health.restore();
+    this.mining = null;
+    this.projectiles.clear();
+    this.events.push({ type: 'hint', text: FAINTED_HINT });
+    this.version += 1;
+  }
+
+  /** A cama vira o lugar de voltar; à noite, dormir pula para a manhã e os inimigos vão embora. */
+  private useBed(target: RayHit): void {
+    const block = this.catalog.blockAt(this.world.get(target.x, target.y, target.z));
+
+    this.respawnPoint = {
+      x: target.x + 0.5,
+      y: target.y + (block?.collisionHeight ?? 1),
+      z: target.z + 0.5,
+      yaw: this.hero.yaw,
+    };
+
+    if (!this.clock.isNight) {
+      this.events.push({ type: 'hint', text: BED_DAY_HINT });
+      this.confirmUse();
+      return;
+    }
+
+    this.clock.skipToMorning();
+    this.creatures.sendHostilesHome();
+    this.projectiles.clear();
+    this.health.restore();
+    this.events.push({ type: 'hint', text: SLEPT_HINT });
+    this.recordGoal({ trigger: 'sleep', target: null, count: 1 });
+    this.confirmUse();
+  }
+
+  /** Comer recupera vida; com a vida cheia, a comida fica guardada. */
+  private eat(held: ItemDefinition, heal: number): void {
+    if (this.health.isFull) {
+      this.events.push({ type: 'hint', text: `Sua vida já está cheia. Guarde ${held.name.toLowerCase()} para depois.` });
+      return;
+    }
+
+    this.health.heal(heal);
+
+    if (held.leftover) {
+      this.exchangeSelected(held.leftover);
+    } else {
+      this.inventory.consume(this.selectedSlot);
+    }
+
+    this.events.push({ type: 'sound', cue: 'crystal' });
+    this.visualEvents.push({ type: 'swing' });
+    this.version += 1;
   }
 
   private applySelection(input: CraftInputSnapshot): void {
@@ -410,48 +545,15 @@ export class CraftSimulation {
     this.version += 1;
   }
 
-  /** Golpe no animal mirado, no ritmo do item da mão: a espada bate mais forte e gasta um uso. */
-  private attack(): void {
-    const creature = this.targetCreature;
-
-    if (!creature || this.attackCooldownMs > 0) {
-      return;
-    }
-
-    const held = this.selectedItem;
-    const body = this.hero.body;
-    const isDefeated = this.creatures.hit(creature, held?.damage ?? HAND_DAMAGE, held?.knockback ?? HAND_KNOCKBACK, body.x, body.z);
-
-    this.attackCooldownMs = held?.attackCooldownMs ?? HAND_ATTACK_COOLDOWN_MS;
-    this.events.push({ type: 'sound', cue: 'enemyHit' });
-
-    if (held?.kind === 'weapon') {
-      this.wearSelected(held);
-    }
-
-    if (isDefeated) {
-      this.defeat(creature);
-    }
-  }
-
-  /** O animal derrotado vira uma nuvem e solta o que dá. */
-  private defeat(creature: Creature): void {
-    const { body, definition } = creature;
-
-    if (definition.drops) {
-      this.dropLoot(definition.drops, body.x, body.y + body.height / 2, body.z);
-    }
-
-    this.visualEvents.push({ type: 'creature-defeated', x: body.x, y: body.y, z: body.z, color: definition.colors[0] });
-    this.recordGoal({ trigger: 'defeat', target: definition.id, count: 1 });
-  }
-
   /** Item da mão usado no animal: a tesoura na ovelha dá lã, o balde na vaca vira leite. */
   private useOnCreature(creature: Creature): void {
     const held = this.selectedItem;
     const interaction = held ? creature.definition.interactions.find((entry) => entry.item === held.id) : undefined;
 
     if (!held || !interaction) {
+      if (held?.heal) {
+        this.eat(held, held.heal);
+      }
       return;
     }
 
@@ -483,7 +585,7 @@ export class CraftSimulation {
     }
   }
 
-  /** Botão de usar: vale para o animal mirado; abre a mesa, o baú ou a fornalha; abre a porta; senão, usa o item da mão. */
+  /** Botão de usar: vale para o bicho mirado; usa a cama; abre a mesa, o baú ou a fornalha; abre a porta; senão, usa o item da mão. */
   private use(): void {
     if (this.targetCreature) {
       this.useOnCreature(this.targetCreature);
@@ -493,8 +595,12 @@ export class CraftSimulation {
     const target = this.target;
     const interaction = target ? (this.catalog.blockAt(this.world.get(target.x, target.y, target.z))?.interaction ?? null) : null;
 
-    if (target && interaction && interaction !== 'bed') {
-      this.openScreen(interaction, { cell: this.world.indexOf(target.x, target.y, target.z) });
+    if (target && interaction) {
+      if (interaction === 'bed') {
+        this.useBed(target);
+      } else {
+        this.openScreen(interaction, { cell: this.world.indexOf(target.x, target.y, target.z) });
+      }
       return;
     }
 
@@ -510,10 +616,19 @@ export class CraftSimulation {
     }
   }
 
-  /** O item da mão no bloco mirado: balde, enxada, semente ou bloco para colocar. */
+  /**
+   * O item da mão no bloco mirado: balde, enxada, semente ou bloco para
+   * colocar. Comida é comida em qualquer lugar — a cenoura só é plantada
+   * quando a mira está no solo dela.
+   */
   private useHeld(held: ItemDefinition, target: RayHit | null): void {
     if (held.bucket) {
       this.useBucket(held.bucket, target);
+      return;
+    }
+
+    if (held.heal !== null && !(held.plants && target && this.isSoilFor(held.plants, target))) {
+      this.eat(held, held.heal);
       return;
     }
 
@@ -560,12 +675,17 @@ export class CraftSimulation {
     }
   }
 
+  private isSoilFor(cropId: string, target: RayHit): boolean {
+    const ground = this.catalog.blockAt(this.world.get(target.x, target.y, target.z));
+
+    return ground !== null && this.catalog.crop(cropId).soil.includes(ground.id);
+  }
+
   /** Planta no solo mirado; no solo errado, conta onde a semente cresce. */
   private plant(target: RayHit, held: ItemDefinition, cropId: string): void {
     const crop = this.catalog.crop(cropId);
-    const ground = this.catalog.blockAt(this.world.get(target.x, target.y, target.z));
 
-    if (!ground || !crop.soil.includes(ground.id)) {
+    if (!this.isSoilFor(cropId, target)) {
       const soils = SOIL_LIST.format(crop.soil.map((soil) => this.catalog.block(soil).name.toLowerCase()));
 
       this.events.push({ type: 'hint', text: `${held.name}: plante em ${soils}.` });

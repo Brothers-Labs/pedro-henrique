@@ -355,4 +355,93 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(record).toHaveBeenCalledWith({ trigger: 'defeat', target: 'sheep', count: 1 });
     });
   });
+  describe('sobreviver', () => {
+    const makeNight = (): void => simulation.clock.advance(catalog.world.clock.dayMs);
+
+    it('comer a maçã recupera vida e gasta uma', () => {
+      simulation.health.damage(4);
+      simulation.inventory.slots[0] = { item: 'apple', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.health.value).toBe(catalog.world.hero.maxHealth - 4 + (catalog.item('apple').heal ?? 0));
+      expect(simulation.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('com a vida cheia, a comida fica guardada', () => {
+      simulation.inventory.slots[0] = { item: 'apple', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('beber o leite devolve o balde', () => {
+      simulation.health.damage(2);
+      hold('milk-bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.item).toBe('bucket');
+    });
+
+    it('a cama de dia guarda o lugar de voltar, sem pular o tempo', () => {
+      put('bed');
+      const before = simulation.clock.time;
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.respawnPoint).toEqual(jasmine.objectContaining({ x: TARGET.x + 0.5, z: TARGET.z + 0.5 }));
+      expect(simulation.clock.time).toBeGreaterThan(before);
+      expect(simulation.clock.isNight).toBeFalse();
+    });
+
+    it('a cama à noite faz dormir até de manhã, manda os inimigos embora e conta para a missão', () => {
+      put('bed');
+      makeNight();
+      const slime = simulation.creatures.spawn(catalog.creature('mud-slime'), 12.5, FLOOR_TOP, 12.5);
+      const record = spyOn(simulation.goals, 'record').and.callThrough();
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.clock.isNight).toBeFalse();
+      expect(simulation.creatures.list).not.toContain(slime);
+      expect(record).toHaveBeenCalledWith({ trigger: 'sleep', target: null, count: 1 });
+    });
+
+    it('ao desmaiar, o herói volta para casa com a vida cheia e todos os itens', () => {
+      makeNight();
+      simulation.inventory.slots[3] = { item: 'stone', count: 20, durability: null };
+      simulation.respawnPoint = { x: 2.5, y: FLOOR_TOP, z: 2.5, yaw: 0 };
+      simulation.health.damage(catalog.world.hero.maxHealth - 1);
+      simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      run(120);
+
+      expect(simulation.hero.body.x).toBeLessThan(4);
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.count('stone')).toBe(20);
+      expect(events.some((event) => event.type === 'hero-hurt')).toBeTrue();
+    });
+
+    it('o arco atira uma flecha e gasta uma da mochila', () => {
+      hold('bow');
+      simulation.inventory.slots[5] = { item: 'arrow', count: 3, durability: null };
+      run(1, { primaryPressed: true });
+
+      expect(simulation.projectiles.list.length).toBe(1);
+      expect(simulation.inventory.count('arrow')).toBe(2);
+    });
+
+    it('o arco sem flechas explica o que falta', () => {
+      hold('bow');
+      run(1, { primaryPressed: true });
+
+      expect(simulation.projectiles.list.length).toBe(0);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('ligar o Modo Paz manda os inimigos embora na hora', () => {
+      makeNight();
+      const spider = simulation.creatures.spawn(catalog.creature('button-spider'), 12.5, FLOOR_TOP, 12.5);
+      simulation.setPeaceful(true);
+
+      expect(simulation.creatures.list).not.toContain(spider);
+    });
+  });
 });

@@ -15,6 +15,8 @@ import type { GoalDefinition } from './content.model';
 
 /** Preferências que o motor precisa saber enquanto roda. */
 export interface CraftEngineSettings {
+  /** Modo Paz: nenhum inimigo nasce. */
+  readonly peaceful: boolean;
   readonly lookSensitivity: number;
   readonly autoJump: boolean;
   readonly effectsEnabled: boolean;
@@ -39,6 +41,10 @@ export interface CraftHudState {
   readonly goal: GoalView | null;
   readonly goalsDone: number;
   readonly goalsTotal: number;
+  /** Corações do herói agora e no máximo. */
+  readonly health: number;
+  readonly maxHealth: number;
+  readonly isNight: boolean;
 }
 
 export interface IngredientView {
@@ -94,6 +100,7 @@ export type CraftSessionEvent =
   | { readonly type: 'tool-broke'; readonly item: string }
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }
   | { readonly type: 'open-screen'; readonly screen: CraftScreen }
+  | { readonly type: 'hero-hurt' }
   /** A tela aberta mudou sozinha (a fornalha assando). */
   | { readonly type: 'screen'; readonly view: ScreenView }
   | { readonly type: 'pause-requested' }

@@ -1,11 +1,13 @@
 import type { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { HERO_PHYSICS, STEP_MS } from '../../config/craft-physics.config';
-import { AIR, type CraftCatalog } from '../../content/craft-catalog';
-import type { CreatureDefinition, CreatureInteraction } from '../../models/content.model';
+import type { CraftCatalog } from '../../content/craft-catalog';
+import type { CreatureDefinition, CreatureInteraction, SpawnPeriod, Temperament } from '../../models/content.model';
 import type { VoxelWorld } from '../../world/voxel-world';
 import type { BlockProperties, PhysicsTerrain } from '../block-properties';
+import { CreatureSpawner } from './creature-spawner';
 import { PhysicsBody } from './physics-body';
-import type { RayDirection, RayOrigin } from './raycast';
+import type { ProjectileLaunch } from './projectiles';
+import { castRay, type RayDirection, type RayOrigin } from './raycast';
 
 const STEP_SECONDS = STEP_MS / 1000;
 
@@ -17,30 +19,46 @@ const WANDER_MS = { min: 1500, max: 4000 } as const;
 const FLEE_MS = 3000;
 const FLEE_SPEED_FACTOR = 1.8;
 
+/** Perto assim, o inimigo percebe o herói e vai atrás. */
+const CHASE_RANGE = 16;
+
+/** Longe assim do herói, o inimigo desiste do mundo e some, abrindo vaga para outro. */
+const LEASH_RANGE = 48;
+
+/** Folga entre a caixa do inimigo e a do herói para o golpe alcançar. */
+const MELEE_GAP = 0.45;
+
+/** O pulo do slime e da aranha: sobe e avança, e espera um pouco no chão. */
+const HOP_SPEED = 6.5;
+const HOP_REACH_FACTOR = 1.6;
+const HOP_REST_MS = { min: 600, max: 1100 } as const;
+
+/** O esqueleto gosta de distância: nem colado, nem longe demais para acertar. */
+const ARCHER_MIN_DISTANCE = 5;
+const ARCHER_MAX_DISTANCE = 10;
+const ARCHER_SHOOT_RANGE = 14;
+const ARCHER_ARROW_SPEED = 16;
+/** A flecha cai assim, em blocos por segundo ao quadrado: o esqueleto mira um pouco acima para compensar. */
+const ARROW_GRAVITY = 12;
+
 /** Quanto da velocidade desejada é alcançada por passo: o bicho acelera e freia macio. */
 const GRIP = 0.3;
 
-/** Na água, o animal bate as patas e boia, em vez de afundar. */
+/** Na água, o bicho bate as patas e boia, em vez de afundar. */
 const SWIM_UP_SPEED = 2.5;
 
-/** Distância à frente onde o animal sente o degrau ou a água. */
+/** Distância à frente onde o bicho sente o degrau ou a água. */
 const PROBE_DISTANCE = 0.6;
 
-/** Lugares sorteados para cada grupo antes de desistir até a próxima vez. */
-const SPAWN_TRIES = 6;
-
-/** O quanto os animais de um mesmo grupo nascem afastados entre si. */
-const GROUP_SPREAD = 2;
-
-/** Abaixo disto o animal saiu do mundo e some. */
+/** Abaixo disto o bicho saiu do mundo e some. */
 const FALLOUT_Y = -8;
 
-/** Um golpe joga o animal um pouco para cima, além de para trás. */
+/** Um golpe joga o bicho um pouco para cima, além de para trás. */
 const KNOCKBACK_LIFT = 4;
 
-export type CreatureMood = 'idle' | 'wander' | 'flee';
+export type CreatureMood = 'idle' | 'wander' | 'flee' | 'chase';
 
-/** Um animal no mundo: corpo, vida, humor e o que ele ainda está esperando para repetir. */
+/** Um bicho no mundo: corpo, vida, humor e o que ele ainda está esperando para repetir. */
 export class Creature {
   readonly body: PhysicsBody;
   health: number;
@@ -52,6 +70,10 @@ export class Creature {
   previousZ: number;
   /** Tempo até o próximo ovo; `null` para quem não bota nada. */
   layLeftMs: number | null;
+  /** Tempo até poder golpear ou atirar de novo. */
+  attackLeftMs = 0;
+  /** Tempo de descanso no chão entre dois pulos. */
+  hopLeftMs = 0;
 
   /** Espera de cada interação, pelo item usado (a lã crescendo de volta). */
   private readonly cooldowns = new Map<string, number>();
@@ -73,6 +95,10 @@ export class Creature {
     this.layLeftMs = definition.lays?.everyMs ?? null;
   }
 
+  get isHostile(): boolean {
+    return this.definition.temperament === 'hostile';
+  }
+
   /** Alguma interação ainda está esperando: a ovelha tosquiada fica sem lã até lá. */
   get isCoolingDown(): boolean {
     return this.cooldowns.size > 0;
@@ -89,6 +115,9 @@ export class Creature {
   }
 
   tickCooldowns(elapsedMs: number): void {
+    this.attackLeftMs = Math.max(0, this.attackLeftMs - elapsedMs);
+    this.hopLeftMs = Math.max(0, this.hopLeftMs - elapsedMs);
+
     for (const [item, leftMs] of this.cooldowns) {
       if (leftMs <= elapsedMs) {
         this.cooldowns.delete(item);
@@ -105,23 +134,37 @@ export interface CreatureHit {
 }
 
 export interface CreaturesHost {
-  /** Onde o herói está: os animais nascem longe dele e fogem dele. */
-  hero(): { readonly x: number; readonly z: number };
-  /** O animal soltou um item no chão (o ovo da galinha). */
+  /** O corpo do herói: os bichos nascem longe dele, fogem dele ou vão atrás dele. */
+  hero(): PhysicsBody;
+  /** Hora do dia para o sorteio de quem nasce. */
+  period(): SpawnPeriod;
+  /** Inimigos podem existir agora? Falso com o Modo Paz ligado. */
+  allowsHostiles(): boolean;
+  /** O bicho soltou um item no chão (o ovo da galinha). */
   laid(creature: Creature, item: string): void;
+  /** O inimigo encostou no herói e deu um golpe. */
+  strike(creature: Creature): void;
+  /** O esqueleto atirou uma flecha. */
+  shoot(launch: ProjectileLaunch): void;
+  /** O inimigo foi embora numa nuvem de fumaça (o dia chegou, o Modo Paz ligou). */
+  vanished(creature: Creature): void;
 }
 
 /**
- * Os animais do mundo.
+ * Os bichos do mundo.
  *
- * Cada um vive numa máquina de estados pequena: parado pastando, passeando
- * numa direção ou fugindo de quem bateu nele. Novos animais nascem de tempos
- * em tempos fora da vista do herói, até o teto do mundo. Os inimigos e a
- * noite chegam com o combate; por enquanto só nascem os animais passivos.
+ * Cada um vive numa máquina de estados pequena: parado, passeando, fugindo
+ * de quem bateu nele ou, se for inimigo, indo atrás do herói. O jeito de ir
+ * atrás vem do comportamento no JSON: o espantalho anda, o slime e a aranha
+ * pulam e o esqueleto mantém distância e atira.
+ *
+ * Novos bichos nascem de tempos em tempos fora da vista do herói: os animais
+ * de dia, os inimigos só à noite, longe das tochas, e nunca no Modo Paz. Ao
+ * amanhecer os inimigos "voltam para casa" numa nuvem.
  */
 export class Creatures {
   private readonly creatures: Creature[] = [];
-  private readonly spawnable: readonly (readonly [CreatureDefinition, number])[];
+  private readonly spawner: CreatureSpawner;
   private spawnLeftMs: number;
   private nextId = 1;
 
@@ -132,9 +175,7 @@ export class Creatures {
     private readonly random: SeededRandom,
     private readonly host: CreaturesHost,
   ) {
-    this.spawnable = catalog.creatures
-      .filter((creature) => creature.temperament === 'passive' && creature.spawn)
-      .map((creature) => [creature, creature.spawn?.weight ?? 0] as const);
+    this.spawner = new CreatureSpawner(world, catalog, properties, random);
     this.spawnLeftMs = catalog.world.creatures.spawnIntervalMs;
   }
 
@@ -159,7 +200,23 @@ export class Creatures {
     }
   }
 
+  /** Todos os inimigos vão embora numa nuvem: amanheceu, o herói dormiu ou o Modo Paz ligou. */
+  sendHostilesHome(): void {
+    for (let index = this.creatures.length - 1; index >= 0; index -= 1) {
+      const creature = this.creatures[index];
+
+      if (creature.isHostile) {
+        this.creatures.splice(index, 1);
+        this.host.vanished(creature);
+      }
+    }
+  }
+
   step(terrain: PhysicsTerrain): void {
+    if (this.host.period() === 'day' || !this.host.allowsHostiles()) {
+      this.sendHostilesHome();
+    }
+
     this.spawnLeftMs -= STEP_MS;
 
     if (this.spawnLeftMs <= 0) {
@@ -167,23 +224,30 @@ export class Creatures {
       this.spawnGroup();
     }
 
+    const hero = this.host.hero();
+
     for (let index = this.creatures.length - 1; index >= 0; index -= 1) {
       const creature = this.creatures[index];
+      const body = creature.body;
 
-      this.think(creature);
-      this.move(terrain, creature);
+      this.think(creature, hero);
+      this.move(terrain, creature, hero);
+      this.attack(creature, hero);
       this.layEgg(creature);
       creature.tickCooldowns(STEP_MS);
 
-      if (creature.body.y < FALLOUT_Y) {
+      const isLost = creature.isHostile && Math.hypot(body.x - hero.x, body.z - hero.z) > LEASH_RANGE;
+
+      if (body.y < FALLOUT_Y || isLost) {
         this.creatures.splice(index, 1);
       }
     }
   }
 
   /**
-   * Um golpe: tira vida, empurra para longe de quem bateu e faz o animal
-   * fugir. Devolve se ele foi derrotado — quem bate cuida do que ele solta.
+   * Um golpe: tira vida e empurra para longe de quem bateu. O animal foge; o
+   * inimigo fica bravo e vem atrás. Devolve se o bicho foi derrotado — quem
+   * bate cuida do que ele solta.
    */
   hit(creature: Creature, damage: number, knockback: number, fromX: number, fromZ: number): boolean {
     const body = creature.body;
@@ -201,14 +265,20 @@ export class Creatures {
     body.velocityX = (awayX / length) * knockback;
     body.velocityZ = (awayZ / length) * knockback;
     body.velocityY = KNOCKBACK_LIFT;
-    creature.yaw = Math.atan2(-awayX, -awayZ);
-    creature.mood = 'flee';
-    creature.moodLeftMs = FLEE_MS;
+
+    if (creature.isHostile) {
+      creature.mood = 'chase';
+      creature.yaw = Math.atan2(awayX, awayZ);
+    } else {
+      creature.mood = 'flee';
+      creature.moodLeftMs = FLEE_MS;
+      creature.yaw = Math.atan2(-awayX, -awayZ);
+    }
 
     return false;
   }
 
-  /** Animal mais perto que o raio acerta, até `reach`. */
+  /** Bicho mais perto que o raio acerta, até `reach`. */
   castRay(origin: RayOrigin, direction: RayDirection, reach: number): CreatureHit | null {
     let nearest: CreatureHit | null = null;
 
@@ -223,14 +293,22 @@ export class Creatures {
     return nearest;
   }
 
-  private think(creature: Creature): void {
+  private think(creature: Creature, hero: PhysicsBody): void {
+    if (creature.isHostile && distanceBetween(creature.body, hero) < CHASE_RANGE) {
+      creature.mood = 'chase';
+      creature.yaw = yawTowards(creature.body, hero);
+      return;
+    }
+
+    if (creature.mood === 'chase') {
+      this.startIdle(creature);
+    }
+
     creature.moodLeftMs -= STEP_MS;
 
     if (creature.moodLeftMs > 0) {
       if (creature.mood === 'flee') {
-        const hero = this.host.hero();
-
-        creature.yaw = Math.atan2(-(creature.body.x - hero.x), -(creature.body.z - hero.z));
+        creature.yaw = yawTowards(hero, creature.body);
       }
       return;
     }
@@ -249,7 +327,30 @@ export class Creatures {
     creature.moodLeftMs = this.random.integer(IDLE_MS.min, IDLE_MS.max);
   }
 
-  private move(terrain: PhysicsTerrain, creature: Creature): void {
+  /** Velocidade de andar neste passo; negativa é andar de costas (o esqueleto recuando). */
+  private walkSpeed(creature: Creature, hero: PhysicsBody): number {
+    const speed = creature.definition.speed;
+
+    switch (creature.mood) {
+      case 'idle':
+        return 0;
+      case 'flee':
+        return speed * FLEE_SPEED_FACTOR;
+      case 'wander':
+        return speed;
+      case 'chase': {
+        if (creature.definition.behavior !== 'archer') {
+          return speed;
+        }
+
+        const distance = distanceBetween(creature.body, hero);
+
+        return distance > ARCHER_MAX_DISTANCE ? speed : distance < ARCHER_MIN_DISTANCE ? -speed : 0;
+      }
+    }
+  }
+
+  private move(terrain: PhysicsTerrain, creature: Creature, hero: PhysicsBody): void {
     const body = creature.body;
 
     creature.previousX = body.x;
@@ -257,17 +358,25 @@ export class Creatures {
     creature.previousZ = body.z;
     body.isInWater = body.touchesLiquid(terrain);
 
-    let speed = creature.mood === 'idle' ? 0 : creature.definition.speed * (creature.mood === 'flee' ? FLEE_SPEED_FACTOR : 1);
-    const directionX = -Math.sin(creature.yaw);
-    const directionZ = -Math.cos(creature.yaw);
+    const isHopper = creature.definition.behavior === 'hopper';
+    let speed = this.walkSpeed(creature, hero);
+    const sign = Math.sign(speed);
+    const directionX = -Math.sin(creature.yaw) * sign;
+    const directionZ = -Math.cos(creature.yaw) * sign;
 
-    // Animal que passeia não entra na água sozinho: para na beirada e dá meia-volta.
+    speed = Math.abs(speed);
+
+    // Ninguém entra na água sozinho: para na beirada e, se estava passeando, dá meia-volta.
     if (speed > 0 && !body.isInWater && this.isWaterAhead(terrain, body, directionX, directionZ)) {
-      creature.yaw += Math.PI;
+      if (creature.mood !== 'chase') {
+        creature.yaw += Math.PI;
+      }
       speed = 0;
     }
 
-    if (body.isOnGround || body.isInWater) {
+    if (isHopper && body.isOnGround && !body.isInWater) {
+      this.hop(creature, speed, directionX, directionZ);
+    } else if (!isHopper && (body.isOnGround || body.isInWater)) {
       body.velocityX += (directionX * speed - body.velocityX) * GRIP;
       body.velocityZ += (directionZ * speed - body.velocityZ) * GRIP;
     }
@@ -280,7 +389,7 @@ export class Creatures {
 
     const result = body.move(terrain, body.velocityX * STEP_SECONDS, body.velocityY * STEP_SECONDS, body.velocityZ * STEP_SECONDS);
 
-    if ((result.blockedX || result.blockedZ) && body.isOnGround && speed > 0) {
+    if ((result.blockedX || result.blockedZ) && body.isOnGround && speed > 0 && !isHopper) {
       if (body.collidesAt(terrain, directionX * PROBE_DISTANCE, 1.05, directionZ * PROBE_DISTANCE)) {
         creature.yaw += Math.PI / 2 + this.random.next() * Math.PI;
       } else {
@@ -289,12 +398,125 @@ export class Creatures {
     }
   }
 
+  /** No chão, quem pula freia; depois do descanso, salta para a frente. */
+  private hop(creature: Creature, speed: number, directionX: number, directionZ: number): void {
+    const body = creature.body;
+
+    body.velocityX *= 1 - GRIP;
+    body.velocityZ *= 1 - GRIP;
+
+    if (speed === 0 || creature.hopLeftMs > 0) {
+      return;
+    }
+
+    body.velocityX = directionX * speed * HOP_REACH_FACTOR;
+    body.velocityZ = directionZ * speed * HOP_REACH_FACTOR;
+    body.velocityY = HOP_SPEED;
+    creature.hopLeftMs = this.random.integer(HOP_REST_MS.min, HOP_REST_MS.max);
+  }
+
+  /** O inimigo que alcançou o herói golpeia; o esqueleto atira de longe, se enxerga o herói. */
+  private attack(creature: Creature, hero: PhysicsBody): void {
+    if (creature.mood !== 'chase' || creature.attackLeftMs > 0) {
+      return;
+    }
+
+    const definition = creature.definition;
+
+    if (definition.behavior === 'archer') {
+      const distance = distanceBetween(creature.body, hero);
+
+      if (distance <= ARCHER_SHOOT_RANGE && this.canSee(creature, hero)) {
+        creature.attackLeftMs = definition.attackCooldownMs;
+        this.host.shoot(this.aimAt(creature, hero));
+      }
+      return;
+    }
+
+    if (isWithinReach(creature.body, hero)) {
+      creature.attackLeftMs = definition.attackCooldownMs;
+      this.host.strike(creature);
+    }
+  }
+
+  /** Flecha do olho do esqueleto até o peito do herói, mirando um pouco acima pela queda da flecha. */
+  private aimAt(creature: Creature, hero: PhysicsBody): ProjectileLaunch {
+    const eye = eyeOf(creature.body);
+    const deltaX = hero.x - eye.x;
+    const deltaZ = hero.z - eye.z;
+    const flat = Math.hypot(deltaX, deltaZ);
+    const flightSeconds = flat / ARCHER_ARROW_SPEED;
+    const deltaY = hero.y + hero.height * 0.6 - eye.y + 0.5 * ARROW_GRAVITY * flightSeconds * flightSeconds;
+    const length = Math.hypot(deltaX, deltaY, deltaZ) || 1;
+
+    return {
+      owner: 'creature',
+      damage: creature.definition.damage,
+      x: eye.x,
+      y: eye.y,
+      z: eye.z,
+      directionX: deltaX / length,
+      directionY: deltaY / length,
+      directionZ: deltaZ / length,
+      speed: ARCHER_ARROW_SPEED,
+    };
+  }
+
+  /** Nenhum bloco sólido entre o olho do bicho e o herói. */
+  private canSee(creature: Creature, hero: PhysicsBody): boolean {
+    const eye = eyeOf(creature.body);
+    const deltaX = hero.x - eye.x;
+    const deltaY = hero.y + hero.height * 0.8 - eye.y;
+    const deltaZ = hero.z - eye.z;
+    const distance = Math.hypot(deltaX, deltaY, deltaZ);
+    const { world, properties } = this;
+
+    if (distance === 0) {
+      return true;
+    }
+
+    const blocker = castRay(
+      eye,
+      { x: deltaX / distance, y: deltaY / distance, z: deltaZ / distance },
+      distance,
+      (x, y, z) => properties.collisionHeight[world.get(x, y, z)] > 0,
+    );
+
+    return blocker === null;
+  }
+
   private isWaterAhead(terrain: PhysicsTerrain, body: PhysicsBody, directionX: number, directionZ: number): boolean {
     const aheadX = Math.floor(body.x + directionX * (body.halfWidth + PROBE_DISTANCE));
     const aheadZ = Math.floor(body.z + directionZ * (body.halfWidth + PROBE_DISTANCE));
     const feetY = Math.floor(body.y);
 
     return terrain.isLiquid(aheadX, feetY, aheadZ) || terrain.isLiquid(aheadX, feetY - 1, aheadZ);
+  }
+
+  private spawnGroup(): void {
+    const hero = this.host.hero();
+    const group = this.spawner.pick({
+      period: this.host.period(),
+      allowsHostiles: this.host.allowsHostiles(),
+      heroX: hero.x,
+      heroZ: hero.z,
+      roomFor: (temperament) => this.roomFor(temperament),
+    });
+
+    if (!group) {
+      return;
+    }
+
+    for (const position of group.positions) {
+      this.spawn(group.definition, position.x, position.y, position.z);
+    }
+  }
+
+  private roomFor(temperament: Temperament): number {
+    const settings = this.catalog.world.creatures;
+    const cap = temperament === 'hostile' ? settings.hostileCap : settings.passiveCap;
+
+    return cap - this.creatures.filter((creature) => creature.definition.temperament === temperament).length;
   }
 
   private layEgg(creature: Creature): void {
@@ -312,80 +534,28 @@ export class Creatures {
     }
   }
 
-  /** Sorteia um tipo de animal e tenta pôr um grupo dele no chão certo, longe do herói. */
-  private spawnGroup(): void {
-    const settings = this.catalog.world.creatures;
-    const room = settings.passiveCap - this.creatures.length;
+}
 
-    if (room <= 0 || this.spawnable.length === 0) {
-      return;
-    }
+function distanceBetween(from: PhysicsBody, to: PhysicsBody): number {
+  return Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+}
 
-    const definition = this.random.weighted(this.spawnable);
-    const spawn = definition.spawn;
+/** Ângulo para olhar de `from` até `to`, no mesmo sentido do olhar do herói (frente é -z). */
+function yawTowards(from: PhysicsBody, to: PhysicsBody): number {
+  return Math.atan2(-(to.x - from.x), -(to.z - from.z));
+}
 
-    if (!spawn) {
-      return;
-    }
+/** As duas caixas estão quase encostadas, na mesma altura mais ou menos? */
+function isWithinReach(creature: PhysicsBody, hero: PhysicsBody): boolean {
+  const gapX = Math.abs(hero.x - creature.x) - creature.halfWidth - hero.halfWidth;
+  const gapZ = Math.abs(hero.z - creature.z) - creature.halfWidth - hero.halfWidth;
+  const overlapsY = creature.y < hero.y + hero.height && hero.y < creature.y + creature.height + MELEE_GAP;
 
-    const ground = new Set(spawn.on.map((id) => this.catalog.blockNumber(id)));
-    const hero = this.host.hero();
+  return gapX < MELEE_GAP && gapZ < MELEE_GAP && overlapsY;
+}
 
-    for (let attempt = 0; attempt < SPAWN_TRIES; attempt += 1) {
-      const angle = this.random.next() * Math.PI * 2;
-      const distance = settings.minSpawnDistance + this.random.next() * (settings.maxSpawnDistance - settings.minSpawnDistance);
-      const x = Math.floor(hero.x + Math.cos(angle) * distance);
-      const z = Math.floor(hero.z + Math.sin(angle) * distance);
-
-      if (this.standingY(x, z, ground) === null) {
-        continue;
-      }
-
-      const size = Math.min(room, this.random.integer(spawn.groupMin, spawn.groupMax));
-
-      for (let member = 0; member < size; member += 1) {
-        const memberX = member === 0 ? x : x + this.random.integer(-GROUP_SPREAD, GROUP_SPREAD);
-        const memberZ = member === 0 ? z : z + this.random.integer(-GROUP_SPREAD, GROUP_SPREAD);
-        const y = this.standingY(memberX, memberZ, ground);
-
-        if (y !== null) {
-          this.spawn(definition, memberX + 0.5, y, memberZ + 0.5);
-        }
-      }
-      return;
-    }
-  }
-
-  /**
-   * Altura onde um animal fica em pé na coluna: o chão mais alto tem que ser
-   * de um dos blocos permitidos, com dois blocos livres em cima. Capim e flor
-   * não contam como chão.
-   */
-  private standingY(x: number, z: number, ground: ReadonlySet<number>): number | null {
-    const { world, properties } = this;
-
-    if (x < 0 || z < 0 || x >= world.width || z >= world.depth) {
-      return null;
-    }
-
-    for (let y = world.height - 1; y > 0; y -= 1) {
-      const block = world.get(x, y, z);
-
-      if (block === AIR || (properties.collisionHeight[block] === 0 && properties.isLiquid[block] === 0)) {
-        continue;
-      }
-
-      const isClear = [1, 2].every((above) => {
-        const cell = world.get(x, y + above, z);
-
-        return properties.collisionHeight[cell] === 0 && properties.isLiquid[cell] === 0;
-      });
-
-      return ground.has(block) && isClear ? y + 1 : null;
-    }
-
-    return null;
-  }
+function eyeOf(body: PhysicsBody): RayOrigin {
+  return { x: body.x, y: body.y + body.height * 0.85, z: body.z };
 }
 
 /** Distância até a caixa do corpo pelo raio (teste das placas); `null` se o raio não a cruza. */
