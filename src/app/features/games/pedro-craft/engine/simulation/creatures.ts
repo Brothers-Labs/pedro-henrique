@@ -109,8 +109,18 @@ export class Creature {
   }
 
   startCooldown(interaction: CreatureInteraction): void {
-    if (interaction.cooldownMs > 0) {
-      this.cooldowns.set(interaction.item, interaction.cooldownMs);
+    this.setCooldown(interaction.item, interaction.cooldownMs);
+  }
+
+  /** Esperas em curso, para o save. */
+  get cooldownList(): readonly { readonly item: string; readonly leftMs: number }[] {
+    return [...this.cooldowns].map(([item, leftMs]) => ({ item, leftMs }));
+  }
+
+  /** Volta uma espera guardada (o save) ou começa uma nova; zero não espera nada. */
+  setCooldown(item: string, leftMs: number): void {
+    if (leftMs > 0) {
+      this.cooldowns.set(item, leftMs);
     }
   }
 

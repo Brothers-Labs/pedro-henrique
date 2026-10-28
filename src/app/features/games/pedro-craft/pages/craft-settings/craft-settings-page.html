@@ -1,0 +1,84 @@
+@let current = settings();
+
+<app-craft-page-frame heading="Configurações" emoji="⚙️">
+  <div class="sections">
+    <section class="section" aria-labelledby="jogo-titulo">
+      <h2 id="jogo-titulo" class="section__title">Jogo</h2>
+      <div class="toggles">
+        @for (option of toggles; track option.id) {
+          <button type="button" class="toggle" role="switch" [attr.aria-checked]="current[option.id]" (click)="toggle(option.id)">
+            <span class="toggle__emoji" aria-hidden="true">{{ option.emoji }}</span>
+            <span class="toggle__label">{{ option.label }}</span>
+            <span class="toggle__state">{{ current[option.id] ? 'Ligado' : 'Desligado' }}</span>
+          </button>
+        }
+      </div>
+      <p class="section__hint">
+        Com o Modo Paz, a noite fica tranquila: nenhum inimigo aparece. Ele começa ligado quando o modo calmo do site está
+        ligado.
+      </p>
+    </section>
+
+    <section class="section" aria-labelledby="olhar-titulo">
+      <h2 id="olhar-titulo" class="section__title"><span aria-hidden="true">👀</span> Velocidade do olhar</h2>
+      <div class="choices choices--compact" role="radiogroup" aria-labelledby="olhar-titulo">
+        @for (option of sensitivities; track option.value) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.lookSensitivity === option.value"
+            (click)="chooseSensitivity(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="controles-titulo">
+      <h2 id="controles-titulo" class="section__title"><span aria-hidden="true">🎮</span> Controles</h2>
+      <p class="section__label">Botões na tela durante o jogo:</p>
+      <div class="choices choices--compact" role="radiogroup" aria-label="Botões de toque">
+        @for (mode of touchModes; track mode.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.touchControls === mode.id"
+            (click)="chooseTouchMode(mode.id)"
+          >
+            {{ mode.label }}
+          </button>
+        }
+      </div>
+
+      <p class="section__label">Tamanho dos botões:</p>
+      <div class="choices choices--compact" role="radiogroup" aria-label="Tamanho dos botões">
+        @for (size of buttonSizes; track size.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.buttonSize === size.id"
+            (click)="chooseButtonSize(size.id)"
+          >
+            {{ size.label }}
+          </button>
+        }
+      </div>
+
+      <table class="keys">
+        <caption class="section__label">No teclado:</caption>
+        <tbody>
+          @for (entry of keyboard; track entry.keys) {
+            <tr>
+              <th scope="row"><kbd>{{ entry.keys }}</kbd></th>
+              <td>{{ entry.action }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  </div>
+</app-craft-page-frame>

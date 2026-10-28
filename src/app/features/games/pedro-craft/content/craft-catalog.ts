@@ -114,6 +114,10 @@ export class CraftCatalog {
     return required(this.cropsById, id, 'Plantação');
   }
 
+  hasCrop(id: string): boolean {
+    return this.cropsById.has(id);
+  }
+
   /** Plantação representada por um bloco do mundo; `null` se o bloco não é planta. */
   cropForBlock(blockId: string): CropDefinition | null {
     return this.cropsByBlock.get(blockId) ?? null;

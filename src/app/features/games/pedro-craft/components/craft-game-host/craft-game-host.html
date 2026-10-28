@@ -44,7 +44,7 @@
     <app-craft-hud [hud]="hud()" [icons]="icons()" [pickups]="pickups()" (slotSelected)="selectSlot($event)" />
 
     <div class="bar">
-      <p class="bar__title">{{ worldName() }}</p>
+      <p class="bar__title">{{ world().name }}</p>
       <button type="button" class="bar__button" aria-label="Abrir a mochila" (click)="openInventory()">
         <span aria-hidden="true">🎒</span>
       </button>

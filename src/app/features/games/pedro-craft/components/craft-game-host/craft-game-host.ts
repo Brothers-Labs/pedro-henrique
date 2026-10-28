@@ -27,8 +27,10 @@ import type {
   CraftSessionEvent,
   ScreenView,
 } from '../../models/craft-session.model';
+import type { WorldSave } from '../../models/world-save.model';
 import { ItemIconCache } from '../../presentation/item-icon-cache';
 import { CraftSettingsService } from '../../services/craft-settings.service';
+import { CraftWorldsService } from '../../services/craft-worlds.service';
 import { CraftHud, type PickupNotice } from '../craft-hud/craft-hud';
 import { CraftScreenPanel, type SlotRequest } from '../craft-screen-panel/craft-screen-panel';
 import { CraftTouchControls } from '../craft-touch-controls/craft-touch-controls';
@@ -37,6 +39,11 @@ type HostPhase = 'loading' | 'playing' | 'screen' | 'paused' | 'error';
 
 const TOAST_VISIBLE_MS = 2600;
 const HURT_VISIBLE_MS = 350;
+
+/** De quanto em quanto tempo o mundo se salva sozinho enquanto se joga. */
+const AUTOSAVE_EVERY_MS = 20_000;
+
+const SAVE_FAILED_MESSAGE = 'Não foi possível salvar o mundo agora. Vamos tentar de novo daqui a pouco.';
 const PICKUP_VISIBLE_MS = 1800;
 const MAX_PICKUPS = 3;
 
@@ -45,8 +52,11 @@ const MAX_PICKUPS = 3;
  *
  * Carrega o motor só quando o mundo abre, cria o jogo fora da zona do
  * Angular (60 quadros por segundo não podem disparar detecção de mudanças) e
- * traduz os eventos do motor em signals: HUD, mochila, avisos e missões. Ao
- * sair da tela, o jogo é destruído junto com o canvas.
+ * traduz os eventos do motor em signals: HUD, mochila, avisos e missões.
+ *
+ * O mundo se salva sozinho: ao abrir, a cada `AUTOSAVE_EVERY_MS`, ao pausar,
+ * ao esconder a aba e ao sair. Ao sair da tela, o jogo é destruído junto com
+ * o canvas.
  */
 @Component({
   selector: 'app-craft-game-host',
@@ -63,14 +73,14 @@ const MAX_PICKUPS = 3;
 })
 export class CraftGameHost {
   readonly catalog = input.required<CraftCatalog>();
-  readonly seed = input.required<number>();
-  readonly worldName = input.required<string>();
+  readonly world = input.required<WorldSave>();
 
   readonly exited = output<void>();
 
   private readonly zone = inject(NgZone);
   private readonly audio = inject(MakerAudioService);
   private readonly settingsService = inject(CraftSettingsService);
+  private readonly worlds = inject(CraftWorldsService);
   private readonly siteProgress = inject(GameProgressService);
   private readonly motion = inject(MotionPreferenceService);
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -80,6 +90,7 @@ export class CraftGameHost {
   private lookPointer: { readonly id: number; x: number; y: number } | null = null;
   private pickupKey = 0;
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
+  private autosaveTimer: ReturnType<typeof setInterval> | null = null;
 
   /** Estado dos controles de toque, lido pelo motor a cada passo. */
   protected readonly virtualInput = createVirtualCraftInput();
@@ -143,6 +154,7 @@ export class CraftGameHost {
     this.session?.pause();
     this.phase.set('paused');
     this.audio.play('button');
+    this.saveNow();
   }
 
   protected resume(): void {
@@ -163,6 +175,7 @@ export class CraftGameHost {
 
   protected exit(): void {
     this.audio.play('button');
+    this.saveNow();
     this.exited.emit();
   }
 
@@ -219,9 +232,16 @@ export class CraftGameHost {
     }
   }
 
+  /** Aba escondida pode nunca mais voltar (o tablet fecha o navegador): pausa e salva. */
   protected pauseWhenHidden(): void {
-    if (document.hidden) {
+    if (!document.hidden) {
+      return;
+    }
+
+    if (this.phase() === 'playing') {
       this.pause();
+    } else {
+      this.saveNow();
     }
   }
 
@@ -273,7 +293,7 @@ export class CraftGameHost {
         launchCraftGame({
           parent: this.stage().nativeElement,
           catalog: this.catalog(),
-          seed: this.seed(),
+          world: this.world(),
           settings: this.engineSettings(),
           input: this.virtualInput,
           listener: (event) => this.receive(event),
@@ -303,6 +323,7 @@ export class CraftGameHost {
         return;
       case 'ready':
         this.phase.set('playing');
+        this.startAutosave();
         return;
       case 'hud':
         this.hud.set(event.hud);
@@ -381,12 +402,37 @@ export class CraftGameHost {
     this.timers.add(timer);
   }
 
+  private startAutosave(): void {
+    this.saveNow();
+    this.autosaveTimer = setInterval(() => this.saveNow(), AUTOSAVE_EVERY_MS);
+  }
+
+  /** Fotografa o mundo e guarda no aparelho; uma falha avisa sem interromper o jogo. */
+  private saveNow(): void {
+    const save = this.session?.capture();
+
+    if (!save) {
+      return;
+    }
+
+    this.worlds.save(save).catch((error: unknown) => {
+      console.error('PedroCraft: o mundo não pôde ser salvo.', error);
+      this.zone.run(() => this.showToast(SAVE_FAILED_MESSAGE));
+    });
+  }
+
   private teardown(): void {
     for (const timer of this.timers) {
       clearTimeout(timer);
     }
 
+    if (this.autosaveTimer !== null) {
+      clearInterval(this.autosaveTimer);
+      this.autosaveTimer = null;
+    }
+
     this.timers.clear();
+    this.saveNow();
     this.session?.destroy();
     this.session = null;
 

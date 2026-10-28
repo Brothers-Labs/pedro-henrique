@@ -16,6 +16,26 @@ export interface GoalProgress {
 
 export const NO_GOAL_PROGRESS: GoalProgress = { index: 0, amount: 0 };
 
+/** As missões já cumpridas, pelo id: é assim que vão para o save, à prova de reordenar o JSON. */
+export function completedGoalIds(goals: readonly GoalDefinition[], progress: GoalProgress): readonly string[] {
+  return goals.slice(0, progress.index).map((goal) => goal.id);
+}
+
+/**
+ * O progresso a partir das missões cumpridas: conta as primeiras da lista que
+ * já estão feitas. Uma missão nova no meio do JSON vira a missão da vez.
+ */
+export function progressFromCompleted(goals: readonly GoalDefinition[], completed: readonly string[], amount: number): GoalProgress {
+  const done = new Set(completed);
+  let index = 0;
+
+  while (index < goals.length && done.has(goals[index].id)) {
+    index += 1;
+  }
+
+  return { index, amount: index === completed.length && index < goals.length ? amount : 0 };
+}
+
 /**
  * Missões em fila, uma de cada vez.
  *

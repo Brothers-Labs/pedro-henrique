@@ -3,6 +3,7 @@ import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import type { BucketStats, ItemDefinition } from '../../models/content.model';
 import type { SpawnPoint } from '../../world/world-generator';
+import { BlockChangeLog } from '../../world/block-change-log';
 import type { VoxelWorld } from '../../world/voxel-world';
 import { BlockProperties, type PhysicsTerrain, physicsTerrain } from '../block-properties';
 import type { CraftInputSnapshot } from '../input/craft-input';
@@ -69,6 +70,8 @@ export class CraftSimulation {
   readonly world: VoxelWorld;
   readonly properties: BlockProperties;
   readonly terrain: PhysicsTerrain;
+  /** Os blocos que mudaram desde a geração: é o que vai para o save. */
+  readonly changes: BlockChangeLog;
   readonly hero: HeroMotion;
   readonly inventory: Inventory;
   readonly drops = new ItemDrops();
@@ -107,6 +110,7 @@ export class CraftSimulation {
     this.world = options.world;
     this.properties = new BlockProperties(options.catalog);
     this.terrain = physicsTerrain(options.world, this.properties);
+    this.changes = new BlockChangeLog(options.world);
     this.hero = new HeroMotion(options.spawn.x, options.spawn.y, options.spawn.z, options.spawn.yaw);
     this.autoJump = options.autoJump;
     this.isPeaceful = options.peaceful ?? false;

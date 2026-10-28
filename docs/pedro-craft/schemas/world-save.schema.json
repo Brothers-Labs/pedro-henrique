@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pedrohenrique.app/schemas/pedro-craft/world-save.schema.json",
+  "title": "PedroCraft — mundo salvo",
+  "description": "Um mundo do PedroCraft. Guarda só o que a semente não refaz. Blocos, itens, plantações e bichos são referidos por id de texto, nunca pelo número interno do bloco.",
+  "type": "object",
+  "required": ["version", "id", "name", "seed", "createdAt", "updatedAt", "state"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1, "description": "Versão do formato. Cada versão nova ganha uma migração no cliente." },
+    "id": { "type": "string", "minLength": 1, "maxLength": 64, "description": "Id do mundo, gerado no aparelho (mundo-<uuid>) ou fixo na Fazenda do Pedro (fazenda)." },
+    "name": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295, "description": "Semente da geração: a mesma semente gera o mesmo mundo, bloco a bloco." },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time", "description": "Última vez que o mundo foi salvo. Resolve conflito entre aparelhos: vence o mais recente." },
+    "state": {
+      "description": "null num mundo recém-criado, que ainda não foi jogado.",
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/state" }]
+    }
+  },
+  "$defs": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "slot": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["item", "count", "durability"],
+          "additionalProperties": false,
+          "properties": {
+            "item": { "$ref": "#/$defs/id" },
+            "count": { "type": "integer", "minimum": 1 },
+            "durability": { "type": ["integer", "null"], "minimum": 0, "description": "Usos que restam; null para o que não gasta." }
+          }
+        }
+      ]
+    },
+    "point": {
+      "type": "object",
+      "required": ["x", "y", "z", "yaw"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" },
+        "yaw": { "type": "number", "description": "Para onde olha, em radianos." }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "integer" }, "y": { "type": "integer" }, "z": { "type": "integer" } }
+    },
+    "state": {
+      "type": "object",
+      "required": ["hero", "inventory", "clockMs", "goals", "chunks", "plants", "containers", "furnaces", "creatures"],
+      "additionalProperties": false,
+      "properties": {
+        "hero": {
+          "allOf": [{ "$ref": "#/$defs/point" }],
+          "required": ["pitch", "health", "selectedSlot", "respawn"],
+          "properties": {
+            "pitch": { "type": "number" },
+            "health": { "type": "integer", "minimum": 0 },
+            "selectedSlot": { "type": "integer", "minimum": 0, "maximum": 8 },
+            "respawn": { "$ref": "#/$defs/point", "description": "Onde volta depois de desmaiar: a cama usada por último, ou o começo do mundo." }
+          }
+        },
+        "inventory": { "type": "array", "maxItems": 36, "items": { "$ref": "#/$defs/slot" }, "description": "Barra (0 a 8) e mochila (9 a 35)." },
+        "clockMs": { "type": "number", "minimum": 0, "description": "Milissegundos desde o começo da manhã." },
+        "goals": {
+          "type": "object",
+          "required": ["completed", "amount"],
+          "additionalProperties": false,
+          "properties": {
+            "completed": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Ids das missões cumpridas, na ordem." },
+            "amount": { "type": "integer", "minimum": 0, "description": "Quanto já foi feito da missão da vez." }
+          }
+        },
+        "chunks": {
+          "type": "array",
+          "description": "Blocos que mudaram, agrupados pela coluna de chunk (x e z em chunks de 16 × 16). A água corrente não entra: ela nasce de novo das nascentes.",
+          "items": {
+            "type": "object",
+            "required": ["x", "z", "blocks"],
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "integer" },
+              "z": { "type": "integer" },
+              "blocks": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [{ "type": "integer" }, { "type": "integer" }, { "type": "integer" }, { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/id" }] }],
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "description": "[x, y, z, bloco] em coordenadas do mundo; null é ar."
+                }
+              }
+            }
+          }
+        },
+        "plants": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/$defs/cell" }],
+            "required": ["crop", "stage", "elapsedMs"],
+            "properties": {
+              "crop": { "$ref": "#/$defs/id" },
+              "stage": { "type": "integer", "minimum": 0 },
+              "elapsedMs": { "type": "number", "minimum": 0 }
+            }
+          }
+        },
+        "containers": {
+          "type": "array",
+          "description": "Baús, pela posição no mundo.",
+          "items": {
+            "allOf": [{ "$ref": "#/$defs/cell" }],
+            "required": ["slots"],
+            "properties": { "slots": { "type": "array", "maxItems": 27, "items": { "$ref": "#/$defs/slot" } } }
+          }
+        },
+        "furnaces": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/$defs/cell" }],
+            "required": ["slots", "burnLeftMs", "burnTotalMs", "progressMs"],
+            "properties": {
+              "slots": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/slot" }, "description": "Assar, combustível e pronto." },
+              "burnLeftMs": { "type": "number", "minimum": 0 },
+              "burnTotalMs": { "type": "number", "minimum": 0 },
+              "progressMs": { "type": "number", "minimum": 0 }
+            }
+          }
+        },
+        "creatures": {
+          "type": "array",
+          "description": "Só os animais. Os inimigos não vão para o save: ao abrir o mundo, eles já voltaram para casa.",
+          "items": {
+            "type": "object",
+            "required": ["creature", "x", "y", "z", "yaw", "health", "layLeftMs", "cooldowns"],
+            "additionalProperties": false,
+            "properties": {
+              "creature": { "$ref": "#/$defs/id" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number" },
+              "yaw": { "type": "number" },
+              "health": { "type": "integer", "minimum": 1 },
+              "layLeftMs": { "type": ["number", "null"], "minimum": 0, "description": "Tempo até o próximo ovo; null para quem não bota nada." },
+              "cooldowns": {
+                "type": "array",
+                "description": "Esperas em curso, como a lã da ovelha crescendo de volta.",
+                "items": {
+                  "type": "object",
+                  "required": ["item", "leftMs"],
+                  "additionalProperties": false,
+                  "properties": { "item": { "$ref": "#/$defs/id" }, "leftMs": { "type": "number", "minimum": 0 } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

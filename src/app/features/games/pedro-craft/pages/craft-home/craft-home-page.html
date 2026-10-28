@@ -6,14 +6,107 @@
     </h1>
     <p class="home__tagline">Colha, construa e cuide da sua fazenda!</p>
 
-    <a class="home__play" data-tone="green" routerLink="jogar/fazenda">
-      <span aria-hidden="true">▶</span> Explorar a fazenda
-    </a>
+    @if (latest(); as world) {
+      <a class="home__play" data-tone="green" [routerLink]="['jogar', world.id]">
+        <span aria-hidden="true">▶</span> Continuar: {{ world.name }}
+      </a>
+    } @else if (status() === 'ready') {
+      <a class="home__play" data-tone="green" [routerLink]="['jogar', explorationWorld.id]">
+        <span aria-hidden="true">▶</span> Começar na {{ explorationWorld.name }}
+      </a>
+    }
 
-    <article class="notice">
-      <p class="notice__emoji" aria-hidden="true">🧱</p>
-      <h2 class="notice__title">Construindo bloco por bloco</h2>
-      <p>Já dá para colher e construir na fazenda. Fabricar ferramentas chega logo!</p>
-    </article>
+    <a class="home__settings" data-tone="blue" routerLink="configuracoes">
+      <span aria-hidden="true">⚙️</span> Configurações
+    </a>
+  </section>
+
+  <section class="group" aria-labelledby="novo-mundo">
+    <h2 id="novo-mundo" class="group__title">Novo mundo</h2>
+
+    @if (canCreate()) {
+      <form class="create" (submit)="createWorld($event)">
+        <label class="create__label" for="nome-do-mundo">Nome do mundo</label>
+        <input
+          id="nome-do-mundo"
+          class="create__input"
+          type="text"
+          autocomplete="off"
+          [maxLength]="nameMaxLength"
+          [placeholder]="suggestedName()"
+          [value]="newName()"
+          (input)="updateName($event)"
+        />
+        <button type="submit" class="create__button" data-tone="orange" [disabled]="isCreating()">
+          <span aria-hidden="true">🌱</span> Criar mundo
+        </button>
+      </form>
+    } @else {
+      <p class="group__message">Já tem {{ maxWorlds }} mundos guardados. Apague um para criar outro.</p>
+    }
+  </section>
+
+  <section class="group" aria-labelledby="meus-mundos">
+    <h2 id="meus-mundos" class="group__title">Meus mundos</h2>
+
+    @if (problem(); as message) {
+      <p class="group__message" role="alert">{{ message }}</p>
+    }
+
+    @switch (status()) {
+      @case ('error') {
+        <p class="group__message">
+          Não deu para abrir os seus mundos agora.
+          <button type="button" class="group__retry" data-tone="blue" (click)="retryLoading()">Tentar de novo</button>
+        </p>
+      }
+      @case ('ready') {
+        @if (worlds().length === 0 && broken().length === 0) {
+          <p class="group__message">Ainda não há mundos guardados. Comece na fazenda ou crie um mundo novo!</p>
+        } @else {
+          <ul class="worlds">
+            @for (world of worlds(); track world.id) {
+              <li class="world">
+                <div class="world__body">
+                  <h3 class="world__name">{{ world.name }}</h3>
+                  <p class="world__meta">{{ savedAt(world) }}</p>
+                </div>
+
+                @if (pendingDeletion() === world.id) {
+                  <div class="world__actions" role="group" [attr.aria-label]="'Apagar o mundo ' + world.name + '?'">
+                    <span class="world__question">Apagar mesmo?</span>
+                    <button type="button" class="world__small" data-tone="red" (click)="confirmDeletion(world.id)">Sim, apagar</button>
+                    <button type="button" class="world__small" data-tone="gray" (click)="cancelDeletion()">Não</button>
+                  </div>
+                } @else {
+                  <div class="world__actions">
+                    <a class="world__play" data-tone="green" [routerLink]="['jogar', world.id]">
+                      <span aria-hidden="true">▶</span> Jogar
+                    </a>
+                    <button type="button" class="world__small" data-tone="gray" [attr.aria-label]="'Apagar o mundo ' + world.name" (click)="askDeletion(world.id)">
+                      <span aria-hidden="true">🗑️</span> Apagar
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+
+            @for (world of broken(); track world.id) {
+              <li class="world world--broken">
+                <div class="world__body">
+                  <h3 class="world__name"><span aria-hidden="true">🧩</span> {{ world.name }}</h3>
+                  <p class="world__meta">Este mundo se quebrou e não dá para abrir.</p>
+                </div>
+                <div class="world__actions">
+                  <button type="button" class="world__small" data-tone="red" (click)="confirmDeletion(world.id)">
+                    <span aria-hidden="true">🗑️</span> Apagar
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
   </section>
 </app-craft-page-frame>

@@ -4,6 +4,7 @@ import type { VirtualCraftInput } from '../engine/input/craft-input';
 import type { SlotClick } from '../engine/simulation/inventory';
 import type { CraftScreen, SlotRef } from '../engine/simulation/screens';
 import type { GoalDefinition } from './content.model';
+import type { WorldSave } from './world-save.model';
 
 /**
  * Contrato entre o Angular e o motor do PedroCraft.
@@ -111,7 +112,8 @@ export type CraftSessionListener = (event: CraftSessionEvent) => void;
 export interface CraftLaunchOptions {
   readonly parent: HTMLElement;
   readonly catalog: CraftCatalog;
-  readonly seed: number;
+  /** O mundo a abrir: a semente e o que já mudou nele (`state` vazio num mundo novo). */
+  readonly world: WorldSave;
   readonly settings: CraftEngineSettings;
   readonly input: VirtualCraftInput;
   readonly listener: CraftSessionListener;
@@ -132,5 +134,7 @@ export interface CraftGameSession {
   craftRecipe(recipeId: string): ScreenView | null;
   /** Devolve a grade e a mão à mochila e solta o mundo de novo. */
   closeScreen(): void;
+  /** O mundo como está agora, pronto para guardar; `null` enquanto ainda carrega. */
+  capture(): WorldSave | null;
   destroy(): void;
 }

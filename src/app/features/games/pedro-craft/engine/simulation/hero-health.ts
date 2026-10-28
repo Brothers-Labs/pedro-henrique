@@ -60,6 +60,11 @@ export class HeroHealth {
     return this.current - before;
   }
 
+  /** Vida guardada no save; fica entre 1 e o máximo. */
+  set(value: number): void {
+    this.current = Math.min(this.settings.maxHealth, Math.max(1, Math.round(value)));
+  }
+
   restore(): void {
     this.current = this.settings.maxHealth;
     this.invulnerableLeftMs = 0;

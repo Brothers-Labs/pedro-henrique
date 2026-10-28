@@ -10,14 +10,14 @@ const TWILIGHT_MS = 20000;
  * funda, a 1, o meio do dia, e passa pelo crepúsculo sem pular.
  */
 export class DayClock {
-  private timeMs: number;
+  private timeMs = 0;
 
   constructor(
     private readonly dayMs: number,
     private readonly nightMs: number,
     startMs = 0,
   ) {
-    this.timeMs = ((startMs % this.cycleMs) + this.cycleMs) % this.cycleMs;
+    this.setTime(startMs);
   }
 
   get cycleMs(): number {
@@ -52,6 +52,11 @@ export class DayClock {
     const untilMorning = this.cycleMs - time;
 
     return untilMorning < TWILIGHT_MS ? 1 - untilMorning / TWILIGHT_MS : 0;
+  }
+
+  /** Volta a hora guardada no save. */
+  setTime(timeMs: number): void {
+    this.timeMs = ((timeMs % this.cycleMs) + this.cycleMs) % this.cycleMs;
   }
 
   advance(elapsedMs: number): void {

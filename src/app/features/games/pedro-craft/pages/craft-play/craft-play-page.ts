@@ -1,27 +1,25 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { seedFromText } from '../../../pedro-maker/levels/seeded-random';
 import { CraftGameHost } from '../../components/craft-game-host/craft-game-host';
 import type { CraftCatalog } from '../../content/craft-catalog';
+import type { WorldSave } from '../../models/world-save.model';
 import { CraftContentService } from '../../services/craft-content.service';
+import { CraftWorldsService, EXPLORATION_WORLD, type WorldLookup } from '../../services/craft-worlds.service';
 
-type PlayStatus = 'loading' | 'ready' | 'error';
+/** Por que o mundo não abriu: cada caso tem a sua frase para a criança. */
+type PlayStatus = 'loading' | 'ready' | 'missing' | 'broken' | 'error';
 
 interface OpenWorld {
   readonly catalog: CraftCatalog;
-  readonly seed: number;
-  readonly name: string;
+  readonly world: WorldSave;
 }
 
-/** Nome do mundo de exploração aberto pela tela inicial. */
-const EXPLORATION_WORLD_NAME = 'Fazenda do Pedro';
-
 /**
- * Tela de jogo: busca o conteúdo e abre o mundo pedido no endereço.
+ * Tela de jogo: busca o conteúdo e o mundo pedido no endereço e abre o jogo.
  *
- * A semente vem do próprio endereço: o mesmo `/jogar/fazenda` abre sempre a
- * mesma fazenda.
+ * Um mundo estragado ou apagado não derruba a tela: a criança lê o que
+ * aconteceu e volta para escolher outro mundo (CA04).
  */
 @Component({
   selector: 'app-craft-play-page',
@@ -30,14 +28,30 @@ const EXPLORATION_WORLD_NAME = 'Fazenda do Pedro';
   template: `
     @switch (status()) {
       @case ('ready') {
-        @if (world(); as open) {
-          <app-craft-game-host [catalog]="open.catalog" [seed]="open.seed" [worldName]="open.name" (exited)="exit()" />
+        @if (open(); as current) {
+          <app-craft-game-host [catalog]="current.catalog" [world]="current.world" (exited)="exit()" />
         }
       }
       @case ('loading') {
         <div class="message" role="status">
           <p class="message__emoji" aria-hidden="true">🧱</p>
           <p class="message__title">Abrindo o mundo…</p>
+        </div>
+      }
+      @case ('missing') {
+        <div class="message" role="alert">
+          <p class="message__emoji" aria-hidden="true">🔎</p>
+          <h1 class="message__title">Esse mundo não está aqui</h1>
+          <p class="message__text">Ele pode ter sido apagado. Escolha outro mundo ou crie um novo.</p>
+          <a class="message__button" routerLink="/jogos/pedro-craft">🌍 Meus mundos</a>
+        </div>
+      }
+      @case ('broken') {
+        <div class="message" role="alert">
+          <p class="message__emoji" aria-hidden="true">🧩</p>
+          <h1 class="message__title">Esse mundo se quebrou</h1>
+          <p class="message__text">Não dá para abrir este mundo salvo. Escolha outro mundo ou crie um novo.</p>
+          <a class="message__button" routerLink="/jogos/pedro-craft">🌍 Meus mundos</a>
         </div>
       }
       @case ('error') {
@@ -56,9 +70,10 @@ export class CraftPlayPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly content = inject(CraftContentService);
+  private readonly worlds = inject(CraftWorldsService);
 
   protected readonly status = signal<PlayStatus>('loading');
-  protected readonly world = signal<OpenWorld | null>(null);
+  protected readonly open = signal<OpenWorld | null>(null);
 
   constructor() {
     void this.load(this.route.snapshot.paramMap.get('worldId') ?? '');
@@ -70,13 +85,27 @@ export class CraftPlayPage {
 
   private async load(worldId: string): Promise<void> {
     try {
-      const catalog = await this.content.load();
+      const [catalog, lookup] = await Promise.all([this.content.load(), this.findWorld(worldId)]);
 
-      this.world.set({ catalog, seed: seedFromText(worldId), name: EXPLORATION_WORLD_NAME });
+      if (lookup.type !== 'found') {
+        this.status.set(lookup.type);
+        return;
+      }
+
+      this.open.set({ catalog, world: lookup.save });
       this.status.set('ready');
     } catch (error) {
-      console.error('PedroCraft: o conteúdo do jogo não pôde ser carregado.', error);
+      console.error('PedroCraft: o mundo não pôde ser aberto.', error);
       this.status.set('error');
     }
+  }
+
+  /** A Fazenda do Pedro sempre existe: o endereço antigo `/jogar/fazenda` a abre ou a cria. */
+  private async findWorld(worldId: string): Promise<WorldLookup> {
+    if (worldId === EXPLORATION_WORLD.id) {
+      return { type: 'found', save: await this.worlds.openExploration() };
+    }
+
+    return this.worlds.find(worldId);
   }
 }
