@@ -31,11 +31,12 @@ import type { WorldSave } from '../../models/world-save.model';
 import { ItemIconCache } from '../../presentation/item-icon-cache';
 import { CraftSettingsService } from '../../services/craft-settings.service';
 import { CraftWorldsService } from '../../services/craft-worlds.service';
+import { CraftHelp } from '../craft-help/craft-help';
 import { CraftHud, type PickupNotice } from '../craft-hud/craft-hud';
 import { CraftScreenPanel, type SlotRequest } from '../craft-screen-panel/craft-screen-panel';
 import { CraftTouchControls } from '../craft-touch-controls/craft-touch-controls';
 
-type HostPhase = 'loading' | 'playing' | 'screen' | 'paused' | 'error';
+type HostPhase = 'loading' | 'playing' | 'screen' | 'help' | 'paused' | 'error';
 
 const TOAST_VISIBLE_MS = 2600;
 const HURT_VISIBLE_MS = 350;
@@ -61,14 +62,14 @@ const MAX_PICKUPS = 3;
 @Component({
   selector: 'app-craft-game-host',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CraftTouchControls, CraftHud, CraftScreenPanel],
+  imports: [CraftTouchControls, CraftHud, CraftScreenPanel, CraftHelp],
   templateUrl: './craft-game-host.html',
   styleUrl: './craft-game-host.scss',
   host: {
     '(document:visibilitychange)': 'pauseWhenHidden()',
     '(document:fullscreenchange)': 'syncFullscreen()',
     '(document:pointerlockchange)': 'syncPointerLock()',
-    '(document:keydown)': 'closeScreenWithKey($event)',
+    '(document:keydown)': 'handleKey($event)',
   },
 })
 export class CraftGameHost {
@@ -91,6 +92,7 @@ export class CraftGameHost {
   private pickupKey = 0;
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private autosaveTimer: ReturnType<typeof setInterval> | null = null;
+  private helpReturnsTo: 'playing' | 'paused' = 'playing';
 
   /** Estado dos controles de toque, lido pelo motor a cada passo. */
   protected readonly virtualInput = createVirtualCraftInput();
@@ -212,9 +214,43 @@ export class CraftGameHost {
     this.audio.play('button');
   }
 
-  protected closeScreenWithKey(event: KeyboardEvent): void {
+  /** Atalhos que valem por cima do jogo: E fecha a mochila; H abre e fecha a ajuda. */
+  protected handleKey(event: KeyboardEvent): void {
     if (this.phase() === 'screen' && (event.code === 'KeyE' || event.code === 'KeyI')) {
       this.closeScreen();
+    } else if (event.code === 'KeyH') {
+      if (this.phase() === 'help') {
+        this.closeHelp();
+      } else {
+        this.openHelp();
+      }
+    }
+  }
+
+  /** A ajuda pausa o mundo; ao fechar, volta para onde estava (o jogo ou a pausa). */
+  protected openHelp(): void {
+    const phase = this.phase();
+
+    if (phase !== 'playing' && phase !== 'paused') {
+      return;
+    }
+
+    this.session?.pause();
+    this.helpReturnsTo = phase;
+    this.phase.set('help');
+    this.audio.play('button');
+  }
+
+  protected closeHelp(): void {
+    if (this.phase() !== 'help') {
+      return;
+    }
+
+    this.audio.play('button');
+    this.phase.set(this.helpReturnsTo);
+
+    if (this.helpReturnsTo === 'playing') {
+      this.session?.resume();
     }
   }
 
