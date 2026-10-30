@@ -56,6 +56,9 @@
     }
 
     @if (current.chest) {
+      @if (current.infiniteChest) {
+        <p>Baú infinito: toque para pegar. Os recursos são repostos a cada retirada.</p>
+      }
       <app-craft-slot-grid [entries]="chestEntries()" [columns]="9" label="Baú" [icons]="icons()" (pressed)="press('container', $event)" />
     }
 

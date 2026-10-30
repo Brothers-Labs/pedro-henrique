@@ -6,6 +6,8 @@ export const HOTBAR_SIZE = 9;
 /** Espaços da mochila, além da barra. */
 export const BACKPACK_SIZE = 27;
 
+export const CHEST_SIZE = BACKPACK_SIZE * 2;
+
 export const INVENTORY_SIZE = HOTBAR_SIZE + BACKPACK_SIZE;
 
 /**

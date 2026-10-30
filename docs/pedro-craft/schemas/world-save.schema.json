@@ -12,9 +12,9 @@
     "name": { "type": "string", "minLength": 1, "maxLength": 32 },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295, "description": "Semente da geração: a mesma semente gera o mesmo mundo, bloco a bloco." },
     "mode": {
-      "enum": ["creative", "adventure", "survival"],
+      "enum": ["creative", "adventure", "survival", "infinite"],
       "default": "adventure",
-      "description": "creative = sem perder vida e sem inimigos; adventure = o jogo de sempre; survival = com energia, que nunca tira vida."
+      "description": "creative = sem perder vida e sem inimigos; adventure = modo Normal; survival = com energia, que nunca tira vida; infinite = ferramentas sem desgaste e suprimentos renováveis nos baús."
     },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time", "description": "Última vez que o mundo foi salvo. Resolve conflito entre aparelhos: vence o mais recente." },
@@ -124,7 +124,7 @@
           "items": {
             "allOf": [{ "$ref": "#/$defs/cell" }],
             "required": ["slots"],
-            "properties": { "slots": { "type": "array", "maxItems": 27, "items": { "$ref": "#/$defs/slot" } } }
+            "properties": { "slots": { "type": "array", "maxItems": 54, "items": { "$ref": "#/$defs/slot" } } }
           }
         },
         "furnaces": {

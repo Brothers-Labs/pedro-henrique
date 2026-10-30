@@ -111,6 +111,7 @@ export interface ScreenView {
   readonly grid: CraftingGridView | null;
   readonly recipes: readonly RecipeView[];
   readonly chest: readonly (SlotView | null)[] | null;
+  readonly infiniteChest?: boolean;
   readonly furnace: FurnaceView | null;
   /** Modo Criativo, na mochila: todos os itens do jogo para pegar com um toque. Vazio nos outros casos. */
   readonly creativeItems: readonly string[];

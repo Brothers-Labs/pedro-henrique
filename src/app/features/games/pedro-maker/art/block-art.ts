@@ -561,3 +561,15 @@ export function paintSign(context: CanvasRenderingContext2D): void {
   context.lineTo(32, 21);
   context.stroke();
 }
+
+/** Ícone do canhão de ferro, com boca escura e base larga. */
+export function paintCannon(context: CanvasRenderingContext2D): void {
+  context.fillStyle = '#414956';
+  context.fillRect(2, 34, 44, 12);
+  context.fillStyle = '#626d7c';
+  context.fillRect(8, 5, 32, 31);
+  context.fillStyle = '#8b99ab';
+  context.fillRect(5, 3, 38, 7);
+  context.fillStyle = '#141b24';
+  context.fillRect(13, 14, 22, 16);
+}

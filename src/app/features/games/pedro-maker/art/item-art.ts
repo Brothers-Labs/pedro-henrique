@@ -49,7 +49,7 @@ export function paintNumberedCoin(context: CanvasRenderingContext2D, size: numbe
   context.lineWidth = size * 0.05;
   context.stroke();
   context.fillStyle = darken(GOLD, 0.45);
-  context.font = `bold ${Math.round(size * 0.35)}px sans-serif`;
+  context.font = `bold ${Math.round(size * Math.min(0.35, 0.95 / value.length))}px sans-serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(value, center, center + size * 0.025);

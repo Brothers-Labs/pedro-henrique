@@ -129,6 +129,9 @@ export class PropView {
       const y = this.space.y((object.y + 1) * TILE_SIZE);
 
       switch (object.type) {
+        case 'cannon':
+          at(x, y, 0, cannonParts());
+          break;
         case 'tree':
           at(x, y, DECOR_Z, this.treeModel());
           break;
@@ -628,3 +631,15 @@ function paintSwirl(): CanvasTexture {
   return texture;
 }
 
+
+/** Corpo de ferro com boca escura dos dois lados e base sólida. */
+function cannonParts(): readonly VoxelBox[] {
+  return [
+    box(0, 0.14, 0, 0.96, 0.28, 0.9, '#414956'),
+    box(0, 0.62, 0, 0.94, 0.72, 0.68, '#626d7c'),
+    box(0, 0.64, 0.35, 0.7, 0.46, 0.04, '#2c3440'),
+    box(-0.48, 0.64, 0, 0.04, 0.48, 0.48, '#141b24'),
+    box(0.48, 0.64, 0, 0.04, 0.48, 0.48, '#141b24'),
+    box(0, 0.93, 0, 0.98, 0.1, 0.74, '#8b99ab'),
+  ];
+}

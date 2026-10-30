@@ -27,6 +27,8 @@ export interface OverallsPortrait {
   readonly drop: number;
 }
 
+export const WARIO_PORTRAIT: OverallsPortrait = { emblem: 'W', hasMustache: true, drop: 6 };
+
 export const GUI_PORTRAIT: OverallsPortrait = { emblem: 'G', hasMustache: false, drop: 0 };
 export const LUIGI_PORTRAIT: OverallsPortrait = { emblem: 'L', hasMustache: true, drop: 0 };
 export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true, drop: 5 };
@@ -37,6 +39,7 @@ export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true
  * Pedro, e todos aparecem na mesma escala nos menus.
  */
 export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette: CharacterPalette, portrait: OverallsPortrait): void {
+  const overalls = palette.hero === 'wario' ? '#7b35b5' : OVERALLS;
   const sleeveShade = darken(palette.shirt, 0.15);
   const hipY = HIP_Y + portrait.drop;
 
@@ -44,9 +47,9 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
   context.lineJoin = 'round';
 
   // Pernas e sapatos ficam no chão; o resto do corpo desce junto com o quadril.
-  limb(context, [30, hipY], BACK_FOOT, darken(OVERALLS, 0.2));
+  limb(context, [30, hipY], BACK_FOOT, darken(overalls, 0.2));
   shoe(context, BACK_FOOT);
-  limb(context, [38, hipY], FRONT_FOOT, OVERALLS);
+  limb(context, [38, hipY], FRONT_FOOT, overalls);
   shoe(context, FRONT_FOOT);
 
   context.save();
@@ -56,7 +59,7 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
   limb(context, [28, SHOULDER_Y], BACK_HAND, sleeveShade);
   hand(context, BACK_HAND, SKIN_SHADE);
 
-  paintOutfit(context, palette.shirt);
+  paintOutfit(context, palette.shirt, overalls);
 
   limb(context, [40, SHOULDER_Y], FRONT_HAND, palette.shirt);
   hand(context, FRONT_HAND, SKIN);
@@ -66,16 +69,16 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
 }
 
 /** Camiseta por baixo e macacão por cima, com peitilho, alças e dois botões. */
-function paintOutfit(context: CanvasRenderingContext2D, shirt: string): void {
+function paintOutfit(context: CanvasRenderingContext2D, shirt: string, overalls: string): void {
   roundedRect(context, 25, 34, 18, 22, 6);
   fillAndOutline(context, shirt);
 
   roundedRect(context, 25, 47, 18, 11, 3);
-  fillAndOutline(context, OVERALLS);
+  fillAndOutline(context, overalls);
   roundedRect(context, 28, 40, 12, 9, 2);
-  fillAndOutline(context, OVERALLS, 2);
+  fillAndOutline(context, overalls, 2);
 
-  context.strokeStyle = OVERALLS;
+  context.strokeStyle = overalls;
   context.lineWidth = 3;
 
   for (const [fromX, toX] of [

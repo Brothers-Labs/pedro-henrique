@@ -23,6 +23,7 @@ import { HeroEnergy } from './hero-energy';
 import { HeroHealth } from './hero-health';
 import { HeroMotion } from './hero-motion';
 import { tickFurnace } from './furnace';
+import { bestTools } from './infinite-supplies';
 import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 import { type DropCollector, ItemDrops } from './item-drops';
 import { Projectiles } from './projectiles';
@@ -260,10 +261,18 @@ export class CraftSimulation {
 
     this.screens = new ScreenController({
       catalog: this.catalog,
+      infinite: this.mode === 'infinite',
       inventory: this.inventory,
       receive: (stack) => this.receive(stack),
       dropNearHero: (stack) => this.dropNearHero(stack),
     });
+
+    if (this.mode === 'infinite' && !options.inventory) {
+      for (const tool of bestTools(this.catalog)) {
+        this.inventory.add(tool.id, 1);
+      }
+      this.addSupplyChest(options.spawn);
+    }
 
     const body = this.hero.body;
 
@@ -836,7 +845,7 @@ export class CraftSimulation {
   }
 
   private wearSelected(held: ItemDefinition): void {
-    if (this.mode === 'creative') {
+    if (this.mode === 'creative' || this.mode === 'infinite') {
       return;
     }
 
@@ -1112,6 +1121,23 @@ export class CraftSimulation {
     }
 
     return left;
+  }
+
+  private addSupplyChest(spawn: SpawnPoint): void {
+    const x = Math.floor(spawn.x);
+    const y = Math.floor(spawn.y);
+    const z = Math.floor(spawn.z);
+    for (const [dx, dz] of [[0, -2], [2, 0], [0, 2], [-2, 0]]) {
+      if (this.world.contains(x + dx, y, z + dz) && this.world.get(x + dx, y, z + dz) === AIR) {
+        const cell = this.world.indexOf(x + dx, y, z + dz);
+        this.world.set(x + dx, y, z + dz, this.catalog.blockNumber('chest'));
+        this.screens.open('chest', cell);
+        this.screens.close();
+        return;
+      }
+    }
+    // A blocked spawn still gives the player a chest to place nearby.
+    this.inventory.add('chest', 1);
   }
 
   /** Guarda algo que acabou de chegar à mochila (recolhido, fabricado, assado) e conta para a missão. */

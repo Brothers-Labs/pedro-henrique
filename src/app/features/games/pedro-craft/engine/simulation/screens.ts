@@ -3,7 +3,8 @@ import { GRID_SIZE } from '../../content/parsers/parse-recipes';
 import type { CraftingRecipe, CraftingStation } from '../../models/content.model';
 import { consumeIngredients, fitsStation, matchGrid } from './crafting';
 import { createFurnace, FURNACE_OUTPUT, type FurnaceState } from './furnace';
-import { BACKPACK_SIZE, type Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
+import { infiniteSupplies } from './infinite-supplies';
+import { CHEST_SIZE, type Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 
 /** Tela que o jogo abre por cima do mundo. */
 export type CraftScreen = 'inventory' | 'workbench' | 'chest' | 'furnace';
@@ -22,6 +23,7 @@ export interface SlotRef {
 }
 
 export interface ScreenHost {
+  readonly infinite?: boolean;
   readonly catalog: CraftCatalog;
   readonly inventory: Inventory;
   /** Guarda na mochila o que acabou de ser feito; conta para a missão e devolve o que não coube. */
@@ -85,6 +87,21 @@ export class ScreenController {
     // A saída da fornalha só se esvazia: nada é posto nela com a mão.
     if (this.screen?.kind === 'furnace' && ref.area === 'container' && ref.index === FURNACE_OUTPUT) {
       this.collectFurnaceOutput();
+      return;
+    }
+
+    if (!Number.isInteger(ref.index) || ref.index < 0 || ref.index >= container.length) {
+      return;
+    }
+
+    if (this.host.infinite && this.screen?.kind === 'chest' && ref.area === 'container') {
+      const source = container[ref.index];
+      if (source) {
+        if (this.host.inventory.cursor) {
+          this.giveBack(this.host.inventory.returnCursor());
+        }
+        this.host.inventory.cursor = { ...source, count: mode === 'one' ? Math.ceil(source.count / 2) : source.count };
+      }
       return;
     }
 
@@ -187,13 +204,20 @@ export class ScreenController {
   }
 
   private chestAt(cell: number): SlotContent[] {
+    if (this.host.infinite) {
+      const supplies = infiniteSupplies(this.host.catalog);
+      this.containers.set(cell, supplies);
+      return supplies;
+    }
     const known = this.containers.get(cell);
 
     if (known) {
-      return known;
+      const expanded = Array.from({ length: CHEST_SIZE }, (_, index) => known[index] ?? null);
+      this.containers.set(cell, expanded);
+      return expanded;
     }
 
-    const slots: SlotContent[] = Array.from({ length: BACKPACK_SIZE }, () => null);
+    const slots: SlotContent[] = Array.from({ length: CHEST_SIZE }, () => null);
 
     this.containers.set(cell, slots);
 

@@ -14,7 +14,7 @@ import {
 } from '../models/world-save.model';
 import type { CraftSimulation } from './simulation/craft-simulation';
 import { completedGoalIds } from './simulation/goal-tracker';
-import type { SlotContent } from './simulation/inventory';
+import { CHEST_SIZE, type SlotContent } from './simulation/inventory';
 
 /**
  * Fotografa a simulação num `WorldSave`.
@@ -73,7 +73,7 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
   }
 
   for (const container of state.containers) {
-    screens.containers.set(world.indexOf(container.x, container.y, container.z), container.slots.map(copySlot));
+    screens.containers.set(world.indexOf(container.x, container.y, container.z), Array.from({ length: CHEST_SIZE }, (_, index) => copySlot(container.slots[index] ?? null)));
   }
 
   for (const furnace of state.furnaces) {

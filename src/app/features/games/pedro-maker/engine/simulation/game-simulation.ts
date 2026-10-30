@@ -15,6 +15,7 @@ import type { GameSessionEvent, GameSessionListener, MakerSoundCue } from '../..
 import type { DifficultyRules } from '../../models/settings.model';
 import type { InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
+import { CannonSystem } from './cannons';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
@@ -79,6 +80,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly collectibles: CollectibleSystem;
   readonly triggers: TriggerSystem;
   readonly slides: SlideSystem;
+  readonly cannons: CannonSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -118,6 +120,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.coinsTotal = this.collectibles.coinCount + countSurpriseCoins(blueprint.objects) * SURPRISE_COIN_COUNT;
     this.player = this.createPlayer(blueprint.objects);
     this.createEnemies(blueprint.objects);
+    this.cannons = new CannonSystem(blueprint.objects);
     this.createBoss(blueprint.objects);
   }
 
@@ -165,6 +168,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       this.throwBall(input);
     }
 
+    this.cannons.update(this.clockMs, centerX(body), (x, y, direction) => {
+      const bullet = this.addEnemy('bullet', x, y, 1, true);
+      bullet.direction = direction;
+      return bullet;
+    });
     this.updateEnemies(seconds);
     this.updateFireballs(seconds);
     this.updateBoss(seconds);
@@ -209,7 +217,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
   }
 
-  private addEnemy(kind: EnemyKind, cellX: number, cellY: number, scale: number): Enemy {
+  private addEnemy(kind: EnemyKind, cellX: number, cellY: number, scale: number, isProjectile = false): Enemy {
     const enemy = new Enemy(
       this.nextEnemyId,
       kind,
@@ -219,6 +227,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       (worldX, worldY) => this.grid.isGroundAtPoint(worldX, worldY),
       this.random.next() * Math.PI * 2,
       scale,
+      isProjectile,
     );
 
     this.nextEnemyId += 1;
@@ -281,7 +290,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         continue;
       }
 
-      if (Math.abs(centerX(body) - playerX) < ENEMY_ACTIVE_DISTANCE) {
+      if (enemy.isProjectile || Math.abs(centerX(body) - playerX) < ENEMY_ACTIVE_DISTANCE) {
         enemy.step(this.clockMs, playerX, playerY);
         stepBody(body, this.world, seconds, true);
         this.reactToEnemyLanding(enemy);
@@ -638,6 +647,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 14);
         break;
+      case 'coin-25':
+      case 'coin-100':
+      case 'coin-250':
+      case 'coin-500':
+      case 'coin-1000':
       case 'huge-coin':
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 30);
