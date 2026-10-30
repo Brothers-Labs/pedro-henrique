@@ -4,6 +4,7 @@ import { VoxelWorld } from '../../world/voxel-world';
 import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
 import { CraftSimulation } from './craft-simulation';
 import type { Creature } from './creatures';
+import { goalIcon, hudState as hudOf } from '../session-views';
 import type { SimulationEvent } from './simulation-events';
 
 /** Olhando para +x, na altura dos olhos: a mira cai no bloco (7, 4, 5). */
@@ -334,6 +335,21 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(simulation.inventory.slots[0]?.item).toBe('milk-bucket');
     });
 
+    it('o trigo na mão alimenta as ovelhas, e nasce um filhote que ainda não dá lã', () => {
+      const first = placeAnimal('sheep');
+      simulation.creatures.spawn(catalog.creature('sheep'), TARGET.x + 1.5, FLOOR_TOP, TARGET.z + 0.5).loveLeftMs = 10_000;
+      simulation.inventory.slots[0] = { item: 'wheat', count: 3, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(first.breedRestMs).toBeGreaterThan(0);
+
+      const baby = simulation.creatures.list.find((creature) => creature.isBaby);
+
+      expect(baby).toBeDefined();
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('filhote'))).toBeTrue();
+    });
+
     it('a mão tira um pouco de vida, e o animal foge', () => {
       const sheep = placeAnimal('sheep');
       run(1, { primaryPressed: true, primaryHeld: true });
@@ -353,6 +369,366 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(droppedCount('wool')).toBe(1);
       expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('iron-sword').durability ?? 0) - 1);
       expect(record).toHaveBeenCalledWith({ trigger: 'defeat', target: 'sheep', count: 1 });
+    });
+  });
+  describe('adubo', () => {
+    const plantWheat = (): void => {
+      put('farmland', TARGET.x, TARGET.y - 1);
+      put('wheat-crop');
+      simulation.farm.plant(TARGET.x, TARGET.y, TARGET.z, catalog.crop('wheat'));
+    };
+
+    it('o adubo faz a planta crescer um estágio e gasta um', () => {
+      plantWheat();
+      simulation.inventory.slots[0] = { item: 'fertilizer', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.farm.stageAt(TARGET.x, TARGET.y, TARGET.z)).toBe(1);
+      expect(simulation.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('sem planta crescendo, o adubo não é gasto e o jogo explica', () => {
+      put('stone');
+      simulation.inventory.slots[0] = { item: 'fertilizer', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('a batata planta na terra arada e, colhida madura, dá batatas', () => {
+      put('farmland');
+      simulation.inventory.slots[0] = { item: 'potato', count: 1, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x, TARGET.y + 1, TARGET.z)).toBe(catalog.blockNumber('potato-crop'));
+    });
+  });
+
+  describe('sobreviver', () => {
+    const makeNight = (): void => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+    };
+
+    it('comer a maçã recupera vida e gasta uma', () => {
+      simulation.health.damage(4);
+      simulation.inventory.slots[0] = { item: 'apple', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.health.value).toBe(catalog.world.hero.maxHealth - 4 + (catalog.item('apple').heal ?? 0));
+      expect(simulation.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('com a vida cheia, a comida fica guardada', () => {
+      simulation.inventory.slots[0] = { item: 'apple', count: 2, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.count).toBe(2);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('beber o leite devolve o balde', () => {
+      simulation.health.damage(2);
+      hold('milk-bucket');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.item).toBe('bucket');
+    });
+
+    it('a cama de dia guarda o lugar de voltar, sem pular o tempo', () => {
+      put('bed');
+      const before = simulation.clock.time;
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.respawnPoint).toEqual(jasmine.objectContaining({ x: TARGET.x + 0.5, z: TARGET.z + 0.5 }));
+      expect(simulation.clock.time).toBeGreaterThan(before);
+      expect(simulation.clock.isNight).toBeFalse();
+    });
+
+    it('a cama à noite faz dormir até de manhã, manda os inimigos embora e conta para a missão', () => {
+      put('bed');
+      makeNight();
+      const slime = simulation.creatures.spawn(catalog.creature('mud-slime'), 12.5, FLOOR_TOP, 12.5);
+      const record = spyOn(simulation.goals, 'record').and.callThrough();
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.clock.isNight).toBeFalse();
+      expect(simulation.creatures.list).not.toContain(slime);
+      expect(record).toHaveBeenCalledWith({ trigger: 'sleep', target: null, count: 1 });
+    });
+
+    it('ao desmaiar, o herói volta para casa com a vida cheia e todos os itens', () => {
+      makeNight();
+      simulation.inventory.slots[3] = { item: 'stone', count: 20, durability: null };
+      simulation.respawnPoint = { x: 2.5, y: FLOOR_TOP, z: 2.5, yaw: 0 };
+      simulation.health.damage(catalog.world.hero.maxHealth - 1);
+      simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      run(120);
+
+      expect(simulation.hero.body.x).toBeLessThan(4);
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.count('stone')).toBe(20);
+      expect(events.some((event) => event.type === 'hero-hurt')).toBeTrue();
+    });
+
+    it('o arco atira uma flecha e gasta uma da mochila', () => {
+      hold('bow');
+      simulation.inventory.slots[5] = { item: 'arrow', count: 3, durability: null };
+      run(1, { primaryPressed: true });
+
+      expect(simulation.projectiles.list.length).toBe(1);
+      expect(simulation.inventory.count('arrow')).toBe(2);
+    });
+
+    it('o arco sem flechas explica o que falta', () => {
+      hold('bow');
+      run(1, { primaryPressed: true });
+
+      expect(simulation.projectiles.list.length).toBe(0);
+      expect(events.some((event) => event.type === 'hint')).toBeTrue();
+    });
+
+    it('a manhã nova vira o dia do calendário, e dormir também', () => {
+      // Perto do fim da noite: poucos passos atravessam a virada da manhã.
+      simulation.clock.setTime(simulation.clock.cycleMs - 50);
+      run(10);
+
+      expect(simulation.calendar.day).toBe(2);
+
+      put('bed');
+      makeNight();
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.calendar.day).toBe(3);
+    });
+
+    it('no inverno, só a planta debaixo do vidro cresce', () => {
+      const definition = catalog.world.calendar;
+      const winterDay = definition.daysPerSeason * definition.seasons.findIndex((season) => season.id === 'winter') + 1;
+
+      simulation.setCalendarDay(winterDay);
+      expect(simulation.calendar.season.id).toBe('winter');
+
+      const wheat = catalog.crop('wheat');
+      const open = { x: 2, z: 2 } as const;
+      const covered = { x: 12, z: 12 } as const;
+
+      for (const cell of [open, covered]) {
+        put('farmland', cell.x, FLOOR_TOP - 1, cell.z);
+        put('wheat-crop', cell.x, FLOOR_TOP, cell.z);
+        simulation.farm.plant(cell.x, FLOOR_TOP, cell.z, wheat);
+      }
+
+      put('glass', covered.x, FLOOR_TOP + 3, covered.z);
+      simulation.farm.step(wheat.stageMs * 1.1);
+
+      expect(simulation.farm.stageAt(open.x, FLOOR_TOP, open.z)).toBe(0);
+      expect(simulation.farm.stageAt(covered.x, FLOOR_TOP, covered.z)).toBe(1);
+    });
+
+    it('ligar o Modo Paz manda os inimigos embora na hora', () => {
+      makeNight();
+      const spider = simulation.creatures.spawn(catalog.creature('button-spider'), 12.5, FLOOR_TOP, 12.5);
+      simulation.setPeaceful(true);
+
+      expect(simulation.creatures.list).not.toContain(spider);
+    });
+  });
+  describe('primeiros passos e missões', () => {
+    it('o guia acompanha os gestos e avisa quando acaba', () => {
+      const guided = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        guideFirstSteps: true,
+      });
+      const go = (steps: number, input: Partial<CraftInputSnapshot>): void => {
+        for (let step = 0; step < steps; step += 1) {
+          guided.step({ ...IDLE_CRAFT_INPUT, ...input });
+        }
+      };
+
+      world.fill(TARGET.x, TARGET.y, TARGET.z, catalog.blockNumber('dirt'));
+      go(60, { strafe: 1 });
+      expect(guided.firstSteps?.current).toBe('look');
+
+      guided.look({ yaw: 1.2, pitch: 0 });
+      guided.look({ yaw: -1.2, pitch: 0 });
+      expect(guided.firstSteps?.current).toBe('jump');
+
+      go(1, { jumpHeld: true });
+      expect(guided.firstSteps?.current).toBe('break');
+
+      guided.drainEvents();
+      guided.skipFirstSteps();
+      expect(guided.drainEvents()).toContain({ type: 'first-steps-done' });
+    });
+
+    it('sem o pedido, não há guia', () => {
+      expect(simulation.firstSteps).toBeNull();
+    });
+
+    it('a missão mostra a figura do item: o tronco, a mesa colocada, o trigo colhido, a cama', () => {
+      const icon = (id: string): string | null => goalIcon(catalog.goals.find((goal) => goal.id === id) ?? catalog.goals[0], catalog);
+
+      expect(icon('get-wood')).toBe('oak-log');
+      expect(icon('place-workbench')).toBe('workbench');
+      expect(icon('harvest-wheat')).toBe('wheat');
+      expect(icon('sleep')).toBe('bed');
+    });
+  });
+  describe('modos de jogo', () => {
+    const withMode = (mode: 'creative' | 'survival'): CraftSimulation =>
+      new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        mode,
+      });
+
+    const steps = (running: CraftSimulation, count: number, input: Partial<CraftInputSnapshot> = {}): void => {
+      for (let step = 0; step < count; step += 1) {
+        running.step({ ...IDLE_CRAFT_INPUT, ...input });
+      }
+    };
+
+    it('criativo: o bloco colocado não acaba e quebrar é na hora', () => {
+      const creative = withMode('creative');
+
+      put('stone');
+      creative.inventory.slots[0] = { item: 'oak-planks', count: 1, durability: null };
+      steps(creative, 1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('oak-planks'));
+      expect(creative.inventory.slots[0]?.count).toBe(1);
+
+      steps(creative, 5, { primaryHeld: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+    });
+
+    it('criativo: o espantalho não tira vida, e pegar item da lista enche a mochila', () => {
+      const creative = withMode('creative');
+
+      creative.clock.advance(catalog.world.clock.dayMs);
+      creative.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      steps(creative, 120);
+
+      expect(creative.health.isFull).toBeTrue();
+
+      creative.giveCreativeItem('diamond-que-nao-existe');
+      creative.giveCreativeItem('glass');
+
+      expect(creative.inventory.count('glass')).toBe(catalog.item('glass').maxStack);
+    });
+
+    it('criativo: segurar o pulo no ar faz voar', () => {
+      const creative = withMode('creative');
+
+      steps(creative, 60, { jumpHeld: true });
+
+      expect(creative.hero.body.y).toBeGreaterThan(FLOOR_TOP + 2);
+    });
+
+    it('sobrevivência: sem energia a vida não volta, mas nunca diminui', () => {
+      const survival = withMode('survival');
+      const energy = survival.energy;
+
+      expect(energy).not.toBeNull();
+      energy?.set(0);
+      survival.health.damage(2);
+      steps(survival, Math.ceil(catalog.world.hero.regenEveryMs / (1000 / 60)) * 2);
+
+      expect(survival.health.value).toBe(catalog.world.hero.maxHealth - 2);
+    });
+
+    it('sobrevivência: comer enche a energia mesmo com a vida cheia', () => {
+      const survival = withMode('survival');
+
+      survival.energy?.set(4);
+      survival.inventory.slots[0] = { item: 'bread', count: 2, durability: null };
+      steps(survival, 1, { secondaryPressed: true });
+
+      expect(survival.energy?.value).toBe(4 + (catalog.item('bread').heal ?? 0));
+      expect(survival.inventory.slots[0]?.count).toBe(1);
+    });
+
+    it('aventura: não há energia', () => {
+      expect(simulation.energy).toBeNull();
+      expect(simulation.mode).toBe('adventure');
+    });
+  });
+  describe('noites mais justas', () => {
+    const makeNight = (): void => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+    };
+
+    it('a armadura na mochila segura o golpe: gasta um uso e não tira coração', () => {
+      makeNight();
+      simulation.inventory.slots[8] = { item: 'leather-armor', count: 1, durability: catalog.item('leather-armor').durability };
+      simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), 6.4, FLOOR_TOP, 5.5);
+      run(20);
+
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.slots[8]?.durability).toBeLessThan(catalog.item('leather-armor').durability ?? 0);
+      expect(hudOf(simulation).armor).toBe(simulation.inventory.slots[8]?.durability ?? -1);
+    });
+
+    it('o escudo na mão segura a flecha', () => {
+      hold('shield');
+      simulation.projectiles.launch({
+        owner: 'creature',
+        damage: 1,
+        x: 9.5,
+        y: FLOOR_TOP + 1,
+        z: 5.5,
+        directionX: -1,
+        directionY: 0.05,
+        directionZ: 0,
+        speed: 16,
+      });
+      run(30);
+
+      expect(simulation.health.isFull).toBeTrue();
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('shield').durability ?? 0) - 1);
+    });
+
+    it('sem escudo, a flecha tira coração', () => {
+      simulation.projectiles.launch({
+        owner: 'creature',
+        damage: 1,
+        x: 9.5,
+        y: FLOOR_TOP + 1,
+        z: 5.5,
+        directionX: -1,
+        directionY: 0.05,
+        directionZ: 0,
+        speed: 16,
+      });
+      run(30);
+
+      expect(simulation.health.value).toBe(catalog.world.hero.maxHealth - 1);
+    });
+
+    it('o pôr do sol avisa para acender tochas', () => {
+      simulation.clock.setTime(catalog.world.clock.dayMs - 10_000);
+      run(2);
+
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('sol está se pondo'))).toBeTrue();
+    });
+
+    it('com o Modo Paz, o pôr do sol não assusta ninguém', () => {
+      simulation.setPeaceful(true);
+      simulation.clock.setTime(catalog.world.clock.dayMs - 10_000);
+      run(2);
+
+      expect(events.some((event) => event.type === 'hint')).toBeFalse();
     });
   });
 });

@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { CalmModeService } from '../../../../core/services/calm-mode.service';
 import {
   type CraftButtonSize,
+  type CraftDifficulty,
   type CraftSettings,
   type CraftTouchMode,
   LOOK_SENSITIVITY_RANGE,
@@ -12,6 +13,7 @@ const STORAGE_KEY = 'pedro-henrique:pedro-craft:settings:v1';
 
 const TOUCH_MODES: readonly CraftTouchMode[] = ['automatico', 'sempre', 'nunca'];
 const BUTTON_SIZES: readonly CraftButtonSize[] = ['normal', 'grande'];
+const DIFFICULTIES: readonly CraftDifficulty[] = ['facil', 'normal'];
 
 /**
  * Preferências do PedroCraft, guardadas no aparelho.
@@ -39,7 +41,16 @@ export class CraftSettingsService {
 }
 
 function defaults(isCalm: boolean): CraftSettings {
-  return { peaceful: isCalm, lookSensitivity: 1, autoJump: true, touchControls: 'automatico', buttonSize: 'normal' };
+  return {
+    peaceful: isCalm,
+    difficulty: 'normal',
+    lookSensitivity: 1,
+    autoJump: true,
+    touchControls: 'automatico',
+    buttonSize: 'normal',
+    readAloud: false,
+    hasSeenFirstSteps: false,
+  };
 }
 
 function loadSettings(isCalm: boolean): CraftSettings {
@@ -66,6 +77,7 @@ export function sanitize(value: unknown, fallback: CraftSettings): CraftSettings
 
   return {
     peaceful: typeof stored.peaceful === 'boolean' ? stored.peaceful : fallback.peaceful,
+    difficulty: DIFFICULTIES.find((difficulty) => difficulty === stored.difficulty) ?? fallback.difficulty,
     lookSensitivity:
       sensitivity === null
         ? fallback.lookSensitivity
@@ -73,5 +85,7 @@ export function sanitize(value: unknown, fallback: CraftSettings): CraftSettings
     autoJump: typeof stored.autoJump === 'boolean' ? stored.autoJump : fallback.autoJump,
     touchControls: TOUCH_MODES.find((mode) => mode === stored.touchControls) ?? fallback.touchControls,
     buttonSize: BUTTON_SIZES.find((size) => size === stored.buttonSize) ?? fallback.buttonSize,
+    readAloud: typeof stored.readAloud === 'boolean' ? stored.readAloud : fallback.readAloud,
+    hasSeenFirstSteps: typeof stored.hasSeenFirstSteps === 'boolean' ? stored.hasSeenFirstSteps : fallback.hasSeenFirstSteps,
   };
 }

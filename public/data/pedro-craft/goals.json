@@ -18,6 +18,9 @@
     { "id": "fill-bucket", "title": "Pegue água com o balde", "emoji": "🪣", "hint": "Três barras de ferro fazem um balde.", "trigger": "obtain", "target": "water-bucket" },
     { "id": "shear-sheep", "title": "Tosquie uma ovelha", "emoji": "🐑", "hint": "Faça uma tesoura e use na ovelha. A lã cresce de novo!", "trigger": "obtain", "target": "wool" },
     { "id": "sleep", "title": "Durma na cama", "emoji": "🛏️", "hint": "À noite, toque na cama da casa para dormir até de manhã.", "trigger": "sleep" },
+    { "id": "harvest-potatoes", "title": "Colha 3 batatas", "emoji": "🥔", "hint": "Ache batatas no capim alto e plante na terra arada.", "trigger": "harvest", "target": "potato", "count": 3 },
+    { "id": "harvest-pumpkin", "title": "Colha uma abóbora", "emoji": "🎃", "hint": "Sementes de abóbora saem do capim alto. Adubo faz crescer mais rápido!", "trigger": "harvest", "target": "pumpkin" },
+    { "id": "bake-cake", "title": "Faça um bolo", "emoji": "🎂", "hint": "Na mesa: 3 trigos em cima, açúcar, ovo e açúcar embaixo.", "trigger": "obtain", "target": "cake" },
     { "id": "golden-pickaxe", "title": "Faça uma picareta de ouro", "emoji": "🏆", "hint": "O ouro só sai com picareta de ferro.", "trigger": "obtain", "target": "golden-pickaxe" }
   ]
 }

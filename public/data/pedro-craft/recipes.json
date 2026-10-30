@@ -9,6 +9,11 @@
     { "id": "stone-bricks", "type": "shaped", "station": "hand", "pattern": ["SS", "SS"], "key": { "S": "stone" }, "output": { "item": "stone-bricks", "count": 4 } },
     { "id": "shears", "type": "shaped", "station": "hand", "pattern": [" I", "I "], "key": { "I": "iron-ingot" }, "output": { "item": "shears" } },
     { "id": "string", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool" }], "output": { "item": "string", "count": 4 } },
+    { "id": "sugar", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "sugar-cane" }], "output": { "item": "sugar" } },
+    { "id": "fertilizer-from-seeds", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wheat-seeds", "count": 4 }], "output": { "item": "fertilizer", "count": 2 } },
+    { "id": "fertilizer-from-bone", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "bone" }], "output": { "item": "fertilizer", "count": 3 } },
+    { "id": "beetroot-soup", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "beetroot", "count": 3 }, { "item": "bowl" }], "output": { "item": "beetroot-soup" } },
+    { "id": "pumpkin-pie", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "pumpkin" }, { "item": "sugar" }, { "item": "egg" }], "output": { "item": "pumpkin-pie" } },
 
     { "id": "wooden-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-pickaxe" } },
     { "id": "stone-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-pickaxe" } },
@@ -43,7 +48,15 @@
     { "id": "bow", "type": "shaped", "station": "workbench", "pattern": [" ST", "S T", " ST"], "key": { "S": "stick", "T": "string" }, "output": { "item": "bow" } },
     { "id": "arrow", "type": "shaped", "station": "workbench", "pattern": ["C", "S", "F"], "key": { "C": "cobblestone", "S": "stick", "F": "feather" }, "output": { "item": "arrow", "count": 4 } },
     { "id": "bucket", "type": "shaped", "station": "workbench", "pattern": ["I I", " I "], "key": { "I": "iron-ingot" }, "output": { "item": "bucket" } },
-    { "id": "bread", "type": "shaped", "station": "workbench", "pattern": ["WWW"], "key": { "W": "wheat" }, "output": { "item": "bread" } }
+    { "id": "bread", "type": "shaped", "station": "workbench", "pattern": ["WWW"], "key": { "W": "wheat" }, "output": { "item": "bread" } },
+    { "id": "leather-armor", "type": "shaped", "station": "workbench", "pattern": ["L L", "LLL", "LLL"], "key": { "L": "leather" }, "output": { "item": "leather-armor" } },
+    { "id": "iron-armor", "type": "shaped", "station": "workbench", "pattern": ["I I", "III", "III"], "key": { "I": "iron-ingot" }, "output": { "item": "iron-armor" } },
+    { "id": "golden-armor", "type": "shaped", "station": "workbench", "pattern": ["G G", "GGG", "GGG"], "key": { "G": "gold-ingot" }, "output": { "item": "golden-armor" } },
+    { "id": "shield", "type": "shaped", "station": "workbench", "pattern": ["PIP", "PPP", " P "], "key": { "P": "oak-planks", "I": "iron-ingot" }, "output": { "item": "shield" } },
+    { "id": "lantern", "type": "shaped", "station": "workbench", "pattern": ["III", "ITI", "III"], "key": { "I": "iron-ingot", "T": "torch" }, "output": { "item": "lantern" } },
+    { "id": "campfire", "type": "shaped", "station": "workbench", "pattern": [" S ", "SCS", "LLL"], "key": { "S": "stick", "C": "coal", "L": "oak-log" }, "output": { "item": "campfire" } },
+    { "id": "bowl", "type": "shaped", "station": "workbench", "pattern": ["P P", " P "], "key": { "P": "oak-planks" }, "output": { "item": "bowl", "count": 4 } },
+    { "id": "cake", "type": "shaped", "station": "workbench", "pattern": ["WWW", "SES"], "key": { "W": "wheat", "S": "sugar", "E": "egg" }, "output": { "item": "cake" } }
   ],
   "smelting": [
     { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },
@@ -51,7 +64,8 @@
     { "id": "smelt-iron", "input": "iron-ore", "output": { "item": "iron-ingot" }, "timeMs": 5000 },
     { "id": "smelt-gold", "input": "gold-ore", "output": { "item": "gold-ingot" }, "timeMs": 5000 },
     { "id": "smelt-egg", "input": "egg", "output": { "item": "fried-egg" }, "timeMs": 3000 },
-    { "id": "smelt-charcoal", "input": "oak-log", "output": { "item": "coal" }, "timeMs": 5000 }
+    { "id": "smelt-charcoal", "input": "oak-log", "output": { "item": "coal" }, "timeMs": 5000 },
+    { "id": "smelt-potato", "input": "potato", "output": { "item": "baked-potato" }, "timeMs": 3000 }
   ],
   "fuels": [
     { "item": "coal", "burnMs": 40000 },

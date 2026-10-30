@@ -49,6 +49,7 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
   const item = (file: ContentFile, owner: string, id: string | null): void => check(file, owner, 'item', id, items);
   const loot = (file: ContentFile, owner: string, id: string | null): void =>
     check(file, owner, 'tabela de drop', id, lootTables);
+  const creature = (file: ContentFile, owner: string, id: string | null): void => check(file, owner, 'criatura', id, creatures);
 
   for (const definition of content.blocks) {
     const owner = `bloco "${definition.id}"`;
@@ -100,6 +101,7 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     definition.spawn?.on.forEach((ground) => block('creatures', owner, ground));
     check('creatures', owner, 'criatura', definition.splitInto?.creature ?? null, creatures);
     item('creatures', owner, definition.lays?.item ?? null);
+    item('creatures', owner, definition.breedsWith);
 
     if (definition.splitInto?.creature === definition.id) {
       problems.push({ file: 'creatures', message: `${owner}: não pode se dividir em si mesma` });
@@ -132,7 +134,7 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     }
   }
 
-  checkWorld(content, block, item);
+  checkWorld(content, block, item, creature);
 
   for (const table of content.lootTables) {
     table.entries.forEach((entry) => item('loot-tables', `tabela "${table.id}"`, entry.item));
@@ -156,7 +158,7 @@ export function assertContentIntegrity(content: CraftContent): void {
 
 type Checker = (file: ContentFile, owner: string, id: string | null) => void;
 
-function checkWorld(content: CraftContent, block: Checker, item: Checker): void {
+function checkWorld(content: CraftContent, block: Checker, item: Checker, creature: Checker): void {
   const world = content.world;
   const { decorations, ...named } = world.blocks;
 
@@ -166,6 +168,8 @@ function checkWorld(content: CraftContent, block: Checker, item: Checker): void 
 
   decorations.forEach((id) => block('world', 'blocks.decorations', id));
   world.quarry.ores.forEach((ore) => block('world', 'quarry.ores', ore.block));
+  block('world', 'calendar.greenhouseBlock', world.calendar.greenhouseBlock);
+  creature('world', 'calendar.fullMoonVisitor', world.calendar.fullMoonVisitor);
   world.hero.startingInventory.forEach((entry) => item('world', 'hero.startingInventory', entry.item));
 
   for (const [symbol, id] of Object.entries(world.house.palette)) {

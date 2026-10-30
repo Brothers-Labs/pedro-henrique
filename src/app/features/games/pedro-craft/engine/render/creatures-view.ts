@@ -11,6 +11,9 @@ const SIDE_X_BRIGHTNESS = 0.8;
 const SIDE_Z_BRIGHTNESS = 0.9;
 const BOTTOM_BRIGHTNESS = 0.55;
 
+/** Tamanho do filhote perto do adulto. */
+const BABY_SCALE = 0.55;
+
 /** O passinho de quem anda: o corpo sobe e desce de leve. */
 const STEP_BOB_HEIGHT = 0.05;
 const STEP_BOB_SPEED = 0.012;
@@ -90,6 +93,7 @@ export class CreaturesView {
       lerp(creature.previousZ, body.z, alpha),
     );
     view.mesh.rotation.y = creature.yaw;
+    view.mesh.scale.setScalar(creature.isBaby ? BABY_SCALE : 1);
   }
 
   private create(creature: Creature, modelKey: string): CreatureMesh {

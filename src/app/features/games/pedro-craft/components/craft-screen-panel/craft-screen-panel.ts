@@ -43,6 +43,8 @@ export class CraftScreenPanel {
   readonly slotPressed = output<SlotRequest>();
   readonly resultTaken = output<void>();
   readonly recipeCrafted = output<string>();
+  /** Modo Criativo: tocou num item da lista de todos os itens. */
+  readonly creativeTaken = output<string>();
   readonly closed = output<void>();
 
   protected readonly title = computed(() => TITLES[this.view().kind]);

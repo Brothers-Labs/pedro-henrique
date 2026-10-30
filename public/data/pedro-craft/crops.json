@@ -25,6 +25,72 @@
       "mature": { "type": "harvest", "loot": "carrot-harvest" }
     },
     {
+      "id": "potato",
+      "name": "Batata",
+      "block": "potato-crop",
+      "seed": "potato",
+      "stages": 4,
+      "stageMs": 45000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "potato-harvest" }
+    },
+    {
+      "id": "beetroot",
+      "name": "Beterraba",
+      "block": "beetroot-crop",
+      "seed": "beetroot-seeds",
+      "stages": 4,
+      "stageMs": 50000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "beetroot-harvest" }
+    },
+    {
+      "id": "pumpkin",
+      "name": "Abóbora",
+      "block": "pumpkin-crop",
+      "seed": "pumpkin-seeds",
+      "stages": 4,
+      "stageMs": 60000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "pumpkin-harvest" }
+    },
+    {
+      "id": "melon",
+      "name": "Melancia",
+      "block": "melon-crop",
+      "seed": "melon-seeds",
+      "stages": 4,
+      "stageMs": 60000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "melon-harvest" }
+    },
+    {
+      "id": "sunflower",
+      "name": "Girassol",
+      "block": "sunflower-crop",
+      "seed": "sunflower-seeds",
+      "stages": 4,
+      "stageMs": 50000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland"],
+      "mature": { "type": "harvest", "loot": "sunflower-harvest" }
+    },
+    {
+      "id": "sugar-cane",
+      "name": "Cana-de-açúcar",
+      "block": "sugar-cane-crop",
+      "seed": "sugar-cane",
+      "stages": 4,
+      "stageMs": 45000,
+      "wateredSpeedup": 2,
+      "soil": ["farmland", "grass", "dirt", "sand"],
+      "mature": { "type": "harvest", "loot": "sugar-cane-harvest" }
+    },
+    {
       "id": "oak-tree",
       "name": "Carvalho",
       "block": "oak-sapling",

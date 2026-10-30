@@ -2,19 +2,29 @@ import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import type { CraftCatalog } from '../../content/craft-catalog';
 import { loadTestCatalog } from '../../testing/craft-test-content';
 import { VoxelWorld } from '../../world/voxel-world';
+import type { SpawnPeriod } from '../../models/content.model';
 import { BlockProperties, physicsTerrain, type PhysicsTerrain } from '../block-properties';
-import { Creatures } from './creatures';
+import { type Creature, Creatures } from './creatures';
+import { PhysicsBody } from './physics-body';
+import type { ProjectileLaunch } from './projectiles';
 
 const SIZE = 80;
 const FLOOR_TOP = 3;
 const HERO = { x: SIZE / 2, z: SIZE / 2 } as const;
 
-describe('Animais do PedroCraft', () => {
+describe('Bichos do PedroCraft', () => {
   let catalog: CraftCatalog;
   let world: VoxelWorld;
   let terrain: PhysicsTerrain;
   let creatures: Creatures;
+  let hero: PhysicsBody;
+  let period: SpawnPeriod;
+  let allowsHostiles: boolean;
   let laid: string[];
+  let strikes: Creature[];
+  let shots: ProjectileLaunch[];
+  let vanished: Creature[];
+  let born: Creature[];
 
   beforeAll(async () => {
     catalog = await loadTestCatalog();
@@ -34,10 +44,24 @@ describe('Animais do PedroCraft', () => {
     const properties = new BlockProperties(catalog);
 
     terrain = physicsTerrain(world, properties);
+    hero = new PhysicsBody(HERO.x, FLOOR_TOP, HERO.z, 0.3, 1.7);
+    period = 'day';
+    allowsHostiles = true;
     laid = [];
+    strikes = [];
+    shots = [];
+    vanished = [];
+    born = [];
     creatures = new Creatures(world, catalog, properties, new SeededRandom(7), {
-      hero: () => HERO,
+      hero: () => hero,
+      period: () => period,
+      allowsHostiles: () => allowsHostiles,
       laid: (_creature, item) => laid.push(item),
+      strike: (creature) => strikes.push(creature),
+      shoot: (launch) => shots.push(launch),
+      vanished: (creature) => vanished.push(creature),
+      born: (baby) => born.push(baby),
+      difficulty: () => ({ speed: 1, attackCooldown: 1 }),
     });
   });
 
@@ -47,7 +71,7 @@ describe('Animais do PedroCraft', () => {
     }
   };
 
-  it('faz nascer só animais passivos, longe do herói e até o teto do mundo', () => {
+  it('de dia faz nascer só animais passivos, longe do herói e até o teto do mundo', () => {
     run(60 * 120);
 
     const settings = catalog.world.creatures;
@@ -150,5 +174,162 @@ describe('Animais do PedroCraft', () => {
     expect(creatures.castRay(origin, { x: 1, y: 0, z: 0 }, 5)?.creature).toBe(sheep);
     expect(creatures.castRay(origin, { x: 0, y: 0, z: 1 }, 5)).toBeNull();
     expect(creatures.castRay(origin, { x: 1, y: 0, z: 0 }, 2)).toBeNull();
+  });
+  describe('filhotes', () => {
+    it('duas ovelhas alimentadas perto uma da outra têm um filhote, que cresce', () => {
+      const first = creatures.spawn(catalog.creature('sheep'), 20.5, FLOOR_TOP, 20.5);
+      const second = creatures.spawn(catalog.creature('sheep'), 22.5, FLOOR_TOP, 20.5);
+
+      expect(creatures.feed(first)).toBeTrue();
+      expect(born).toEqual([]);
+      expect(creatures.feed(second)).toBeTrue();
+      expect(born.length).toBe(1);
+
+      const baby = born[0];
+
+      expect(baby.isBaby).toBeTrue();
+      expect(baby.definition.id).toBe('sheep');
+      expect(first.canBreed).toBeFalse();
+
+      baby.tickCooldowns(catalog.creature('sheep').babyGrowMs);
+
+      expect(baby.isBaby).toBeFalse();
+    });
+
+    it('longe demais, não há filhote', () => {
+      const first = creatures.spawn(catalog.creature('cow'), 10.5, FLOOR_TOP, 10.5);
+      const second = creatures.spawn(catalog.creature('cow'), 40.5, FLOOR_TOP, 40.5);
+
+      creatures.feed(first);
+      creatures.feed(second);
+
+      expect(born).toEqual([]);
+    });
+
+    it('filhote e animal descansando não aceitam comida', () => {
+      const first = creatures.spawn(catalog.creature('chicken'), 20.5, FLOOR_TOP, 20.5);
+      const second = creatures.spawn(catalog.creature('chicken'), 21.5, FLOOR_TOP, 20.5);
+
+      creatures.feed(first);
+      creatures.feed(second);
+
+      expect(creatures.feed(first)).toBeFalse();
+      expect(creatures.feed(born[0])).toBeFalse();
+    });
+  });
+
+  describe('inimigos', () => {
+    const fillTorches = (spacing: number): void => {
+      for (let z = 0; z < SIZE; z += spacing) {
+        for (let x = 0; x < SIZE; x += spacing) {
+          world.fill(x, FLOOR_TOP, z, catalog.blockNumber('torch'));
+        }
+      }
+    };
+
+    it('à noite faz nascer inimigos até o teto deles', () => {
+      period = 'night';
+      run(60 * 120);
+
+      const hostiles = creatures.list.filter((creature) => creature.isHostile);
+
+      expect(hostiles.length).toBeGreaterThan(0);
+      expect(hostiles.length).toBeLessThanOrEqual(catalog.world.creatures.hostileCap);
+    });
+
+    it('no Modo Paz, nenhum inimigo nasce nem de noite', () => {
+      period = 'night';
+      allowsHostiles = false;
+      run(60 * 120);
+
+      expect(creatures.list.some((creature) => creature.isHostile)).toBeFalse();
+    });
+
+    it('não nasce inimigo perto de tocha', () => {
+      period = 'night';
+      fillTorches(10);
+      run(60 * 120);
+
+      expect(creatures.list.some((creature) => creature.isHostile)).toBeFalse();
+    });
+
+    it('ao amanhecer os inimigos vão embora numa nuvem', () => {
+      const slime = creatures.spawn(catalog.creature('mud-slime'), 20.5, FLOOR_TOP, 20.5);
+
+      period = 'night';
+      run(1);
+      period = 'day';
+      run(1);
+
+      expect(creatures.list).not.toContain(slime);
+      expect(vanished).toEqual([slime]);
+    });
+
+    it('o espantalho vai atrás do herói e golpeia quando encosta', () => {
+      period = 'night';
+      const zombie = creatures.spawn(catalog.creature('scarecrow-zombie'), HERO.x + 6.5, FLOOR_TOP, HERO.z);
+      const startDistance = Math.abs(zombie.body.x - hero.x);
+
+      run(60 * 8);
+
+      expect(zombie.mood).toBe('chase');
+      expect(Math.abs(zombie.body.x - hero.x)).toBeLessThan(startDistance);
+      expect(strikes).toContain(zombie);
+    });
+
+    it('o slime avança aos pulos', () => {
+      period = 'night';
+      const slime = creatures.spawn(catalog.creature('mud-slime'), HERO.x + 8.5, FLOOR_TOP, HERO.z);
+      let highest = FLOOR_TOP;
+
+      for (let step = 0; step < 60 * 3; step += 1) {
+        creatures.step(terrain);
+        highest = Math.max(highest, slime.body.y);
+      }
+
+      expect(highest).toBeGreaterThan(FLOOR_TOP + 0.5);
+      expect(slime.body.x).toBeLessThan(HERO.x + 8.5);
+    });
+
+    it('o esqueleto atira no herói que ele enxerga', () => {
+      period = 'night';
+      creatures.spawn(catalog.creature('skeleton-archer'), HERO.x + 8.5, FLOOR_TOP, HERO.z);
+      run(60);
+
+      expect(shots.length).toBe(1);
+      expect(shots[0].owner).toBe('creature');
+      expect(shots[0].directionX).toBeLessThan(0);
+    });
+
+    it('o esqueleto não atira através da parede', () => {
+      period = 'night';
+
+      for (let z = 0; z < SIZE; z += 1) {
+        for (let y = FLOOR_TOP; y < FLOOR_TOP + 4; y += 1) {
+          world.fill(HERO.x + 3, y, z, catalog.blockNumber('stone'));
+        }
+      }
+
+      creatures.spawn(catalog.creature('skeleton-archer'), HERO.x + 8.5, FLOOR_TOP, HERO.z);
+      run(60);
+
+      expect(shots.length).toBe(0);
+    });
+
+    it('a lua cheia chama o Rei Slime para longe das tochas', () => {
+      const king = creatures.summon(catalog.creature('king-slime'));
+
+      expect(king?.definition.id).toBe('king-slime');
+      expect(Math.hypot((king?.body.x ?? 0) - HERO.x, (king?.body.z ?? 0) - HERO.z)).toBeGreaterThanOrEqual(
+        catalog.world.creatures.minSpawnDistance - 1,
+      );
+    });
+
+    it('golpeado, o inimigo não foge: fica bravo e vem atrás', () => {
+      const spider = creatures.spawn(catalog.creature('button-spider'), 20.5, FLOOR_TOP, 20.5);
+
+      expect(creatures.hit(spider, 1, 3, 18.5, 20.5)).toBeFalse();
+      expect(spider.mood).toBe('chase');
+    });
   });
 });

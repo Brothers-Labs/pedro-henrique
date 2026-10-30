@@ -21,6 +21,21 @@
   touch-action: none;
 }
 
+/* Golpe no herói: a borda da tela fica vermelha e some devagar. Esmaece, nunca pisca. */
+.hurt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(255 70 70 / 45%) 100%);
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+
+  &--visible {
+    opacity: 1;
+    transition-duration: 0.12s;
+  }
+}
+
 /* Mira: uma cruzinha branca com contorno, visível em qualquer fundo. */
 .crosshair {
   position: absolute;
@@ -49,11 +64,25 @@
 .bar__title {
   @include maker.pill;
 
-  margin-right: auto;
   max-width: 50%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Aparece e some devagar ao lado do nome, sem chamar atenção. */
+.bar__saved {
+  margin-right: auto;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgb(42 35 80 / 80%);
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+
+  &--visible {
+    opacity: 1;
+  }
 }
 
 .bar__button {

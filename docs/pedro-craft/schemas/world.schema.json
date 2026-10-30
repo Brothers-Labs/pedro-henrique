@@ -6,7 +6,7 @@
   "type": "object",
   "required": [
     "schemaVersion", "width", "depth", "height", "chunkSize", "seaLevel", "blocks", "terrain", "lake", "river", "forest",
-    "quarry", "farm", "tree", "decorationChance", "house", "clock", "water", "creatures", "hero"
+    "quarry", "farm", "tree", "decorationChance", "house", "clock", "calendar", "water", "creatures", "hero"
   ],
   "additionalProperties": false,
   "properties": {
@@ -100,6 +100,44 @@
       }
     },
     "clock": { "$ref": "#/$defs/integers", "required": ["dayMs", "nightMs"] },
+    "calendar": {
+      "type": "object",
+      "required": ["daysPerSeason", "greenhouseBlock", "fullMoonEvery", "seasons"],
+      "additionalProperties": false,
+      "description": "Dias e estações. O ano começa na primeira estação da lista.",
+      "properties": {
+        "daysPerSeason": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "greenhouseBlock": { "$ref": "common.schema.json#/$defs/id", "description": "Telhado que protege as plantas do inverno." },
+        "fullMoonEvery": { "type": "integer", "minimum": 2, "maximum": 60, "description": "A cada quantas noites tem lua cheia." },
+        "fullMoonVisitor": { "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/id" }], "description": "Criatura que aparece na lua cheia." },
+        "seasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "emoji", "arrival", "dayScale", "nightScale", "growth", "rain", "snow", "palette"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "name": { "type": "string", "minLength": 1 },
+              "emoji": { "type": "string", "minLength": 1 },
+              "arrival": { "type": "string", "minLength": 1, "description": "O aviso quando a estação chega." },
+              "dayScale": { "type": "number", "minimum": 0.3, "maximum": 3 },
+              "nightScale": { "type": "number", "minimum": 0.3, "maximum": 3 },
+              "growth": { "type": "number", "minimum": 0, "maximum": 5, "description": "0 é planta parada fora da estufa." },
+              "rain": { "type": "number", "minimum": 0, "maximum": 1 },
+              "snow": { "type": "number", "minimum": 0, "maximum": 1 },
+              "palette": {
+                "type": "object",
+                "description": "Troca de cores nas texturas: a cor de hoje (chave) e a cor da estação.",
+                "propertyNames": { "pattern": "^#[0-9a-fA-F]{6}$" },
+                "additionalProperties": { "$ref": "common.schema.json#/$defs/color" }
+              }
+            }
+          }
+        }
+      }
+    },
     "water": { "$ref": "#/$defs/integers", "required": ["maxSpread", "tickMs"] },
     "creatures": {
       "type": "object",
@@ -116,13 +154,24 @@
     },
     "hero": {
       "type": "object",
-      "required": ["maxHealth", "regenEveryMs", "reach", "invulnerableMs", "startingInventory"],
+      "required": ["maxHealth", "regenEveryMs", "reach", "invulnerableMs", "energy", "startingInventory"],
       "additionalProperties": false,
       "properties": {
         "maxHealth": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Em corações." },
         "regenEveryMs": { "type": "integer", "minimum": 500 },
         "reach": { "type": "number", "minimum": 2, "maximum": 8 },
         "invulnerableMs": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "energy": {
+          "type": "object",
+          "required": ["max", "drainEveryMs", "lowAt"],
+          "additionalProperties": false,
+          "description": "Energia do modo Sobrevivência gentil: desce com o tempo, sobe comendo e nunca tira vida.",
+          "properties": {
+            "max": { "type": "integer", "minimum": 1, "maximum": 20 },
+            "drainEveryMs": { "type": "integer", "minimum": 10000 },
+            "lowAt": { "type": "integer", "minimum": 0 }
+          }
+        },
         "startingInventory": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/itemAmount" } }
       }
     }

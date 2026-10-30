@@ -38,9 +38,10 @@ export class BlockAtlas implements TileSource {
 
   private readonly tilesByBlock: readonly (BlockTiles | null)[];
   private readonly uvs: readonly TileUv[];
+  private readonly recipes: readonly TileRecipe[];
 
   constructor(catalog: CraftCatalog) {
-    const recipes: { readonly spec: TextureSpec; readonly growth: number }[] = [];
+    const recipes: TileRecipe[] = [];
     const indexByKey = new Map<string, number>();
     const register = (spec: TextureSpec, growth = 1): number => {
       const key = `${spec.pattern}|${spec.colors.join()}|${spec.detail ?? ''}|${growth}`;
@@ -73,6 +74,7 @@ export class BlockAtlas implements TileSource {
     }
 
     this.tilesByBlock = tilesByBlock;
+    this.recipes = recipes;
     this.canvas = paintAtlas(recipes);
     this.uvs = recipes.map((_, index) => uvOf(index, this.canvas.width, this.canvas.height));
 
@@ -99,16 +101,44 @@ export class BlockAtlas implements TileSource {
     return this.uvs[tiles[face]];
   }
 
+  /**
+   * Repinta as faces com as cores da estação (a grama branca de neve, as
+   * folhas laranjas). Acontece uma vez por estação, não a cada quadro; a
+   * paleta vazia volta às cores originais.
+   */
+  applyPalette(palette: Readonly<Record<string, string>>): void {
+    const swap = (color: string): string => palette[color.toLowerCase()] ?? color;
+
+    paintRecipes(
+      this.canvas,
+      this.recipes.map(({ spec, growth }) => ({ spec: { ...spec, colors: spec.colors.map(swap) }, growth })),
+    );
+    this.texture.needsUpdate = true;
+  }
+
   dispose(): void {
     this.texture.dispose();
   }
 }
 
-function paintAtlas(recipes: readonly { readonly spec: TextureSpec; readonly growth: number }[]): HTMLCanvasElement {
+interface TileRecipe {
+  readonly spec: TextureSpec;
+  readonly growth: number;
+}
+
+function paintAtlas(recipes: readonly TileRecipe[]): HTMLCanvasElement {
   const rows = Math.max(1, Math.ceil(recipes.length / ATLAS_COLUMNS));
   const canvas = createCanvas(ATLAS_COLUMNS * SLOT, rows * SLOT);
+
+  paintRecipes(canvas, recipes);
+
+  return canvas;
+}
+
+function paintRecipes(canvas: HTMLCanvasElement, recipes: readonly TileRecipe[]): void {
   const context = context2d(canvas);
 
+  context.clearRect(0, 0, canvas.width, canvas.height);
   recipes.forEach(({ spec, growth }, index) => {
     const left = (index % ATLAS_COLUMNS) * SLOT + PADDING;
     const top = Math.floor(index / ATLAS_COLUMNS) * SLOT + PADDING;
@@ -116,8 +146,6 @@ function paintAtlas(recipes: readonly { readonly spec: TextureSpec; readonly gro
     paintTile(context, spec, left, top, growth);
     extrudeEdges(context, left, top);
   });
-
-  return canvas;
 }
 
 function uvOf(index: number, width: number, height: number): TileUv {

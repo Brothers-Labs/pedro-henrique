@@ -76,6 +76,17 @@ export const HEROES: readonly HeroDefinition[] = [
     abilities: { jumpMultiplier: Math.sqrt(1.3), brakingMultiplier: 0.45 },
     outfit: { cap: '#1f9e3a', shirt: '#1f9e3a', backpack: '#cccccc', backpackStyle: 'none' },
   },
+  {
+    id: 'wario',
+    name: 'Wario',
+    description: 'O aventureiro de boné amarelo e macacão roxo.',
+    traits: [
+      { emoji: '💪', label: 'Forte e firme nos saltos' },
+      { emoji: '🎯', label: 'Freia sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1.1 },
+    outfit: { cap: '#f7cf24', shirt: '#f7cf24', backpack: '#cccccc', backpackStyle: 'none' },
+  },
 ];
 
 export const DEFAULT_HERO: HeroId = 'pedro';

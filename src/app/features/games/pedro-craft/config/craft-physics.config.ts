@@ -26,6 +26,8 @@ export const HERO_PHYSICS = {
   swimUpSpeed: 3.4,
   /** Impulso para sair da água pela beirada. */
   climbOutSpeed: 6,
+  /** Subida segurando o pulo no modo Criativo: voar devagar, sem susto. */
+  flySpeed: 5,
   /** Quanto da velocidade desejada é alcançada por passo no chão e no ar. */
   groundGrip: 0.35,
   airGrip: 0.08,

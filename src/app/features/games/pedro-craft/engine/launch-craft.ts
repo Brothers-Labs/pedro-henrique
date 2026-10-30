@@ -3,12 +3,15 @@ import { FrameBudgetMonitor, initialQualityTier } from '../../pedro-maker/engine
 import { STEP_MS } from '../config/craft-physics.config';
 import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions, ScreenView } from '../models/craft-session.model';
 import { generateWorld } from '../world/world-generator';
+import { cleanWorldSave } from '../world/world-save';
 import { CraftInputReader } from './input/craft-input-reader';
 import { nextTask } from './next-task';
 import { CraftStage } from './render/craft-stage';
 import { CraftView } from './render/craft-view';
 import { hudState, screenView } from './session-views';
 import { CraftSimulation } from './simulation/craft-simulation';
+import { progressFromCompleted } from './simulation/goal-tracker';
+import { captureWorld, restoreWorld } from './world-snapshot';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
 const BUILD_FAILED_MESSAGE = 'Não foi possível montar este mundo.';
@@ -152,14 +155,27 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     listener({ type: 'loading', progress: 0 });
     await nextTask();
 
-    const generated = generateWorld(options.catalog, options.seed);
+    const { catalog } = options;
+    const { state } = cleanWorldSave(options.world, catalog);
+    const generated = generateWorld(catalog, options.world.seed);
     const nextSimulation = new CraftSimulation({
-      catalog: options.catalog,
+      catalog,
       world: generated.world,
       spawn: generated.layout.spawn,
       autoJump: settings.autoJump,
-      randomSeed: options.seed,
+      randomSeed: options.world.seed,
+      peaceful: settings.peaceful,
+      difficulty: settings.difficulty,
+      guideFirstSteps: options.guideFirstSteps,
+      mode: options.world.mode,
+      inventory: state?.inventory,
+      goals: state ? progressFromCompleted(catalog.goals, state.goals.completed, state.goals.amount) : undefined,
     });
+
+    if (state) {
+      restoreWorld(nextSimulation, state);
+    }
+
     const nextView = new CraftView(activeStage, nextSimulation);
 
     nextView.setEffectsEnabled(settings.effectsEnabled);
@@ -206,6 +222,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     updateSettings: (next) => {
       settings = next;
       simulation?.setAutoJump(next.autoJump);
+      simulation?.setPeaceful(next.peaceful);
+      simulation?.setDifficulty(next.difficulty);
       view?.setEffectsEnabled(next.effectsEnabled);
     },
     selectSlot: (index) => {
@@ -229,6 +247,11 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       withSimulation((running) => running.closeScreen());
       start();
     },
+    takeCreativeItem: (itemId) => withSimulation((running) => running.giveCreativeItem(itemId)),
+    skipFirstSteps: () => {
+      withSimulation((running) => running.skipFirstSteps());
+    },
+    capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString()) : null),
     destroy: () => {
       if (isDestroyed) {
         return;

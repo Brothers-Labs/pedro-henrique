@@ -129,7 +129,8 @@ export interface BlockDefinition {
 
 /* Itens ------------------------------------------------------------------------------- */
 
-export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo'] as const;
+/** `armor` protege da mochila mesmo, gastando um uso por golpe; `shield` na mão segura as flechas. */
+export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo', 'armor', 'shield'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -155,6 +156,19 @@ export const ICON_SHAPES = [
   'fried-egg',
   'feather',
   'string',
+  'potato',
+  'beetroot',
+  'bowl',
+  'pumpkin',
+  'pie',
+  'melon-slice',
+  'cake',
+  'bone',
+  'powder',
+  'cane',
+  'armor',
+  'shield',
+  'crown',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -212,6 +226,8 @@ export interface ItemDefinition {
   /** Item devolvido depois de comer (o balde do leite). */
   readonly leftover: string | null;
   readonly bucket: BucketStats | null;
+  /** Estágios que o adubo faz uma planta crescer de uma vez; `null` para o que não aduba. */
+  readonly fertilizer: number | null;
 }
 
 /* Receitas ---------------------------------------------------------------------------- */
@@ -269,7 +285,7 @@ export const CREATURE_BEHAVIORS = ['grazer', 'chaser', 'hopper', 'archer'] as co
 
 export type CreatureBehavior = (typeof CREATURE_BEHAVIORS)[number];
 
-export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'scarecrow', 'spider', 'skeleton'] as const;
+export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'king-slime', 'scarecrow', 'spider', 'skeleton'] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];
 
@@ -321,6 +337,10 @@ export interface CreatureDefinition {
   readonly interactions: readonly CreatureInteraction[];
   /** Item que a criatura deixa no chão de tempos em tempos (o ovo da galinha). */
   readonly lays: { readonly item: string; readonly everyMs: number } | null;
+  /** Comida que faz o animal querer ter filhote; `null` para quem não tem. */
+  readonly breedsWith: string | null;
+  /** Quanto o filhote leva para crescer. */
+  readonly babyGrowMs: number;
 }
 
 /* Plantações -------------------------------------------------------------------------- */
@@ -386,6 +406,37 @@ export interface WorldBlocks {
   readonly decorations: readonly string[];
 }
 
+/** Uma estação do ano: duração do dia, crescimento das plantas, clima e cores do mundo. */
+export interface SeasonDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly emoji: string;
+  /** O aviso quando a estação chega. */
+  readonly arrival: string;
+  /** Multiplica o dia e a noite do relógio: o verão tem dias longos, o inverno noites longas. */
+  readonly dayScale: number;
+  readonly nightScale: number;
+  /** Multiplica o crescimento das plantas; 0 é planta parada (fora da estufa). */
+  readonly growth: number;
+  /** Chance, a cada manhã, de chover e de nevar. */
+  readonly rain: number;
+  readonly snow: number;
+  /** Troca de cores no mundo: a cor de antes e a da estação (a grama branca de neve). */
+  readonly palette: Readonly<Record<string, string>>;
+}
+
+export interface CalendarDefinition {
+  readonly daysPerSeason: number;
+  /** Bloco de telhado que protege as plantas do inverno (a estufa). */
+  readonly greenhouseBlock: string;
+  /** A cada quantas noites tem lua cheia. */
+  readonly fullMoonEvery: number;
+  /** Quem aparece na lua cheia (o Rei Slime); `null` para ninguém. */
+  readonly fullMoonVisitor: string | null;
+  /** Em ordem: o ano começa na primeira. */
+  readonly seasons: readonly SeasonDefinition[];
+}
+
 export interface WorldDefinition {
   readonly width: number;
   readonly depth: number;
@@ -409,6 +460,7 @@ export interface WorldDefinition {
   readonly decorationChance: number;
   readonly house: StructureTemplate;
   readonly clock: { readonly dayMs: number; readonly nightMs: number };
+  readonly calendar: CalendarDefinition;
   readonly water: { readonly maxSpread: number; readonly tickMs: number };
   readonly creatures: {
     readonly passiveCap: number;
@@ -424,6 +476,8 @@ export interface WorldDefinition {
     readonly regenEveryMs: number;
     readonly reach: number;
     readonly invulnerableMs: number;
+    /** Energia do modo Sobrevivência gentil. */
+    readonly energy: { readonly max: number; readonly drainEveryMs: number; readonly lowAt: number };
     readonly startingInventory: readonly ItemAmount[];
   };
 }

@@ -56,6 +56,7 @@ function parseItem(item: JsonObjectReader): ItemDefinition {
     ranged: ranged ? parseRanged(ranged.object()) : null,
     heal: item.optionalField('heal')?.number({ integer: true, min: 1, max: 20 }) ?? null,
     leftover: optionalId(item, 'leftover'),
+    fertilizer: item.optionalField('fertilizer')?.number({ integer: true, min: 1, max: 3 }) ?? null,
     bucket: bucket ? parseBucket(bucket.object()) : null,
   };
 }

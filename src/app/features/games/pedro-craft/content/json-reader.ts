@@ -1,7 +1,10 @@
 import type { ContentFile } from '../models/content.model';
 
+/** De onde vem o JSON lido: um arquivo de conteúdo ou um mundo salvo. */
+export type JsonSource = ContentFile | 'world-save';
+
 /**
- * Erro de conteúdo: um JSON fora do contrato.
+ * Erro de leitura: um JSON (de conteúdo ou de save) fora do contrato.
  *
  * A mensagem sempre diz o arquivo e o caminho do campo (`blocks.json:
  * blocks[3].hardness: deve ser no mínimo 0`), para quem edita o JSON achar o
@@ -9,7 +12,7 @@ import type { ContentFile } from '../models/content.model';
  */
 export class ContentError extends Error {
   constructor(
-    readonly file: ContentFile,
+    readonly file: JsonSource,
     readonly problems: readonly string[],
   ) {
     super(`${file}.json: ${problems.join(' | ')}`);
@@ -31,12 +34,12 @@ const CONTENT_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
  */
 export class JsonReader {
   constructor(
-    private readonly file: ContentFile,
+    private readonly file: JsonSource,
     private readonly path: string,
     private readonly value: unknown,
   ) {}
 
-  static root(file: ContentFile, value: unknown): JsonReader {
+  static root(file: JsonSource, value: unknown): JsonReader {
     return new JsonReader(file, '', value);
   }
 
@@ -155,7 +158,7 @@ function problemAt(path: string, message: string): string {
 
 export class JsonObjectReader {
   constructor(
-    private readonly file: ContentFile,
+    private readonly file: JsonSource,
     private readonly path: string,
     private readonly fields: JsonObject,
   ) {}

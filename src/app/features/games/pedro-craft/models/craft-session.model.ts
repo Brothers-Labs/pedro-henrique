@@ -3,7 +3,12 @@ import type { CraftCatalog } from '../content/craft-catalog';
 import type { VirtualCraftInput } from '../engine/input/craft-input';
 import type { SlotClick } from '../engine/simulation/inventory';
 import type { CraftScreen, SlotRef } from '../engine/simulation/screens';
+import type { PartOfDay } from '../engine/simulation/day-clock';
+import type { FirstStep } from '../engine/simulation/first-steps';
+import type { WeatherKind } from '../engine/simulation/weather';
 import type { GoalDefinition } from './content.model';
+import type { CraftDifficulty } from './craft-settings.model';
+import type { WorldSave } from './world-save.model';
 
 /**
  * Contrato entre o Angular e o motor do PedroCraft.
@@ -15,6 +20,9 @@ import type { GoalDefinition } from './content.model';
 
 /** Preferências que o motor precisa saber enquanto roda. */
 export interface CraftEngineSettings {
+  /** Modo Paz: nenhum inimigo nasce. */
+  readonly peaceful: boolean;
+  readonly difficulty: CraftDifficulty;
   readonly lookSensitivity: number;
   readonly autoJump: boolean;
   readonly effectsEnabled: boolean;
@@ -30,6 +38,18 @@ export interface SlotView {
 export interface GoalView {
   readonly goal: GoalDefinition;
   readonly amount: number;
+  /** Figura do item da missão (o tronco, a picareta); `null` quando a missão não tem item. */
+  readonly icon: string | null;
+}
+
+/** Dia, estação, parte do dia e clima, como o HUD mostra. */
+export interface CalendarView {
+  readonly day: number;
+  readonly seasonName: string;
+  readonly seasonEmoji: string;
+  readonly partOfDay: PartOfDay;
+  readonly weather: WeatherKind;
+  readonly isFullMoon: boolean;
 }
 
 export interface CraftHudState {
@@ -39,6 +59,16 @@ export interface CraftHudState {
   readonly goal: GoalView | null;
   readonly goalsDone: number;
   readonly goalsTotal: number;
+  /** Corações do herói agora e no máximo. */
+  readonly health: number;
+  readonly maxHealth: number;
+  readonly calendar: CalendarView;
+  /** Golpes que as armaduras da mochila ainda seguram; `null` sem armadura. */
+  readonly armor: number | null;
+  /** Energia do modo Sobrevivência gentil; `null` nos outros modos. */
+  readonly energy: { readonly value: number; readonly max: number } | null;
+  /** O gesto da vez no guia do primeiro minuto; `null` sem guia. */
+  readonly firstStep: FirstStep | null;
 }
 
 export interface IngredientView {
@@ -81,7 +111,10 @@ export interface ScreenView {
   readonly grid: CraftingGridView | null;
   readonly recipes: readonly RecipeView[];
   readonly chest: readonly (SlotView | null)[] | null;
+  readonly infiniteChest?: boolean;
   readonly furnace: FurnaceView | null;
+  /** Modo Criativo, na mochila: todos os itens do jogo para pegar com um toque. Vazio nos outros casos. */
+  readonly creativeItems: readonly string[];
 }
 
 export type CraftSessionEvent =
@@ -94,6 +127,8 @@ export type CraftSessionEvent =
   | { readonly type: 'tool-broke'; readonly item: string }
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }
   | { readonly type: 'open-screen'; readonly screen: CraftScreen }
+  | { readonly type: 'hero-hurt' }
+  | { readonly type: 'first-steps-done' }
   /** A tela aberta mudou sozinha (a fornalha assando). */
   | { readonly type: 'screen'; readonly view: ScreenView }
   | { readonly type: 'pause-requested' }
@@ -104,8 +139,11 @@ export type CraftSessionListener = (event: CraftSessionEvent) => void;
 export interface CraftLaunchOptions {
   readonly parent: HTMLElement;
   readonly catalog: CraftCatalog;
-  readonly seed: number;
+  /** O mundo a abrir: a semente e o que já mudou nele (`state` vazio num mundo novo). */
+  readonly world: WorldSave;
   readonly settings: CraftEngineSettings;
+  /** Mostra o guia do primeiro minuto neste mundo. */
+  readonly guideFirstSteps: boolean;
   readonly input: VirtualCraftInput;
   readonly listener: CraftSessionListener;
 }
@@ -125,5 +163,11 @@ export interface CraftGameSession {
   craftRecipe(recipeId: string): ScreenView | null;
   /** Devolve a grade e a mão à mochila e solta o mundo de novo. */
   closeScreen(): void;
+  /** Modo Criativo: põe uma pilha cheia do item na mochila e devolve a tela atualizada. */
+  takeCreativeItem(itemId: string): ScreenView | null;
+  /** Termina o guia do primeiro minuto. */
+  skipFirstSteps(): void;
+  /** O mundo como está agora, pronto para guardar; `null` enquanto ainda carrega. */
+  capture(): WorldSave | null;
   destroy(): void;
 }

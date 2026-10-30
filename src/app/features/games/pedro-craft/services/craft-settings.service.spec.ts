@@ -9,10 +9,13 @@ const STORAGE_KEY = 'pedro-henrique:pedro-craft:settings:v1';
 
 const FALLBACK: CraftSettings = {
   peaceful: false,
+  difficulty: 'normal',
   lookSensitivity: 1,
   autoJump: true,
   touchControls: 'automatico',
   buttonSize: 'normal',
+  readAloud: false,
+  hasSeenFirstSteps: false,
 };
 
 describe('Preferências do PedroCraft', () => {

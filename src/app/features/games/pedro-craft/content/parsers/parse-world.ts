@@ -1,6 +1,7 @@
 import {
   CONTENT_SCHEMA_VERSION,
   type OreVein,
+  type SeasonDefinition,
   type StructureTemplate,
   type WorldBlocks,
   type WorldDefinition,
@@ -37,6 +38,7 @@ export function parseWorld(value: unknown): WorldDefinition {
   const quarry = root.field('quarry').object();
   const tree = root.field('tree').object();
   const clock = root.field('clock').object();
+  const calendar = root.field('calendar').object();
   const water = root.field('water').object();
   const creatures = root.field('creatures').object();
   const hero = root.field('hero').object();
@@ -91,6 +93,13 @@ export function parseWorld(value: unknown): WorldDefinition {
       dayMs: clock.field('dayMs').number({ integer: true, min: 10_000 }),
       nightMs: clock.field('nightMs').number({ integer: true, min: 10_000 }),
     },
+    calendar: {
+      daysPerSeason: calendar.field('daysPerSeason').number({ integer: true, min: 1, max: 60 }),
+      greenhouseBlock: calendar.field('greenhouseBlock').id(),
+      fullMoonEvery: calendar.field('fullMoonEvery').number({ integer: true, min: 2, max: 60 }),
+      fullMoonVisitor: calendar.optionalField('fullMoonVisitor')?.id() ?? null,
+      seasons: calendar.field('seasons').array({ minLength: 1 }).map((season) => parseSeason(season.object())),
+    },
     water: {
       maxSpread: water.field('maxSpread').number({ integer: true, min: 1, max: 7 }),
       tickMs: water.field('tickMs').number({ integer: true, min: 50, max: 5000 }),
@@ -108,6 +117,7 @@ export function parseWorld(value: unknown): WorldDefinition {
       regenEveryMs: hero.field('regenEveryMs').number({ integer: true, min: 500 }),
       reach: hero.field('reach').number({ min: 2, max: 8 }),
       invulnerableMs: hero.field('invulnerableMs').number({ integer: true, min: 0, max: 5000 }),
+      energy: parseEnergy(hero.field('energy').object()),
       startingInventory: hero.field('startingInventory').array().map((entry) => parseAmount(entry.object())),
     },
   };
@@ -172,4 +182,38 @@ function parseStructure(structure: JsonObjectReader): StructureTemplate {
   }
 
   return { palette, layers };
+}
+
+function parseSeason(season: JsonObjectReader): SeasonDefinition {
+  return {
+    id: season.field('id').id(),
+    name: season.field('name').string(),
+    emoji: season.field('emoji').string(),
+    arrival: season.field('arrival').string(),
+    dayScale: season.field('dayScale').number({ min: 0.3, max: 3 }),
+    nightScale: season.field('nightScale').number({ min: 0.3, max: 3 }),
+    growth: season.field('growth').number({ min: 0, max: 5 }),
+    rain: season.field('rain').number({ min: 0, max: 1 }),
+    snow: season.field('snow').number({ min: 0, max: 1 }),
+    palette: Object.fromEntries(season.field('palette').object().entries().map(([from, to]) => [checkColor(season, from), to.color()])),
+  };
+}
+
+/** A chave da paleta também é uma cor: a que existe hoje nas texturas. */
+function checkColor(season: JsonObjectReader, color: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) {
+    season.fail(`a cor "${color}" da paleta não está no formato #rrggbb`);
+  }
+
+  return color.toLowerCase();
+}
+
+function parseEnergy(energy: JsonObjectReader): WorldDefinition['hero']['energy'] {
+  const max = energy.field('max').number({ integer: true, min: 1, max: 20 });
+
+  return {
+    max,
+    drainEveryMs: energy.field('drainEveryMs').number({ integer: true, min: 10_000 }),
+    lowAt: energy.field('lowAt').number({ integer: true, min: 0, max }),
+  };
 }

@@ -38,14 +38,31 @@
   }
 
   @default {
+    <span class="hurt" [class.hurt--visible]="isHurt()" aria-hidden="true"></span>
     <span class="crosshair" aria-hidden="true"></span>
 
-    <app-craft-hud [hud]="hud()" [icons]="icons()" [pickups]="pickups()" (slotSelected)="selectSlot($event)" />
+    <app-craft-hud
+      [hud]="hud()"
+      [icons]="icons()"
+      [pickups]="pickups()"
+      [isTouch]="showsTouchControls()"
+      (slotSelected)="selectSlot($event)"
+      (goalPressed)="readGoal()"
+      (firstStepsSkipped)="skipFirstSteps()"
+    />
 
     <div class="bar">
-      <p class="bar__title">{{ worldName() }}</p>
+      <p class="bar__title">{{ world().name }}</p>
+      <span class="bar__saved" [class.bar__saved--visible]="isSaved()" role="status">
+        @if (isSaved()) {
+          <span aria-hidden="true">💾</span> Salvo ✓
+        }
+      </span>
       <button type="button" class="bar__button" aria-label="Abrir a mochila" (click)="openInventory()">
         <span aria-hidden="true">🎒</span>
+      </button>
+      <button type="button" class="bar__button" aria-label="Ajuda: como jogar" (click)="openHelp()">
+        <span aria-hidden="true">❓</span>
       </button>
       @if (canFullscreen) {
         <button type="button" class="bar__button" [attr.aria-label]="isFullscreen() ? 'Sair da tela cheia' : 'Tela cheia'" (click)="toggleFullscreen()">
@@ -64,8 +81,8 @@
     @if (showsMouseHint()) {
       <p class="hint" role="status">
         Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula,
-        <strong>clique</strong> quebra, <strong>botão direito</strong> coloca, <strong>E</strong> abre a mochila e
-        <strong>Esc</strong> pausa.
+        <strong>clique</strong> quebra e golpeia, <strong>botão direito</strong> coloca e usa, <strong>E</strong> abre a mochila,
+        <strong>H</strong> abre a ajuda e <strong>Esc</strong> pausa.
       </p>
     }
 
@@ -83,9 +100,14 @@
       (slotPressed)="clickSlot($event)"
       (resultTaken)="takeGridResult()"
       (recipeCrafted)="craftRecipe($event)"
+      (creativeTaken)="takeCreativeItem($event)"
       (closed)="closeScreen()"
     />
   }
+}
+
+@if (phase() === 'help') {
+  <app-craft-help [catalog]="catalog()" [icons]="icons()" (closed)="closeHelp()" />
 }
 
 @if (phase() === 'paused') {
@@ -95,6 +117,12 @@
       <h2 id="pausa-titulo" class="card__title">Pausa</h2>
       <button type="button" class="card__button" data-tone="green" (click)="resume()">
         <span aria-hidden="true">▶</span> Continuar
+      </button>
+      <button type="button" class="card__button" data-tone="blue" (click)="openHelp()">
+        <span aria-hidden="true">❓</span> Como jogar
+      </button>
+      <button type="button" class="card__button" data-tone="green" [attr.aria-pressed]="isPeaceful()" (click)="togglePeaceful()">
+        <span aria-hidden="true">🕊️</span> Modo Paz: {{ isPeaceful() ? 'ligado' : 'desligado' }}
       </button>
       @if (canFullscreen) {
         <button type="button" class="card__button" data-tone="blue" (click)="toggleFullscreen()">

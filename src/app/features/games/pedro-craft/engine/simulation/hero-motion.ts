@@ -60,7 +60,7 @@ export class HeroMotion {
    * sozinho — no tablet, coordenar o polegar do analógico com o do pulo é
    * difícil para uma criança.
    */
-  step(terrain: PhysicsTerrain, input: CraftInputSnapshot, autoJump: boolean): void {
+  step(terrain: PhysicsTerrain, input: CraftInputSnapshot, autoJump: boolean, canFly = false): void {
     const body = this.body;
 
     this.previousX = body.x;
@@ -86,6 +86,8 @@ export class HeroMotion {
 
       if (input.jumpHeld && body.isOnGround) {
         body.velocityY = HERO_PHYSICS.jumpSpeed;
+      } else if (input.jumpHeld && canFly) {
+        body.velocityY = HERO_PHYSICS.flySpeed;
       }
     }
 

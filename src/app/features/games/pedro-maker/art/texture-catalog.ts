@@ -4,6 +4,7 @@ import type { LevelObject, LevelTheme, SurpriseContent } from '../models/level.m
 import {
   MOVING_PLATFORM_HEIGHT,
   MOVING_PLATFORM_WIDTH,
+  paintCannon,
   paintBrick,
   paintCheckpoint,
   paintCrumble,
@@ -72,6 +73,7 @@ import {
   CRYSTAL_HEIGHT,
   CRYSTAL_WIDTH,
   HEART_SIZE,
+  paintNumberedCoin,
   paintBigCoin,
   paintCoinIcon,
   paintHugeCoin,
@@ -80,7 +82,7 @@ import {
   paintPowerUp,
   POWER_UP_SIZE,
 } from './item-art';
-import { GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
+import { WARIO_PORTRAIT, GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
@@ -115,6 +117,9 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
   switch (character.hero) {
     case 'pedro':
       paintPedroPortrait(context, character);
+      return;
+    case 'wario':
+      paintOverallsPortrait(context, character, WARIO_PORTRAIT);
       return;
     case 'gui':
       paintOverallsPortrait(context, character, GUI_PORTRAIT);
@@ -174,6 +179,9 @@ function drawIcon(
     case 'spikes':
       paintSpikes(context);
       return;
+    case 'cannon':
+      paintCannon(context);
+      return;
     case 'brick':
       paintBrick(context);
       return;
@@ -222,6 +230,21 @@ function drawIcon(
       return;
     case 'huge-coin':
       fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, paintHugeCoin);
+      return;
+    case 'coin-25':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '25'));
+      return;
+    case 'coin-100':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '100'));
+      return;
+    case 'coin-250':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '250'));
+      return;
+    case 'coin-500':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '500'));
+      return;
+    case 'coin-1000':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '1000'));
       return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);

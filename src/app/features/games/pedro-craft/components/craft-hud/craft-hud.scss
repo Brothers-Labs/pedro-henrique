@@ -22,14 +22,75 @@
   border-width: 3px;
   border-radius: 1rem;
   box-shadow: 0 4px 0 rgb(42 35 80 / 30%);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+
+  &:focus-visible {
+    outline: 3px solid #ffcf3f;
+    outline-offset: 2px;
+  }
 
   &--done {
+    cursor: default;
     background: #d3f7ea;
   }
 }
 
 .goal__emoji {
   font-size: 1.8rem;
+}
+
+.goal__icon {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  image-rendering: pixelated;
+}
+
+/* Guia do primeiro minuto: um cartão grande no meio, acima dos corações. */
+.coach {
+  @include maker.panel(#fff5c2);
+
+  position: absolute;
+  bottom: calc(3.6rem + var(--slot-size) + var(--safe-bottom));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: max-content;
+  max-width: min(30rem, calc(100% - 1.5rem));
+  padding: 0.6rem 0.9rem;
+  translate: -50% 0;
+  border-width: 3px;
+  border-radius: 1rem;
+  pointer-events: auto;
+}
+
+.coach__emoji {
+  font-size: 2.2rem;
+}
+
+.coach__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: maker.$ink;
+}
+
+.coach__how {
+  font-weight: 700;
+  color: #4b4470;
+}
+
+.coach__skip {
+  @include maker.pill;
+
+  flex: none;
+  cursor: pointer;
+  font-size: var(--text-sm);
 }
 
 .goal__title {
@@ -49,6 +110,43 @@
 
   margin-left: auto;
   background: #ffcf3f;
+}
+
+.status {
+  position: absolute;
+  bottom: calc(1.4rem + var(--slot-size) + var(--safe-bottom));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
+  translate: -50% 0;
+  font-size: calc(var(--slot-size) * 0.32);
+  filter: drop-shadow(0 1px 0 rgb(42 35 80 / 60%));
+}
+
+.status__energy {
+  margin-left: 0.5rem;
+}
+
+.status__heart--empty,
+.status__bit--empty {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.status__armor {
+  @include maker.pill;
+
+  margin-left: 0.5rem;
+  font-size: calc(var(--slot-size) * 0.26);
+}
+
+.status__calendar {
+  @include maker.pill;
+
+  margin-left: 0.5rem;
+  font-size: calc(var(--slot-size) * 0.26);
+  white-space: nowrap;
 }
 
 .hotbar {

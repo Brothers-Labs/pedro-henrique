@@ -1,0 +1,153 @@
+@let current = page();
+
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ajuda-titulo">
+  <header class="sheet__top">
+    @if (current.kind !== 'index') {
+      <button type="button" class="sheet__button" data-tone="gray" (click)="back()"><span aria-hidden="true">←</span> Voltar</button>
+    }
+
+    <h2 id="ajuda-titulo" class="sheet__title">
+      @switch (current.kind) {
+        @case ('index') {
+          <span aria-hidden="true">❓</span> Como jogar
+        }
+        @case ('topic') {
+          <span aria-hidden="true">{{ current.topic.emoji }}</span> {{ current.topic.title }}
+        }
+        @default {
+          {{ catalogTitles[current.kind] }}
+        }
+      }
+    </h2>
+
+    @if (current.kind === 'topic' && canSpeak) {
+      <button type="button" class="sheet__button" data-tone="blue" (click)="listen(current.topic)">
+        <span aria-hidden="true">🔊</span> Ouvir
+      </button>
+    }
+    <button type="button" class="sheet__button" data-tone="green" (click)="close()"><span aria-hidden="true">✓</span> Fechar</button>
+  </header>
+
+  <div class="sheet__body">
+    @switch (current.kind) {
+      @case ('index') {
+        <p class="lead">Toque num assunto para aprender, passo a passo.</p>
+        <ul class="cards">
+          @for (topic of topics; track topic.id) {
+            <li>
+              <button type="button" class="card" (click)="open({ kind: 'topic', topic })">
+                <span class="card__emoji" aria-hidden="true">{{ topic.emoji }}</span>
+                <span class="card__title">{{ topic.title }}</span>
+                <span class="card__summary">{{ topic.summary }}</span>
+              </button>
+            </li>
+          }
+          @for (card of catalogCards; track card.kind) {
+            <li>
+              <button type="button" class="card card--list" (click)="open({ kind: card.kind })">
+                <span class="card__emoji" aria-hidden="true">{{ card.emoji }}</span>
+                <span class="card__title">{{ card.title }}</span>
+                <span class="card__summary">{{ card.summary }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      @case ('topic') {
+        <p class="lead">{{ current.topic.summary }}</p>
+        <ol class="steps">
+          @for (step of current.topic.steps; track $index) {
+            <li class="step">
+              <span class="step__number" aria-hidden="true">{{ $index + 1 }}</span>
+              <div class="step__body">
+                <p class="step__text">{{ step.text }}</p>
+                @if (step.items; as items) {
+                  <div class="figures">
+                    @for (item of items; track item) {
+                      <figure class="figure">
+                        <img class="figure__icon" [src]="icons().url(item)" alt="" />
+                        <figcaption class="figure__name">{{ icons().name(item) }}</figcaption>
+                      </figure>
+                    }
+                  </div>
+                }
+                @if (step.control; as id) {
+                  @let gesture = control(id);
+                  <p class="gesture">
+                    <span class="gesture__chip"><span aria-hidden="true">📱</span> {{ gesture.touch }}</span>
+                    <span class="gesture__chip"><span aria-hidden="true">⌨️</span> {{ gesture.keyboard }}</span>
+                  </p>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+        @if (current.topic.tip; as tip) {
+          <p class="tip"><span aria-hidden="true">💡</span> {{ tip }}</p>
+        }
+      }
+
+      @case ('recipes') {
+        <p class="lead">"Mochila" quer dizer que dá para fazer na mochila. "Mesa de trabalho" precisa da mesa.</p>
+        <ul class="rows">
+          @for (recipe of recipes(); track recipe.id) {
+            <li class="row">
+              <span class="row__result">
+                <img class="row__icon" [src]="icons().url(recipe.output.item)" alt="" />
+                <strong>{{ recipe.output.count > 1 ? recipe.output.count + ' ' : '' }}{{ icons().name(recipe.output.item) }}</strong>
+              </span>
+              <span class="row__arrow" aria-label="precisa de">⬅</span>
+              <span class="row__parts">
+                @for (part of recipe.ingredients; track part.item) {
+                  <span class="part">
+                    <img class="row__icon row__icon--small" [src]="icons().url(part.item)" alt="" />
+                    {{ part.count }} {{ icons().name(part.item) }}
+                  </span>
+                }
+              </span>
+              <span class="row__station">{{ recipe.station }}</span>
+            </li>
+          }
+        </ul>
+      }
+
+      @case ('smelting') {
+        <p class="lead">Coloque em cima o que vai assar e embaixo o combustível.</p>
+        <ul class="rows">
+          @for (entry of smelting(); track entry.id) {
+            <li class="row">
+              <span class="part">
+                <img class="row__icon" [src]="icons().url(entry.input)" alt="" />
+                {{ icons().name(entry.input) }}
+              </span>
+              <span class="row__arrow" aria-label="vira">➜</span>
+              <span class="part">
+                <img class="row__icon" [src]="icons().url(entry.output.item)" alt="" />
+                <strong>{{ icons().name(entry.output.item) }}</strong>
+              </span>
+              <span class="row__station">{{ entry.seconds }} segundos</span>
+            </li>
+          }
+        </ul>
+      }
+
+      @case ('items') {
+        <ul class="items">
+          @for (item of items(); track item.id) {
+            <li class="item">
+              <img class="item__icon" [src]="icons().url(item.id)" alt="" />
+              <div class="item__body">
+                <p class="item__name">{{ item.name }}</p>
+                <p class="item__text">{{ item.use }}</p>
+                @if (item.obtain) {
+                  <p class="item__text item__text--obtain">{{ item.obtain }}</p>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+</div>
