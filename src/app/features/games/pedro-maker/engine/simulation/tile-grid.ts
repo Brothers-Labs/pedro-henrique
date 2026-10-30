@@ -48,6 +48,7 @@ export class TileGrid {
     const grid = new TileGrid(blueprint.width, blueprint.height);
 
     for (const object of blueprint.objects) {
+      if (object.type === 'cannon') grid.setCollision(object.x, object.y, COLLISION.solid);
       if (isTerrainMaterial(object.type) && grid.contains(object.x, object.y)) {
         const index = grid.index(object.x, object.y);
 

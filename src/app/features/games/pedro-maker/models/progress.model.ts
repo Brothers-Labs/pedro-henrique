@@ -63,7 +63,7 @@ export interface MakerStats {
 }
 
 /** Herói que a criança controla nas fases e no kart. */
-export type HeroId = 'pedro' | 'gui' | 'mario' | 'luigi';
+export type HeroId = 'pedro' | 'gui' | 'mario' | 'luigi' | 'wario';
 
 /** Visual do Pedro no jogo. Cada campo é o id de uma opção do catálogo. */
 export interface CharacterLook {

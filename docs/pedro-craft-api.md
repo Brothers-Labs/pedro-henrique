@@ -166,3 +166,10 @@ Mesmo assim, trate tudo como conteúdo de uma criança:
 - sem anúncios;
 - sem compartilhar com terceiros;
 - sem expor a lista de mundos de um código para outro código.
+
+
+### Modos e capacidade dos baús
+
+O modo **Normal** usa o identificador `adventure`, preservando mundos existentes. O novo modo `infinite` começa com as ferramentas de maior nível e um baú de suprimentos próximo ao jogador. Os baús desse modo oferecem pilhas completas de materiais, blocos e equipamentos e repõem cada item a cada retirada; ferramentas não perdem durabilidade.
+
+Todos os baús passam de 27 para **54 espaços**. Saves antigos conservam os primeiros 27 e recebem 27 espaços vazios. O campo `mode` aceita `creative`, `adventure`, `survival` e `infinite`; o formato continua na versão 1.

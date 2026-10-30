@@ -43,7 +43,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'one-up': '#2fb84a',
 };
 
-type NumberedCoinKind = 'big-coin' | 'huge-coin';
+type NumberedCoinKind = 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000';
 
 interface NumberedCoinLook {
   /** Raio do disco, em blocos. */
@@ -56,6 +56,11 @@ interface NumberedCoinLook {
 /** As moedas gigantes mostram o quanto valem, como no ícone do editor. */
 const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
   'big-coin': { radius: 0.5, iconSize: BIG_COIN_SIZE, value: '10' },
+  'coin-25': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '25' },
+  'coin-100': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '100' },
+  'coin-250': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '250' },
+  'coin-500': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '500' },
+  'coin-1000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '1000' },
   'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
 };
 
@@ -250,6 +255,11 @@ export class CollectibleView {
       case 'power-up':
         return this.powerUpModel(item.powerUp ?? 'super-jump');
       case 'big-coin':
+      case 'coin-25':
+      case 'coin-100':
+      case 'coin-250':
+      case 'coin-500':
+      case 'coin-1000':
       case 'huge-coin':
         return this.numberedCoin(item.kind);
       case 'coin':

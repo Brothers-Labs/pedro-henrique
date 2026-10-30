@@ -1,7 +1,7 @@
 import { normalizeText } from '../../../../core/utils/format';
 import { type JsonObjectReader, JsonReader } from '../content/json-reader';
 import type { CraftCatalog } from '../content/craft-catalog';
-import { BACKPACK_SIZE, HOTBAR_SIZE, INVENTORY_SIZE } from '../engine/simulation/inventory';
+import { CHEST_SIZE, HOTBAR_SIZE, INVENTORY_SIZE } from '../engine/simulation/inventory';
 import {
   type SavedBlock,
   type SavedChunk,
@@ -111,7 +111,7 @@ function cleanState(state: WorldState, catalog: CraftCatalog): WorldState {
     plants: state.plants.filter((plant) => isInside(plant.x, plant.y, plant.z) && catalog.hasCrop(plant.crop)),
     containers: state.containers
       .filter((container) => isInside(container.x, container.y, container.z))
-      .map((container) => ({ ...container, slots: cleanSlots(container.slots, BACKPACK_SIZE) })),
+      .map((container) => ({ ...container, slots: cleanSlots(container.slots, CHEST_SIZE) })),
     furnaces: state.furnaces
       .filter((furnace) => isInside(furnace.x, furnace.y, furnace.z))
       .map((furnace) => ({ ...furnace, slots: cleanSlots(furnace.slots, FURNACE_SLOTS) })),

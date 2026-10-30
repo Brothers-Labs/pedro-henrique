@@ -74,6 +74,12 @@ function isCollectible(object: LevelObject): boolean {
     object.type === 'coin' ||
     object.type === 'big-coin' ||
     object.type === 'huge-coin' ||
+    object.type === 'coin-25' ||
+    object.type === 'coin-100' ||
+    object.type === 'coin-250' ||
+    object.type === 'coin-500' ||
+    object.type === 'coin-1000' ||
+
     object.type === 'crystal' ||
     object.type === 'heart' ||
     object.type === 'power-up'

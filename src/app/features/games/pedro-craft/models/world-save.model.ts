@@ -14,10 +14,11 @@ export const WORLD_SAVE_VERSION = 1;
 /**
  * Como o mundo se joga, escolhido ao criar:
  * - `creative`: sem perder vida e sem inimigos, blocos infinitos, voo;
- * - `adventure`: o jogo de sempre;
+ * - `adventure`: modo Normal, o jogo de sempre;
+ * - `infinite`: melhores ferramentas e suprimentos renovados nos baús;
  * - `survival`: com a energia, que pede comida mas nunca tira vida.
  */
-export const GAME_MODES = ['creative', 'adventure', 'survival'] as const;
+export const GAME_MODES = ['creative', 'adventure', 'survival', 'infinite'] as const;
 
 export type GameMode = (typeof GAME_MODES)[number];
 

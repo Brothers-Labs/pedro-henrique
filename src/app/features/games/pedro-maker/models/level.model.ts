@@ -107,6 +107,7 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
  * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele.
  */
 export type BlockType =
+  | 'cannon'
   | 'brick'
   | 'surprise'
   | 'spring'
@@ -119,7 +120,7 @@ export type BlockType =
   | 'note';
 
 /** As moedas gigantes valem várias moedas de uma vez: 10 e 50. */
-export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'crystal' | 'heart' | 'power-up';
+export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'crystal' | 'heart' | 'power-up';
 
 /**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na

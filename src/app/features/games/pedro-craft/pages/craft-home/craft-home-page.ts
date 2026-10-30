@@ -8,12 +8,13 @@ import { WORLD_NAME_MAX_LENGTH } from '../../world/world-save';
 
 /** Os modos como a criança escolhe: figura, nome e o que muda, em uma frase. */
 const MODES: readonly { readonly id: GameMode; readonly emoji: string; readonly name: string; readonly summary: string }[] = [
-  { id: 'adventure', emoji: '🗺️', name: 'Aventura', summary: 'O jogo de sempre: colher, construir e cuidar da fazenda.' },
+  { id: 'adventure', emoji: '🗺️', name: 'Normal', summary: 'O jogo de sempre: colher, construir e cuidar da fazenda.' },
+  { id: 'infinite', emoji: '♾️', name: 'Infinito', summary: 'Melhores ferramentas e recursos sem fim em baús com 54 espaços.' },
   { id: 'creative', emoji: '🎨', name: 'Criativo', summary: 'Todos os blocos, sem inimigos e dá para voar. Só construir!' },
   { id: 'survival', emoji: '🍎', name: 'Sobrevivência', summary: 'Com energia: lembre de comer. A energia nunca tira vida.' },
 ];
 
-const MODE_NAMES: Readonly<Record<GameMode, string>> = { adventure: '🗺️ Aventura', creative: '🎨 Criativo', survival: '🍎 Sobrevivência' };
+const MODE_NAMES: Readonly<Record<GameMode, string>> = { infinite: '♾️ Infinito', adventure: '🗺️ Normal', creative: '🎨 Criativo', survival: '🍎 Sobrevivência' };
 
 const SAVED_AT = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 

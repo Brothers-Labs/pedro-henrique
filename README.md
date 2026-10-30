@@ -468,6 +468,9 @@ Jogo de plataforma 2D em `/jogos/pedro-maker`: 5 mundos, 50 fases com chefões, 
 um editor para o Pedro criar as próprias fases. Todo o código fica em
 `src/app/features/games/pedro-maker/`.
 
+O editor oferece o **Canhão** em **Blocos**, com disparos de bala de canhão, e moedas gigantes
+de **25, 100, 250, 500 e 1000** em **Itens**. O **Wario** também pode ser escolhido como personagem.
+
 | Pasta | O que tem |
 | --- | --- |
 | `models/`, `config/` | Tipos das fases e do progresso; física, regras de XP, moedas, estrelas e conquistas |
@@ -763,8 +766,18 @@ restrito ou remover os campos mais identificáveis (nome completo dos pais e nom
   único `<h1>` e cada `aria-labelledby` aponta para um título que existe de fato.
 
 ```bash
-npx ng test --watch=false --browsers=ChromeHeadless
+npm run test:ci # Karma/Jasmine com cobertura
+npx playwright install chromium # uma vez por ambiente
+npm run vtest # fluxos reais de Maker e Craft no Chromium
+npm run verify # auditoria, tipos, testes, build de produção e E2E
 ```
+
+O workflow `.github/workflows/verify.yml` executa essa verificação em cada push e pull request.
+Os relatórios de cobertura e Playwright ficam nos artefatos do Actions.
+No Windows, `test:ci` também reconhece o Chromium instalado pelo Playwright;
+para outro navegador, defina `CHROME_BIN`. A cobertura é reportada sem excluir código para elevar os índices.
+O CI exige pelo menos 80% de linhas, instruções e funções; a cobertura de ramificações também é reportada.
+Para usar um Chromium específico nos E2E, defina `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 
 ---
 

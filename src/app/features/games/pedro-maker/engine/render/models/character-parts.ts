@@ -1,6 +1,6 @@
 import type { CharacterPalette } from '../../../config/character.config';
 import type { VoxelBox } from '../voxel-geometry';
-import { GUI_BUILD, LUIGI_BUILD, MARIO_BUILD, overallsParts } from './overalls-parts';
+import { WARIO_BUILD, GUI_BUILD, LUIGI_BUILD, MARIO_BUILD, overallsParts } from './overalls-parts';
 import { pedroParts } from './pedro-parts';
 
 /**
@@ -24,6 +24,8 @@ export function characterParts(palette: CharacterPalette): CharacterParts {
   switch (palette.hero) {
     case 'pedro':
       return pedroParts(palette);
+    case 'wario':
+      return overallsParts(palette, WARIO_BUILD);
     case 'gui':
       return overallsParts(palette, GUI_BUILD);
     case 'mario':

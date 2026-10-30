@@ -136,6 +136,7 @@ export class Enemy {
     private readonly phase: number,
     /** Ajudantes do chefão são menores. */
     readonly scale = 1,
+    readonly isProjectile = false,
   ) {
     const profile = PROFILES[kind];
 
@@ -220,7 +221,7 @@ export class Enemy {
         this.buzzAround(now);
         return;
       case 'bullet':
-        this.cruise(targetX);
+        this.cruise(now, targetX);
         return;
       case 'thwomp':
         this.slam(now, targetX, targetY);
@@ -389,11 +390,15 @@ export class Enemy {
     this.emergence = this.isHidden ? 0 : 1;
   }
 
-  private cruise(targetX: number): void {
+  private cruise(now: number, targetX: number): void {
     const body = this.body;
     const isTooFar = Math.abs(centerX(body) - this.homeX) > BULLET_RANGE;
 
     if (body.blockedLeft || body.blockedRight || isTooFar) {
+      if (this.isProjectile) {
+        this.defeat(now);
+        return;
+      }
       this.relaunch(targetX);
       return;
     }

@@ -21,6 +21,8 @@ export interface OverallsBuild {
   readonly hasMustache: boolean;
 }
 
+export const WARIO_BUILD: OverallsBuild = { legLength: 0.32, hasMustache: true };
+
 export const GUI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false };
 export const LUIGI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: true };
 export const MARIO_BUILD: OverallsBuild = { legLength: 0.36, hasMustache: true };
@@ -34,14 +36,15 @@ export const MARIO_BUILD: OverallsBuild = { legLength: 0.36, hasMustache: true }
  * esguios mesmo do lado dele.
  */
 export function overallsParts(palette: CharacterPalette, build: OverallsBuild): CharacterParts {
+  const overalls = palette.hero === 'wario' ? '#7b35b5' : OVERALLS;
   const drop = build.legLength - TALL_LEG;
-  const upperBody = [...torso(palette.shirt), ...head(palette.cap), ...(build.hasMustache ? mustache() : [])];
+  const upperBody = [...torso(palette.shirt, overalls), ...head(palette.cap), ...(build.hasMustache ? mustache() : [])];
 
   return {
     upperBody: upperBody.map((part) => ({ ...part, y: part.y + drop })),
     arm: [box(0, -0.13, 0, 0.13, 0.28, 0.15, palette.shirt), box(0, -0.35, 0, 0.12, 0.16, 0.13, SKIN)],
     leg: [
-      box(0, -build.legLength / 2, 0, 0.16, build.legLength, 0.18, OVERALLS),
+      box(0, -build.legLength / 2, 0, 0.16, build.legLength, 0.18, overalls),
       box(0, -build.legLength, 0.04, 0.19, 0.08, 0.28, SHOE),
     ],
     shoulderX: 0.29,
@@ -51,16 +54,16 @@ export function overallsParts(palette: CharacterPalette, build: OverallsBuild): 
   };
 }
 
-function torso(shirt: string): readonly VoxelBox[] {
+function torso(shirt: string, overalls: string): readonly VoxelBox[] {
   return [
     // Camiseta por baixo e o macacão por cima, com peitilho, alças e botões.
     box(0, 0.8, 0, 0.44, 0.44, 0.28, shirt),
-    box(0, 0.6, 0, 0.45, 0.2, 0.29, OVERALLS),
-    box(0, 0.8, 0.142, 0.26, 0.2, 0.01, OVERALLS),
-    box(-0.13, 0.95, 0.142, 0.06, 0.12, 0.01, OVERALLS),
-    box(0.13, 0.95, 0.142, 0.06, 0.12, 0.01, OVERALLS),
-    box(-0.13, 0.85, -0.142, 0.06, 0.32, 0.01, OVERALLS),
-    box(0.13, 0.85, -0.142, 0.06, 0.32, 0.01, OVERALLS),
+    box(0, 0.6, 0, 0.45, 0.2, 0.29, overalls),
+    box(0, 0.8, 0.142, 0.26, 0.2, 0.01, overalls),
+    box(-0.13, 0.95, 0.142, 0.06, 0.12, 0.01, overalls),
+    box(0.13, 0.95, 0.142, 0.06, 0.12, 0.01, overalls),
+    box(-0.13, 0.85, -0.142, 0.06, 0.32, 0.01, overalls),
+    box(0.13, 0.85, -0.142, 0.06, 0.32, 0.01, overalls),
     box(-0.09, 0.87, 0.15, 0.05, 0.05, 0.01, BUTTON),
     box(0.09, 0.87, 0.15, 0.05, 0.05, 0.01, BUTTON),
   ];
