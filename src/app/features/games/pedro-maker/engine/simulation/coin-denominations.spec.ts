@@ -27,7 +27,7 @@ describe('Moedas de alto valor do Pedro Maker', () => {
 
     it(`contabiliza ${value} uma única vez durante a partida`, () => {
       const blueprint = new LevelBuilder(40, 15).ground(0, 39, 12)
-        .add('start', 2, 11).add('portal', 38, 11).add(type, 2, 11)
+        .add('start', 2, 11).add('portal', 38, 11).add(type, 2, 10)
         .build({ id: 'moedas', name: 'Moedas', theme: 'vale', targetTimeSeconds: 60 });
       const events: GameSessionEvent[] = [];
       const simulation = new GameSimulation({ blueprint, hero: 'pedro', rules: DIFFICULTY_RULES.aventura,

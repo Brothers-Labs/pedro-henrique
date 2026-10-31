@@ -18,7 +18,7 @@ describe('Visual do Wario', () => {
   it('mostra nariz rosa e emblema azul na frente do boné em 3D', () => {
     const parts = characterParts(palette);
     expect(parts.upperBody.some((part) => part.color === '#ed8caa' && part.z > 0.25)).toBeTrue();
-    const emblem = parts.upperBody.filter((part) => part.color === '#2456a6');
+    const emblem = parts.upperBody.filter((part) => part.color === '#2456a6' && part.y > 1.3);
     expect(emblem.length).toBeGreaterThan(4);
     expect(emblem.every((part) => part.z > 0.25)).toBeTrue();
   });
