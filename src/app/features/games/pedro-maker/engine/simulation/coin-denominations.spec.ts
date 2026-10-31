@@ -27,14 +27,17 @@ describe('Moedas de alto valor do Pedro Maker', () => {
 
     it(`contabiliza ${value} uma única vez durante a partida`, () => {
       const blueprint = new LevelBuilder(40, 15).ground(0, 39, 12)
-        .add('start', 2, 11).add('portal', 38, 11).add(type, 2, 10)
+        .add('start', 2, 11).add('portal', 38, 11).add(type, 4, 11)
         .build({ id: 'moedas', name: 'Moedas', theme: 'vale', targetTimeSeconds: 60 });
       const events: GameSessionEvent[] = [];
       const simulation = new GameSimulation({ blueprint, hero: 'pedro', rules: DIFFICULTY_RULES.aventura,
         isTouch: false, listener: (event) => events.push(event) });
       expect(simulation.collectibles.coinCount).toBe(value);
       expect(coinValue(type)).toBe(value);
-      simulation.step(IDLE_INPUT);
+      simulation.announceReady();
+      for (let step = 0; step < 60; step += 1) {
+        simulation.step({ ...IDLE_INPUT, right: true });
+      }
       simulation.step(IDLE_INPUT);
       expect(events.filter((event) => event.type === 'hud').at(-1)?.hud.coins).toBe(value);
       expect(simulation.collectibles.items).toEqual([]);
