@@ -21,8 +21,6 @@ export interface OverallsBuild {
   readonly hasMustache: boolean;
 }
 
-export const WARIO_BUILD: OverallsBuild = { legLength: 0.32, hasMustache: true };
-
 export const GUI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false };
 export const LUIGI_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: true };
 export const MARIO_BUILD: OverallsBuild = { legLength: 0.36, hasMustache: true };
@@ -36,7 +34,7 @@ export const MARIO_BUILD: OverallsBuild = { legLength: 0.36, hasMustache: true }
  * esguios mesmo do lado dele.
  */
 export function overallsParts(palette: CharacterPalette, build: OverallsBuild): CharacterParts {
-  const overalls = palette.hero === 'wario' ? '#7b35b5' : OVERALLS;
+  const overalls = OVERALLS;
   const drop = build.legLength - TALL_LEG;
   const upperBody = [...torso(palette.shirt, overalls), ...head(palette.cap), ...(build.hasMustache ? mustache() : [])];
 

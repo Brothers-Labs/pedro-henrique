@@ -27,8 +27,6 @@ export interface OverallsPortrait {
   readonly drop: number;
 }
 
-export const WARIO_PORTRAIT: OverallsPortrait = { emblem: 'W', hasMustache: true, drop: 6 };
-
 export const GUI_PORTRAIT: OverallsPortrait = { emblem: 'G', hasMustache: false, drop: 0 };
 export const LUIGI_PORTRAIT: OverallsPortrait = { emblem: 'L', hasMustache: true, drop: 0 };
 export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true, drop: 5 };
@@ -39,7 +37,7 @@ export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true
  * Pedro, e todos aparecem na mesma escala nos menus.
  */
 export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette: CharacterPalette, portrait: OverallsPortrait): void {
-  const overalls = palette.hero === 'wario' ? '#7b35b5' : OVERALLS;
+  const overalls = OVERALLS;
   const sleeveShade = darken(palette.shirt, 0.15);
   const hipY = HIP_Y + portrait.drop;
 
