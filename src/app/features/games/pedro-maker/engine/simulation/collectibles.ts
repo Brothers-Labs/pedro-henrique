@@ -1,7 +1,7 @@
 import { BIG_COIN_VALUE, HUGE_COIN_VALUE, MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
-import type { LevelObject, PowerUpKind } from '../../models/level.model';
+import type { ItemType, LevelObject, PowerUpKind } from '../../models/level.model';
 
-export type CollectibleKind = 'coin' | 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'crystal' | 'heart' | 'power-up';
+export type CollectibleKind = ItemType;
 
 export interface Collectible {
   readonly id: number;
@@ -54,6 +54,10 @@ export class CollectibleSystem {
         case 'coin-250':
         case 'coin-500':
         case 'coin-1000':
+        case 'coin-2500':
+        case 'coin-5000':
+        case 'coin-10000':
+        case 'coin-50000':
         case 'heart':
           this.spawn(object.type, x, y, {}, null);
           break;
@@ -128,6 +132,14 @@ export function coinValue(kind: CollectibleKind): number {
       return 500;
     case 'coin-1000':
       return 1000;
+    case 'coin-2500':
+      return 2500;
+    case 'coin-5000':
+      return 5000;
+    case 'coin-10000':
+      return 10000;
+    case 'coin-50000':
+      return 50000;
     case 'crystal':
     case 'heart':
     case 'power-up':

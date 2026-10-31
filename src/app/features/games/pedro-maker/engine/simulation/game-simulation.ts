@@ -652,6 +652,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       case 'coin-250':
       case 'coin-500':
       case 'coin-1000':
+      case 'coin-2500':
+      case 'coin-5000':
+      case 'coin-10000':
+      case 'coin-50000':
       case 'huge-coin':
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 30);

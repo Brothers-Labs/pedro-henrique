@@ -1,5 +1,6 @@
 import type { HeroId } from '../models/progress.model';
 import type { CharacterPalette } from './character.config';
+import { WARIO_COLORS } from './wario.config';
 
 /** Jeito de se mexer de um herói, em proporção à física padrão do jogo. */
 export interface HeroAbilities {
@@ -79,13 +80,13 @@ export const HEROES: readonly HeroDefinition[] = [
   {
     id: 'wario',
     name: 'Wario',
-    description: 'O aventureiro de boné amarelo e macacão roxo.',
+    description: 'Bigodão em zigue-zague, boné amarelo com W e macacão roxo.',
     traits: [
       { emoji: '💪', label: 'Forte e firme nos saltos' },
       { emoji: '🎯', label: 'Freia sem escorregar' },
     ],
     abilities: { jumpMultiplier: 1, brakingMultiplier: 1.1 },
-    outfit: { cap: '#f7cf24', shirt: '#f7cf24', backpack: '#cccccc', backpackStyle: 'none' },
+    outfit: { cap: WARIO_COLORS.cap, shirt: WARIO_COLORS.cap, backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

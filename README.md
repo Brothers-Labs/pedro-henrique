@@ -469,7 +469,10 @@ um editor para o Pedro criar as próprias fases. Todo o código fica em
 `src/app/features/games/pedro-maker/`.
 
 O editor oferece o **Canhão** em **Blocos**, com disparos de bala de canhão, e moedas gigantes
-de **25, 100, 250, 500 e 1000** em **Itens**. O **Wario** também pode ser escolhido como personagem.
+de **25, 100, 250, 500, 1000, 2500, 5000, 10000 e 50000** em **Itens**. Cada moeda soma
+o valor indicado ao ser coletada e é preservada ao salvar e reabrir a fase.
+O **Wario** pode ser escolhido como personagem, com retrato e modelo 3D próprios: corpo largo,
+boné amarelo com W azul, macacão roxo, nariz rosa, bigode em zigue-zague, luvas brancas e sapatos verdes.
 
 | Pasta | O que tem |
 | --- | --- |
