@@ -43,7 +43,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'one-up': '#2fb84a',
 };
 
-type NumberedCoinKind = 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000';
+type NumberedCoinKind = 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'coin-2500' | 'coin-5000' | 'coin-10000' | 'coin-50000';
 
 interface NumberedCoinLook {
   /** Raio do disco, em blocos. */
@@ -61,6 +61,10 @@ const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
   'coin-250': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '250' },
   'coin-500': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '500' },
   'coin-1000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '1000' },
+  'coin-2500': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '2500' },
+  'coin-5000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '5000' },
+  'coin-10000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '10000' },
+  'coin-50000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50000' },
   'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
 };
 
@@ -260,6 +264,10 @@ export class CollectibleView {
       case 'coin-250':
       case 'coin-500':
       case 'coin-1000':
+      case 'coin-2500':
+      case 'coin-5000':
+      case 'coin-10000':
+      case 'coin-50000':
       case 'huge-coin':
         return this.numberedCoin(item.kind);
       case 'coin':

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 interface SavedLevel {
+  readonly id: string;
   readonly name: string;
   readonly objects: readonly { readonly type: string }[];
 }
@@ -37,14 +38,14 @@ test('Maker saves the cannon and every new giant coin, and remembers Wario', asy
   await page.getByRole('button', { name: 'Canhão', exact: true }).click();
   await grid.click({ position: { x: 112, y: 112 } });
   await page.getByRole('tab', { name: 'Itens', exact: true }).click();
-  for (const [index, value] of [25, 100, 250, 500, 1000].entries()) {
+  for (const [index, value] of [25, 100, 250, 500, 1000, 2500, 5000, 10000, 50000].entries()) {
     const coin = page.getByRole('button', { name: `Moeda Gigante ${value}`, exact: true });
     await coin.click();
     await expect(coin).toHaveAttribute('aria-pressed', 'true');
     await grid.click({ position: { x: 144 + index * 32, y: 112 } });
   }
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
-  const types = ['cannon', 'coin-25', 'coin-100', 'coin-250', 'coin-500', 'coin-1000'];
+  const types = ['cannon', 'coin-25', 'coin-100', 'coin-250', 'coin-500', 'coin-1000', 'coin-2500', 'coin-5000', 'coin-10000', 'coin-50000'];
   await expect.poll(async () => {
     const records = await savedRecords<SavedLevel>(page, 'maker-levels');
     return records.find((record) => record.name === 'Recursos do Pedro')?.objects
@@ -57,6 +58,14 @@ test('Maker saves the cannon and every new giant coin, and remembers Wario', asy
   await page.reload();
   await expect(page.getByRole('button', { name: /^Wario\b/ })).toHaveAttribute('aria-pressed', 'true');
   await page.screenshot({ path: test.info().outputPath('wario-selected.png'), fullPage: true });
+  const savedLevel = (await savedRecords<SavedLevel>(page, 'maker-levels'))
+    .find((record) => record.name === 'Recursos do Pedro');
+  if (!savedLevel) throw new Error('The Maker level was not saved');
+  await page.goto(`/jogos/pedro-maker/criar/${encodeURIComponent(savedLevel.id)}`);
+  await expect(page.getByRole('textbox', { name: 'Nome da fase' })).toHaveValue('Recursos do Pedro');
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('wario-in-game.png') });
 });
 
 for (const mode of ['Normal', 'Infinito']) {

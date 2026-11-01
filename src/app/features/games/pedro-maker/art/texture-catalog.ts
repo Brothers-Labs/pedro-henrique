@@ -82,7 +82,8 @@ import {
   paintPowerUp,
   POWER_UP_SIZE,
 } from './item-art';
-import { WARIO_PORTRAIT, GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
+import { GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
+import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
@@ -119,7 +120,7 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       paintPedroPortrait(context, character);
       return;
     case 'wario':
-      paintOverallsPortrait(context, character, WARIO_PORTRAIT);
+      paintWarioPortrait(context, character);
       return;
     case 'gui':
       paintOverallsPortrait(context, character, GUI_PORTRAIT);
@@ -245,6 +246,18 @@ function drawIcon(
       return;
     case 'coin-1000':
       fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '1000'));
+      return;
+    case 'coin-2500':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '2500'));
+      return;
+    case 'coin-5000':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '5000'));
+      return;
+    case 'coin-10000':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '10000'));
+      return;
+    case 'coin-50000':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '50000'));
       return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);

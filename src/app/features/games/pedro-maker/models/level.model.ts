@@ -119,8 +119,8 @@ export type BlockType =
   | 'spikes'
   | 'note';
 
-/** As moedas gigantes valem várias moedas de uma vez: 10 e 50. */
-export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'crystal' | 'heart' | 'power-up';
+/** Itens coletáveis, incluindo moedas gigantes com valores de 10 a 50000. */
+export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'coin-2500' | 'coin-5000' | 'coin-10000' | 'coin-50000' | 'crystal' | 'heart' | 'power-up';
 
 /**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na
