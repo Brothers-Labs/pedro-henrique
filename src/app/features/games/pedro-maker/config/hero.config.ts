@@ -31,6 +31,10 @@ export interface HeroDefinition {
  * ao frear. Mario e Luigi, os encanadores dos jogos clássicos, também pulam
  * mais que o Pedro. As fases continuam justas para todos, porque o validador
  * mede os pulos pelo Pedro, que pula menos.
+ *
+ * Giuseppe, Zeca, Tina e Bruno são heróis originais do Pedro Maker. Nenhum
+ * pula menos que o Pedro — senão uma fase validada poderia ficar impossível —,
+ * e o que muda entre eles é a altura extra do pulo e o jeito de frear.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -87,6 +91,50 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: 1, brakingMultiplier: 1.1 },
     outfit: { cap: WARIO_COLORS.cap, shirt: WARIO_COLORS.cap, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'giuseppe',
+    name: 'Giuseppe',
+    description: 'O padeiro do bairro: bigode grisalho, boné creme e avental marrom.',
+    traits: [
+      { emoji: '🥖', label: 'Pula igual ao Pedro' },
+      { emoji: '🎯', label: 'Para na hora, sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1.2 },
+    outfit: { cap: '#f4e3c3', shirt: '#f08a24', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'zeca',
+    name: 'Zeca Trovão',
+    description: 'O rival barulhento: boné cinza com Z e camiseta amarela de raio.',
+    traits: [
+      { emoji: '⚡', label: 'Pula alto como um trovão' },
+      { emoji: '🧊', label: 'Derrapa um pouco ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.15), brakingMultiplier: 0.7 },
+    outfit: { cap: '#5d6372', shirt: '#ffd23f', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'tina',
+    name: 'Tina Turbo',
+    description: 'A rival mais rápida das pistas: boné turquesa e camiseta rosa.',
+    traits: [
+      { emoji: '🚀', label: 'Pula bem alto' },
+      { emoji: '🛼', label: 'Escorrega bastante ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.25), brakingMultiplier: 0.5 },
+    outfit: { cap: '#14b8a6', shirt: '#ff4f9a', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'bruno',
+    name: 'Bruno Bigorna',
+    description: 'O rival ferreiro: baixinho, ruivo e firme como uma bigorna.',
+    traits: [
+      { emoji: '🔨', label: 'Pula igual ao Pedro' },
+      { emoji: '🧱', label: 'Freia mais firme que todos' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1.3 },
+    outfit: { cap: '#d0632a', shirt: '#7b4a2b', backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

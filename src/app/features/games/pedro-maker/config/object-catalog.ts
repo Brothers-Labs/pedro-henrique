@@ -57,6 +57,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   bullet: { surface: 'none', isUnique: false },
   thwomp: { surface: 'none', isUnique: false },
   'king-slime': { surface: 'none', isUnique: false },
+  'iron-ball': { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
@@ -187,6 +188,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'bullet', category: 'inimigos', type: 'bullet', label: 'Bala de Canhão' },
   { id: 'thwomp', category: 'inimigos', type: 'thwomp', label: 'Thwomp' },
   { id: 'king-slime', category: 'inimigos', type: 'king-slime', label: 'Rei Slime' },
+  { id: 'iron-ball', category: 'inimigos', type: 'iron-ball', label: 'Bolão na Corrente' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante 10' },

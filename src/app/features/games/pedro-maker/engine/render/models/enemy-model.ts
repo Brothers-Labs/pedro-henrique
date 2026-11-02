@@ -19,6 +19,10 @@ export interface EnemyPose {
   /** Quanto a planta carnívora está para fora do cano, de 0 a 1. */
   readonly emergence: number;
   readonly isMoving: boolean;
+  /** O Bolão tremendo antes do bote. */
+  readonly isWindingUp: boolean;
+  /** Onde fica a estaca da corrente, em blocos, a partir dos pés do inimigo; `null` sem corrente. */
+  readonly tether: { readonly x: number; readonly y: number } | null;
 }
 
 /**
@@ -63,7 +67,8 @@ export class EnemyMaterials {
  * e a planta carnívora sobe do cano mordendo, o pinguim gingando e a bolinha de
  * lava pula girando. O goomba marcha balançando, a bala de canhão voa de lado
  * com o nariz para a frente, o thwomp treme de raiva e o Rei Slime quica como
- * o slime. Congelado, para dentro de um bloco de gelo. Derrotado, achata e
+ * o slime. O Bolão treme antes do bote e arrasta a corrente presa na estaca,
+ * que fica no chão enquanto ele vai e volta. Congelado, para dentro de um bloco de gelo. Derrotado, achata e
  * some.
  */
 export class EnemyModel {
@@ -76,6 +81,9 @@ export class EnemyModel {
   private iceBlock: Mesh | null = null;
   private heading: number;
   private readonly phase = Math.random() * Math.PI * 2;
+  /** Estaca e elos do Bolão. Ficam fora do corpo para não girar nem achatar com ele. */
+  private readonly stake: Mesh | null = null;
+  private readonly chainLinks: readonly Mesh[] = [];
 
   constructor(
     private readonly kind: EnemyKind,
@@ -106,11 +114,20 @@ export class EnemyModel {
       this.wings = this.buildWings(0.08, 0.36, [box(0.16, 0.06, -0.04, 0.3, 0.04, 0.2, '#e6f6ff')], material);
     }
 
+    if (kind === 'iron-ball') {
+      this.stake = this.mesh(STAKE_PARTS, material);
+      this.chainLinks = Array.from({ length: CHAIN_LINK_COUNT }, (_, index) =>
+        this.mesh([index % 2 === 0 ? CHAIN_LINK_FLAT : CHAIN_LINK_UPRIGHT], material),
+      );
+      this.root.add(this.stake, ...this.chainLinks);
+    }
+
     this.root.add(this.body);
   }
 
   update(pose: EnemyPose, deltaSeconds: number, now: number): void {
     this.showIce(pose.isFrozen);
+    this.stretchChain(pose);
 
     if (pose.isFrozen) {
       return;
@@ -191,7 +208,33 @@ export class EnemyModel {
         this.body.rotation.y = this.heading * 0.3;
         this.body.position.x = pose.isMoving ? 0 : Math.sin(time * 40) * 0.01;
         return;
+      case 'iron-ball':
+        // Rola na direção do bote e treme forte no aviso, para dar tempo de fugir.
+        this.body.rotation.y = this.heading * 0.3;
+        this.body.rotation.z = pose.isWindingUp ? Math.sin(time * 60) * 0.12 : -pose.direction * time * (pose.isMoving ? 6 : 0);
+        return;
     }
+  }
+
+  /** Estaca no chão e elos espalhados em linha reta até a bola. */
+  private stretchChain(pose: EnemyPose): void {
+    if (!this.stake || !pose.tether) {
+      return;
+    }
+
+    const { x: stakeX, y: stakeY } = pose.tether;
+    const fromY = stakeY + STAKE_HEIGHT;
+    const isVisible = !pose.isDefeated;
+
+    this.stake.position.set(stakeX, stakeY, -0.05);
+    this.stake.visible = isVisible;
+
+    this.chainLinks.forEach((link, index) => {
+      const progress = (index + 1) / (this.chainLinks.length + 1);
+
+      link.position.set(MathUtils.lerp(stakeX, 0, progress), MathUtils.lerp(fromY, IRON_BALL_CENTER_Y, progress), -0.05);
+      link.visible = isVisible;
+    });
   }
 
   private showIce(isFrozen: boolean): void {
@@ -251,6 +294,19 @@ export class EnemyModel {
 const ICE_BLOCK_SIZE = 0.82;
 /** O Rei Slime é largo demais para o bloco comum. */
 const KING_ICE_BLOCK_SIZE = 1.3;
+
+/** Centro da bola do Bolão, onde a corrente se prende, em blocos a partir dos pés. */
+const IRON_BALL_CENTER_Y = 0.375;
+const STAKE_HEIGHT = 0.5;
+const CHAIN_LINK_COUNT = 6;
+const CHAIN_COLOR = '#8a94a6';
+/** Elos alternados, um deitado e outro em pé, como numa corrente de verdade. */
+const CHAIN_LINK_FLAT = box(0, 0, 0, 0.16, 0.07, 0.07, CHAIN_COLOR);
+const CHAIN_LINK_UPRIGHT = box(0, 0, 0, 0.07, 0.14, 0.07, CHAIN_COLOR);
+const STAKE_PARTS: readonly VoxelBox[] = [
+  box(0, STAKE_HEIGHT / 2, 0, 0.14, STAKE_HEIGHT, 0.14, '#a0703c'),
+  box(0, STAKE_HEIGHT - 0.03, 0, 0.18, 0.06, 0.18, '#7a5229'),
+];
 
 /** Altura da planta carnívora fora do cano, em blocos. */
 const PIRANHA_HEIGHT = 1.0;
@@ -391,6 +447,18 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(0, 0.86, 0, 0.5, 0.14, 0.4, '#ffc629'),
     ...[-0.18, 0, 0.18].map((x) => box(x, 0.98, 0, 0.1, 0.12, 0.1, '#ffc629')),
     box(0, 0.86, 0.205, 0.1, 0.08, 0.02, '#e8343f'),
+  ],
+  // Bola de aço azulada feita de três caixas cruzadas, com rebites e sorriso pequeno.
+  'iron-ball': [
+    box(0, IRON_BALL_CENTER_Y, 0, 0.74, 0.5, 0.6, '#5b6b80'),
+    box(0, IRON_BALL_CENTER_Y, 0, 0.5, 0.74, 0.6, '#5b6b80'),
+    box(0, IRON_BALL_CENTER_Y, 0, 0.62, 0.62, 0.7, '#66778d'),
+    box(-0.16, 0.6, 0.351, 0.14, 0.08, 0.01, '#9fb0c6'),
+    ...[-0.24, 0.24].flatMap((x) => [box(x, 0.2, 0.351, 0.05, 0.05, 0.01, '#3c4757'), box(x, 0.56, 0.351, 0.05, 0.05, 0.01, '#3c4757')]),
+    box(-0.13, 0.55, 0.356, 0.16, 0.04, 0.01, '#2a2350'),
+    box(0.13, 0.55, 0.356, 0.16, 0.04, 0.01, '#2a2350'),
+    box(0, 0.24, 0.356, 0.14, 0.035, 0.01, '#2a2350'),
+    ...eyes(0.42, 0.356, 0.12, 0.11),
   ],
   piranha: [
     box(0, 0.2, 0, 0.12, 0.4, 0.12, '#2f8f47'),

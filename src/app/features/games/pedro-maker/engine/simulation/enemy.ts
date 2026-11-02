@@ -30,6 +30,7 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   bullet: { speed: 150, bodyWidth: 40, bodyHeight: 28, flies: true, isStompable: true, isFireproof: true },
   thwomp: { speed: 0, bodyWidth: 44, bodyHeight: 46, flies: true, isStompable: false, isFireproof: true },
   'king-slime': { speed: 40, bodyWidth: 58, bodyHeight: 46, flies: false, isStompable: true, isFireproof: false },
+  'iron-ball': { speed: 0, bodyWidth: 36, bodyHeight: 36, flies: true, isStompable: false, isFireproof: true },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -76,6 +77,32 @@ const THWOMP_REST_MS = 900;
 /** `waiting` no alto, `falling` despencando, `resting` no chão e `rising` voltando para cima. */
 type ThwompState = 'waiting' | 'falling' | 'resting' | 'rising';
 
+/** Comprimento da corrente do Bolão: até onde ele alcança a partir da estaca. */
+export const IRON_BALL_CHAIN_LENGTH = TILE_SIZE * 3;
+/** A estaca fica um pouco atrás do Bolão, cravada no chão da mesma célula. */
+const IRON_BALL_STAKE_OFFSET_X = TILE_SIZE * 0.55;
+/** O Bolão só repara no herói dentro desta caixa em volta da estaca. */
+const IRON_BALL_NOTICE_X = TILE_SIZE * 4.5;
+const IRON_BALL_NOTICE_Y = TILE_SIZE * 2.5;
+/** O aviso antes do bote: o Bolão treme e o herói tem tempo de sair dali. */
+const IRON_BALL_WINDUP_MS = 450;
+const IRON_BALL_LUNGE_SPEED = 520;
+const IRON_BALL_RETURN_SPEED = 120;
+/** Descanso depois de voltar para a estaca, antes de poder dar outro bote. */
+const IRON_BALL_REST_MS = 1000;
+const IRON_BALL_HOP_HEIGHT = TILE_SIZE * 0.3;
+/** Perto assim do alvo, o bote terminou. */
+const IRON_BALL_ARRIVAL = 6;
+
+/** `idle` quicando na estaca, `winding` tremendo antes do bote, `lunging` no bote e `returning` voltando. */
+type IronBallState = 'idle' | 'winding' | 'lunging' | 'returning';
+
+/** Um ponto do mundo, em pixels. */
+export interface WorldPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
 /** Tempo da animação de derrota antes de o inimigo sair da partida. */
 export const ENEMY_DEFEAT_MS = 280;
 
@@ -97,6 +124,11 @@ export const ENEMY_DEFEAT_MS = 280;
  * partida, na direção do herói. O thwomp espera no alto, despenca quando o
  * herói passa embaixo, descansa um pouco no chão e sobe devagar.
  *
+ * O Bolão é uma bola de ferro presa numa estaca pela corrente. Quica no
+ * lugar e, quando o herói chega perto, treme como aviso e dá um bote na
+ * direção dele — nunca além da corrente. Depois volta devagar para a estaca e
+ * descansa: é a hora de passar. De ferro, não se pisa nem se queima.
+ *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
  * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
  */
@@ -114,6 +146,8 @@ export class Enemy {
   isFrozen = false;
   /** Até quando o inimigo recém-nascido não machuca: os slimes do Rei Slime nascem colados no herói. */
   harmlessUntil = 0;
+  /** Topo da estaca que segura a corrente, para o Bolão; `null` para os outros. */
+  readonly anchor: WorldPoint | null = null;
 
   private readonly profile: EnemyProfile;
   private frozenUntil = 0;
@@ -124,6 +158,8 @@ export class Enemy {
   private lastStepAt: number | null = null;
   private thwompState: ThwompState = 'waiting';
   private hasLanded = false;
+  private ironBallState: IronBallState = 'idle';
+  private lungeTarget: WorldPoint = { x: 0, y: 0 };
 
   constructor(
     readonly id: number,
@@ -143,12 +179,19 @@ export class Enemy {
     this.profile = profile;
     this.body = createBody(profile.bodyWidth * scale, profile.bodyHeight * scale, !profile.flies);
     this.body.x = cellX * TILE_SIZE + TILE_SIZE / 2 - this.body.width / 2;
-    this.body.y = profile.flies ? cellY * TILE_SIZE + (TILE_SIZE - this.body.height) / 2 : (cellY + 1) * TILE_SIZE - this.body.height;
+    this.body.y = profile.flies && kind !== 'iron-ball'
+      ? cellY * TILE_SIZE + (TILE_SIZE - this.body.height) / 2
+      // O Bolão voa preso à corrente, mas descansa apoiado no chão da célula.
+      : (cellY + 1) * TILE_SIZE - this.body.height;
     this.body.previousX = this.body.x;
     this.body.previousY = this.body.y;
     this.homeX = centerX(this.body);
     this.homeY = centerY(this.body);
     this.piranhaCycleMs = (phase / (Math.PI * 2)) * PIRANHA_CYCLE_MS;
+
+    if (kind === 'iron-ball') {
+      this.anchor = { x: this.homeX - IRON_BALL_STAKE_OFFSET_X, y: (cellY + 1) * TILE_SIZE };
+    }
 
     if (kind === 'piranha') {
       this.emergence = piranhaEmergence(this.piranhaCycleMs);
@@ -181,6 +224,11 @@ export class Enemy {
   /** A bolinha de lava é quente demais: o gelo derrete nela. */
   get canBeFrozen(): boolean {
     return !this.profile.isFireproof;
+  }
+
+  /** O Bolão tremendo antes do bote: a tela mostra o aviso. */
+  get isWindingUp(): boolean {
+    return this.ironBallState === 'winding';
   }
 
   step(now: number, targetX: number, targetY: number): void {
@@ -225,6 +273,9 @@ export class Enemy {
         return;
       case 'thwomp':
         this.slam(now, targetX, targetY);
+        return;
+      case 'iron-ball':
+        this.strainAtChain(now, targetX, targetY);
         return;
     }
   }
@@ -467,6 +518,78 @@ export class Enemy {
     }
   }
 
+  private strainAtChain(now: number, targetX: number, targetY: number): void {
+    const body = this.body;
+
+    switch (this.ironBallState) {
+      case 'idle': {
+        const hop = Math.abs(Math.sin((now / 1000) * 4 + this.phase)) * IRON_BALL_HOP_HEIGHT;
+        const isHeroNear = Math.abs(targetX - this.homeX) < IRON_BALL_NOTICE_X && Math.abs(targetY - this.homeY) < IRON_BALL_NOTICE_Y;
+
+        this.steerTo(this.homeX, this.homeY - hop, IRON_BALL_RETURN_SPEED * 2);
+        this.direction = targetX > this.homeX ? 1 : -1;
+
+        if (isHeroNear && now >= this.pausedUntil) {
+          this.lungeTarget = withinChain({ x: this.homeX, y: this.homeY }, { x: targetX, y: targetY });
+          this.ironBallState = 'winding';
+          this.pausedUntil = now + IRON_BALL_WINDUP_MS;
+        }
+
+        return;
+      }
+      case 'winding':
+        body.vx = 0;
+        body.vy = 0;
+
+        if (now >= this.pausedUntil) {
+          this.ironBallState = 'lunging';
+        }
+
+        return;
+      case 'lunging': {
+        const hasArrived = this.steerTo(this.lungeTarget.x, this.lungeTarget.y, IRON_BALL_LUNGE_SPEED);
+        const hitWall = body.blockedLeft || body.blockedRight || body.blockedUp || body.blockedDown;
+
+        if (hasArrived || hitWall) {
+          this.hasLanded = body.blockedDown;
+          this.ironBallState = 'returning';
+        }
+
+        return;
+      }
+      case 'returning':
+        if (this.steerTo(this.homeX, this.homeY, IRON_BALL_RETURN_SPEED)) {
+          this.ironBallState = 'idle';
+          this.pausedUntil = now + IRON_BALL_REST_MS;
+        }
+
+        return;
+    }
+  }
+
+  /** Aponta a velocidade para um ponto. Verdadeiro quando já chegou nele. */
+  private steerTo(x: number, y: number, speed: number): boolean {
+    const body = this.body;
+    const deltaX = x - centerX(body);
+    const deltaY = y - centerY(body);
+    const distance = Math.hypot(deltaX, deltaY);
+
+    if (distance < IRON_BALL_ARRIVAL) {
+      body.vx = 0;
+      body.vy = 0;
+
+      return true;
+    }
+
+    // Sem passar do ponto num passo só: perto do alvo, a velocidade diminui.
+    const pace = Math.min(speed * this.speedMultiplier, distance * 12);
+
+    body.vx = (deltaX / distance) * pace;
+    body.vy = (deltaY / distance) * pace;
+
+    return false;
+  }
+
   private hasGroundAhead(): boolean {
     const aheadX = centerX(this.body) + this.direction * (this.body.width / 2 + 6);
 
@@ -476,6 +599,21 @@ export class Enemy {
   private turnAround(): void {
     this.direction = this.direction === 1 ? -1 : 1;
   }
+}
+
+/** O ponto mais perto do alvo que a corrente deixa alcançar a partir de casa. */
+export function withinChain(home: WorldPoint, target: WorldPoint): WorldPoint {
+  const deltaX = target.x - home.x;
+  const deltaY = target.y - home.y;
+  const distance = Math.hypot(deltaX, deltaY);
+
+  if (distance <= IRON_BALL_CHAIN_LENGTH) {
+    return target;
+  }
+
+  const reach = IRON_BALL_CHAIN_LENGTH / distance;
+
+  return { x: home.x + deltaX * reach, y: home.y + deltaY * reach };
 }
 
 function piranhaEmergence(cycleMs: number): number {

@@ -51,6 +51,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   bullet: '#e8505b',
   thwomp: '#e8505b',
   'king-slime': '#e8505b',
+  'iron-ball': '#e8505b',
   boss: '#e8505b',
 };
 

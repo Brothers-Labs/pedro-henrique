@@ -1,14 +1,17 @@
 import type { CharacterPalette } from '../config/character.config';
+import {
+  BRUNO_OVERALLS,
+  CLASSIC_OVERALLS,
+  GIUSEPPE_OVERALLS,
+  type OverallsColors,
+  TINA_OVERALLS,
+  ZECA_OVERALLS,
+} from '../config/overalls.config';
 import { circle, darken, ellipse, eye, fillAndOutline, hand, limb, type Point, roundedRect, smile } from './canvas';
 
 const SKIN = '#ffd2a6';
 const SKIN_SHADE = '#f0b98c';
 const NOSE = '#f5b08c';
-const HAIR = '#3a2516';
-const MUSTACHE = '#2a1a10';
-const OVERALLS = '#2f5fd0';
-const BUTTON = '#ffd23f';
-const SHOE = '#6b3f22';
 
 /** Mãos e pés do herói alto parado: o mesmo quadro do Pedro, com o corpo mais esticado. */
 const BACK_FOOT: Point = [29, 70];
@@ -25,19 +28,25 @@ export interface OverallsPortrait {
   readonly hasMustache: boolean;
   /** Quanto o corpo desce, em pixels, para o herói mais baixinho; os pés não saem do chão. */
   readonly drop: number;
+  readonly colors: OverallsColors;
 }
 
-export const GUI_PORTRAIT: OverallsPortrait = { emblem: 'G', hasMustache: false, drop: 0 };
-export const LUIGI_PORTRAIT: OverallsPortrait = { emblem: 'L', hasMustache: true, drop: 0 };
-export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true, drop: 5 };
+export const GUI_PORTRAIT: OverallsPortrait = { emblem: 'G', hasMustache: false, drop: 0, colors: CLASSIC_OVERALLS };
+export const LUIGI_PORTRAIT: OverallsPortrait = { emblem: 'L', hasMustache: true, drop: 0, colors: CLASSIC_OVERALLS };
+export const MARIO_PORTRAIT: OverallsPortrait = { emblem: 'M', hasMustache: true, drop: 5, colors: CLASSIC_OVERALLS };
+export const GIUSEPPE_PORTRAIT: OverallsPortrait = { emblem: 'J', hasMustache: true, drop: 6, colors: GIUSEPPE_OVERALLS };
+export const ZECA_PORTRAIT: OverallsPortrait = { emblem: 'Z', hasMustache: true, drop: 3, colors: ZECA_OVERALLS };
+export const TINA_PORTRAIT: OverallsPortrait = { emblem: 'T', hasMustache: false, drop: 0, colors: TINA_OVERALLS };
+export const BRUNO_PORTRAIT: OverallsPortrait = { emblem: 'B', hasMustache: true, drop: 7, colors: BRUNO_OVERALLS };
 
 /**
- * Herói de macacão parado e sorrindo — o Gui, o Luigi ou o Mario —, de boné e
- * camiseta da cor dele e macacão azul. Cabe no mesmo quadro do retrato do
+ * Herói de macacão parado e sorrindo, de boné e camiseta da cor dele e o
+ * macacão, os sapatos e o cabelo descritos no retrato. Cabe no mesmo quadro do retrato do
  * Pedro, e todos aparecem na mesma escala nos menus.
  */
 export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette: CharacterPalette, portrait: OverallsPortrait): void {
-  const overalls = OVERALLS;
+  const { colors } = portrait;
+  const overalls = colors.overalls;
   const sleeveShade = darken(palette.shirt, 0.15);
   const hipY = HIP_Y + portrait.drop;
 
@@ -46,9 +55,9 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
 
   // Pernas e sapatos ficam no chão; o resto do corpo desce junto com o quadril.
   limb(context, [30, hipY], BACK_FOOT, darken(overalls, 0.2));
-  shoe(context, BACK_FOOT);
+  shoe(context, BACK_FOOT, colors.shoe);
   limb(context, [38, hipY], FRONT_FOOT, overalls);
-  shoe(context, FRONT_FOOT);
+  shoe(context, FRONT_FOOT, colors.shoe);
 
   context.save();
   context.translate(0, portrait.drop);
@@ -57,7 +66,7 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
   limb(context, [28, SHOULDER_Y], BACK_HAND, sleeveShade);
   hand(context, BACK_HAND, SKIN_SHADE);
 
-  paintOutfit(context, palette.shirt, overalls);
+  paintOutfit(context, palette.shirt, colors);
 
   limb(context, [40, SHOULDER_Y], FRONT_HAND, palette.shirt);
   hand(context, FRONT_HAND, SKIN);
@@ -67,7 +76,9 @@ export function paintOverallsPortrait(context: CanvasRenderingContext2D, palette
 }
 
 /** Camiseta por baixo e macacão por cima, com peitilho, alças e dois botões. */
-function paintOutfit(context: CanvasRenderingContext2D, shirt: string, overalls: string): void {
+function paintOutfit(context: CanvasRenderingContext2D, shirt: string, colors: OverallsColors): void {
+  const { overalls } = colors;
+
   roundedRect(context, 25, 34, 18, 22, 6);
   fillAndOutline(context, shirt);
 
@@ -91,7 +102,7 @@ function paintOutfit(context: CanvasRenderingContext2D, shirt: string, overalls:
 
   for (const x of [30.5, 37.5]) {
     circle(context, x, 43.5, 1.6);
-    fillAndOutline(context, BUTTON, 1);
+    fillAndOutline(context, colors.button, 1);
   }
 }
 
@@ -100,7 +111,7 @@ function paintHead(context: CanvasRenderingContext2D, cap: string, portrait: Ove
   const centerY = 21;
 
   // Cabelo que escapa do boné na nuca.
-  context.fillStyle = HAIR;
+  context.fillStyle = portrait.colors.hair;
   ellipse(context, centerX - 10, centerY + 1, 6, 8);
   context.fill();
 
@@ -119,7 +130,7 @@ function paintHead(context: CanvasRenderingContext2D, cap: string, portrait: Ove
   smile(context, centerX + 8, centerY + 9.5);
 
   if (portrait.hasMustache) {
-    context.fillStyle = MUSTACHE;
+    context.fillStyle = portrait.colors.mustache;
     ellipse(context, centerX + 9, centerY + 7, 6.5, 2.6);
     context.fill();
   }
@@ -145,7 +156,7 @@ function paintHead(context: CanvasRenderingContext2D, cap: string, portrait: Ove
   context.fillText(portrait.emblem, centerX - 1, centerY - 8.7);
 }
 
-function shoe(context: CanvasRenderingContext2D, at: Point): void {
+function shoe(context: CanvasRenderingContext2D, at: Point, color: string): void {
   roundedRect(context, at[0] - 5, at[1] - 6, 13, 7, 3.5);
-  fillAndOutline(context, SHOE, 2.5);
+  fillAndOutline(context, color, 2.5);
 }
