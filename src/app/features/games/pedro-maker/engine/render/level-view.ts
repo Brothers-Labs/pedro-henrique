@@ -295,6 +295,7 @@ export class LevelView {
 
       seen.add(enemy.id);
       this.placeEnemy(enemy, model, alpha);
+      const anchor = enemy.anchor;
       model.update(
         {
           kind: enemy.kind,
@@ -305,6 +306,10 @@ export class LevelView {
           isFrozen: enemy.isFrozen,
           emergence: enemy.emergence,
           isMoving: Math.abs(enemy.body.vx) > 1,
+          isWindingUp: enemy.isWindingUp,
+          tether: anchor
+            ? { x: this.space.x(anchor.x) - model.root.position.x, y: this.space.y(anchor.y) - model.root.position.y }
+            : null,
         },
         deltaSeconds,
         now,

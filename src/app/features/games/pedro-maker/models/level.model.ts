@@ -47,6 +47,7 @@ export const ENEMY_KINDS = [
   'bullet',
   'thwomp',
   'king-slime',
+  'iron-ball',
 ] as const;
 
 export type EnemyKind = (typeof ENEMY_KINDS)[number];

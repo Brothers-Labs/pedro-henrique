@@ -82,7 +82,16 @@ import {
   paintPowerUp,
   POWER_UP_SIZE,
 } from './item-art';
-import { GUI_PORTRAIT, LUIGI_PORTRAIT, MARIO_PORTRAIT, paintOverallsPortrait } from './overalls-art';
+import {
+  BRUNO_PORTRAIT,
+  GIUSEPPE_PORTRAIT,
+  GUI_PORTRAIT,
+  LUIGI_PORTRAIT,
+  MARIO_PORTRAIT,
+  paintOverallsPortrait,
+  TINA_PORTRAIT,
+  ZECA_PORTRAIT,
+} from './overalls-art';
 import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
@@ -113,7 +122,7 @@ export function paintCharacterIcon(character: CharacterPalette, scale = 1): HTML
   });
 }
 
-/** Todos os heróis dividem o mesmo quadro de retrato; o Pedro tem pintor próprio, e os de macacão, um só. */
+/** Todos os heróis dividem o mesmo quadro de retrato; o Pedro e o Wario têm pintor próprio, e os de macacão, um só. */
 function paintCharacterPortrait(context: CanvasRenderingContext2D, character: CharacterPalette): void {
   switch (character.hero) {
     case 'pedro':
@@ -130,6 +139,18 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       return;
     case 'luigi':
       paintOverallsPortrait(context, character, LUIGI_PORTRAIT);
+      return;
+    case 'giuseppe':
+      paintOverallsPortrait(context, character, GIUSEPPE_PORTRAIT);
+      return;
+    case 'zeca':
+      paintOverallsPortrait(context, character, ZECA_PORTRAIT);
+      return;
+    case 'tina':
+      paintOverallsPortrait(context, character, TINA_PORTRAIT);
+      return;
+    case 'bruno':
+      paintOverallsPortrait(context, character, BRUNO_PORTRAIT);
       return;
   }
 }
@@ -218,6 +239,7 @@ function drawIcon(
     case 'bullet':
     case 'thwomp':
     case 'king-slime':
+    case 'iron-ball':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':

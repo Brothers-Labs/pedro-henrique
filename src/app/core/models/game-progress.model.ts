@@ -18,7 +18,8 @@ export type GameId =
   | 'pedro-maker'
   | 'pedro-kart'
   | 'pedro-flash'
-  | 'pedro-craft';
+  | 'pedro-craft'
+  | 'pedro-sprunks';
 
 /**
  * Nome da unidade de desafio de cada jogo.

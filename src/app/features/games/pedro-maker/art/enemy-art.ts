@@ -28,6 +28,7 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   bullet: paintBullet,
   thwomp: paintThwomp,
   'king-slime': paintKingSlime,
+  'iron-ball': paintIronBall,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -508,5 +509,53 @@ function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: 
   context.lineWidth = 2;
   context.beginPath();
   context.arc(x, y - radius / 2, radius, Math.PI * 0.2, Math.PI * 0.8);
+  context.stroke();
+}
+
+/**
+ * O Bolão: bola de aço azulada com rebites, presa por uma corrente a uma
+ * estaca de madeira. Sobrancelhas de bravo e um sorriso pequeno de quem só
+ * quer brincar de pegar.
+ */
+function paintIronBall(context: CanvasRenderingContext2D): void {
+  const steel = '#5b6b80';
+
+  roundedRect(context, 3, 28, 7, 18, 2);
+  fillAndOutline(context, '#a0703c', 2);
+
+  context.strokeStyle = '#8a94a6';
+  context.lineWidth = 2.5;
+
+  for (const [x, y] of [[11, 34], [16, 32], [21, 30]] as const) {
+    ellipse(context, x, y, 3, 2);
+    context.stroke();
+  }
+
+  circle(context, 31, 26, 15);
+  fillAndOutline(context, steel);
+  shine(context, 25, 19, 4, 2.5);
+
+  context.fillStyle = darken(steel, 0.3);
+
+  for (let index = 0; index < 8; index += 1) {
+    const angle = (index / 8) * Math.PI * 2;
+
+    circle(context, 31 + Math.cos(angle) * 12, 26 + Math.sin(angle) * 12, 1.2);
+    context.fill();
+  }
+
+  eye(context, 27, 25, 3.6, 0.2);
+  eye(context, 36, 25, 3.6, 0.2);
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2.5;
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(23, 19);
+  context.lineTo(29, 21);
+  context.moveTo(40, 19);
+  context.lineTo(34, 21);
+  context.moveTo(28, 33);
+  context.quadraticCurveTo(31.5, 35.5, 35, 33);
   context.stroke();
 }

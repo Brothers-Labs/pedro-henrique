@@ -92,6 +92,15 @@ export const routes: Routes = [
       import('./features/games/pedro-craft/pedro-craft.routes').then((m) => m.PEDRO_CRAFT_ROUTES),
   },
   {
+    path: 'jogos/pedro-sprunks',
+    data: {
+      description:
+        'Pedro Sprunks: monte uma banda de bonecos cantores, toque neles para ver as ações e crie os seus próprios personagens.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-sprunks/pedro-sprunks.routes').then((m) => m.PEDRO_SPRUNKS_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

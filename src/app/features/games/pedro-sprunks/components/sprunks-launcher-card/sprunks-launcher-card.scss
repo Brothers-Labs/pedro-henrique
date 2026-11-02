@@ -1,0 +1,17 @@
+.launcher__band {
+  position: absolute;
+  inset: 8% 8% 14%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.5rem;
+  z-index: 1;
+
+  app-sprunk-figure {
+    max-height: 100%;
+  }
+}
+
+.launcher__title--sprunks {
+  color: var(--color-pink);
+}

@@ -1,0 +1,189 @@
+@let current = character();
+
+<svg class="figure" [attr.viewBox]="viewBox()" aria-hidden="true" focusable="false">
+  @if (current.shape === 'iron-ball') {
+    <g class="figure__post">
+      <rect x="6" y="150" width="14" height="46" rx="3" fill="#a0703c" />
+      <rect x="4" y="146" width="18" height="8" rx="3" fill="#7a5229" />
+    </g>
+    <g class="figure__chain" fill="none" stroke="#8a94a6" stroke-width="3">
+      <ellipse cx="24" cy="156" rx="7" ry="4" />
+      <ellipse cx="34" cy="152" rx="4" ry="7" />
+      <ellipse cx="43" cy="148" rx="7" ry="4" />
+      <ellipse cx="51" cy="144" rx="4" ry="7" />
+    </g>
+    <g class="figure__actor figure__actor--ball">
+      <circle cx="72" cy="120" r="44" [attr.fill]="current.color" />
+      <ellipse cx="58" cy="98" rx="13" ry="8" fill="#ffffff" opacity="0.35" />
+      @for (angle of [0, 45, 90, 135, 180, 225, 270, 315]; track angle) {
+        <circle cx="72" cy="82" r="2.6" fill="rgb(0 0 0 / 28%)" [attr.transform]="'rotate(' + angle + ' 72 120)'" />
+      }
+      <g class="figure__brows" stroke="#2a2350" stroke-width="4" stroke-linecap="round">
+        <line x1="50" y1="98" x2="64" y2="102" />
+        <line x1="94" y1="98" x2="80" y2="102" />
+      </g>
+      <g transform="translate(12 36)">
+        <ng-container [ngTemplateOutlet]="face" />
+      </g>
+    </g>
+  } @else {
+    <g class="figure__actor">
+      @if (accessoryLayer() === 'back') {
+        <ng-container [ngTemplateOutlet]="accessory" />
+      }
+      <path
+        class="figure__body"
+        d="M40 104 Q38 150 32 196 L88 196 Q82 150 80 104 Z"
+        [attr.fill]="current.color"
+      />
+      <circle class="figure__head" cx="60" cy="78" r="38" [attr.fill]="current.color" />
+      <ellipse cx="46" cy="58" rx="10" ry="6" fill="#ffffff" opacity="0.3" />
+      <ng-container [ngTemplateOutlet]="face" />
+      @if (accessoryLayer() === 'front') {
+        <ng-container [ngTemplateOutlet]="accessory" />
+      }
+    </g>
+  }
+</svg>
+
+<ng-template #face>
+<svg:g>
+  <g class="figure__eyes">
+    @switch (current.eyes) {
+      @case ('round') {
+        <circle cx="46" cy="76" r="10" fill="#ffffff" />
+        <circle cx="74" cy="76" r="10" fill="#ffffff" />
+        <circle cx="47" cy="78" r="4.5" fill="#2a2350" />
+        <circle cx="75" cy="78" r="4.5" fill="#2a2350" />
+      }
+      @case ('sleepy') {
+        <path d="M37 75 Q46 83 55 75" class="figure__line" />
+        <path d="M65 75 Q74 83 83 75" class="figure__line" />
+      }
+      @case ('happy') {
+        <path d="M37 80 Q46 68 55 80" class="figure__line" />
+        <path d="M65 80 Q74 68 83 80" class="figure__line" />
+      }
+      @case ('shades') {
+        <rect x="33" y="68" width="24" height="15" rx="6" fill="#1d1b2e" />
+        <rect x="63" y="68" width="24" height="15" rx="6" fill="#1d1b2e" />
+        <line x1="57" y1="73" x2="63" y2="73" class="figure__line" />
+        <line x1="38" y1="72" x2="44" y2="72" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+        <line x1="68" y1="72" x2="74" y2="72" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+      }
+      @case ('star') {
+        <polygon points="46,65 49,73 57,73 51,78 53,86 46,81 39,86 41,78 35,73 43,73" class="figure__star" />
+        <polygon points="74,65 77,73 85,73 79,78 81,86 74,81 67,86 69,78 63,73 71,73" class="figure__star" />
+      }
+    }
+  </g>
+  @if (isSinging()) {
+    <ellipse class="figure__mouth figure__mouth--open" cx="60" cy="96" rx="7" ry="6" />
+  } @else {
+    <path class="figure__line" d="M50 93 Q60 101 70 93" />
+  }
+</svg:g>
+</ng-template>
+
+<ng-template #accessory>
+<svg:g>
+  @switch (current.accessory) {
+    @case ('headphones') {
+      <path d="M24 74 A36 38 0 0 1 96 74" fill="none" stroke="#2a2350" stroke-width="6" />
+      <rect x="13" y="62" width="15" height="28" rx="7" fill="#ff4f9a" class="figure__outline" />
+      <rect x="92" y="62" width="15" height="28" rx="7" fill="#ff4f9a" class="figure__outline" />
+    }
+    @case ('spikes') {
+      <polygon
+        points="28,60 34,24 46,46 54,14 62,44 72,16 78,46 90,26 92,60"
+        [attr.fill]="current.color"
+        class="figure__outline figure__shade"
+      />
+    }
+    @case ('propeller') {
+      <path d="M34 52 A26 24 0 0 1 86 52 Z" fill="#ff4f9a" class="figure__outline" />
+      <line x1="60" y1="30" x2="60" y2="18" stroke="#2a2350" stroke-width="3" />
+      <g class="figure__propeller">
+        <ellipse cx="47" cy="17" rx="13" ry="4" fill="#2ba8e0" class="figure__outline" />
+        <ellipse cx="73" cy="17" rx="13" ry="4" fill="#ffd23f" class="figure__outline" />
+      </g>
+    }
+    @case ('antennas') {
+      <line x1="46" y1="46" x2="36" y2="14" stroke="#2a2350" stroke-width="3" />
+      <line x1="74" y1="46" x2="84" y2="14" stroke="#2a2350" stroke-width="3" />
+      <circle cx="36" cy="13" r="6" fill="#ff4f9a" class="figure__outline" />
+      <circle cx="84" cy="13" r="6" fill="#2ba8e0" class="figure__outline" />
+    }
+    @case ('sprout') {
+      <path d="M60 44 Q58 30 60 16" fill="none" stroke="#2e7d32" stroke-width="4" />
+      <path d="M60 24 Q44 8 34 20 Q48 30 60 24 Z" fill="#4caf50" class="figure__outline" />
+      <path d="M60 18 Q76 2 88 14 Q74 26 60 18 Z" fill="#66bb6a" class="figure__outline" />
+    }
+    @case ('cat-ears') {
+      <polygon points="26,62 28,22 56,44" [attr.fill]="current.color" class="figure__outline" />
+      <polygon points="94,62 92,22 64,44" [attr.fill]="current.color" class="figure__outline" />
+      <polygon points="32,52 33,32 48,44" fill="#ffb3cf" />
+      <polygon points="88,52 87,32 72,44" fill="#ffb3cf" />
+    }
+    @case ('bucket') {
+      <polygon points="34,52 40,6 80,6 86,52" fill="#9aa0a6" class="figure__outline" />
+      <rect x="30" y="47" width="60" height="9" rx="4" fill="#7c838b" class="figure__outline" />
+    }
+    @case ('visor') {
+      <rect x="24" y="48" width="72" height="13" rx="6" fill="#2ba8e0" opacity="0.9" class="figure__outline" />
+      <line x1="32" y1="53" x2="46" y2="53" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
+    }
+    @case ('crown') {
+      <polygon points="36,50 36,22 48,36 60,14 72,36 84,22 84,50" fill="#ffd23f" class="figure__outline" />
+      <circle cx="60" cy="40" r="4" fill="#e8483f" />
+      <circle cx="45" cy="44" r="3" fill="#2ba8e0" />
+      <circle cx="75" cy="44" r="3" fill="#2ba8e0" />
+    }
+    @case ('bear-ears') {
+      <circle cx="30" cy="48" r="14" [attr.fill]="current.color" class="figure__outline" />
+      <circle cx="90" cy="48" r="14" [attr.fill]="current.color" class="figure__outline" />
+      <circle cx="30" cy="48" r="7" fill="rgb(0 0 0 / 15%)" />
+      <circle cx="90" cy="48" r="7" fill="rgb(0 0 0 / 15%)" />
+    }
+    @case ('sun-rays') {
+      @for (ray of sunRays; track $index) {
+        <polygon [attr.points]="ray" fill="#ff9f1c" class="figure__outline" />
+      }
+    }
+    @case ('horns') {
+      <path d="M38 52 Q22 32 30 10 Q38 34 50 44 Z" fill="#fff7e0" class="figure__outline" />
+      <path d="M82 52 Q98 32 90 10 Q82 34 70 44 Z" fill="#fff7e0" class="figure__outline" />
+    }
+    @case ('flower') {
+      @for (angle of [0, 72, 144, 216, 288]; track angle) {
+        <circle cx="88" cy="40" r="7" fill="#ff7eb6" class="figure__outline" [attr.transform]="'rotate(' + angle + ' 88 48)'" />
+      }
+      <circle cx="88" cy="48" r="5" fill="#ffd23f" class="figure__outline" />
+    }
+    @case ('halo') {
+      <ellipse cx="60" cy="24" rx="26" ry="7" fill="none" stroke="#ffd23f" stroke-width="5" />
+    }
+    @case ('cap') {
+      <path d="M28 58 A32 30 0 0 1 92 58 Z" fill="#e8483f" class="figure__outline" />
+      <path d="M86 56 Q106 54 112 62 L86 62 Z" fill="#c2342c" class="figure__outline" />
+      <circle cx="60" cy="30" r="3" fill="#2a2350" />
+    }
+    @case ('bow') {
+      <polygon points="80,42 64,32 64,52" fill="#ff4f9a" class="figure__outline" />
+      <polygon points="80,42 96,32 96,52" fill="#ff4f9a" class="figure__outline" />
+      <circle cx="80" cy="42" r="5" fill="#ff8fc0" class="figure__outline" />
+    }
+    @case ('bunny-ears') {
+      <ellipse cx="44" cy="24" rx="9" ry="26" [attr.fill]="current.color" class="figure__outline" transform="rotate(-12 44 24)" />
+      <ellipse cx="76" cy="24" rx="9" ry="26" [attr.fill]="current.color" class="figure__outline" transform="rotate(12 76 24)" />
+      <ellipse cx="44" cy="26" rx="4" ry="17" fill="#ffb3cf" transform="rotate(-12 44 24)" />
+      <ellipse cx="76" cy="26" rx="4" ry="17" fill="#ffb3cf" transform="rotate(12 76 24)" />
+    }
+    @case ('top-hat') {
+      <rect x="38" y="4" width="44" height="42" rx="3" fill="#222034" class="figure__outline" />
+      <rect x="38" y="33" width="44" height="7" fill="#e8483f" />
+      <rect x="26" y="42" width="68" height="9" rx="4" fill="#222034" class="figure__outline" />
+    }
+  }
+</svg:g>
+</ng-template>

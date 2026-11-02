@@ -1,6 +1,15 @@
 import type { CharacterPalette } from '../../../config/character.config';
 import type { VoxelBox } from '../voxel-geometry';
-import { GUI_BUILD, LUIGI_BUILD, MARIO_BUILD, overallsParts } from './overalls-parts';
+import {
+  BRUNO_BUILD,
+  GIUSEPPE_BUILD,
+  GUI_BUILD,
+  LUIGI_BUILD,
+  MARIO_BUILD,
+  overallsParts,
+  TINA_BUILD,
+  ZECA_BUILD,
+} from './overalls-parts';
 import { pedroParts } from './pedro-parts';
 import { warioParts } from './wario-parts';
 
@@ -33,5 +42,13 @@ export function characterParts(palette: CharacterPalette): CharacterParts {
       return overallsParts(palette, MARIO_BUILD);
     case 'luigi':
       return overallsParts(palette, LUIGI_BUILD);
+    case 'giuseppe':
+      return overallsParts(palette, GIUSEPPE_BUILD);
+    case 'zeca':
+      return overallsParts(palette, ZECA_BUILD);
+    case 'tina':
+      return overallsParts(palette, TINA_BUILD);
+    case 'bruno':
+      return overallsParts(palette, BRUNO_BUILD);
   }
 }

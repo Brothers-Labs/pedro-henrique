@@ -163,6 +163,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-sprunks',
+    label: 'Pedro Sprunks',
+    emoji: '🎵',
+    color: 'pink',
+    /** Cada banda completa e diferente conta como um desafio da jornada. */
+    tagline: 'Monte a banda tocando nos bonecos e crie os seus personagens.',
+    unit: 'desafio',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));
