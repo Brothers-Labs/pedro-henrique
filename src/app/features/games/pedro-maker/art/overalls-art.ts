@@ -1,8 +1,12 @@
 import type { CharacterPalette } from '../config/character.config';
 import {
+  ANA_OVERALLS,
   BRUNO_OVERALLS,
+  CAIO_OVERALLS,
   CLASSIC_OVERALLS,
   GIUSEPPE_OVERALLS,
+  NINA_OVERALLS,
+  OTTO_OVERALLS,
   type OverallsColors,
   TINA_OVERALLS,
   ZECA_OVERALLS,
@@ -38,6 +42,10 @@ export const GIUSEPPE_PORTRAIT: OverallsPortrait = { emblem: 'J', hasMustache: t
 export const ZECA_PORTRAIT: OverallsPortrait = { emblem: 'Z', hasMustache: true, drop: 3, colors: ZECA_OVERALLS };
 export const TINA_PORTRAIT: OverallsPortrait = { emblem: 'T', hasMustache: false, drop: 0, colors: TINA_OVERALLS };
 export const BRUNO_PORTRAIT: OverallsPortrait = { emblem: 'B', hasMustache: true, drop: 7, colors: BRUNO_OVERALLS };
+export const ANA_PORTRAIT: OverallsPortrait = { emblem: 'A', hasMustache: false, drop: 0, colors: ANA_OVERALLS };
+export const CAIO_PORTRAIT: OverallsPortrait = { emblem: 'C', hasMustache: false, drop: 3, colors: CAIO_OVERALLS };
+export const NINA_PORTRAIT: OverallsPortrait = { emblem: 'N', hasMustache: false, drop: 0, colors: NINA_OVERALLS };
+export const OTTO_PORTRAIT: OverallsPortrait = { emblem: 'O', hasMustache: true, drop: 4, colors: OTTO_OVERALLS };
 
 /**
  * Herói de macacão parado e sorrindo, de boné e camiseta da cor dele e o

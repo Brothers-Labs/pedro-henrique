@@ -41,7 +41,7 @@ test('Maker saves the chained iron ball and plays a level with it', async ({ pag
 
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
-  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna']) {
+  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${name}\\b`) })).toBeVisible();
   }
   const giuseppe = page.getByRole('button', { name: /^Giuseppe\b/ });

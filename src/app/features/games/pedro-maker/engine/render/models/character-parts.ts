@@ -1,11 +1,15 @@
 import type { CharacterPalette } from '../../../config/character.config';
 import type { VoxelBox } from '../voxel-geometry';
 import {
+  ANA_BUILD,
   BRUNO_BUILD,
+  CAIO_BUILD,
   GIUSEPPE_BUILD,
   GUI_BUILD,
   LUIGI_BUILD,
   MARIO_BUILD,
+  NINA_BUILD,
+  OTTO_BUILD,
   overallsParts,
   TINA_BUILD,
   ZECA_BUILD,
@@ -50,5 +54,13 @@ export function characterParts(palette: CharacterPalette): CharacterParts {
       return overallsParts(palette, TINA_BUILD);
     case 'bruno':
       return overallsParts(palette, BRUNO_BUILD);
+    case 'ana':
+      return overallsParts(palette, ANA_BUILD);
+    case 'caio':
+      return overallsParts(palette, CAIO_BUILD);
+    case 'nina':
+      return overallsParts(palette, NINA_BUILD);
+    case 'otto':
+      return overallsParts(palette, OTTO_BUILD);
   }
 }

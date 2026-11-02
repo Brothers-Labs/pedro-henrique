@@ -1,9 +1,13 @@
 import { darken } from '../../../art/canvas';
 import type { CharacterPalette } from '../../../config/character.config';
 import {
+  ANA_OVERALLS,
   BRUNO_OVERALLS,
+  CAIO_OVERALLS,
   CLASSIC_OVERALLS,
   GIUSEPPE_OVERALLS,
+  NINA_OVERALLS,
+  OTTO_OVERALLS,
   type OverallsColors,
   TINA_OVERALLS,
   ZECA_OVERALLS,
@@ -32,13 +36,17 @@ export const GIUSEPPE_BUILD: OverallsBuild = { legLength: 0.34, hasMustache: tru
 export const ZECA_BUILD: OverallsBuild = { legLength: 0.4, hasMustache: true, colors: ZECA_OVERALLS };
 export const TINA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false, colors: TINA_OVERALLS };
 export const BRUNO_BUILD: OverallsBuild = { legLength: 0.32, hasMustache: true, colors: BRUNO_OVERALLS };
+export const ANA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false, colors: ANA_OVERALLS };
+export const CAIO_BUILD: OverallsBuild = { legLength: 0.4, hasMustache: false, colors: CAIO_OVERALLS };
+export const NINA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false, colors: NINA_OVERALLS };
+export const OTTO_BUILD: OverallsBuild = { legLength: 0.38, hasMustache: true, colors: OTTO_OVERALLS };
 
 /**
  * Herói de cubos de boné, camiseta e macacão: o Gui, o Luigi, o Mario e os
- * heróis originais do Pedro Maker (Giuseppe, Zeca, Tina e Bruno), cada um com
- * as cores dele.
+ * heróis originais do Pedro Maker (Giuseppe, Zeca, Tina, Bruno, Ana, Caio,
+ * Nina e Otto), cada um com as cores dele.
  *
- * Gui, Luigi e Tina são altos e magros; quem tem as pernas mais curtas desce
+ * Gui, Luigi, Tina, Ana e Nina são altos e magros; quem tem as pernas mais curtas desce
  * o corpo todo junto. A cabeça é um pouco menor que a do Pedro, e eles parecem
  * esguios mesmo do lado dele.
  */

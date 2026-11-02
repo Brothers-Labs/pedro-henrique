@@ -55,3 +55,39 @@ export const BRUNO_OVERALLS: OverallsColors = {
   hair: '#d0632a',
   mustache: '#a84a1a',
 };
+
+/** Ana Faísca, a inventora: macacão grafite e botões dourados de engrenagem. */
+export const ANA_OVERALLS: OverallsColors = {
+  overalls: '#3d3a4a',
+  button: '#ffd23f',
+  shoe: '#2a2350',
+  hair: '#1b1b22',
+  mustache: '#1b1b22',
+};
+
+/** Caio Cometa: macacão prateado de astronauta e cabelo ruivo. */
+export const CAIO_OVERALLS: OverallsColors = {
+  overalls: '#9aa7b8',
+  button: '#ff4f9a',
+  shoe: '#1f3a8a',
+  hair: '#c8552a',
+  mustache: '#c8552a',
+};
+
+/** Nina Neblina: tons de azul-claro e cabelo prateado, leve como a névoa. */
+export const NINA_OVERALLS: OverallsColors = {
+  overalls: '#5b8fb9',
+  button: '#eef1f6',
+  shoe: '#46607a',
+  hair: '#c0c6d0',
+  mustache: '#c0c6d0',
+};
+
+/** Otto Onda, o surfista: macacão azul-petróleo e chinelos de madeira. */
+export const OTTO_OVERALLS: OverallsColors = {
+  overalls: '#1d4e5f',
+  button: '#ffd23f',
+  shoe: '#a0703c',
+  hair: '#4a2a12',
+  mustache: '#3a200c',
+};

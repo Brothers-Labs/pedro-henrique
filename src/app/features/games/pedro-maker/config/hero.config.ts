@@ -32,7 +32,8 @@ export interface HeroDefinition {
  * mais que o Pedro. As fases continuam justas para todos, porque o validador
  * mede os pulos pelo Pedro, que pula menos.
  *
- * Giuseppe, Zeca, Tina e Bruno são heróis originais do Pedro Maker. Nenhum
+ * Giuseppe, Zeca, Tina, Bruno, Ana, Caio, Nina e Otto são heróis originais
+ * do Pedro Maker. Nenhum
  * pula menos que o Pedro — senão uma fase validada poderia ficar impossível —,
  * e o que muda entre eles é a altura extra do pulo e o jeito de frear.
  */
@@ -135,6 +136,50 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: 1, brakingMultiplier: 1.3 },
     outfit: { cap: '#d0632a', shirt: '#7b4a2b', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'ana',
+    name: 'Ana Faísca',
+    description: 'A inventora da turma: boné roxo, camiseta lilás e macacão grafite.',
+    traits: [
+      { emoji: '🔧', label: 'Pula um pouquinho mais alto' },
+      { emoji: '🎯', label: 'Freia quase sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.1), brakingMultiplier: 0.9 },
+    outfit: { cap: '#7b52d3', shirt: '#c9a7ff', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'caio',
+    name: 'Caio Cometa',
+    description: 'O ruivo que sonha com o espaço: boné azul-marinho e macacão prateado.',
+    traits: [
+      { emoji: '☄️', label: 'Pula alto como um cometa' },
+      { emoji: '🧊', label: 'Derrapa um pouco ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.2), brakingMultiplier: 0.6 },
+    outfit: { cap: '#1f3a8a', shirt: '#ff8a3d', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'nina',
+    name: 'Nina Neblina',
+    description: 'Leve como a névoa: cabelo prateado e roupa toda em azul-claro.',
+    traits: [
+      { emoji: '🌫️', label: 'Pula tão alto quanto o Luigi' },
+      { emoji: '🛼', label: 'Escorrega mais que todos ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.3), brakingMultiplier: 0.4 },
+    outfit: { cap: '#9fd3ff', shirt: '#eef1f6', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'otto',
+    name: 'Otto Onda',
+    description: 'O surfista bigodudo: boné verde-água e camiseta azul do mar.',
+    traits: [
+      { emoji: '🏄', label: 'Pula igual ao Pedro' },
+      { emoji: '⚖️', label: 'Freia na medida certa' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1 },
+    outfit: { cap: '#12b886', shirt: '#2bb7c9', backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

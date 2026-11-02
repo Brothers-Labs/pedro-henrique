@@ -83,11 +83,15 @@ import {
   POWER_UP_SIZE,
 } from './item-art';
 import {
+  ANA_PORTRAIT,
   BRUNO_PORTRAIT,
+  CAIO_PORTRAIT,
   GIUSEPPE_PORTRAIT,
   GUI_PORTRAIT,
   LUIGI_PORTRAIT,
   MARIO_PORTRAIT,
+  NINA_PORTRAIT,
+  OTTO_PORTRAIT,
   paintOverallsPortrait,
   TINA_PORTRAIT,
   ZECA_PORTRAIT,
@@ -151,6 +155,18 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       return;
     case 'bruno':
       paintOverallsPortrait(context, character, BRUNO_PORTRAIT);
+      return;
+    case 'ana':
+      paintOverallsPortrait(context, character, ANA_PORTRAIT);
+      return;
+    case 'caio':
+      paintOverallsPortrait(context, character, CAIO_PORTRAIT);
+      return;
+    case 'nina':
+      paintOverallsPortrait(context, character, NINA_PORTRAIT);
+      return;
+    case 'otto':
+      paintOverallsPortrait(context, character, OTTO_PORTRAIT);
       return;
   }
 }
