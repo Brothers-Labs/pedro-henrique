@@ -1,0 +1,132 @@
+@let current = draft();
+
+<section class="creator" aria-labelledby="criador-titulo">
+  <h2 id="criador-titulo" class="creator__title"><span aria-hidden="true">🎨</span> Meus personagens</h2>
+  <p class="creator__hint">Escolha as peças, ouça o som e crie o seu boneco. Ele entra na banda!</p>
+
+  <div class="creator__layout">
+    <div class="creator__preview">
+      <app-sprunk-figure [character]="preview()" [isSinging]="true" [isActing]="isPreviewActing()" />
+      <button type="button" class="button button--accent" (click)="listen()">
+        <span aria-hidden="true">🔊</span> Ouvir
+      </button>
+    </div>
+
+    <div class="creator__form">
+      <label class="creator__field">
+        <span class="creator__label">Nome</span>
+        <input
+          class="creator__input"
+          type="text"
+          autocomplete="off"
+          [maxLength]="maxNameLength"
+          [value]="current.name"
+          placeholder="Ex.: Trovão"
+          (input)="updateName($event)"
+        />
+      </label>
+
+      <fieldset class="creator__group">
+        <legend class="creator__label">Cor</legend>
+        <div class="creator__swatches">
+          @for (color of colors; track color) {
+            <button
+              type="button"
+              class="creator__swatch"
+              [style.background]="color"
+              [attr.aria-label]="'Cor ' + ($index + 1)"
+              [attr.aria-pressed]="current.color === color"
+              (click)="update('color', color)"
+            ></button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="creator__group">
+        <legend class="creator__label">Na cabeça</legend>
+        <div class="creator__chips">
+          @for (accessory of accessories; track accessory) {
+            <button
+              type="button"
+              class="creator__chip"
+              [attr.aria-pressed]="current.accessory === accessory"
+              (click)="update('accessory', accessory)"
+            >
+              {{ accessoryLabels[accessory] }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="creator__group">
+        <legend class="creator__label">Olhos</legend>
+        <div class="creator__chips">
+          @for (eyes of eyesOptions; track eyes) {
+            <button
+              type="button"
+              class="creator__chip"
+              [attr.aria-pressed]="current.eyes === eyes"
+              (click)="update('eyes', eyes)"
+            >
+              {{ eyesLabels[eyes] }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="creator__group">
+        <legend class="creator__label">Ação</legend>
+        <div class="creator__chips">
+          @for (action of actions; track action) {
+            <button
+              type="button"
+              class="creator__chip"
+              [attr.aria-pressed]="current.action === action"
+              (click)="update('action', action)"
+            >
+              {{ actionLabels[action] }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <label class="creator__field">
+        <span class="creator__label">Som</span>
+        <select class="creator__input" [value]="current.soundId" (change)="updateSound($event)">
+          @for (sound of sounds; track sound.id) {
+            <option [value]="sound.id" [selected]="current.soundId === sound.id">
+              {{ categoryLabels[sound.category] }} · {{ sound.label }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <button type="button" class="button button--primary" [disabled]="!canCreate()" (click)="create()">
+        <span aria-hidden="true">✨</span> Criar boneco
+      </button>
+
+      @if (myCharacters().length >= maxCharacters) {
+        <p class="creator__notice">Você já criou {{ maxCharacters }} bonecos. Apague um para criar outro.</p>
+      }
+    </div>
+  </div>
+
+  @if (myCharacters().length > 0) {
+    <ul class="creator__list" aria-label="Bonecos que você criou">
+      @for (character of myCharacters(); track character.id) {
+        <li class="creator__item">
+          <app-sprunk-figure class="creator__thumb" [character]="character" variant="icon" />
+          <span class="creator__name">{{ character.name }}</span>
+          <button
+            type="button"
+            class="creator__remove"
+            [attr.aria-label]="'Apagar ' + character.name"
+            (click)="remove(character)"
+          >
+            <span aria-hidden="true">🗑️</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

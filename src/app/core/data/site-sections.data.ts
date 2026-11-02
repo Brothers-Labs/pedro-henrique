@@ -99,6 +99,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'mint',
   },
   {
+    id: 'pedro-sprunks',
+    label: 'Pedro Sprunks',
+    route: '/jogos/pedro-sprunks',
+    emoji: '🎵',
+    description: 'Minha banda de bonecos: toco neles, cada um canta um som e eu crio os meus personagens.',
+    color: 'pink',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',
@@ -145,7 +153,7 @@ export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   {
     id: 'brincar',
     label: 'Brincar',
-    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'pedro-craft', 'mascote'].map(findSection),
+    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'pedro-craft', 'pedro-sprunks', 'mascote'].map(findSection),
   },
   { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
 ];

@@ -1,0 +1,212 @@
+@use 'mixins' as *;
+
+$ink: #2a2350;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+// O ícone mostra só a cabeça: o corpo fica de fora em vez de vazar sobre o nome.
+:host(.is-icon) .figure {
+  overflow: hidden;
+}
+
+.figure__actor {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.figure__body,
+.figure__head,
+.figure__actor--ball > circle:first-child,
+.figure__outline {
+  stroke: $ink;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.figure__shade {
+  filter: brightness(0.82);
+}
+
+.figure__line {
+  fill: none;
+  stroke: $ink;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.figure__star {
+  fill: #ffffff;
+  stroke: $ink;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.figure__mouth--open {
+  fill: $ink;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sing var(--beat, 0.5s) ease-in-out infinite alternate;
+}
+
+.figure__propeller {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+// Cantando: o boneco balança no tempo da música, apoiado no chão.
+:host(.is-singing) .figure__actor {
+  animation: groove var(--beat, 0.5s) ease-in-out infinite alternate;
+}
+
+:host(.is-singing) .figure__propeller {
+  animation: propeller 0.4s linear infinite;
+}
+
+// Ações especiais, disparadas ao tocar no boneco. Vencem a dança enquanto duram.
+:host([data-action='jump']) .figure__actor {
+  animation: jump 0.7s ease-out;
+}
+
+:host([data-action='spin']) .figure__actor {
+  transform-origin: 50% 50%;
+  animation: spin 0.7s ease-in-out;
+}
+
+:host([data-action='shake']) .figure__actor {
+  animation: shake 0.7s ease-in-out;
+}
+
+:host([data-action='stretch']) .figure__actor {
+  animation: stretch 0.7s ease-in-out;
+}
+
+:host([data-action='lunge']) .figure__actor--ball {
+  transform-origin: 50% 50%;
+  animation: lunge 0.7s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@include reduced-motion {
+  .figure__actor,
+  .figure__propeller,
+  .figure__mouth--open {
+    animation: none !important;
+  }
+}
+
+@keyframes groove {
+  from {
+    transform: translateY(0) scale(1, 1);
+  }
+
+  to {
+    transform: translateY(-3%) scale(0.97, 1.03);
+  }
+}
+
+@keyframes sing {
+  from {
+    transform: scaleY(0.5);
+  }
+
+  to {
+    transform: scaleY(1.1);
+  }
+}
+
+@keyframes propeller {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  15% {
+    transform: translateY(0) scale(1.08, 0.9);
+  }
+
+  50% {
+    transform: translateY(-28%) scale(0.95, 1.06);
+  }
+}
+
+@keyframes spin {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  25% {
+    transform: scaleX(-1);
+  }
+
+  50% {
+    transform: scaleX(1);
+  }
+
+  75% {
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  20%,
+  60% {
+    transform: rotate(-9deg);
+  }
+
+  40%,
+  80% {
+    transform: rotate(9deg);
+  }
+}
+
+@keyframes stretch {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+
+  45% {
+    transform: scale(0.88, 1.25);
+  }
+
+  70% {
+    transform: scale(1.06, 0.94);
+  }
+}
+
+// A bola avança até a corrente esticar e volta quicando.
+@keyframes lunge {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  35% {
+    transform: translate(14%, -10%) scale(1.12);
+  }
+
+  60% {
+    transform: translate(-4%, 2%) scale(0.95);
+  }
+}

@@ -1,0 +1,97 @@
+<div class="sprunks">
+  <a class="sprunks__back" routerLink="/jogos"><span aria-hidden="true">←</span> Jogos</a>
+
+  <h1 class="sprunks__title">PEDRO SPRUNKS <span aria-hidden="true">🎵</span></h1>
+  <p class="sprunks__tagline">Toque nos bonecos e monte a sua banda!</p>
+
+  @if (!isAudible()) {
+    <p class="sprunks__muted" role="status">
+      <span aria-hidden="true">🔇</span> O som do site está desligado (ou o modo calmo está ligado). Ligue o som para ouvir a banda.
+    </p>
+  }
+
+  <section class="stage" aria-label="Palco da banda" [style.--beat]="beatDuration">
+    <ul class="stage__slots">
+      @for (entry of stageEntries(); track entry.index) {
+        <li class="stage__slot">
+          @if (entry.character; as character) {
+            <button
+              type="button"
+              class="stage__actor"
+              [attr.aria-label]="character.name + ': fazer a ação especial'"
+              (click)="act(entry.index, character)"
+            >
+              <app-sprunk-figure
+                [character]="character"
+                [isSinging]="isSinging()"
+                [isActing]="actingSlot() === entry.index"
+              />
+            </button>
+            <span class="stage__name">{{ character.name }}</span>
+            <button
+              type="button"
+              class="stage__remove"
+              [attr.aria-label]="'Tirar ' + character.name + ' da banda'"
+              (click)="remove(character)"
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
+          } @else {
+            <app-sprunk-figure class="stage__empty" [character]="emptySlot" />
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  <p class="sprunks__message" aria-live="polite">{{ message() }}</p>
+
+  <div class="controls">
+    <button type="button" class="button button--secondary" [disabled]="isEmpty()" (click)="togglePause()">
+      @if (isPaused()) {
+        <span aria-hidden="true">▶</span> Tocar
+      } @else {
+        <span aria-hidden="true">⏸</span> Pausar
+      }
+    </button>
+    <button type="button" class="button" [disabled]="isEmpty()" (click)="clearStage()">
+      <span aria-hidden="true">🧹</span> Limpar palco
+    </button>
+    <button type="button" class="button button--accent" (click)="randomBand()">
+      <span aria-hidden="true">🎲</span> Banda surpresa
+    </button>
+    <label class="controls__volume">
+      <span aria-hidden="true">🔊</span>
+      <span class="controls__volume-label">Volume</span>
+      <input type="range" min="0" max="100" [value]="volume() * 100" (input)="changeVolume($event)" />
+    </label>
+  </div>
+
+  <section class="palette" aria-labelledby="paleta-titulo">
+    <h2 id="paleta-titulo" class="palette__title">Bonecos</h2>
+    <div class="palette__grid">
+      @for (character of palette(); track character.id) {
+        <button
+          type="button"
+          class="palette__tile"
+          [style.--tile-color]="character.color"
+          [attr.aria-pressed]="onStageIds().has(character.id)"
+          [attr.aria-label]="character.name + ' (' + categoryLabels[categoryOf(character)] + ')'"
+          (click)="toggle(character)"
+        >
+          <app-sprunk-figure [character]="character" variant="icon" />
+          <span class="palette__name">{{ character.name }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <button type="button" class="button button--primary sprunks__creator-toggle" [attr.aria-expanded]="isCreatorOpen()" (click)="toggleCreator()">
+    <span aria-hidden="true">🎨</span>
+    {{ isCreatorOpen() ? 'Fechar o criador' : 'Criar meus personagens' }}
+  </button>
+
+  @if (isCreatorOpen()) {
+    <app-sprunk-creator (created)="onCreated($event)" />
+  }
+</div>
