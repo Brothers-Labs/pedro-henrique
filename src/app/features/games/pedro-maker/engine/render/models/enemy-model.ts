@@ -68,14 +68,17 @@ export class EnemyMaterials {
  * lava pula girando. O goomba marcha balançando, a bala de canhão voa de lado
  * com o nariz para a frente, o thwomp treme de raiva e o Rei Slime quica como
  * o slime. O Bolão treme antes do bote e arrasta a corrente presa na estaca,
- * que fica no chão enquanto ele vai e volta. Congelado, para dentro de um bloco de gelo. Derrotado, achata e
- * some.
+ * que fica no chão enquanto ele vai e volta. Os peixes nadam de perfil
+ * abanando o rabo, e o saltador some na água entre um pulo e outro.
+ * Congelado, para dentro de um bloco de gelo. Derrotado, achata e some.
  */
 export class EnemyModel {
   readonly root = new Group();
 
   private readonly body = new Group();
   private readonly wings: readonly Group[] = [];
+  /** Rabo dos peixes, que abana sozinho atrás do corpo. */
+  private readonly tail: Group | null = null;
   private readonly ghostMaterial: MeshStandardMaterial | null = null;
   /** Criado no primeiro congelamento: a maioria dos inimigos nunca precisa dele. */
   private iceBlock: Mesh | null = null;
@@ -112,6 +115,13 @@ export class EnemyModel {
 
     if (kind === 'bee') {
       this.wings = this.buildWings(0.08, 0.36, [box(0.16, 0.06, -0.04, 0.3, 0.04, 0.2, '#e6f6ff')], material);
+    }
+
+    if (kind === 'fish' || kind === 'jumping-fish') {
+      this.tail = new Group();
+      this.tail.position.set(0, FISH_CENTER_Y, -FISH_HALF_LENGTH);
+      this.tail.add(this.mesh(fishTail(FISH_COLORS[kind].fin), material));
+      this.body.add(this.tail);
     }
 
     if (kind === 'iron-ball') {
@@ -208,6 +218,19 @@ export class EnemyModel {
         this.body.rotation.y = this.heading * 0.3;
         this.body.position.x = pose.isMoving ? 0 : Math.sin(time * 40) * 0.01;
         return;
+      case 'fish':
+        // De perfil, nadando para onde olha, ondulando o corpo e abanando o rabo.
+        this.body.rotation.y = pose.direction * (Math.PI / 2);
+        this.body.rotation.z = Math.sin(time * 4) * 0.06;
+        this.wagTail(time * 10);
+        return;
+      case 'jumping-fish':
+        // Mergulhado some de vez; no ar, se curva para cima e para baixo no arco do salto.
+        this.body.scale.setScalar(pose.emergence === 0 ? 0.001 : 1);
+        this.body.rotation.y = pose.direction * (Math.PI / 2);
+        this.body.rotation.x = Math.sin(time * 3) * 0.35;
+        this.wagTail(time * 16);
+        return;
       case 'iron-ball':
         // Rola na direção do bote e treme forte no aviso, para dar tempo de fugir.
         this.body.rotation.y = this.heading * 0.3;
@@ -265,6 +288,12 @@ export class EnemyModel {
     });
   }
 
+  private wagTail(angle: number): void {
+    if (this.tail) {
+      this.tail.rotation.y = Math.sin(angle) * 0.45;
+    }
+  }
+
   private flapWings(angle: number, amplitude: number): void {
     this.wings.forEach((wing, index) => {
       wing.rotation.z = (index === 0 ? 1 : -1) * Math.sin(angle) * amplitude;
@@ -310,6 +339,49 @@ const STAKE_PARTS: readonly VoxelBox[] = [
 
 /** Altura da planta carnívora fora do cano, em blocos. */
 const PIRANHA_HEIGHT = 1.0;
+
+/** Centro do corpo dos peixes e meio comprimento, em blocos: o rabo se prende atrás. */
+const FISH_CENTER_Y = 0.24;
+const FISH_HALF_LENGTH = 0.3;
+
+interface FishColors {
+  readonly body: string;
+  readonly belly: string;
+  readonly fin: string;
+  readonly stripe: string;
+}
+
+/** O nadador é azul-piscina de nadadeiras amarelas; o saltador, coral de nadadeiras roxas. */
+const FISH_COLORS: Readonly<Record<'fish' | 'jumping-fish', FishColors>> = {
+  fish: { body: '#2bb7c9', belly: '#bff3f7', fin: '#ffd23f', stripe: '#ffffff' },
+  'jumping-fish': { body: '#ff6f91', belly: '#ffd6e0', fin: '#8e44c9', stripe: '#ffe14d' },
+};
+
+/** Rabo em leque, desenhado a partir da junta com o corpo e aberto para trás (-z). */
+function fishTail(color: string): readonly VoxelBox[] {
+  return [box(0, 0, -0.06, 0.06, 0.16, 0.12, color), box(0, 0, -0.16, 0.06, 0.32, 0.1, color)];
+}
+
+/** Corpo de peixe de perfil, com a boca para a frente (+z), listra, barbatana e olhos dos dois lados. */
+function fishBody(colors: FishColors): readonly VoxelBox[] {
+  const y = FISH_CENTER_Y;
+
+  return [
+    box(0, y, 0, 0.32, 0.36, 0.6, colors.body),
+    box(0, y - 0.1, 0.04, 0.3, 0.12, 0.46, colors.belly),
+    box(0, y, 0.33, 0.24, 0.22, 0.08, colors.body),
+    box(0, y - 0.04, 0.38, 0.14, 0.05, 0.02, '#2a2350'),
+    box(0, y, -0.08, 0.34, 0.3, 0.06, colors.stripe),
+    box(0, y + 0.24, -0.02, 0.06, 0.12, 0.26, colors.fin),
+    box(-0.17, y - 0.06, 0.06, 0.04, 0.08, 0.14, colors.fin),
+    box(0.17, y - 0.06, 0.06, 0.04, 0.08, 0.14, colors.fin),
+    // Olho de cada lado da cabeça, porque o peixe é visto de perfil.
+    ...[-1, 1].flatMap((side) => [
+      box(side * 0.165, y + 0.06, 0.2, 0.02, 0.12, 0.12, EYE_WHITE),
+      box(side * 0.18, y + 0.05, 0.22, 0.02, 0.07, 0.06, PUPIL),
+    ]),
+  ];
+}
 
 /** Olhos na frente do corpo, na altura e distância pedidas. */
 function eyes(y: number, z: number, spread: number, size: number): readonly VoxelBox[] {
@@ -460,6 +532,8 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(0, 0.24, 0.356, 0.14, 0.035, 0.01, '#2a2350'),
     ...eyes(0.42, 0.356, 0.12, 0.11),
   ],
+  fish: fishBody(FISH_COLORS.fish),
+  'jumping-fish': fishBody(FISH_COLORS['jumping-fish']),
   piranha: [
     box(0, 0.2, 0, 0.12, 0.4, 0.12, '#2f8f47'),
     box(-0.16, 0.22, 0, 0.22, 0.06, 0.14, '#45b95a'),

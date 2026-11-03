@@ -48,6 +48,7 @@ export interface SprunkSound {
 export type SprunkAccessory =
   | 'none'
   | 'headphones'
+  | 'antenna-headphones'
   | 'spikes'
   | 'propeller'
   | 'antennas'
@@ -66,7 +67,11 @@ export type SprunkAccessory =
   | 'bunny-ears'
   | 'top-hat';
 
-export type SprunkEyes = 'sleepy' | 'round' | 'happy' | 'shades' | 'star';
+/** `glow` são os olhos acesos da turma da noite, que brilham no escuro. */
+export type SprunkEyes = 'sleepy' | 'round' | 'happy' | 'shades' | 'star' | 'glow';
+
+/** Fantasia vestida no corpo; a cabeça fica por conta do acessório. */
+export type SprunkCostume = 'none' | 'bowtie' | 'tie' | 'scarf' | 'cape' | 'overalls' | 'stripes' | 'skeleton';
 
 /** O que o boneco faz quando é tocado no palco. */
 export type SprunkAction = 'jump' | 'spin' | 'shake' | 'stretch' | 'lunge';
@@ -87,6 +92,7 @@ export interface SprunkCharacter {
   readonly color: string;
   readonly shape: SprunkShape;
   readonly accessory: SprunkAccessory;
+  readonly costume: SprunkCostume;
   readonly eyes: SprunkEyes;
   readonly action: SprunkAction;
   readonly soundId: string;
@@ -95,6 +101,9 @@ export interface SprunkCharacter {
 }
 
 /** Dados que o criador pede; o resto (id, formato) é decidido pelo jogo. */
-export type SprunkDraft = Pick<SprunkCharacter, 'name' | 'color' | 'accessory' | 'eyes' | 'action' | 'soundId'>;
+export type SprunkDraft = Pick<
+  SprunkCharacter,
+  'name' | 'color' | 'accessory' | 'costume' | 'eyes' | 'action' | 'soundId'
+>;
 
 export const SPRUNK_STEPS_PER_BAR = 16;

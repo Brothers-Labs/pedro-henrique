@@ -76,7 +76,10 @@ export type HeroId =
   | 'ana'
   | 'caio'
   | 'nina'
-  | 'otto';
+  | 'otto'
+  | 'vava'
+  | 'rafa'
+  | 'duda';
 
 /** Visual do Pedro no jogo. Cada campo é o id de uma opção do catálogo. */
 export interface CharacterLook {

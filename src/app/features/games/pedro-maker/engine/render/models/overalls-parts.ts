@@ -5,11 +5,14 @@ import {
   BRUNO_OVERALLS,
   CAIO_OVERALLS,
   CLASSIC_OVERALLS,
+  DUDA_OVERALLS,
   GIUSEPPE_OVERALLS,
   NINA_OVERALLS,
   OTTO_OVERALLS,
   type OverallsColors,
+  RAFA_OVERALLS,
   TINA_OVERALLS,
+  VAVA_OVERALLS,
   ZECA_OVERALLS,
 } from '../../../config/overalls.config';
 import { box, type VoxelBox } from '../voxel-geometry';
@@ -40,13 +43,16 @@ export const ANA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: fals
 export const CAIO_BUILD: OverallsBuild = { legLength: 0.4, hasMustache: false, colors: CAIO_OVERALLS };
 export const NINA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: false, colors: NINA_OVERALLS };
 export const OTTO_BUILD: OverallsBuild = { legLength: 0.38, hasMustache: true, colors: OTTO_OVERALLS };
+export const VAVA_BUILD: OverallsBuild = { legLength: TALL_LEG, hasMustache: true, colors: VAVA_OVERALLS };
+export const RAFA_BUILD: OverallsBuild = { legLength: 0.38, hasMustache: true, colors: RAFA_OVERALLS };
+export const DUDA_BUILD: OverallsBuild = { legLength: 0.32, hasMustache: true, colors: DUDA_OVERALLS };
 
 /**
  * Herói de cubos de boné, camiseta e macacão: o Gui, o Luigi, o Mario e os
  * heróis originais do Pedro Maker (Giuseppe, Zeca, Tina, Bruno, Ana, Caio,
- * Nina e Otto), cada um com as cores dele.
+ * Nina, Otto, Vavá, Rafa e Duda), cada um com as cores dele.
  *
- * Gui, Luigi, Tina, Ana e Nina são altos e magros; quem tem as pernas mais curtas desce
+ * Gui, Luigi, Tina, Ana, Nina e Vavá são altos e magros; quem tem as pernas mais curtas desce
  * o corpo todo junto. A cabeça é um pouco menor que a do Pedro, e eles parecem
  * esguios mesmo do lado dele.
  */

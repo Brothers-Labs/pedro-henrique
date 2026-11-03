@@ -16,7 +16,7 @@ import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { GameSimulation, STEP_MS } from './game-simulation';
-import { bottom, centerX } from './physics-body';
+import { bottom, centerX, centerY } from './physics-body';
 
 const META = { id: 'teste', name: 'Teste', theme: 'vale', targetTimeSeconds: 60 } as const;
 const SURFACE = 12;
@@ -541,6 +541,68 @@ describe('Simulação do Pedro Maker', () => {
     expect(directions).toEqual(new Set([1, -1]));
     expect(farthest).toBeLessThan(TILE_SIZE * 3.5);
     expect(bee.canBeStomped).toBeTrue();
+  });
+
+  it('faz o peixe nadador ir e voltar dentro da água, sem afundar', () => {
+    const harness = start(flatLevel().clearColumns(14, 26).fill('water', 14, 26, SURFACE - 2, SURFACE).add('fish', 20, SURFACE - 1).build(META));
+    const fish = harness.simulation.enemies[0];
+    const homeX = centerX(fish.body);
+    const homeY = centerY(fish.body);
+    const directions = new Set<number>();
+    let farthestX = 0;
+    let farthestY = 0;
+
+    for (let step = 0; step < 900; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      directions.add(fish.direction);
+      farthestX = Math.max(farthestX, Math.abs(centerX(fish.body) - homeX));
+      farthestY = Math.max(farthestY, Math.abs(centerY(fish.body) - homeY));
+    }
+
+    expect(directions).toEqual(new Set([1, -1]));
+    expect(farthestX).toBeLessThan(TILE_SIZE * 4.5);
+    expect(farthestY).toBeLessThan(TILE_SIZE / 2);
+    expect(fish.canBeStomped).toBeTrue();
+    expect(fish.canBeFrozen).toBeTrue();
+  });
+
+  it('faz o peixe saltador pular da água e mergulhar de volta, sem machucar mergulhado', () => {
+    const harness = start(flatLevel().clearColumns(19, 21).fill('water', 19, 21, SURFACE, SURFACE).add('jumping-fish', 20, SURFACE).build(META));
+    const fish = harness.simulation.enemies[0];
+    const homeY = fish.body.y;
+    const states = new Set<boolean>();
+    let highest = homeY;
+
+    expect(fish.isHarmful).toBeFalse();
+
+    for (let step = 0; step < 300; step += 1) {
+      harness.simulation.step(IDLE_INPUT);
+      states.add(fish.isHidden);
+      highest = Math.min(highest, fish.body.y);
+
+      if (fish.isHidden) {
+        expect(fish.isHarmful).toBeFalse();
+      }
+    }
+
+    expect(states).toEqual(new Set([true, false]));
+    expect(homeY - highest).toBeGreaterThan(TILE_SIZE * 2.5);
+    expect(fish.isFireproof).toBeFalse();
+  });
+
+  it('derrota o peixe nadador com um pisão', () => {
+    const harness = start(flatLevel().add('fish', 12, SURFACE - 2).build(META));
+    run(harness, 0.2);
+
+    const fish = harness.simulation.enemies[0];
+    const player = harness.simulation.player;
+
+    player.placeFeetAt(centerX(fish.body), fish.body.y - 4);
+    player.body.vy = 300;
+    run(harness, 0.1);
+
+    expect(fish.isDefeated).toBeTrue();
+    expect(lastHud(harness.events)?.hearts).toBe(3);
   });
 
   it('soma cinquenta moedas de uma vez com a moeda gigante de 50', () => {

@@ -39,9 +39,28 @@ test('Maker saves the chained iron ball and plays a level with it', async ({ pag
   await page.screenshot({ path: test.info().outputPath('iron-ball-in-game.png') });
 });
 
+test('Maker saves both fish enemies placed from the editor', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase dos Peixes');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Inimigos', exact: true }).click();
+  for (const [label, x] of [['Peixe Nadador', 208], ['Peixe Saltador', 272]] as const) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase dos Peixes')?.objects.map((object) => object.type))
+    .toEqual(expect.arrayContaining(['fish', 'jumping-fish']));
+  await page.screenshot({ path: test.info().outputPath('fish-enemies-editor.png') });
+});
+
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
-  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda']) {
+  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${name}\\b`) })).toBeVisible();
   }
   const giuseppe = page.getByRole('button', { name: /^Giuseppe\b/ });

@@ -4,6 +4,8 @@ import {
   SPRUNK_ACCESSORIES,
   SPRUNK_ACCESSORY_LABELS,
   SPRUNK_BODY_COLORS,
+  SPRUNK_COSTUME_LABELS,
+  SPRUNK_COSTUMES,
   SPRUNK_CUSTOM_ACTION_LABELS,
   SPRUNK_CUSTOM_ACTIONS,
   SPRUNK_EYES,
@@ -24,6 +26,7 @@ const INITIAL_DRAFT: SprunkDraft = {
   name: '',
   color: SPRUNK_BODY_COLORS[0],
   accessory: 'none',
+  costume: 'none',
   eyes: 'round',
   action: 'jump',
   soundId: SPRUNK_SOUNDS[0].id,
@@ -56,6 +59,8 @@ export class SprunkCreator {
   protected readonly colors = SPRUNK_BODY_COLORS;
   protected readonly accessories = SPRUNK_ACCESSORIES;
   protected readonly accessoryLabels = SPRUNK_ACCESSORY_LABELS;
+  protected readonly costumes = SPRUNK_COSTUMES;
+  protected readonly costumeLabels = SPRUNK_COSTUME_LABELS;
   protected readonly eyesOptions = SPRUNK_EYES;
   protected readonly eyesLabels = SPRUNK_EYES_LABELS;
   protected readonly actions = SPRUNK_CUSTOM_ACTIONS;

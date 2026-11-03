@@ -4,8 +4,9 @@ import { isValidDraft, MAX_SPRUNK_NAME_LENGTH, normalizeSprunkName, parseStoredS
 const VALID_DRAFT: SprunkDraft = {
   name: 'Trovão',
   color: '#2f5fd0',
-  accessory: 'crown',
-  eyes: 'star',
+  accessory: 'antenna-headphones',
+  costume: 'cape',
+  eyes: 'glow',
   action: 'spin',
   soundId: 'sino',
 };
@@ -20,6 +21,30 @@ describe('Meus personagens do Pedro Sprunks', () => {
     expect(isValidDraft({ ...VALID_DRAFT, color: 'red' })).toBeFalse();
     expect(isValidDraft({ ...VALID_DRAFT, soundId: 'nao-existe' })).toBeFalse();
     expect(isValidDraft({ ...VALID_DRAFT, action: 'lunge' })).toBeFalse();
+  });
+
+  it('recusa fantasia fora do catálogo', () => {
+    expect(isValidDraft({ ...VALID_DRAFT, costume: 'armadura' as SprunkDraft['costume'] })).toBeFalse();
+  });
+
+  it('veste nenhuma fantasia nos bonecos guardados antes das fantasias existirem', () => {
+    const legacySave: Omit<SprunkDraft, 'costume'> & { readonly id: string } = {
+      id: 'meu-antigo',
+      name: 'Trovão',
+      color: '#2f5fd0',
+      accessory: 'antenna-headphones',
+      eyes: 'glow',
+      action: 'spin',
+      soundId: 'sino',
+    };
+    const [character] = parseStoredSprunks(JSON.stringify([legacySave]));
+
+    expect(character.costume).toBe('none');
+    expect(character.accessory).toBe('antenna-headphones');
+  });
+
+  it('descarta boneco guardado com fantasia estragada', () => {
+    expect(parseStoredSprunks(JSON.stringify([{ ...VALID_DRAFT, id: 'meu-1', costume: 7 }]))).toEqual([]);
   });
 
   it('limpa espaços e corta nomes longos', () => {

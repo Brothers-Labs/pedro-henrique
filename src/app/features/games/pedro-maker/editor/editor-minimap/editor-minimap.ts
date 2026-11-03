@@ -52,6 +52,8 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   thwomp: '#e8505b',
   'king-slime': '#e8505b',
   'iron-ball': '#e8505b',
+  fish: '#e8505b',
+  'jumping-fish': '#e8505b',
   boss: '#e8505b',
 };
 

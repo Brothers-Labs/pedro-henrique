@@ -5,10 +5,13 @@ import {
   ANA_OVERALLS,
   BRUNO_OVERALLS,
   CAIO_OVERALLS,
+  DUDA_OVERALLS,
   GIUSEPPE_OVERALLS,
   NINA_OVERALLS,
   OTTO_OVERALLS,
+  RAFA_OVERALLS,
   TINA_OVERALLS,
+  VAVA_OVERALLS,
   ZECA_OVERALLS,
 } from '../../../config/overalls.config';
 import type { HeroId } from '../../../models/progress.model';
@@ -23,6 +26,9 @@ const ORIGINAL_HEROES: readonly { readonly id: HeroId; readonly overalls: string
   { id: 'caio', overalls: CAIO_OVERALLS.overalls, hair: CAIO_OVERALLS.hair },
   { id: 'nina', overalls: NINA_OVERALLS.overalls, hair: NINA_OVERALLS.hair },
   { id: 'otto', overalls: OTTO_OVERALLS.overalls, hair: OTTO_OVERALLS.hair },
+  { id: 'vava', overalls: VAVA_OVERALLS.overalls, hair: VAVA_OVERALLS.hair },
+  { id: 'rafa', overalls: RAFA_OVERALLS.overalls, hair: RAFA_OVERALLS.hair },
+  { id: 'duda', overalls: DUDA_OVERALLS.overalls, hair: DUDA_OVERALLS.hair },
 ];
 
 describe('Heróis originais do Pedro Maker', () => {

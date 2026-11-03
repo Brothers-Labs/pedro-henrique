@@ -51,6 +51,36 @@ $ink: #2a2350;
   stroke-linejoin: round;
 }
 
+// Na turma da noite, a boca e os traços do rosto ficam claros sobre o corpo escuro.
+:host(.is-dark) .figure__line {
+  stroke: #f4f1ff;
+}
+
+:host(.is-dark) .figure__mouth--open {
+  fill: #f4f1ff;
+}
+
+.figure__glow {
+  fill: #ffe14d;
+  opacity: 0.35;
+}
+
+.figure__glow-eye {
+  fill: #ffe14d;
+  stroke: $ink;
+  stroke-width: 2;
+}
+
+.figure__bone {
+  stroke: #f4f1ff;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.figure__antenna-tip {
+  fill: #a6ff4d;
+}
+
 .figure__mouth--open {
   fill: $ink;
   transform-box: fill-box;
@@ -70,6 +100,12 @@ $ink: #2a2350;
 
 :host(.is-singing) .figure__propeller {
   animation: propeller 0.4s linear infinite;
+}
+
+// As antenas do fone piscam e os olhos da turma da noite pulsam no tempo da música.
+:host(.is-singing) .figure__antenna-tip,
+:host(.is-singing) .figure__glow {
+  animation: blink var(--beat, 0.5s) ease-in-out infinite alternate;
 }
 
 // Ações especiais, disparadas ao tocar no boneco. Vencem a dança enquanto duram.
@@ -98,6 +134,8 @@ $ink: #2a2350;
 @include reduced-motion {
   .figure__actor,
   .figure__propeller,
+  .figure__antenna-tip,
+  .figure__glow,
   .figure__mouth--open {
     animation: none !important;
   }
@@ -120,6 +158,16 @@ $ink: #2a2350;
 
   to {
     transform: scaleY(1.1);
+  }
+}
+
+@keyframes blink {
+  from {
+    opacity: 0.25;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

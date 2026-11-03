@@ -30,6 +30,7 @@ const EMPTY_SLOT: SprunkCharacter = {
   color: '#c3c7cf',
   shape: 'classic',
   accessory: 'none',
+  costume: 'none',
   eyes: 'sleepy',
   action: 'jump',
   soundId: 'bumbo',

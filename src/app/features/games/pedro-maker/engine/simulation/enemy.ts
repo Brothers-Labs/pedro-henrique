@@ -31,6 +31,8 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   thwomp: { speed: 0, bodyWidth: 44, bodyHeight: 46, flies: true, isStompable: false, isFireproof: true },
   'king-slime': { speed: 40, bodyWidth: 58, bodyHeight: 46, flies: false, isStompable: true, isFireproof: false },
   'iron-ball': { speed: 0, bodyWidth: 36, bodyHeight: 36, flies: true, isStompable: false, isFireproof: true },
+  fish: { speed: 70, bodyWidth: 34, bodyHeight: 22, flies: true, isStompable: true, isFireproof: false },
+  'jumping-fish': { speed: 0, bodyWidth: 30, bodyHeight: 22, flies: true, isStompable: true, isFireproof: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -57,12 +59,23 @@ const PIRANHA_SHY_DISTANCE = TILE_SIZE * 1.5;
 const BEE_PATROL = TILE_SIZE * 3;
 const BEE_BOB_HEIGHT = 30;
 
-/** Ciclo da bolinha de lava: espera na lava e dá um salto alto. */
-const LAVA_BUBBLE_WAIT_MS = 1100;
-const LAVA_BUBBLE_JUMP_MS = 1500;
-const LAVA_BUBBLE_HEIGHT = TILE_SIZE * 4.2;
+/** O peixe nadador vai e volta mais longe que a abelha e ondula mais de leve. */
+const FISH_PATROL = TILE_SIZE * 4;
+const FISH_BOB_HEIGHT = 14;
+
+/** Um salto para fora do líquido: tempo mergulhado, tempo no ar e a altura do arco. */
+interface LeapProfile {
+  readonly waitMs: number;
+  readonly jumpMs: number;
+  readonly height: number;
+}
+
+/** A bolinha de lava espera na lava e dá um salto alto. */
+const LAVA_BUBBLE_LEAP: LeapProfile = { waitMs: 1100, jumpMs: 1500, height: TILE_SIZE * 4.2 };
+/** O peixe saltador espera mais tempo mergulhado: dá para ver a água e se preparar. */
+const JUMPING_FISH_LEAP: LeapProfile = { waitMs: 1400, jumpMs: 1300, height: TILE_SIZE * 3.6 };
 /** Quão rápido o corpo persegue o ponto do salto: alto para seguir a curva de perto. */
-const LAVA_BUBBLE_STEERING = 12;
+const LEAP_STEERING = 12;
 
 /** Distância que a bala de canhão voa antes de ser disparada de novo do ponto de partida. */
 const BULLET_RANGE = TILE_SIZE * 12;
@@ -128,6 +141,10 @@ export const ENEMY_DEFEAT_MS = 280;
  * lugar e, quando o herói chega perto, treme como aviso e dá um bote na
  * direção dele — nunca além da corrente. Depois volta devagar para a estaca e
  * descansa: é a hora de passar. De ferro, não se pisa nem se queima.
+ *
+ * O peixe nadador vai e volta como a abelha, ondulando de leve. O peixe
+ * saltador pula para fora da água como a bolinha de lava, e mergulhado também
+ * não machuca; diferente dela, é pisável e o fogo e o gelo pegam nele.
  *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
  * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
@@ -198,7 +215,7 @@ export class Enemy {
       this.isHidden = this.emergence < 0.5;
     }
 
-    if (kind === 'lava-bubble') {
+    if (kind === 'lava-bubble' || kind === 'jumping-fish') {
       this.emergence = 0;
       this.isHidden = true;
     }
@@ -263,10 +280,16 @@ export class Enemy {
         this.lurkInPipe(now, targetX);
         return;
       case 'lava-bubble':
-        this.leapFromLava(now);
+        this.leapOut(now, LAVA_BUBBLE_LEAP);
+        return;
+      case 'jumping-fish':
+        this.leapOut(now, JUMPING_FISH_LEAP);
         return;
       case 'bee':
-        this.buzzAround(now);
+        this.hover(now, BEE_PATROL, BEE_BOB_HEIGHT);
+        return;
+      case 'fish':
+        this.hover(now, FISH_PATROL, FISH_BOB_HEIGHT);
         return;
       case 'bullet':
         this.cruise(now, targetX);
@@ -414,29 +437,31 @@ export class Enemy {
     this.isHidden = this.emergence < 0.5;
   }
 
-  private buzzAround(now: number): void {
+  /** Vai e volta pelo ar ou pela água, até `patrol` de cada lado de casa, subindo e descendo de leve. */
+  private hover(now: number, patrol: number, bobHeight: number): void {
     const body = this.body;
     const x = centerX(body);
     const isAtLimit =
-      (this.direction < 0 && (x <= this.homeX - BEE_PATROL || body.blockedLeft)) ||
-      (this.direction > 0 && (x >= this.homeX + BEE_PATROL || body.blockedRight));
+      (this.direction < 0 && (x <= this.homeX - patrol || body.blockedLeft)) ||
+      (this.direction > 0 && (x >= this.homeX + patrol || body.blockedRight));
 
     if (isAtLimit) {
       this.turnAround();
     }
 
     body.vx = this.direction * this.profile.speed * this.speedMultiplier;
-    body.vy = Math.cos(now / 300 + this.phase) * BEE_BOB_HEIGHT;
+    body.vy = Math.cos(now / 300 + this.phase) * bobHeight;
   }
 
-  private leapFromLava(now: number): void {
-    const cycle = (now + this.phase * 1000) % (LAVA_BUBBLE_WAIT_MS + LAVA_BUBBLE_JUMP_MS);
-    const progress = Math.max(0, (cycle - LAVA_BUBBLE_WAIT_MS) / LAVA_BUBBLE_JUMP_MS);
+  /** Espera mergulhado, sem machucar, e salta para fora num arco antes de mergulhar de novo. */
+  private leapOut(now: number, leap: LeapProfile): void {
+    const cycle = (now + this.phase * 1000) % (leap.waitMs + leap.jumpMs);
+    const progress = Math.max(0, (cycle - leap.waitMs) / leap.jumpMs);
     // Parábola de 0 a 1 e de volta a 0: sobe rápido, para no alto e desce.
-    const height = LAVA_BUBBLE_HEIGHT * 4 * progress * (1 - progress);
+    const height = leap.height * 4 * progress * (1 - progress);
 
     this.body.vx = 0;
-    this.body.vy = (this.homeY - height - centerY(this.body)) * LAVA_BUBBLE_STEERING;
+    this.body.vy = (this.homeY - height - centerY(this.body)) * LEAP_STEERING;
     this.isHidden = progress === 0;
     this.emergence = this.isHidden ? 0 : 1;
   }

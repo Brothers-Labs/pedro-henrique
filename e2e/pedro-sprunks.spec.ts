@@ -4,10 +4,11 @@ test('Sprunks puts characters on stage, plays their action and keeps custom char
   await page.goto('/jogos/pedro-sprunks');
   const stage = page.getByRole('region', { name: 'Palco da banda' });
 
-  const pipoca = page.getByRole('button', { name: /^Pipoca \(/ });
-  await pipoca.click();
-  await expect(pipoca).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText('Pipoca entrou na banda!')).toBeVisible();
+  const zabumba = page.getByRole('button', { name: /^Zabumba \(/ });
+  await zabumba.click();
+  await expect(zabumba).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Zabumba entrou na banda!')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Pipoca \(/ })).toHaveCount(0);
 
   const bolao = page.getByRole('button', { name: /^Bolão \(/ });
   await bolao.click();
@@ -16,7 +17,9 @@ test('Sprunks puts characters on stage, plays their action and keeps custom char
 
   await page.getByRole('button', { name: 'Criar meus personagens' }).click();
   await page.getByRole('textbox', { name: 'Nome' }).fill('Trovão');
-  await page.getByRole('button', { name: 'Coroa' }).click();
+  await page.getByRole('button', { name: 'Fone com antenas', exact: true }).click();
+  await page.getByRole('button', { name: 'Capa', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Capa', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Criar boneco' }).click();
   await expect(stage.getByText('Trovão')).toBeVisible();
 

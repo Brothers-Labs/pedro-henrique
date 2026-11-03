@@ -32,10 +32,10 @@ export interface HeroDefinition {
  * mais que o Pedro. As fases continuam justas para todos, porque o validador
  * mede os pulos pelo Pedro, que pula menos.
  *
- * Giuseppe, Zeca, Tina, Bruno, Ana, Caio, Nina e Otto são heróis originais
- * do Pedro Maker. Nenhum
- * pula menos que o Pedro — senão uma fase validada poderia ficar impossível —,
- * e o que muda entre eles é a altura extra do pulo e o jeito de frear.
+ * Giuseppe, Zeca, Tina, Bruno, Ana, Caio, Nina, Otto, Vavá, Rafa e Duda são
+ * heróis originais do Pedro Maker. Nenhum pula menos que o Pedro — senão uma
+ * fase validada poderia ficar impossível —, e o que muda entre eles é a altura
+ * extra do pulo e o jeito de frear.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -180,6 +180,39 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: 1, brakingMultiplier: 1 },
     outfit: { cap: '#12b886', shirt: '#2bb7c9', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'vava',
+    name: 'Vavá Varapau',
+    description: 'O rival mais comprido da turma: boné vinho com V, camiseta verde-limão e bigodinho fino.',
+    traits: [
+      { emoji: '🦒', label: 'Pernas compridas, pulo bem alto' },
+      { emoji: '🛼', label: 'Escorrega bastante ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.3), brakingMultiplier: 0.5 },
+    outfit: { cap: '#7a1f3d', shirt: '#a6e22e', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'rafa',
+    name: 'Rafa Rodopio',
+    description: 'O rival que imita todo mundo: boné laranja com R, camiseta roxa e macacão mostarda.',
+    traits: [
+      { emoji: '🌀', label: 'Pula um pouco mais alto' },
+      { emoji: '⚖️', label: 'Escorrega só um tiquinho' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.15), brakingMultiplier: 0.8 },
+    outfit: { cap: '#ff8a3d', shirt: '#8e44c9', backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'duda',
+    name: 'Duda Dínamo',
+    description: 'Baixinho e cheio de energia: boné verde-escuro com D e macacão cor de tijolo.',
+    traits: [
+      { emoji: '🔋', label: 'Pula igual ao Pedro' },
+      { emoji: '🧱', label: 'Freia firme, sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1.15 },
+    outfit: { cap: '#1f6b3a', shirt: '#ffd23f', backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

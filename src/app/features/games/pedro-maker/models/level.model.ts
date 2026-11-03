@@ -31,6 +31,9 @@ export type LevelTheme =
  * a bala de canhão, que cruza a fase voando reto e não se apaga com fogo; e o
  * thwomp, o bloco de pedra que despenca quando o herói passa embaixo. O Rei
  * Slime é o slime grandão de coroa: pisado, se divide em dois slimes.
+ *
+ * Os peixes moram na água: o nadador vai e volta ondulando, e o saltador fica
+ * mergulhado e pula para fora num arco alto. Os dois caem com um pisão.
  */
 export const ENEMY_KINDS = [
   'slime',
@@ -48,6 +51,8 @@ export const ENEMY_KINDS = [
   'thwomp',
   'king-slime',
   'iron-ball',
+  'fish',
+  'jumping-fish',
 ] as const;
 
 export type EnemyKind = (typeof ENEMY_KINDS)[number];

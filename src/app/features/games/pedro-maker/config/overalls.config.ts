@@ -91,3 +91,30 @@ export const OTTO_OVERALLS: OverallsColors = {
   hair: '#4a2a12',
   mustache: '#3a200c',
 };
+
+/** Vavá Varapau, o rival comprido: macacão cinza-chumbo e botinas cor de vinho. */
+export const VAVA_OVERALLS: OverallsColors = {
+  overalls: '#4a4f5c',
+  button: '#a6e22e',
+  shoe: '#5a1a2e',
+  hair: '#2a1a10',
+  mustache: '#2a1a10',
+};
+
+/** Rafa Rodopio, que imita todo mundo: macacão mostarda com botões turquesa. */
+export const RAFA_OVERALLS: OverallsColors = {
+  overalls: '#c99a1a',
+  button: '#2bb7c9',
+  shoe: '#3d2a1c',
+  hair: '#1b1b22',
+  mustache: '#1b1b22',
+};
+
+/** Duda Dínamo, baixinho e forte: macacão cor de tijolo e cabelo castanho. */
+export const DUDA_OVERALLS: OverallsColors = {
+  overalls: '#a8452f',
+  button: '#f4e3c3',
+  shoe: '#2a2350',
+  hair: '#6b3f22',
+  mustache: '#4a2a12',
+};

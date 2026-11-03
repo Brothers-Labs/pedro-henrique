@@ -4,6 +4,7 @@ import {
   ANA_BUILD,
   BRUNO_BUILD,
   CAIO_BUILD,
+  DUDA_BUILD,
   GIUSEPPE_BUILD,
   GUI_BUILD,
   LUIGI_BUILD,
@@ -11,7 +12,9 @@ import {
   NINA_BUILD,
   OTTO_BUILD,
   overallsParts,
+  RAFA_BUILD,
   TINA_BUILD,
+  VAVA_BUILD,
   ZECA_BUILD,
 } from './overalls-parts';
 import { pedroParts } from './pedro-parts';
@@ -62,5 +65,11 @@ export function characterParts(palette: CharacterPalette): CharacterParts {
       return overallsParts(palette, NINA_BUILD);
     case 'otto':
       return overallsParts(palette, OTTO_BUILD);
+    case 'vava':
+      return overallsParts(palette, VAVA_BUILD);
+    case 'rafa':
+      return overallsParts(palette, RAFA_BUILD);
+    case 'duda':
+      return overallsParts(palette, DUDA_BUILD);
   }
 }

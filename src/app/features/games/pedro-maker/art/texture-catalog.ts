@@ -86,6 +86,7 @@ import {
   ANA_PORTRAIT,
   BRUNO_PORTRAIT,
   CAIO_PORTRAIT,
+  DUDA_PORTRAIT,
   GIUSEPPE_PORTRAIT,
   GUI_PORTRAIT,
   LUIGI_PORTRAIT,
@@ -93,7 +94,9 @@ import {
   NINA_PORTRAIT,
   OTTO_PORTRAIT,
   paintOverallsPortrait,
+  RAFA_PORTRAIT,
   TINA_PORTRAIT,
+  VAVA_PORTRAIT,
   ZECA_PORTRAIT,
 } from './overalls-art';
 import { paintWarioPortrait } from './wario-art';
@@ -167,6 +170,15 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       return;
     case 'otto':
       paintOverallsPortrait(context, character, OTTO_PORTRAIT);
+      return;
+    case 'vava':
+      paintOverallsPortrait(context, character, VAVA_PORTRAIT);
+      return;
+    case 'rafa':
+      paintOverallsPortrait(context, character, RAFA_PORTRAIT);
+      return;
+    case 'duda':
+      paintOverallsPortrait(context, character, DUDA_PORTRAIT);
       return;
   }
 }
@@ -256,6 +268,8 @@ function drawIcon(
     case 'thwomp':
     case 'king-slime':
     case 'iron-ball':
+    case 'fish':
+    case 'jumping-fish':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':

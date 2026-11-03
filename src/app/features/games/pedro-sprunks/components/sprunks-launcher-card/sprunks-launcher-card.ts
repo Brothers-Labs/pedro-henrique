@@ -4,8 +4,8 @@ import { RouterLink } from '@angular/router';
 import { SPRUNK_ROSTER } from '../../data/sprunk-roster.data';
 import { SprunkFigure } from '../sprunk-figure/sprunk-figure';
 
-/** Três bonecos da banda na vitrine do cartão, incluindo o Bolão na corrente. */
-const SHOWCASE_IDS: readonly string[] = ['pipoca', 'bolao', 'safira'];
+/** Três bonecos na vitrine do cartão: um da turma do dia, o Bolão na corrente e um da turma da noite. */
+const SHOWCASE_IDS: readonly string[] = ['zabumba', 'bolao', 'pisca-pisca'];
 
 /**
  * Porta de entrada do Pedro Sprunks na página de jogos.
@@ -33,7 +33,8 @@ const SHOWCASE_IDS: readonly string[] = ['pipoca', 'bolao', 'safira'];
         <h2 class="launcher__title launcher__title--sprunks">PEDRO SPRUNKS</h2>
         <p class="launcher__subtitle">Monte a sua banda de bonecos!</p>
         <ul class="launcher__features">
-          <li>🎵 20 bonecos, cada um com o seu som</li>
+          <li>🎵 20 bonecos fantasiados, cada um com o seu som</li>
+          <li>🌗 A turma do dia e a turma da noite no mesmo palco</li>
           <li>👆 Toque no boneco do palco para ver a ação dele</li>
           <li>⛓️ O Bolão, a bola de ferro na corrente</li>
           <li>🎨 Meus personagens: crie os seus bonecos</li>
