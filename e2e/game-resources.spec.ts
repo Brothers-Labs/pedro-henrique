@@ -30,6 +30,9 @@ async function savedRecords<T>(page: Page, store: string): Promise<T[]> {
 }
 
 test('Maker saves the cannon and every new giant coin, and remembers Wario', async ({ page }) => {
+  // Longest flow in the suite (editor, ten pieces, save, hero, reload, play), and it runs first, paying the
+  // dev server's cold compile: ~85s warm is too close to the 90s default.
+  test.slow();
   await page.goto('/jogos/pedro-maker/criar');
   await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Recursos do Pedro');
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
