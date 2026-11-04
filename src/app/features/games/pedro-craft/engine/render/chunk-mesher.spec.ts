@@ -129,6 +129,52 @@ describe('Malha dos chunks do PedroCraft', () => {
     expect(asked).toEqual([2]);
   });
 
+  describe('trilho', () => {
+    const corners = (data: ChunkMeshData): readonly (readonly [number, number, number])[] =>
+      Array.from({ length: data.positions.length / 3 }, (_, index) => [data.positions[index * 3], data.positions[index * 3 + 1], data.positions[index * 3 + 2]] as const);
+
+    it('desenha o trilho sozinho reto, chato e rente ao chão, no passe recortado', () => {
+      put('rail', 5, 5, 5);
+
+      const result = mesh();
+
+      expect(faces(result.cutout)).toBe(2);
+      expect(faces(result.opaque)).toBe(0);
+      expect(corners(result.cutout).every(([, y]) => y > 5 && y < 5.1)).toBeTrue();
+    });
+
+    it('liga um trilho a todos os vizinhos: a encruzilhada tem quatro metades', () => {
+      put('rail', 5, 5, 5);
+
+      for (const [x, z] of [[5, 4], [6, 5], [5, 6], [4, 5]] as const) {
+        put('rail', x, 5, z);
+      }
+
+      // O do meio tem 4 metades; cada vizinho, ligado só ao meio, vira um trilho reto de 2 metades.
+      expect(faces(mesh().cutout)).toBe(4 + 4 * 2);
+    });
+
+    it('faz a curva só para os lados ligados', () => {
+      put('rail', 5, 5, 5);
+      put('rail', 6, 5, 5);
+      put('rail', 5, 5, 6);
+
+      // Na curva leste-sul, o canto noroeste da célula do meio fica sem trilho.
+      expect(corners(mesh().cutout).some(([x, , z]) => x === 5 && z === 5)).toBeFalse();
+    });
+
+    it('não liga trilhos em alturas diferentes', () => {
+      put('rail', 5, 5, 5);
+      put('rail', 6, 6, 5);
+
+      const lower = corners(mesh().cutout).filter(([, y]) => y < 6);
+
+      // Sem ligação, o de baixo fica no padrão norte-sul: as metades se encontram no meio do z.
+      expect(lower.some(([, , z]) => z === 5.5)).toBeTrue();
+      expect(lower.some(([x]) => x === 5.5)).toBeFalse();
+    });
+  });
+
   it('só desenha o chunk pedido', () => {
     world = new VoxelWorld(32, 16, 32);
     put('stone', 20, 5, 20);

@@ -322,6 +322,44 @@
       "textures": { "all": { "pattern": "ore", "colors": ["#8f969e", "#f5c542", "#fff1a8"] } }
     },
     {
+      "id": "diamond-ore",
+      "name": "Minério de diamante",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 4,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "diamond",
+      "mapColor": "#4fe3e0",
+      "textures": { "all": { "pattern": "ore", "colors": ["#8f969e", "#4fe3e0", "#d4fffd"] } }
+    },
+    {
+      "id": "diamond-block",
+      "name": "Bloco de diamante",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 5,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "diamond-block",
+      "mapColor": "#5ee6e0",
+      "textures": { "all": { "pattern": "panel", "colors": ["#5ee6e0", "#2fb7b1", "#d4fffd"], "detail": "plain" } }
+    },
+    {
+      "id": "rail",
+      "name": "Trilho",
+      "shape": "rail",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0.7,
+      "tool": "pickaxe",
+      "drops": "rail",
+      "mapColor": "#9aa1a9",
+      "textures": { "all": { "pattern": "rail", "colors": ["#b9c0c8", "#8a5a32"] } }
+    },
+    {
       "id": "water",
       "name": "Água",
       "shape": "liquid",

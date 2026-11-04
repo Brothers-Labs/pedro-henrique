@@ -81,6 +81,7 @@ export function parseWorld(value: unknown): WorldDefinition {
       radius: quarry.field('radius').number({ integer: true, min: 3, max: 32 }),
       height: quarry.field('height').number({ integer: true, min: 1, max: 16 }),
       ores: quarry.field('ores').array().map((ore) => parseOre(ore.object(), height)),
+      rareOres: quarry.optionalField('rareOres')?.array().map((ore) => parseOre(ore.object(), height)) ?? [],
     },
     farm: { radius: root.field('farm').object().field('radius').number({ integer: true, min: 3, max: 24 }) },
     tree: {

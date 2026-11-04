@@ -1,6 +1,7 @@
 import { AIR } from '../../content/craft-catalog';
 import type { VoxelWorld } from '../../world/voxel-world';
 import { type BlockProperties, SHAPE_CODE } from '../block-properties';
+import { RAIL_DIRECTIONS, type RailDirection, railConnections } from '../rails';
 
 /**
  * Malha de um chunk do mundo, no jeito dos jogos de cubos.
@@ -106,6 +107,13 @@ const FENCE_RAILS = [
 
 const CROSS_INSET = 0.15;
 
+/**
+ * O trilho fica um pouquinho acima do chão. As metades que correm em z sobem
+ * mais um fio: na curva elas cruzam as de x sem as duas brigarem pelo mesmo plano.
+ */
+const RAIL_HEIGHT = 1 / 16;
+const RAIL_CROSSING_LIFT = 1 / 256;
+
 interface Box {
   readonly min: Vector;
   readonly max: Vector;
@@ -162,6 +170,41 @@ class CellMesher {
       case SHAPE_CODE.fence:
         this.fence(writer, block, x, y, z);
         return;
+      case SHAPE_CODE.rail:
+        this.rail(writer, block, x, y, z);
+        return;
+    }
+  }
+
+  /**
+   * Trilho: meio trilho do centro até cada vizinho ligado. Sozinho ou com um
+   * vizinho só, vira um trilho reto inteiro; com dois de lados vizinhos, vira curva.
+   */
+  private rail(writer: MeshWriter, block: number, x: number, y: number, z: number): void {
+    const tile = this.context.tiles.tile(block, 'top', 0);
+
+    for (const direction of railSegments(railConnections(this.context.world, this.context.properties, x, y, z))) {
+      const isAlongX = direction.dx !== 0;
+      const forward = direction.dx + direction.dz > 0;
+      const [alongMin, alongMax] = forward ? [0.5, 1] : [0, 0.5];
+      const [minX, maxX] = isAlongX ? [alongMin, alongMax] : [0, 1];
+      const [minZ, maxZ] = isAlongX ? [0, 1] : [alongMin, alongMax];
+      const height = y + RAIL_HEIGHT + (isAlongX ? 0 : RAIL_CROSSING_LIFT);
+      const local: readonly (readonly [number, number])[] = [
+        [minX, maxZ],
+        [maxX, maxZ],
+        [maxX, minZ],
+        [minX, minZ],
+      ];
+      const corners: Vector[] = local.map(([localX, localZ]) => [x + localX, height, z + localZ] as const);
+      // Na textura, os trilhos correm de cima para baixo: o "ao longo" do trilho é o v.
+      const uvs = local.flatMap(([localX, localZ]) => {
+        const [across, along] = isAlongX ? [localZ, localX] : [localX, localZ];
+
+        return [tile.u0 + (tile.u1 - tile.u0) * across, tile.v0 + (tile.v1 - tile.v0) * along];
+      });
+
+      writer.quad(corners, uvs, [1, 1, 1, 1], corners.map((corner) => this.lightAt(corner)));
     }
   }
 
@@ -369,6 +412,21 @@ class CellMesher {
 
     return Math.max(0, light);
   }
+}
+
+/** As metades de trilho a desenhar: sem vizinho, o trilho fica reto de norte a sul; com um, segue reto até ele. */
+function railSegments(connections: readonly RailDirection[]): readonly RailDirection[] {
+  if (connections.length === 0) {
+    return [RAIL_DIRECTIONS[0], RAIL_DIRECTIONS[2]];
+  }
+
+  if (connections.length === 1) {
+    const [only] = connections;
+
+    return [only, { dx: -only.dx, dz: -only.dz }];
+  }
+
+  return connections;
 }
 
 /** Posição ao longo de um eixo da face, de 0 a 1, contando do lado negativo do eixo. */

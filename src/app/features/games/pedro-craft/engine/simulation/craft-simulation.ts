@@ -1,7 +1,7 @@
 import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
-import type { BucketStats, ItemDefinition } from '../../models/content.model';
+import type { BucketStats, ItemDefinition, VehicleStats } from '../../models/content.model';
 import type { CraftDifficulty } from '../../models/craft-settings.model';
 import type { GameMode } from '../../models/world-save.model';
 import type { SpawnPoint } from '../../world/world-generator';
@@ -31,6 +31,7 @@ import { castRay, type RayHit } from './raycast';
 import { Weather } from './weather';
 import { type CraftScreen, ScreenController, type SlotRef } from './screens';
 import type { SimulationEvent, VisualEvent } from './simulation-events';
+import { TrainRide } from './train-ride';
 import { WaterFlow } from './water-flow';
 
 /** Folga entre dois blocos quebrados segurando o botão: dá para ver um sumir antes do outro. */
@@ -48,6 +49,8 @@ const FERTILIZER_HINT = 'Use o adubo numa planta que ainda está crescendo.';
 const HUNGRY_HINT = '🍎 Seu estômago roncou! Que tal comer alguma coisa?';
 const FULL_HINT = 'Você já está cheio de energia e de vida. Guarde a comida para depois.';
 const DUSK_HINT = '🌇 O sol está se pondo. Hora de acender tochas ou voltar para casa!';
+const TRAIN_BOARD_HINT = '🚂 Piuí! Nas encruzilhadas, olhe para o lado que quer seguir. Pule para descer.';
+const TRAIN_NEEDS_RAIL_HINT = 'O trem anda no trilho. Coloque trilhos no chão, com espaço livre em cima, e use o trem neles.';
 
 /** No Fácil, os inimigos andam mais devagar e esperam mais entre um golpe e outro. */
 const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
@@ -126,6 +129,7 @@ export class CraftSimulation {
   targetCreature: Creature | null = null;
   mining: MiningState | null = null;
 
+  private ride: TrainRide | null = null;
   private readonly actions: BlockActions;
   private readonly combat: Combat;
   private readonly collector: DropCollector;
@@ -308,6 +312,11 @@ export class CraftSimulation {
     return this.mining ? Math.min(1, this.mining.elapsedMs / this.mining.durationMs) : 0;
   }
 
+  /** O trem em que o herói está andando; `null` a pé. */
+  get train(): TrainRide | null {
+    return this.ride;
+  }
+
   /** Os olhos estão dentro da água? Muda a cor e a névoa da tela. */
   get isEyeUnderwater(): boolean {
     const body = this.hero.body;
@@ -385,7 +394,7 @@ export class CraftSimulation {
     }
 
     this.applySelection(input);
-    this.hero.step(this.terrain, input, this.autoJump, this.mode === 'creative');
+    this.moveHero(input);
     this.observeFirstSteps(input);
     this.target = this.findTarget();
     this.targetCreature = this.findCreature(this.target?.distance ?? this.catalog.world.hero.reach);
@@ -416,6 +425,19 @@ export class CraftSimulation {
     if (input.inventoryPressed) {
       this.openScreen('inventory');
     }
+  }
+
+  /** De trem, o herói vai aonde o trilho leva; pular desce do trem e já sai pulando. */
+  private moveHero(input: CraftInputSnapshot): void {
+    const ride = this.ride;
+
+    if (ride && !input.jumpHeld && ride.step(STEP_MS, this.hero.yaw)) {
+      this.hero.carry(ride.x, ride.seatY, ride.z);
+      return;
+    }
+
+    this.ride = null;
+    this.hero.step(this.terrain, input, this.autoJump, this.mode === 'creative');
   }
 
   /** As fornalhas assam mesmo com a tela delas aberta: a criança gosta de ver o pão ficar pronto. */
@@ -673,6 +695,7 @@ export class CraftSimulation {
   private faint(): void {
     const point = this.respawnPoint;
 
+    this.ride = null;
     this.hero.teleport(point.x, point.y, point.z);
     this.hero.yaw = point.yaw;
     this.health.restore();
@@ -989,6 +1012,11 @@ export class CraftSimulation {
       return;
     }
 
+    if (held.vehicle) {
+      this.boardTrain(held.vehicle, target);
+      return;
+    }
+
     if (held.fertilizer !== null) {
       this.fertilize(held.fertilizer, target);
       return;
@@ -1011,6 +1039,26 @@ export class CraftSimulation {
       this.useUpSelected();
       this.confirmUse();
     }
+  }
+
+  /** O trem usado num trilho: o herói sobe e o trem sai andando. O trem nunca é gasto. */
+  private boardTrain(vehicle: VehicleStats, target: RayHit): void {
+    if (this.ride) {
+      return;
+    }
+
+    const ride = TrainRide.board(this.world, this.properties, target, vehicle.speed, this.hero.yaw);
+
+    if (!ride) {
+      this.events.push({ type: 'hint', text: TRAIN_NEEDS_RAIL_HINT });
+      return;
+    }
+
+    this.ride = ride;
+    this.mining = null;
+    this.hero.teleport(ride.x, ride.seatY, ride.z);
+    this.events.push({ type: 'hint', text: TRAIN_BOARD_HINT });
+    this.confirmUse();
   }
 
   /** O balde vazio pega a nascente mirada; o cheio despeja na face mirada. */

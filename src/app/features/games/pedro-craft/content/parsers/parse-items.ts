@@ -5,9 +5,11 @@ import {
   ITEM_KINDS,
   type ItemDefinition,
   type ItemIcon,
+  type ItemKind,
   type RangedStats,
   type ToolStats,
   TOOL_TYPES,
+  type VehicleStats,
 } from '../../models/content.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
 import { MAX_TOOL_TIER } from './parse-blocks';
@@ -35,6 +37,7 @@ function parseItem(item: JsonObjectReader): ItemDefinition {
   const bucket = item.optionalField('bucket');
   const durability = item.optionalField('durability')?.number({ integer: true, min: 1 }) ?? null;
   const maxStack = item.field('maxStack').number({ integer: true, min: 1, max: 64 });
+  const kind = item.field('kind').oneOf(ITEM_KINDS);
 
   if (durability !== null && maxStack !== 1) {
     item.fail('item com durabilidade precisa de maxStack 1');
@@ -43,7 +46,7 @@ function parseItem(item: JsonObjectReader): ItemDefinition {
   return {
     id: item.field('id').id(),
     name: item.field('name').string(),
-    kind: item.field('kind').oneOf(ITEM_KINDS),
+    kind,
     maxStack,
     icon: parseIcon(item.field('icon').object()),
     places: optionalId(item, 'places'),
@@ -58,7 +61,19 @@ function parseItem(item: JsonObjectReader): ItemDefinition {
     leftover: optionalId(item, 'leftover'),
     fertilizer: item.optionalField('fertilizer')?.number({ integer: true, min: 1, max: 3 }) ?? null,
     bucket: bucket ? parseBucket(bucket.object()) : null,
+    vehicle: parseVehicle(item, kind),
   };
+}
+
+/** Só o item do tipo `vehicle` anda no trilho, e ele sempre diz a velocidade. */
+function parseVehicle(item: JsonObjectReader, kind: ItemKind): VehicleStats | null {
+  const vehicle = item.optionalField('vehicle');
+
+  if ((kind === 'vehicle') !== (vehicle !== null)) {
+    item.fail('item do tipo "vehicle" precisa de "vehicle", e só ele');
+  }
+
+  return vehicle ? { speed: vehicle.object().field('speed').number({ min: 1, max: 20 }) } : null;
 }
 
 function parseIcon(icon: JsonObjectReader): ItemIcon {

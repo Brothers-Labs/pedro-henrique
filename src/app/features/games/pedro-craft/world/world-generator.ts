@@ -1,6 +1,6 @@
 import { SeededRandom } from '../../pedro-maker/levels/seeded-random';
 import { AIR, type CraftCatalog } from '../content/craft-catalog';
-import type { WorldDefinition } from '../models/content.model';
+import type { OreVein, WorldDefinition } from '../models/content.model';
 import { type BlockWriter, placeStructure, placeTree, structureSize } from './structures';
 import { ValueNoise } from './value-noise';
 import { VoxelWorld } from './voxel-world';
@@ -42,6 +42,9 @@ const STRAY_TREE_CHANCE = 0.004;
 /** Fora da pedreira, uma fração das pedras subterrâneas também guarda minério. */
 const UNDERGROUND_ORE_FACTOR = 0.15;
 
+/** Mistura a semente do mundo com a posição do minério raro na lista: cada um tem a sua sequência. */
+const RARE_ORE_SALT = 0x9e3779b9;
+
 /** O herói olha para o sul (+z) ao nascer: de costas para a casa, de frente para a fazenda. */
 const SPAWN_YAW = Math.PI;
 
@@ -57,7 +60,14 @@ interface BlockNumbers {
   readonly leaves: number;
   readonly farmland: number;
   readonly decorations: readonly [number, ...number[]];
-  readonly ores: readonly { readonly block: number; readonly chance: number; readonly maxY: number }[];
+  readonly ores: readonly OreNumbers[];
+  readonly rareOres: readonly OreNumbers[];
+}
+
+interface OreNumbers {
+  readonly block: number;
+  readonly chance: number;
+  readonly maxY: number;
 }
 
 /**
@@ -80,6 +90,7 @@ export function generateWorld(catalog: CraftCatalog, seed: number): GeneratedWor
   const writer: BlockWriter = { get: (x, y, z) => world.get(x, y, z), put: (x, y, z, block) => world.fill(x, y, z, block) };
 
   fillColumns(world, definition, blocks, regions, heights, river, random);
+  scatterRareOres(world, definition, blocks, regions, heights, seed);
 
   const house = buildHouse(world, writer, catalog, definition, regions.farm, heights);
 
@@ -115,8 +126,13 @@ function blockNumbers(catalog: CraftCatalog): BlockNumbers {
     leaves: catalog.blockNumber(names.leaves),
     farmland: catalog.blockNumber(names.farmland),
     decorations: firstDecoration === undefined ? [AIR] : [firstDecoration, ...otherDecorations],
-    ores: catalog.world.quarry.ores.map((ore) => ({ block: catalog.blockNumber(ore.block), chance: ore.chance, maxY: ore.maxY })),
+    ores: oreNumbers(catalog, catalog.world.quarry.ores),
+    rareOres: oreNumbers(catalog, catalog.world.quarry.rareOres),
   };
+}
+
+function oreNumbers(catalog: CraftCatalog, veins: readonly OreVein[]): readonly OreNumbers[] {
+  return veins.map((ore) => ({ block: catalog.blockNumber(ore.block), chance: ore.chance, maxY: ore.maxY }));
 }
 
 interface Regions {
@@ -302,6 +318,38 @@ function fillColumns(
       }
     }
   }
+}
+
+/**
+ * Espalha os minérios raros pela pedra que sobrou. Cada um usa um sorteio só
+ * dele, fora da sequência principal: o resto do mundo sai idêntico ao de antes.
+ */
+function scatterRareOres(
+  world: VoxelWorld,
+  definition: WorldDefinition,
+  blocks: BlockNumbers,
+  regions: Regions,
+  heights: Int16Array,
+  seed: number,
+): void {
+  const { width, depth } = definition;
+
+  blocks.rareOres.forEach((ore, index) => {
+    const random = new SeededRandom(seed ^ Math.imul(RARE_ORE_SALT, index + 1));
+
+    for (let z = 0; z < depth; z += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const chance = ore.chance * (distance(x, z, regions.quarry) < definition.quarry.radius + 2 ? 1 : UNDERGROUND_ORE_FACTOR);
+        const top = Math.min(heights[z * width + x], ore.maxY);
+
+        for (let y = 1; y <= top; y += 1) {
+          if (world.get(x, y, z) === blocks.stone && random.chance(chance)) {
+            world.fill(x, y, z, ore.block);
+          }
+        }
+      }
+    }
+  });
 }
 
 function pickOre(blocks: BlockNumbers, y: number, isQuarry: boolean, random: SeededRandom): number | null {

@@ -12,6 +12,7 @@ import { ItemTextures } from './item-textures';
 import { ParticlesView } from './particles-view';
 import { ProjectilesView } from './projectiles-view';
 import { TargetView } from './target-view';
+import { TrainView } from './train-view';
 import { createDaylightUniform, type DaylightUniform } from './voxel-material';
 import { WeatherView } from './weather-view';
 import { WorldView } from './world-view';
@@ -35,7 +36,7 @@ const RAIN_DIMMING = 0.85;
 const RAIN_SKY_MIX = 0.55;
 
 /**
- * Tudo o que se vê: o céu, o mundo de blocos, os bichos, as flechas, os itens caídos, a mira e a mão.
+ * Tudo o que se vê: o céu, o mundo de blocos, os bichos, o trem, as flechas, os itens caídos, a mira e a mão.
  *
  * Só lê a simulação. A câmera fica entre a posição do passo anterior e a do
  * atual (`alpha`), o que deixa o movimento liso mesmo com a tela mais rápida
@@ -49,6 +50,7 @@ export class CraftView {
   private readonly itemTextures: ItemTextures;
   private readonly dropsView: DropsView;
   private readonly creaturesView: CreaturesView;
+  private readonly trainView: TrainView;
   private readonly projectilesView: ProjectilesView;
   private readonly weatherView: WeatherView;
   private readonly targetView: TargetView;
@@ -73,6 +75,7 @@ export class CraftView {
     this.itemTextures = new ItemTextures(simulation.catalog);
     this.dropsView = new DropsView(stage.scene, this.itemTextures);
     this.creaturesView = new CreaturesView(stage.scene, this.daylight);
+    this.trainView = new TrainView(stage.scene, this.daylight);
     this.projectilesView = new ProjectilesView(stage.scene);
     this.weatherView = new WeatherView(stage.scene);
     this.atlas.applyPalette(simulation.calendar.season.palette);
@@ -116,6 +119,7 @@ export class CraftView {
     this.worldView.rebuild();
     this.dropsView.update(simulation.drops.list);
     this.creaturesView.update(simulation.creatures.list, alpha, frameMs);
+    this.trainView.update(simulation.train, alpha);
     this.projectilesView.update(simulation.projectiles.list, alpha);
     this.weatherView.update(simulation.weather.current, camera.position, frameMs, !this.effectsEnabled);
     this.targetView.update(simulation.target, simulation.miningProgress);
@@ -132,6 +136,7 @@ export class CraftView {
     this.worldView.dispose();
     this.dropsView.dispose();
     this.creaturesView.dispose();
+    this.trainView.dispose();
     this.projectilesView.dispose();
     this.weatherView.dispose();
     this.targetView.dispose();

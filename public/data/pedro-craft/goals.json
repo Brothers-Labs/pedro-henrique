@@ -21,6 +21,10 @@
     { "id": "harvest-potatoes", "title": "Colha 3 batatas", "emoji": "🥔", "hint": "Ache batatas no capim alto e plante na terra arada.", "trigger": "harvest", "target": "potato", "count": 3 },
     { "id": "harvest-pumpkin", "title": "Colha uma abóbora", "emoji": "🎃", "hint": "Sementes de abóbora saem do capim alto. Adubo faz crescer mais rápido!", "trigger": "harvest", "target": "pumpkin" },
     { "id": "bake-cake", "title": "Faça um bolo", "emoji": "🎂", "hint": "Na mesa: 3 trigos em cima, açúcar, ovo e açúcar embaixo.", "trigger": "obtain", "target": "cake" },
-    { "id": "golden-pickaxe", "title": "Faça uma picareta de ouro", "emoji": "🏆", "hint": "O ouro só sai com picareta de ferro.", "trigger": "obtain", "target": "golden-pickaxe" }
+    { "id": "golden-pickaxe", "title": "Faça uma picareta de ouro", "emoji": "🏆", "hint": "O ouro só sai com picareta de ferro.", "trigger": "obtain", "target": "golden-pickaxe" },
+    { "id": "place-rails", "title": "Monte 8 trilhos", "emoji": "🛤️", "hint": "Na mesa, 6 barras de ferro e 1 graveto viram 16 trilhos. Coloque um do lado do outro.", "trigger": "place", "target": "rail", "count": 8 },
+    { "id": "make-train", "title": "Faça um trem", "emoji": "🚂", "hint": "Uma fornalha e 5 barras de ferro na mesa. Depois, use o trem num trilho!", "trigger": "obtain", "target": "train" },
+    { "id": "find-diamond", "title": "Ache um diamante", "emoji": "💎", "hint": "Cave bem embaixo da pedreira, com a picareta de ferro.", "trigger": "obtain", "target": "diamond" },
+    { "id": "diamond-pickaxe", "title": "Faça uma picareta de diamante", "emoji": "⛏️", "hint": "Três diamantes em cima e dois gravetos no meio da mesa.", "trigger": "obtain", "target": "diamond-pickaxe" }
   ]
 }

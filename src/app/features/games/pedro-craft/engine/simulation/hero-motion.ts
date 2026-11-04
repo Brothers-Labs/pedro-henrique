@@ -54,6 +54,19 @@ export class HeroMotion {
   }
 
   /**
+   * Levado por um trem: o corpo vai junto, sem gravidade nem colisão, e a
+   * câmera continua deslizando entre o passo anterior e o atual.
+   */
+  carry(x: number, y: number, z: number): void {
+    const body = this.body;
+
+    this.previousX = body.x;
+    this.previousY = body.y;
+    this.previousZ = body.z;
+    body.teleport(x, y, z);
+  }
+
+  /**
    * Um passo de movimento.
    *
    * Com `autoJump`, encostar num degrau de um bloco andando faz o herói subir

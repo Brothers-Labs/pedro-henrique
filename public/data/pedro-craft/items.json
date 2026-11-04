@@ -23,6 +23,8 @@
     { "id": "door", "name": "Porta", "kind": "block", "maxStack": 16, "icon": { "type": "block", "block": "door" }, "places": "door" },
     { "id": "iron-ore", "name": "Minério de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-ore" }, "places": "iron-ore" },
     { "id": "gold-ore", "name": "Minério de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-ore" }, "places": "gold-ore" },
+    { "id": "diamond-block", "name": "Bloco de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-block" }, "places": "diamond-block" },
+    { "id": "rail", "name": "Trilho", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "rail" }, "places": "rail" },
     { "id": "wool", "name": "Lã", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "wool" }, "places": "wool" },
     { "id": "flower-red", "name": "Flor vermelha", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "flower-red" }, "places": "flower-red" },
     { "id": "flower-yellow", "name": "Flor amarela", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "flower-yellow" }, "places": "flower-yellow" },
@@ -37,6 +39,7 @@
     { "id": "stone-pickaxe", "name": "Picareta de pedra", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#8f969e"] }, "tool": { "type": "pickaxe", "tier": 2, "speed": 4 }, "durability": 132, "damage": 3, "attackCooldownMs": 600 },
     { "id": "iron-pickaxe", "name": "Picareta de ferro", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#e6e9ee"] }, "tool": { "type": "pickaxe", "tier": 3, "speed": 6 }, "durability": 251, "damage": 3, "attackCooldownMs": 600 },
     { "id": "golden-pickaxe", "name": "Picareta de ouro", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#f5c542"] }, "tool": { "type": "pickaxe", "tier": 4, "speed": 9 }, "durability": 400, "damage": 4, "attackCooldownMs": 600 },
+    { "id": "diamond-pickaxe", "name": "Picareta de diamante", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "pickaxe", "colors": ["#4fe3e0"] }, "tool": { "type": "pickaxe", "tier": 5, "speed": 12 }, "durability": 1000, "damage": 5, "attackCooldownMs": 600 },
 
     { "id": "wooden-axe", "name": "Machado de madeira", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "axe", "colors": ["#c08a50"] }, "tool": { "type": "axe", "tier": 1, "speed": 2 }, "durability": 60, "damage": 3, "attackCooldownMs": 700 },
     { "id": "stone-axe", "name": "Machado de pedra", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "axe", "colors": ["#8f969e"] }, "tool": { "type": "axe", "tier": 2, "speed": 4 }, "durability": 132, "damage": 4, "attackCooldownMs": 700 },
@@ -68,6 +71,7 @@
     { "id": "shears", "name": "Tesoura", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "shears", "colors": ["#e6e9ee"] }, "tool": { "type": "shears", "tier": 1, "speed": 5 }, "durability": 200 },
     { "id": "bucket", "name": "Balde", "kind": "bucket", "maxStack": 16, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee"] }, "bucket": { "collects": "water", "becomes": "water-bucket" } },
     { "id": "water-bucket", "name": "Balde com água", "kind": "bucket", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#2f8fe0"] }, "bucket": { "places": "water", "becomes": "bucket" } },
+    { "id": "train", "name": "Trem", "kind": "vehicle", "maxStack": 1, "icon": { "type": "sprite", "shape": "train", "colors": ["#e53935", "#2f8fe0", "#3d3d45"] }, "vehicle": { "speed": 5 } },
     { "id": "milk-bucket", "name": "Balde de leite", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#ffffff"] }, "heal": 4, "leftover": "bucket" },
 
     { "id": "apple", "name": "Maçã", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "apple", "colors": ["#e53935", "#4caf50"] }, "heal": 2 },
@@ -89,6 +93,7 @@
     { "id": "coal", "name": "Carvão", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "lump", "colors": ["#2b2b2b", "#555555"] } },
     { "id": "iron-ingot", "name": "Barra de ferro", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "ingot", "colors": ["#e6e9ee", "#b9c0c8"] } },
     { "id": "gold-ingot", "name": "Barra de ouro", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "ingot", "colors": ["#f5c542", "#d9a21f"] } },
+    { "id": "diamond", "name": "Diamante", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "gem", "colors": ["#4fe3e0", "#ffffff"] } },
     { "id": "feather", "name": "Pena", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "feather", "colors": ["#ffffff", "#d9d9d9"] } },
     { "id": "string", "name": "Linha", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "string", "colors": ["#f4f4f4"] } },
     { "id": "pumpkin", "name": "Abóbora", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "pumpkin", "colors": ["#ff8c1a", "#4caf50"] } },
