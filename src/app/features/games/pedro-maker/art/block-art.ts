@@ -13,6 +13,7 @@ import {
   textureNoise,
 } from './canvas';
 import type { ThemePalette } from './palettes';
+import { paintSignText } from './sign-text-art';
 
 /** Semente das manchas da terra: o ícone sai sempre igual. */
 const SOIL_NOISE_SEED = 304;
@@ -542,7 +543,14 @@ export function paintPortalSwirl(context: CanvasRenderingContext2D): void {
   }
 }
 
-export function paintSign(context: CanvasRenderingContext2D): void {
+/** Menor letra no ícone da placa: abaixo disto, o texto vira borrão na grade do editor. */
+const SIGN_ICON_MIN_FONT = 5;
+
+/**
+ * Placa de madeira com o texto escrito nela. Sem texto, duas riscas fazem as
+ * vezes das letras, para a peça continuar parecendo uma placa.
+ */
+export function paintSign(context: CanvasRenderingContext2D, text = ''): void {
   const wood = '#c98a4b';
 
   context.fillStyle = darken(wood, 0.3);
@@ -552,6 +560,12 @@ export function paintSign(context: CanvasRenderingContext2D): void {
   context.strokeRect(21, 26, 6, 22);
   roundedRect(context, 4, 6, 40, 24, 4);
   fillAndOutline(context, wood, 3);
+
+  if (text.trim()) {
+    paintSignText(context, text, { x: 7, y: 8, width: 34, height: 20 }, SIGN_ICON_MIN_FONT);
+    return;
+  }
+
   context.strokeStyle = darken(wood, 0.3);
   context.lineWidth = 2;
   context.beginPath();

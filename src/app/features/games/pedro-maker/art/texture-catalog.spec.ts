@@ -37,7 +37,7 @@ describe('Catálogo de arte integrado ao Canvas 2D', () => {
     });
   }
 
-  it('diferencia visualmente os valores das moedas, incluindo os quatro novos valores', () => {
+  it('diferencia visualmente os valores das moedas, das pequenas às de milhão', () => {
     const coins = types.filter((type) => type.startsWith('coin-'));
     const images = coins.map((type) => paintObjectIcon({ type }, 'vale').toDataURL());
 
@@ -45,6 +45,9 @@ describe('Catálogo de arte integrado ao Canvas 2D', () => {
     expect(coins).toContain('coin-5000');
     expect(coins).toContain('coin-10000');
     expect(coins).toContain('coin-50000');
+    expect(coins).toContain('coin-5');
+    expect(coins).toContain('coin-25000');
+    expect(coins).toContain('coin-1000000');
     expect(new Set(images).size).toBe(coins.length);
   });
 

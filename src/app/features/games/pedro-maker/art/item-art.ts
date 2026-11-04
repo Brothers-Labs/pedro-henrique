@@ -108,6 +108,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'ice-flower': '#5cc8ff',
   star: '#ffd23f',
   'one-up': '#2fb84a',
+  'cat-mushroom': '#ff9f1a',
+  'leaf-mushroom': '#7cc242',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -145,6 +147,14 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'star':
       paintPowerStar(context, color);
+      break;
+    case 'cat-mushroom':
+      paintCatEars(context, color);
+      paintMushroom(context, color);
+      break;
+    case 'leaf-mushroom':
+      paintMushroom(context, color);
+      paintLeaf(context);
       break;
   }
 
@@ -232,6 +242,43 @@ function paintMushroom(context: CanvasRenderingContext2D, color: string): void {
     circle(context, x, y, radius);
     context.fill();
   }
+}
+
+/** Orelhas pontudas de gato, desenhadas antes do chapéu para saírem de trás dele. */
+function paintCatEars(context: CanvasRenderingContext2D, color: string): void {
+  for (const side of [-1, 1] as const) {
+    context.beginPath();
+    context.moveTo(20 + side * 13, 15);
+    context.lineTo(20 + side * 12, 2);
+    context.lineTo(20 + side * 4, 8);
+    context.closePath();
+    fillAndOutline(context, color, 2.5);
+
+    context.fillStyle = '#ffb3cf';
+    context.beginPath();
+    context.moveTo(20 + side * 11, 11);
+    context.lineTo(20 + side * 11, 5);
+    context.lineTo(20 + side * 7, 8);
+    context.closePath();
+    context.fill();
+  }
+}
+
+/** Folha verde com nervura, pousada de lado no chapéu do cogumelo. */
+function paintLeaf(context: CanvasRenderingContext2D): void {
+  context.beginPath();
+  context.moveTo(18, 7);
+  context.quadraticCurveTo(24, -2, 33, 2);
+  context.quadraticCurveTo(29, 11, 18, 7);
+  context.closePath();
+  fillAndOutline(context, '#2f9e44', 2);
+
+  context.strokeStyle = '#b2f2bb';
+  context.lineWidth = 1.5;
+  context.beginPath();
+  context.moveTo(19, 7);
+  context.lineTo(31, 3);
+  context.stroke();
 }
 
 /** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */

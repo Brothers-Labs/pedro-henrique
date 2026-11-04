@@ -1,6 +1,6 @@
 import { OBJECT_BEHAVIOR } from '../config/object-catalog';
 import { GRAVITY, PLAYER_PHYSICS, TILE_SIZE, VALIDATION_PHYSICS } from '../config/physics.config';
-import type { LevelBlueprint, LevelObject } from '../models/level.model';
+import { isGiantCoinType, type LevelBlueprint, type LevelObject } from '../models/level.model';
 
 /**
  * Validador de alcance: a fase pode ser vencida?
@@ -74,16 +74,7 @@ function isCollectible(object: LevelObject): boolean {
     object.type === 'coin' ||
     object.type === 'big-coin' ||
     object.type === 'huge-coin' ||
-    object.type === 'coin-25' ||
-    object.type === 'coin-100' ||
-    object.type === 'coin-250' ||
-    object.type === 'coin-500' ||
-    object.type === 'coin-1000' ||
-    object.type === 'coin-2500' ||
-    object.type === 'coin-5000' ||
-    object.type === 'coin-10000' ||
-    object.type === 'coin-50000' ||
-
+    isGiantCoinType(object.type) ||
     object.type === 'crystal' ||
     object.type === 'heart' ||
     object.type === 'power-up'

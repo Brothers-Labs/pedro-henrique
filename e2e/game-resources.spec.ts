@@ -30,6 +30,9 @@ async function savedRecords<T>(page: Page, store: string): Promise<T[]> {
 }
 
 test('Maker saves the cannon and every new giant coin, and remembers Wario', async ({ page }) => {
+  // Longest flow in the suite (editor, ten pieces, save, hero, reload, play), and it runs first, paying the
+  // dev server's cold compile: ~85s warm is too close to the 90s default.
+  test.slow();
   await page.goto('/jogos/pedro-maker/criar');
   await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Recursos do Pedro');
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
@@ -38,8 +41,8 @@ test('Maker saves the cannon and every new giant coin, and remembers Wario', asy
   await page.getByRole('button', { name: 'Canhão', exact: true }).click();
   await grid.click({ position: { x: 112, y: 112 } });
   await page.getByRole('tab', { name: 'Itens', exact: true }).click();
-  for (const [index, value] of [25, 100, 250, 500, 1000, 2500, 5000, 10000, 50000].entries()) {
-    const coin = page.getByRole('button', { name: `Moeda Gigante ${value}`, exact: true });
+  for (const [index, label] of ['25', '100', '250', '500', '1000', '2500', '5000', '10k', '50k'].entries()) {
+    const coin = page.getByRole('button', { name: `Moeda Gigante ${label}`, exact: true });
     await coin.click();
     await expect(coin).toHaveAttribute('aria-pressed', 'true');
     await grid.click({ position: { x: 144 + index * 32, y: 112 } });

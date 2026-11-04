@@ -66,9 +66,10 @@ export function isEnemyKind(type: string): type is EnemyKind {
 /**
  * Poderes que o Pedro pode pegar.
  *
- * Os cinco últimos são os clássicos dos jogos de plataforma: cogumelo que faz
- * crescer, flor de fogo, flor de gelo, estrela da invencibilidade e cogumelo
- * de vida.
+ * Do cogumelo em diante são os clássicos dos jogos de plataforma: cogumelo que
+ * faz crescer, flor de fogo, flor de gelo, estrela da invencibilidade e
+ * cogumelo de vida. O Cogumelo Gato e o Cogumelo Folha também fazem crescer:
+ * com o gato, o herói escala paredes; com a folha, plana segurando o pulo.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -81,12 +82,22 @@ export const POWER_UP_KINDS = [
   'ice-flower',
   'star',
   'one-up',
+  'cat-mushroom',
+  'leaf-mushroom',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
 
 /** Os poderes clássicos, que o Lucky Block sorteia. */
-export const CLASSIC_POWER_UPS = ['mushroom', 'fire-flower', 'ice-flower', 'star', 'one-up'] as const satisfies readonly PowerUpKind[];
+export const CLASSIC_POWER_UPS = [
+  'mushroom',
+  'fire-flower',
+  'ice-flower',
+  'star',
+  'one-up',
+  'cat-mushroom',
+  'leaf-mushroom',
+] as const satisfies readonly PowerUpKind[];
 
 /**
  * `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada.
@@ -125,8 +136,73 @@ export type BlockType =
   | 'spikes'
   | 'note';
 
-/** Itens coletáveis, incluindo moedas gigantes com valores de 10 a 50000. */
-export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'coin-2500' | 'coin-5000' | 'coin-10000' | 'coin-50000' | 'crystal' | 'heart' | 'power-up';
+/**
+ * Valores das moedas gigantes numeradas, da menor para a maior.
+ *
+ * É a fonte única: o tipo de cada moeda, o valor somado, o número estampado e
+ * as peças do editor saem desta lista. Moeda nova é só um número a mais aqui.
+ * A moeda de 10 (`big-coin`) e a de 50 (`huge-coin`) vieram antes e mantêm o
+ * tipo antigo, para as fases já salvas continuarem abrindo.
+ */
+export const GIANT_COIN_VALUES = [
+  5, 25, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
+] as const;
+
+export type GiantCoinValue = (typeof GIANT_COIN_VALUES)[number];
+
+export type GiantCoinType = `coin-${GiantCoinValue}`;
+
+export const GIANT_COIN_TYPES: readonly GiantCoinType[] = GIANT_COIN_VALUES.map((value) => giantCoinType(value));
+
+const GIANT_COIN_VALUE_BY_TYPE: ReadonlyMap<string, GiantCoinValue> = new Map(
+  GIANT_COIN_VALUES.map((value) => [giantCoinType(value), value]),
+);
+
+export function giantCoinType(value: GiantCoinValue): GiantCoinType {
+  return `coin-${value}`;
+}
+
+export function isGiantCoinType(type: string): type is GiantCoinType {
+  return GIANT_COIN_VALUE_BY_TYPE.has(type);
+}
+
+export function giantCoinValue(type: GiantCoinType): GiantCoinValue {
+  const value = GIANT_COIN_VALUE_BY_TYPE.get(type);
+
+  if (value === undefined) {
+    throw new Error(`Moeda gigante desconhecida: ${type}`);
+  }
+
+  return value;
+}
+
+/**
+ * Um registro com uma entrada por moeda gigante, para as tabelas tipadas por
+ * objeto (comportamento, cores do minimapa) não repetirem a lista à mão.
+ */
+export function perGiantCoin<Value>(valueFor: (type: GiantCoinType) => Value): Readonly<Record<GiantCoinType, Value>> {
+  // A lista de tipos cobre a união inteira, então o objeto montado tem todas as chaves.
+  return Object.fromEntries(GIANT_COIN_TYPES.map((type) => [type, valueFor(type)])) as Record<GiantCoinType, Value>;
+}
+
+/**
+ * O valor como a criança lê na moeda e no editor: de 10 mil para cima vira
+ * "10k", e de um milhão para cima, "1M". Abaixo disso o número cabe inteiro.
+ */
+export function formatCoinValue(value: number): string {
+  if (value >= 1_000_000) {
+    return `${value / 1_000_000}M`;
+  }
+
+  if (value >= 10_000) {
+    return `${value / 1_000}k`;
+  }
+
+  return String(value);
+}
+
+/** Itens coletáveis, incluindo as moedas gigantes numeradas. */
+export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | GiantCoinType | 'crystal' | 'heart' | 'power-up';
 
 /**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na

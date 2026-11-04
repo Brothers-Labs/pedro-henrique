@@ -4,7 +4,7 @@ import { TILE_SIZE } from '../../config/physics.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import { LevelBuilder } from '../../levels/level-builder';
 import { analyzeReachability } from '../../levels/level-reachability';
-import type { ItemType } from '../../models/level.model';
+import { formatCoinValue, GIANT_COIN_VALUES, giantCoinType } from '../../models/level.model';
 import type { GameSessionEvent } from '../../models/session.model';
 import { sanitizeCustomLevel } from '../../services/custom-level.service';
 import { CollectibleView } from '../render/collectible-view';
@@ -14,8 +14,30 @@ import { CollectibleSystem, coinValue } from './collectibles';
 import { GameSimulation } from './game-simulation';
 
 describe('Moedas de alto valor do Pedro Maker', () => {
-  for (const value of [2500, 5000, 10000, 50000]) {
-    const type = `coin-${value}` as ItemType;
+  it('escreve os valores grandes abreviados: mil vira k e milhão vira M', () => {
+    expect(formatCoinValue(5)).toBe('5');
+    expect(formatCoinValue(5000)).toBe('5000');
+    expect(formatCoinValue(10_000)).toBe('10k');
+    expect(formatCoinValue(25_000)).toBe('25k');
+    expect(formatCoinValue(50_000)).toBe('50k');
+    expect(formatCoinValue(500_000)).toBe('500k');
+    expect(formatCoinValue(1_000_000)).toBe('1M');
+  });
+
+  it('mostra as moedas no editor da menor para a maior, com o valor abreviado no nome', () => {
+    const coins = EDITOR_PIECES.filter((piece) => piece.label.startsWith('Moeda Gigante'));
+
+    expect(coins.map((piece) => piece.label)).toEqual([
+      'Moeda Gigante 5', 'Moeda Gigante 10', 'Moeda Gigante 25', 'Moeda Gigante 50', 'Moeda Gigante 100',
+      'Moeda Gigante 250', 'Moeda Gigante 500', 'Moeda Gigante 1000', 'Moeda Gigante 2500', 'Moeda Gigante 5000',
+      'Moeda Gigante 10k', 'Moeda Gigante 25k', 'Moeda Gigante 50k', 'Moeda Gigante 100k', 'Moeda Gigante 250k',
+      'Moeda Gigante 500k', 'Moeda Gigante 1M',
+    ]);
+  });
+
+  for (const value of GIANT_COIN_VALUES) {
+    const type = giantCoinType(value);
+    const label = formatCoinValue(value);
 
     it(`oferece e restaura a moeda de ${value} em fases salvas`, () => {
       const object = { id: 'moeda', type, x: 2, y: 11 };
@@ -60,16 +82,16 @@ describe('Moedas de alto valor do Pedro Maker', () => {
       expect(analyzeReachability(blueprint).unreachableCollectibles.map((object) => object.type)).toEqual([type]);
     });
 
-    it(`desenha ${value} por inteiro no editor e nas duas faces 3D`, () => {
+    it(`estampa ${label} na moeda de ${value} no editor e nas duas faces 3D`, () => {
       const text = spyOn(CanvasRenderingContext2D.prototype, 'fillText').and.callThrough();
       paintObjectIcon({ type }, 'vale');
-      expect(text.calls.allArgs().some(([label]) => label === String(value))).toBeTrue();
+      expect(text.calls.allArgs().some(([drawn]) => drawn === label)).toBeTrue();
       text.calls.reset();
       const system = new CollectibleSystem([{ id: 'moeda', type, x: 5, y: 5 }], new Map(), { onCollected: () => {} });
       const view = new CollectibleView(system, new WorldSpace(15 * TILE_SIZE));
       try {
         view.update(0);
-        expect(text.calls.allArgs().some(([label]) => label === String(value))).toBeTrue();
+        expect(text.calls.allArgs().some(([drawn]) => drawn === label)).toBeTrue();
         expect(view.root.children.some((child) => child.children.length === 3)).toBeTrue();
       } finally {
         view.dispose();

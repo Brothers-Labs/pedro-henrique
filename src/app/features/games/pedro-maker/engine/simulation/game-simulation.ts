@@ -6,6 +6,7 @@ import {
   CLASSIC_POWER_UPS,
   type EnemyKind,
   isEnemyKind,
+  isGiantCoinType,
   type LevelBlueprint,
   type LevelObject,
   type PowerUpKind,
@@ -21,7 +22,7 @@ import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } 
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
 import { type BallElement, type Fireball, FireballSystem } from './fireballs';
 import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
-import { Player, type PlayerHost } from './player';
+import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
 import { cellOf, TileGrid } from './tile-grid';
@@ -41,6 +42,12 @@ const BOSS_WAKE_DISTANCE = 11;
 const FLOWER_BALL_NAMES: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'fire-flower': 'fogo',
   'ice-flower': 'gelo',
+};
+
+/** Dica do mascote para os cogumelos que mudam o jeito de se mexer. */
+const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
+  'cat-mushroom': 'Pule numa parede e continue indo para o lado dela: você escala!',
+  'leaf-mushroom': 'Segure o pulo enquanto cai para planar como uma folha!',
 };
 
 const VICTORY_DELAY_MS = 1300;
@@ -575,13 +582,13 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
   }
 
-  /** Grande, o Pedro não perde coração: perde o cogumelo (e a flor) e volta ao tamanho normal. */
+  /** Grande, o Pedro não perde coração: perde o cogumelo (e o traje) e volta ao tamanho normal. */
   private shrinkPlayer(knockbackDirection: number): void {
     const now = this.clockMs;
     const player = this.player;
     const body = player.body;
 
-    for (const kind of ['fire-flower', 'ice-flower', 'mushroom'] as const) {
+    for (const kind of [...SUIT_POWER_UPS, 'mushroom'] as const) {
       if (player.hasPowerUp(kind)) {
         player.losePowerUp(kind);
         this.emit({ type: 'power-up-ended', kind });
@@ -637,6 +644,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   onCollected(item: Collectible): void {
     const { x, y } = item;
 
+    if (isGiantCoinType(item.kind)) {
+      this.collectGiantCoin(item);
+      return;
+    }
+
     switch (item.kind) {
       case 'coin':
         this.coins += 1;
@@ -647,19 +659,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 14);
         break;
-      case 'coin-25':
-      case 'coin-100':
-      case 'coin-250':
-      case 'coin-500':
-      case 'coin-1000':
-      case 'coin-2500':
-      case 'coin-5000':
-      case 'coin-10000':
-      case 'coin-50000':
       case 'huge-coin':
-        this.addCoins(coinValue(item.kind), x, y);
-        this.effects.burst('coin', x, y, 30);
-        this.effects.burst('sparkle', x, y, 16);
+        this.collectGiantCoin(item);
         break;
       case 'crystal':
         if (item.crystalIndex !== undefined) {
@@ -761,6 +762,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   /* Auxiliares ------------------------------------------------------------------------ */
 
+  /** As moedas gigantes somam o valor estampado e soltam uma chuva de brilho. */
+  private collectGiantCoin(item: Collectible): void {
+    const { x, y } = item;
+
+    this.addCoins(coinValue(item.kind), x, y);
+    this.effects.burst('coin', x, y, 30);
+    this.effects.burst('sparkle', x, y, 16);
+  }
+
   private activatePowerUp(kind: PowerUpKind, x: number, y: number): void {
     this.playSound('powerup');
     this.effects.burst('sparkle', x, y, 16);
@@ -783,6 +793,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (ballName) {
       const button = this.options.isTouch ? 'Toque em AÇÃO' : 'Aperte E';
       this.emit({ type: 'mascot', text: `${button} para soltar bolas de ${ballName}!` });
+    }
+
+    const movementTip = MOVEMENT_TIPS[kind];
+
+    if (movementTip) {
+      this.emit({ type: 'mascot', text: movementTip });
     }
   }
 

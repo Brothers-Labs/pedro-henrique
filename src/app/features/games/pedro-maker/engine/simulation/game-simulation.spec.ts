@@ -3,6 +3,7 @@ import { DIFFICULTY_RULES } from '../../config/rules.config';
 import {
   BIG_COIN_VALUE,
   HUGE_COIN_VALUE,
+  LEAF_SUIT_PHYSICS,
   MULTI_COIN_BLOCK_COUNT,
   PLAYER_PHYSICS,
   SLIDE_PHYSICS,
@@ -307,6 +308,145 @@ describe('Simulação do Pedro Maker', () => {
     expect(harness.simulation.player.isBig).toBeFalse();
     expect(lastHud(harness.events)?.hearts).toBe(3);
     expect(harness.events).toContain({ type: 'power-up-ended', kind: 'mushroom' });
+  });
+
+  describe('Cogumelo Gato', () => {
+    /** Parede alta de pedra na coluna 10, do chão até bem acima do pulo. */
+    const wallLevel = (powerUp: PowerUpKind | null): LevelBlueprint => {
+      const builder = flatLevel().fill('stone', 10, 10, SURFACE - 9, SURFACE - 1);
+
+      return (powerUp ? builder.add('power-up', 3, SURFACE - 1, { powerUp }) : builder).build(META);
+    };
+
+    /** Corre até a parede, pula e continua empurrando: devolve quanto os pés subiram. */
+    const climbHeight = (harness: Harness): { readonly lift: number; readonly climbed: boolean } => {
+      const player = harness.simulation.player;
+
+      run(harness, 1.2, { right: true });
+
+      const groundY = bottom(player.body);
+      let highest = groundY;
+      let climbed = false;
+
+      jump(harness, 0.1, { right: true });
+
+      for (let step = 0; step < 120; step += 1) {
+        harness.simulation.step({ ...IDLE_INPUT, right: true });
+        highest = Math.min(highest, bottom(player.body));
+        climbed ||= player.isClimbing;
+      }
+
+      return { lift: groundY - highest, climbed };
+    };
+
+    it('cresce e escala a parede bem mais alto do que um pulo alcança', () => {
+      const withCat = start(wallLevel('cat-mushroom'));
+      const withoutCat = start(wallLevel(null));
+      const cat = climbHeight(withCat);
+      const plain = climbHeight(withoutCat);
+
+      expect(withCat.simulation.player.isBig).toBeTrue();
+      expect(cat.climbed).toBeTrue();
+      expect(plain.climbed).toBeFalse();
+      expect(cat.lift).toBeGreaterThan(plain.lift + TILE_SIZE * 2);
+    });
+
+    it('para de escalar quando o fôlego acaba, e só recarrega no chão', () => {
+      const harness = start(wallLevel('cat-mushroom'));
+      const player = harness.simulation.player;
+
+      run(harness, 1.2, { right: true });
+      jump(harness, 0.1, { right: true });
+      run(harness, 1.6, { right: true });
+
+      expect(player.isClimbing).toBeFalse();
+    });
+
+    it('pula da parede para o lado de lá', () => {
+      const harness = start(wallLevel('cat-mushroom'));
+      const player = harness.simulation.player;
+
+      run(harness, 1.2, { right: true });
+      jump(harness, 0.1, { right: true });
+      run(harness, 0.2, { right: true });
+
+      expect(player.isClimbing).toBeTrue();
+
+      harness.simulation.step({ ...IDLE_INPUT, right: true, jumpHeld: true, jumpPressed: true });
+
+      expect(player.body.vx).toBeLessThan(0);
+      expect(player.body.vy).toBeLessThan(0);
+      expect(player.facing).toBe(-1);
+    });
+
+    it('perde o traje de gato no toque e volta ao tamanho normal, sem perder coração', () => {
+      const harness = start(levelWithPowerUp('cat-mushroom').add('spiky', 14, SURFACE - 1).build(META));
+      run(harness, 0.4, { right: true });
+
+      bumpIntoFirstEnemy(harness);
+
+      expect(harness.simulation.player.hasPowerUp('cat-mushroom')).toBeFalse();
+      expect(harness.simulation.player.isBig).toBeFalse();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'cat-mushroom' });
+    });
+  });
+
+  describe('Cogumelo Folha', () => {
+    /** Solta o herói bem alto e devolve a velocidade de queda depois de meio segundo. */
+    const fallSpeedFromHigh = (harness: Harness, isHoldingJump: boolean): number => {
+      const player = harness.simulation.player;
+
+      player.placeFeetAt(20 * TILE_SIZE, (SURFACE - 9) * TILE_SIZE);
+      run(harness, 0.5, { jumpHeld: isHoldingJump });
+
+      return player.body.vy;
+    };
+
+    it('plana devagar segurando o pulo e cai normal ao soltar', () => {
+      const harness = start(levelWithPowerUp('leaf-mushroom').build(META));
+      run(harness, 0.4, { right: true });
+
+      expect(harness.simulation.player.isBig).toBeTrue();
+
+      const gliding = fallSpeedFromHigh(harness, true);
+
+      expect(harness.simulation.player.isGliding).toBeTrue();
+      expect(gliding).toBeLessThanOrEqual(LEAF_SUIT_PHYSICS.glideFallSpeed);
+
+      const falling = fallSpeedFromHigh(harness, false);
+
+      expect(harness.simulation.player.isGliding).toBeFalse();
+      expect(falling).toBeGreaterThan(LEAF_SUIT_PHYSICS.glideFallSpeed * 2);
+    });
+
+    it('não plana sem o cogumelo', () => {
+      const harness = start(flatLevel().build(META));
+      run(harness, 0.2);
+
+      expect(fallSpeedFromHigh(harness, true)).toBeGreaterThan(LEAF_SUIT_PHYSICS.glideFallSpeed * 2);
+      expect(harness.simulation.player.isGliding).toBeFalse();
+    });
+  });
+
+  it('troca de traje: o cogumelo novo tira a flor, e a flor nova tira o cogumelo', () => {
+    const harness = start(flatLevel().build(META));
+    const player = harness.simulation.player;
+
+    player.grantPowerUp('fire-flower', 0);
+    player.grantPowerUp('leaf-mushroom', 0);
+
+    expect(player.flowerElement).toBeNull();
+    expect(player.hasPowerUp('fire-flower')).toBeFalse();
+    expect(player.hasPowerUp('leaf-mushroom')).toBeTrue();
+    expect(player.isBig).toBeTrue();
+
+    player.grantPowerUp('cat-mushroom', 0);
+    player.grantPowerUp('ice-flower', 0);
+
+    expect(player.hasPowerUp('leaf-mushroom')).toBeFalse();
+    expect(player.hasPowerUp('cat-mushroom')).toBeFalse();
+    expect(player.flowerElement).toBe('ice');
   });
 
   it('derruba o inimigo só de encostar com a Super Estrela', () => {

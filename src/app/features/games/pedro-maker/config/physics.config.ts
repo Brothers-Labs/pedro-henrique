@@ -67,11 +67,13 @@ export const POWER_UP_DURATION_MS = {
   magnet: 15000,
   wings: 20000,
   star: 10000,
-  /** Escudo, cogumelo e flores duram até proteger de um toque. */
+  /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
   'fire-flower': 0,
   'ice-flower': 0,
+  'cat-mushroom': 0,
+  'leaf-mushroom': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
 } as const;
@@ -88,6 +90,24 @@ export const SWIM_PHYSICS = {
   /** Fração do pulo normal ao sair da água pela superfície. */
   leapMultiplier: 0.9,
   speedMultiplier: 0.6,
+} as const;
+
+/**
+ * Cogumelo Gato: no ar, empurrando uma parede, o herói sobe por ela por um
+ * tempinho, que só recarrega no chão — assim não dá para escalar para sempre.
+ * Pular grudado na parede lança o herói para o lado de lá.
+ */
+export const CAT_SUIT_PHYSICS = {
+  climbSpeed: 260,
+  climbMs: 1400,
+  /** Fração do pulo normal no pulo de parede. */
+  wallJumpMultiplier: 0.9,
+  wallJumpPush: 340,
+} as const;
+
+/** Cogumelo Folha: segurando o pulo enquanto cai, o herói plana devagar. */
+export const LEAF_SUIT_PHYSICS = {
+  glideFallSpeed: 110,
 } as const;
 
 /** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */

@@ -1,6 +1,13 @@
 import { TILE_SIZE } from '../config/physics.config';
 import { DEFAULT_LOOK, paletteFor, type CharacterPalette } from '../config/character.config';
-import type { LevelObject, LevelTheme, SurpriseContent } from '../models/level.model';
+import {
+  formatCoinValue,
+  giantCoinValue,
+  isGiantCoinType,
+  type LevelObject,
+  type LevelTheme,
+  type SurpriseContent,
+} from '../models/level.model';
 import {
   MOVING_PLATFORM_HEIGHT,
   MOVING_PLATFORM_WIDTH,
@@ -199,6 +206,13 @@ function drawIcon(
     context.restore();
   };
 
+  if (isGiantCoinType(object.type)) {
+    const label = formatCoinValue(giantCoinValue(object.type));
+
+    fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, label));
+    return;
+  }
+
   switch (object.type) {
     case 'ground':
     case 'stone':
@@ -284,33 +298,6 @@ function drawIcon(
     case 'huge-coin':
       fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, paintHugeCoin);
       return;
-    case 'coin-25':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '25'));
-      return;
-    case 'coin-100':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '100'));
-      return;
-    case 'coin-250':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '250'));
-      return;
-    case 'coin-500':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '500'));
-      return;
-    case 'coin-1000':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '1000'));
-      return;
-    case 'coin-2500':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '2500'));
-      return;
-    case 'coin-5000':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '5000'));
-      return;
-    case 'coin-10000':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '10000'));
-      return;
-    case 'coin-50000':
-      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '50000'));
-      return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);
       return;
@@ -378,7 +365,7 @@ function drawIcon(
       fit(CRATE_SIZE, CRATE_SIZE, paintCrate);
       return;
     case 'sign':
-      paintSign(context);
+      paintSign(context, object.properties?.text ?? '');
       return;
     case 'hint':
     case 'mascot-tip':

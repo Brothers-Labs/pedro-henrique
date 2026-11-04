@@ -19,7 +19,14 @@ import {
 import { context2d, createCanvas, paint } from '../../art/canvas';
 import { BIG_COIN_SIZE, HUGE_COIN_SIZE, paintNumberedCoin } from '../../art/item-art';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
-import type { PowerUpKind } from '../../models/level.model';
+import {
+  formatCoinValue,
+  type GiantCoinType,
+  giantCoinValue,
+  isGiantCoinType,
+  perGiantCoin,
+  type PowerUpKind,
+} from '../../models/level.model';
 import type { Collectible, CollectibleSystem } from '../simulation/collectibles';
 import { disposeTree } from './dispose';
 import { backOut } from './easing';
@@ -41,9 +48,11 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'ice-flower': '#5cc8ff',
   star: '#ffd23f',
   'one-up': '#2fb84a',
+  'cat-mushroom': '#ff9f1a',
+  'leaf-mushroom': '#7cc242',
 };
 
-type NumberedCoinKind = 'big-coin' | 'huge-coin' | 'coin-25' | 'coin-100' | 'coin-250' | 'coin-500' | 'coin-1000' | 'coin-2500' | 'coin-5000' | 'coin-10000' | 'coin-50000';
+type NumberedCoinKind = 'big-coin' | 'huge-coin' | GiantCoinType;
 
 interface NumberedCoinLook {
   /** Raio do disco, em blocos. */
@@ -56,15 +65,7 @@ interface NumberedCoinLook {
 /** As moedas gigantes mostram o quanto valem, como no ícone do editor. */
 const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
   'big-coin': { radius: 0.5, iconSize: BIG_COIN_SIZE, value: '10' },
-  'coin-25': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '25' },
-  'coin-100': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '100' },
-  'coin-250': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '250' },
-  'coin-500': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '500' },
-  'coin-1000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '1000' },
-  'coin-2500': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '2500' },
-  'coin-5000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '5000' },
-  'coin-10000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '10000' },
-  'coin-50000': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50000' },
+  ...perGiantCoin((type) => ({ radius: 0.72, iconSize: HUGE_COIN_SIZE, value: formatCoinValue(giantCoinValue(type)) })),
   'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
 };
 
@@ -241,6 +242,10 @@ export class CollectibleView {
   }
 
   private createModel(item: Collectible): Object3D {
+    if (isGiantCoinType(item.kind)) {
+      return this.numberedCoin(item.kind);
+    }
+
     switch (item.kind) {
       case 'crystal': {
         const crystal = new Mesh(new OctahedronGeometry(0.27).scale(1, 1.45, 1), this.crystalMaterial);
@@ -259,15 +264,6 @@ export class CollectibleView {
       case 'power-up':
         return this.powerUpModel(item.powerUp ?? 'super-jump');
       case 'big-coin':
-      case 'coin-25':
-      case 'coin-100':
-      case 'coin-250':
-      case 'coin-500':
-      case 'coin-1000':
-      case 'coin-2500':
-      case 'coin-5000':
-      case 'coin-10000':
-      case 'coin-50000':
       case 'huge-coin':
         return this.numberedCoin(item.kind);
       case 'coin':
@@ -451,6 +447,10 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return flowerParts('#3fb8ff', '#e6f6ff');
     case 'star':
       return starParts();
+    case 'cat-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['cat-mushroom']), ...catEarParts(POWER_UP_COLORS['cat-mushroom'])];
+    case 'leaf-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['leaf-mushroom']), ...leafParts()];
     default:
       return null;
   }
@@ -471,6 +471,24 @@ function mushroomParts(cap: string): readonly VoxelBox[] {
     box(-0.22, 0.06, 0.301, 0.08, 0.08, 0.01, spot),
     box(0.22, 0.06, 0.301, 0.08, 0.08, 0.01, spot),
     box(0, 0.251, 0, 0.14, 0.01, 0.14, spot),
+  ];
+}
+
+/** Duas orelhas de gato em cima do chapéu do cogumelo, com o rosado por dentro. */
+function catEarParts(color: string): readonly VoxelBox[] {
+  return [-1, 1].flatMap((side) => [
+    box(side * 0.17, 0.31, 0, 0.14, 0.14, 0.12, color),
+    box(side * 0.19, 0.41, 0, 0.08, 0.08, 0.1, color),
+    box(side * 0.17, 0.32, 0.061, 0.07, 0.08, 0.01, '#ffb3cf'),
+  ]);
+}
+
+/** Folha verde deitada em cima do chapéu, com a nervura clara. */
+function leafParts(): readonly VoxelBox[] {
+  return [
+    box(0.08, 0.3, 0, 0.34, 0.05, 0.18, '#2f9e44'),
+    box(0.08, 0.326, 0, 0.3, 0.01, 0.03, '#b2f2bb'),
+    box(-0.12, 0.3, 0, 0.08, 0.04, 0.04, '#2b8a3e'),
   ];
 }
 

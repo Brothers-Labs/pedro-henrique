@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 interface SavedLevel {
   readonly id: string;
   readonly name: string;
-  readonly objects: readonly { readonly type: string }[];
+  readonly objects: readonly { readonly type: string; readonly properties?: { readonly powerUp?: string } }[];
 }
 
 /** Read saved levels after real UI actions, without changing game state through test hooks. */
@@ -56,6 +56,34 @@ test('Maker saves both fish enemies placed from the editor', async ({ page }) =>
     .find((level) => level.name === 'Fase dos Peixes')?.objects.map((object) => object.type))
     .toEqual(expect.arrayContaining(['fish', 'jumping-fish']));
   await page.screenshot({ path: test.info().outputPath('fish-enemies-editor.png') });
+});
+
+test('Maker saves the cat and leaf mushrooms and the new giant coins', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase dos Cogumelos');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  const place = async (label: string, x: number): Promise<void> => {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x, y: 112 } });
+  };
+  await page.getByRole('tab', { name: 'Cogumelos', exact: true }).click();
+  await place('Cogumelo Gato', 144);
+  await place('Cogumelo Folha', 176);
+  await page.getByRole('tab', { name: 'Itens', exact: true }).click();
+  for (const [index, label] of ['5', '25k', '100k', '250k', '500k', '1M'].entries()) {
+    await place(`Moeda Gigante ${label}`, 208 + index * 32);
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => {
+    const level = (await savedLevels(page)).find((saved) => saved.name === 'Fase dos Cogumelos');
+    return level?.objects.map((object) => object.type === 'power-up' ? object.properties?.powerUp : object.type);
+  }).toEqual(expect.arrayContaining([
+    'cat-mushroom', 'leaf-mushroom', 'coin-5', 'coin-25000', 'coin-100000', 'coin-250000', 'coin-500000', 'coin-1000000',
+  ]));
+  await page.screenshot({ path: test.info().outputPath('cat-leaf-mushrooms-editor.png') });
 });
 
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {

@@ -35,6 +35,8 @@ const BUILD_BUDGET_MS = 12;
 
 const CELEBRATION_MS = 900;
 const HINT_FADE_RATE = 7;
+/** Altura do balão da placa, em blocos a partir do chão: logo acima da tábua. */
+const SIGN_BUBBLE_Y = 1.75;
 const BOSS_ZOOM = 1.14;
 const FLASH_MS = 240;
 
@@ -181,6 +183,10 @@ export class LevelView {
         hasStar: player.hasPowerUp('star'),
         hasFireFlower: player.hasPowerUp('fire-flower'),
         hasIceFlower: player.hasPowerUp('ice-flower'),
+        hasCatSuit: player.hasPowerUp('cat-mushroom'),
+        hasLeafSuit: player.hasPowerUp('leaf-mushroom'),
+        isClimbing: player.isClimbing,
+        isGliding: player.isGliding,
       },
       deltaSeconds,
       now,
@@ -375,7 +381,8 @@ export class LevelView {
     for (const sign of triggers.signs) {
       const label = this.labels.create('bubble', sign.text, true);
 
-      label.position.set(this.space.x(sign.x), this.space.y(sign.y) + 1.4, -0.6);
+      // Acima da tábua, para o balão não cobrir as letras escritas nela.
+      label.position.set(this.space.x(sign.x), this.space.y(sign.y) + SIGN_BUBBLE_Y, -0.6);
       this.signLabels.set(sign.id, label);
     }
 
