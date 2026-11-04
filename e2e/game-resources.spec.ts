@@ -38,8 +38,8 @@ test('Maker saves the cannon and every new giant coin, and remembers Wario', asy
   await page.getByRole('button', { name: 'Canhão', exact: true }).click();
   await grid.click({ position: { x: 112, y: 112 } });
   await page.getByRole('tab', { name: 'Itens', exact: true }).click();
-  for (const [index, value] of [25, 100, 250, 500, 1000, 2500, 5000, 10000, 50000].entries()) {
-    const coin = page.getByRole('button', { name: `Moeda Gigante ${value}`, exact: true });
+  for (const [index, label] of ['25', '100', '250', '500', '1000', '2500', '5000', '10k', '50k'].entries()) {
+    const coin = page.getByRole('button', { name: `Moeda Gigante ${label}`, exact: true });
     await coin.click();
     await expect(coin).toHaveAttribute('aria-pressed', 'true');
     await grid.click({ position: { x: 144 + index * 32, y: 112 } });

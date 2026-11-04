@@ -1,10 +1,15 @@
-import type {
-  LevelObject,
-  LevelObjectProperties,
-  LevelObjectType,
-  LevelTheme,
-  PowerUpKind,
+import {
+  formatCoinValue,
+  GIANT_COIN_VALUES,
+  giantCoinType,
+  type LevelObject,
+  type LevelObjectProperties,
+  type LevelObjectType,
+  type LevelTheme,
+  perGiantCoin,
+  type PowerUpKind,
 } from '../models/level.model';
+import { BIG_COIN_VALUE, HUGE_COIN_VALUE } from './physics.config';
 
 /**
  * Como um objeto ocupa a grade.
@@ -64,15 +69,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
   'huge-coin': { surface: 'none', isUnique: false },
-  'coin-25': { surface: 'none', isUnique: false },
-  'coin-100': { surface: 'none', isUnique: false },
-  'coin-250': { surface: 'none', isUnique: false },
-  'coin-500': { surface: 'none', isUnique: false },
-  'coin-1000': { surface: 'none', isUnique: false },
-  'coin-2500': { surface: 'none', isUnique: false },
-  'coin-5000': { surface: 'none', isUnique: false },
-  'coin-10000': { surface: 'none', isUnique: false },
-  'coin-50000': { surface: 'none', isUnique: false },
+  ...perGiantCoin((): ObjectBehavior => ({ surface: 'none', isUnique: false })),
   crystal: { surface: 'none', isUnique: false },
   heart: { surface: 'none', isUnique: false },
   'power-up': { surface: 'none', isUnique: false },
@@ -144,6 +141,25 @@ export interface EditorPiece {
   readonly properties?: LevelObjectProperties;
 }
 
+interface ValuedCoin {
+  readonly value: number;
+  readonly type: LevelObjectType;
+}
+
+/**
+ * Moedas gigantes no editor, da menor para a maior. A de 10 e a de 50 têm tipo
+ * próprio, mais antigo, e entram na fila no lugar do valor delas.
+ */
+const VALUED_COINS: readonly ValuedCoin[] = [
+  { value: BIG_COIN_VALUE, type: 'big-coin' },
+  { value: HUGE_COIN_VALUE, type: 'huge-coin' },
+  ...GIANT_COIN_VALUES.map((value): ValuedCoin => ({ value, type: giantCoinType(value) })),
+];
+
+const GIANT_COIN_PIECES: readonly EditorPiece[] = [...VALUED_COINS]
+  .sort((first, second) => first.value - second.value)
+  .map(({ value, type }): EditorPiece => ({ id: type, category: 'itens', type, label: `Moeda Gigante ${formatCoinValue(value)}` }));
+
 export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'ground', category: 'terreno', type: 'ground', label: 'Grama' },
   { id: 'stone', category: 'terreno', type: 'stone', label: 'Pedra' },
@@ -195,17 +211,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'jumping-fish', category: 'inimigos', type: 'jumping-fish', label: 'Peixe Saltador' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
-  { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante 10' },
-  { id: 'huge-coin', category: 'itens', type: 'huge-coin', label: 'Moeda Gigante 50' },
-  { id: 'coin-25', category: 'itens', type: 'coin-25', label: 'Moeda Gigante 25' },
-  { id: 'coin-100', category: 'itens', type: 'coin-100', label: 'Moeda Gigante 100' },
-  { id: 'coin-250', category: 'itens', type: 'coin-250', label: 'Moeda Gigante 250' },
-  { id: 'coin-500', category: 'itens', type: 'coin-500', label: 'Moeda Gigante 500' },
-  { id: 'coin-1000', category: 'itens', type: 'coin-1000', label: 'Moeda Gigante 1000' },
-  { id: 'coin-2500', category: 'itens', type: 'coin-2500', label: 'Moeda Gigante 2500' },
-  { id: 'coin-5000', category: 'itens', type: 'coin-5000', label: 'Moeda Gigante 5000' },
-  { id: 'coin-10000', category: 'itens', type: 'coin-10000', label: 'Moeda Gigante 10000' },
-  { id: 'coin-50000', category: 'itens', type: 'coin-50000', label: 'Moeda Gigante 50000' },
+  ...GIANT_COIN_PIECES,
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
 
@@ -254,6 +260,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'power-ice-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Gelo', properties: { powerUp: 'ice-flower' } },
   { id: 'power-star', category: 'cogumelos', type: 'power-up', label: 'Super Estrela', properties: { powerUp: 'star' } },
   { id: 'power-one-up', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Vida', properties: { powerUp: 'one-up' } },
+  { id: 'power-cat-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Gato', properties: { powerUp: 'cat-mushroom' } },
+  { id: 'power-leaf-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Folha', properties: { powerUp: 'leaf-mushroom' } },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
   {
     id: 'surprise-mushroom',
@@ -302,6 +310,8 @@ export const POWER_UP_LABELS = {
   'ice-flower': { label: 'Flor de Gelo', emoji: '❄️' },
   star: { label: 'Super Estrela', emoji: '⭐' },
   'one-up': { label: 'Cogumelo Vida', emoji: '💚' },
+  'cat-mushroom': { label: 'Cogumelo Gato', emoji: '🐱' },
+  'leaf-mushroom': { label: 'Cogumelo Folha', emoji: '🍃' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {

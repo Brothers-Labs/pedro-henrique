@@ -10,11 +10,13 @@ import {
 
 import { THEME_PALETTES } from '../../art/palettes';
 import { OBJECT_BEHAVIOR } from '../../config/object-catalog';
-import type { LevelObjectType } from '../../models/level.model';
+import { type LevelObjectType, perGiantCoin } from '../../models/level.model';
 import type { GridViewport } from '../editor-canvas/editor-canvas';
 import type { EditorLevel } from '../editor-state';
 
 /** Cor de cada peça no mapinha: o bastante para reconhecer o caminho, sem detalhe. */
+const GIANT_COIN_COLOR = '#ffc629';
+
 const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   start: '#3fa3f5',
   portal: '#b39cff',
@@ -22,15 +24,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   coin: '#ffc629',
   'big-coin': '#ffc629',
   'huge-coin': '#ffc629',
-  'coin-25': '#ffc629',
-  'coin-100': '#ffc629',
-  'coin-250': '#ffc629',
-  'coin-500': '#ffc629',
-  'coin-1000': '#ffc629',
-  'coin-2500': '#ffc629',
-  'coin-5000': '#ffc629',
-  'coin-10000': '#ffc629',
-  'coin-50000': '#ffc629',
+  ...perGiantCoin(() => GIANT_COIN_COLOR),
   cannon: '#626d7c',
   slide: '#ff5a5a',
   crystal: '#6fe3ff',

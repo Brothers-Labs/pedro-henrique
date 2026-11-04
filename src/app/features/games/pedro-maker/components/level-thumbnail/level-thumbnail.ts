@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { THEME_PALETTES } from '../../art/palettes';
 import { paint } from '../../art/canvas';
-import { type CustomLevel, isEnemyKind, type LevelObjectType } from '../../models/level.model';
+import { type CustomLevel, isEnemyKind, type LevelObjectType, perGiantCoin } from '../../models/level.model';
 
 /** Pixels por célula na miniatura. */
 const CELL = 3;
+
+const GIANT_COIN_COLOR = '#ffc629';
 
 const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   stone: '#8a8fa8',
@@ -23,15 +25,7 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   coin: '#ffe066',
   'big-coin': '#ffc629',
   'huge-coin': '#ffc629',
-  'coin-25': '#ffc629',
-  'coin-100': '#ffc629',
-  'coin-250': '#ffc629',
-  'coin-500': '#ffc629',
-  'coin-1000': '#ffc629',
-  'coin-2500': '#ffc629',
-  'coin-5000': '#ffc629',
-  'coin-10000': '#ffc629',
-  'coin-50000': '#ffc629',
+  ...perGiantCoin(() => GIANT_COIN_COLOR),
   cannon: '#626d7c',
   slide: '#ff5a5a',
   crystal: '#4fd8ff',

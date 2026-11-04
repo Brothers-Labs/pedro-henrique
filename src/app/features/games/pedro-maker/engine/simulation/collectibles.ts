@@ -1,5 +1,5 @@
 import { BIG_COIN_VALUE, HUGE_COIN_VALUE, MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
-import type { ItemType, LevelObject, PowerUpKind } from '../../models/level.model';
+import { giantCoinValue, isGiantCoinType, type ItemType, type LevelObject, type PowerUpKind } from '../../models/level.model';
 
 export type CollectibleKind = ItemType;
 
@@ -45,19 +45,15 @@ export class CollectibleSystem {
       const x = (object.x + 0.5) * TILE_SIZE;
       const y = (object.y + 0.5) * TILE_SIZE;
 
+      if (isGiantCoinType(object.type)) {
+        this.spawn(object.type, x, y, {}, null);
+        continue;
+      }
+
       switch (object.type) {
         case 'coin':
         case 'big-coin':
         case 'huge-coin':
-        case 'coin-25':
-        case 'coin-100':
-        case 'coin-250':
-        case 'coin-500':
-        case 'coin-1000':
-        case 'coin-2500':
-        case 'coin-5000':
-        case 'coin-10000':
-        case 'coin-50000':
         case 'heart':
           this.spawn(object.type, x, y, {}, null);
           break;
@@ -115,6 +111,10 @@ export class CollectibleSystem {
 
 /** Moedas que um item vale: as gigantes valem várias; o que não é moeda, nenhuma. */
 export function coinValue(kind: CollectibleKind): number {
+  if (isGiantCoinType(kind)) {
+    return giantCoinValue(kind);
+  }
+
   switch (kind) {
     case 'coin':
       return 1;
@@ -122,24 +122,6 @@ export function coinValue(kind: CollectibleKind): number {
       return BIG_COIN_VALUE;
     case 'huge-coin':
       return HUGE_COIN_VALUE;
-    case 'coin-25':
-      return 25;
-    case 'coin-100':
-      return 100;
-    case 'coin-250':
-      return 250;
-    case 'coin-500':
-      return 500;
-    case 'coin-1000':
-      return 1000;
-    case 'coin-2500':
-      return 2500;
-    case 'coin-5000':
-      return 5000;
-    case 'coin-10000':
-      return 10000;
-    case 'coin-50000':
-      return 50000;
     case 'crystal':
     case 'heart':
     case 'power-up':

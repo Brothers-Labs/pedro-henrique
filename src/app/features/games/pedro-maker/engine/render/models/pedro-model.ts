@@ -17,6 +17,11 @@ const STAR_GLOW = 0.65;
 const FLOWER_GLOW = 0.22;
 const FIRE_COLOR = '#ff5a1f';
 const ICE_COLOR = '#3fb8ff';
+const CAT_COLOR = '#ff9f1a';
+const CAT_STRIPE = '#c86a00';
+const LEAF_COLOR = '#2f9e44';
+/** Giros por segundo da folha na cabeça enquanto o herói plana, como uma hélice. */
+const LEAF_SPIN_RATE = 14;
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -31,6 +36,12 @@ export interface PedroPose {
   readonly hasStar: boolean;
   readonly hasFireFlower: boolean;
   readonly hasIceFlower: boolean;
+  readonly hasCatSuit: boolean;
+  readonly hasLeafSuit: boolean;
+  /** Subindo uma parede com o Cogumelo Gato. */
+  readonly isClimbing: boolean;
+  /** Planando com o Cogumelo Folha. */
+  readonly isGliding: boolean;
 }
 
 /**
@@ -51,6 +62,8 @@ export class PedroModel {
   private readonly rightLeg: Group;
   private readonly shield: Mesh;
   private readonly wings: Group;
+  private readonly catSuit: Group;
+  private readonly leaf: Group;
   private readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
 
   private heading = Math.PI / 2 - TURN_TOWARD_CAMERA;
@@ -70,7 +83,11 @@ export class PedroModel {
     this.leftLeg = this.limb(parts.leg, -parts.hipX, parts.hipY);
     this.rightLeg = this.limb(parts.leg, parts.hipX, parts.hipY);
     this.wings = this.buildWings(parts.shoulderY);
-    this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings);
+    const headTop = topOf(parts.upperBody);
+
+    this.catSuit = this.buildCatSuit(headTop, parts.hipY);
+    this.leaf = this.buildLeaf(headTop);
+    this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings, this.catSuit, this.leaf);
 
     this.shield = new Mesh(
       new SphereGeometry(0.95, 20, 14),
@@ -85,6 +102,8 @@ export class PedroModel {
     this.root.visible = !pose.isBlinking;
     this.shield.visible = pose.hasShield;
     this.wings.visible = pose.hasWings;
+    this.catSuit.visible = pose.hasCatSuit;
+    this.leaf.visible = pose.hasLeafSuit;
     this.shield.rotation.y = now / 600;
 
     this.turn(pose, deltaSeconds);
@@ -92,6 +111,7 @@ export class PedroModel {
     this.glow(pose, now);
     this.reactToGround(pose);
     this.animateLimbs(pose, deltaSeconds, now);
+    this.animateSuit(pose, deltaSeconds, now);
     this.applySquash(deltaSeconds);
 
     this.previousMode = pose.mode;
@@ -228,6 +248,62 @@ export class PedroModel {
     }
   }
 
+  /** Escalando, os braços vão alternando para cima; planando, abrem como asas e a folha gira. */
+  private animateSuit(pose: PedroPose, deltaSeconds: number, now: number): void {
+    if (pose.isClimbing) {
+      const reach = Math.sin(now / 70);
+
+      this.leftArm.rotation.set(-2.6 + reach * 0.4, 0, 0);
+      this.rightArm.rotation.set(-2.6 - reach * 0.4, 0, 0);
+      this.leftLeg.rotation.x = reach * 0.5;
+      this.rightLeg.rotation.x = -reach * 0.5;
+    }
+
+    if (pose.isGliding) {
+      this.leftArm.rotation.set(0, 0, -1.5);
+      this.rightArm.rotation.set(0, 0, 1.5);
+      this.leaf.rotation.y += LEAF_SPIN_RATE * deltaSeconds;
+    }
+  }
+
+  /** Orelhas pontudas no alto da cabeça e o rabo listrado saindo das costas, na altura do quadril. */
+  private buildCatSuit(headTop: number, hipY: number): Group {
+    const suit = new Group();
+
+    suit.add(
+      this.mesh([
+        ...[-1, 1].flatMap((side) => [
+          box(side * 0.16, headTop + 0.05, 0, 0.14, 0.12, 0.1, CAT_COLOR),
+          box(side * 0.18, headTop + 0.14, 0, 0.08, 0.08, 0.08, CAT_COLOR),
+          box(side * 0.16, headTop + 0.06, 0.052, 0.07, 0.07, 0.01, '#ffb3cf'),
+        ]),
+        box(0, hipY + 0.02, -0.3, 0.08, 0.08, 0.22, CAT_COLOR),
+        box(0, hipY + 0.14, -0.42, 0.08, 0.22, 0.08, CAT_STRIPE),
+        box(0, hipY + 0.3, -0.44, 0.08, 0.12, 0.08, CAT_COLOR),
+      ]),
+    );
+    suit.visible = false;
+
+    return suit;
+  }
+
+  /** Folha deitada no alto da cabeça, presa por um cabinho no meio: é dela que vem o voo planado. */
+  private buildLeaf(headTop: number): Group {
+    const leaf = new Group();
+
+    leaf.position.y = headTop;
+    leaf.add(
+      this.mesh([
+        box(0, 0.04, 0, 0.04, 0.08, 0.04, '#2b8a3e'),
+        box(0, 0.09, 0, 0.56, 0.03, 0.2, LEAF_COLOR),
+        box(0, 0.106, 0, 0.5, 0.01, 0.03, '#b2f2bb'),
+      ]),
+    );
+    leaf.visible = false;
+
+    return leaf;
+  }
+
   private limb(parts: readonly VoxelBox[], x: number, pivotY: number): Group {
     const pivot = new Group();
 
@@ -266,4 +342,9 @@ export class PedroModel {
 
     return wings;
   }
+}
+
+/** Altura do ponto mais alto das peças: o topo da cabeça (ou do boné) de cada herói. */
+function topOf(parts: readonly VoxelBox[]): number {
+  return Math.max(...parts.map((part) => part.y + part.height / 2));
 }

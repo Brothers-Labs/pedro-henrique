@@ -1,5 +1,12 @@
 import type { HeroAbilities } from '../../config/hero.config';
-import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SLIDE_PHYSICS, SWIM_PHYSICS } from '../../config/physics.config';
+import {
+  CAT_SUIT_PHYSICS,
+  LEAF_SUIT_PHYSICS,
+  PLAYER_PHYSICS,
+  POWER_UP_DURATION_MS,
+  SLIDE_PHYSICS,
+  SWIM_PHYSICS,
+} from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { InputSnapshot } from '../input/input-snapshot';
@@ -26,7 +33,22 @@ export interface PlayerSurroundings {
 }
 
 /** Poderes que duram até proteger de um toque, em vez de acabar com o tempo. */
-const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(['shield', 'mushroom', 'fire-flower', 'ice-flower']);
+const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>([
+  'shield',
+  'mushroom',
+  'fire-flower',
+  'ice-flower',
+  'cat-mushroom',
+  'leaf-mushroom',
+]);
+
+/**
+ * Trajes: fazem o herói crescer e dão um jeito próprio de se mexer ou atacar.
+ * Só se veste um de cada vez — pegar outro troca o de antes.
+ */
+export const SUIT_POWER_UPS = ['fire-flower', 'ice-flower', 'cat-mushroom', 'leaf-mushroom'] as const satisfies readonly PowerUpKind[];
+
+const SUIT_SET: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(SUIT_POWER_UPS);
 
 /** Cada flor lança o seu elemento; pegar uma troca a outra. */
 const FLOWER_ELEMENTS = [
@@ -64,8 +86,9 @@ const RUN_DUST_SPEED = 200;
  *
  * Aqui mora a sensação do controle: aceleração e freio suaves, gelo
  * escorregadio, pulo que perdoa o botão apertado um pouquinho cedo ou tarde,
- * pulo curto ao soltar o botão, pulo duplo com a Asa, braçadas na água, a
- * descida no escorregador e a piscada de invencibilidade depois de um toque.
+ * pulo curto ao soltar o botão, pulo duplo com a Asa, escalada e pulo de
+ * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, braçadas na
+ * água, a descida no escorregador e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
@@ -94,6 +117,9 @@ export class Player {
   private previousFallSpeed = 0;
   private lastRunDustAt = 0;
   private slideRide: SlideRide | null = null;
+  private climbTimeLeftMs: number = CAT_SUIT_PHYSICS.climbMs;
+  private climbing = false;
+  private gliding = false;
 
   constructor(
     feetX: number,
@@ -125,6 +151,16 @@ export class Player {
     return this.slideRide !== null;
   }
 
+  /** Subindo uma parede com o Cogumelo Gato. */
+  get isClimbing(): boolean {
+    return this.climbing;
+  }
+
+  /** Planando com o Cogumelo Folha. */
+  get isGliding(): boolean {
+    return this.gliding;
+  }
+
   /** O que o botão de ação lança: fogo, gelo ou nada, conforme a flor. */
   get flowerElement(): BallElement | null {
     return FLOWER_ELEMENTS.find(([flower]) => this.protections.has(flower))?.[1] ?? null;
@@ -154,6 +190,8 @@ export class Player {
   /** Decide a velocidade deste passo; a física move o corpo logo depois. */
   control(now: number, deltaMs: number, input: InputSnapshot, surroundings: PlayerSurroundings): void {
     this.expirePowerUps(now);
+    this.climbing = false;
+    this.gliding = false;
 
     if (!this.isActive) {
       return;
@@ -164,6 +202,7 @@ export class Player {
     if (grounded) {
       this.lastGroundedAt = now;
       this.hasUsedDoubleJump = false;
+      this.climbTimeLeftMs = CAT_SUIT_PHYSICS.climbMs;
     }
 
     if (this.slideRide) {
@@ -180,8 +219,9 @@ export class Player {
 
     if (this.isInWater) {
       this.handleSwim(input, surroundings.isAtWaterSurface);
-    } else {
+    } else if (!this.climbWall(deltaMs, input, grounded)) {
       this.handleJump(now, input, grounded);
+      this.glide(input, grounded);
     }
 
     this.updateMode(now, grounded);
@@ -212,9 +252,9 @@ export class Player {
 
     this.protections.add(kind);
 
-    if (FLOWER_ELEMENTS.some(([flower]) => flower === kind)) {
+    if (SUIT_SET.has(kind)) {
       this.protections.add('mushroom');
-      this.dropOtherFlowers(kind);
+      this.dropOtherSuits(kind);
     }
   }
 
@@ -314,13 +354,69 @@ export class Player {
     this.body.hasGravity = true;
   }
 
-  /** As flores não se somam: a nova toma o lugar da outra. */
-  private dropOtherFlowers(kept: PowerUpKind): void {
-    for (const [flower] of FLOWER_ELEMENTS) {
-      if (flower !== kept && this.protections.delete(flower)) {
-        this.host.onPowerUpEnded(flower);
+  /** Os trajes não se somam: o novo toma o lugar do outro. */
+  private dropOtherSuits(kept: PowerUpKind): void {
+    for (const suit of SUIT_POWER_UPS) {
+      if (suit !== kept && this.protections.delete(suit)) {
+        this.host.onPowerUpEnded(suit);
       }
     }
+  }
+
+  /**
+   * Cogumelo Gato: no ar e empurrando uma parede, o herói sobe por ela enquanto
+   * durar o fôlego; o pulo grudado na parede o lança para o outro lado.
+   * Verdadeiro quando a parede cuidou do movimento deste passo.
+   */
+  private climbWall(deltaMs: number, input: InputSnapshot, grounded: boolean): boolean {
+    const wallSide = this.pushedWallSide(input);
+
+    if (grounded || wallSide === 0 || !this.protections.has('cat-mushroom')) {
+      return false;
+    }
+
+    if (input.jumpPressed) {
+      this.jump(this.jumpVelocity() * CAT_SUIT_PHYSICS.wallJumpMultiplier);
+      this.body.vx = -wallSide * CAT_SUIT_PHYSICS.wallJumpPush;
+      this.facing = wallSide === 1 ? -1 : 1;
+      this.host.effects.burst('dust', centerX(this.body) + wallSide * (this.body.width / 2), this.body.y + this.body.height / 2, 6);
+
+      return true;
+    }
+
+    if (this.climbTimeLeftMs <= 0) {
+      return false;
+    }
+
+    this.climbTimeLeftMs -= deltaMs;
+    this.body.vy = -CAT_SUIT_PHYSICS.climbSpeed;
+    this.climbing = true;
+
+    return true;
+  }
+
+  /** Para que lado o herói empurra uma parede encostada: 1 direita, -1 esquerda, 0 nenhum. */
+  private pushedWallSide(input: InputSnapshot): -1 | 0 | 1 {
+    if (input.right && this.body.blockedRight) {
+      return 1;
+    }
+
+    if (input.left && this.body.blockedLeft) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  /** Cogumelo Folha: caindo com o pulo apertado, a queda fica lenta como a de uma folha. */
+  private glide(input: InputSnapshot, grounded: boolean): void {
+    if (grounded || !input.jumpHeld || this.body.vy <= 0 || !this.protections.has('leaf-mushroom')) {
+      return;
+    }
+
+    this.gliding = true;
+    this.body.maxFallSpeed = LEAF_SUIT_PHYSICS.glideFallSpeed;
+    this.body.vy = Math.min(this.body.vy, LEAF_SUIT_PHYSICS.glideFallSpeed);
   }
 
   /** Dentro da água a gravidade quase some e a queda fica lenta; ao entrar ou sair, espirra. */
