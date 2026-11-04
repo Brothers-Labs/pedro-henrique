@@ -29,6 +29,8 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   thwomp: paintThwomp,
   'king-slime': paintKingSlime,
   'iron-ball': paintIronBall,
+  fish: paintSwimmingFish,
+  'jumping-fish': paintJumpingFish,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -557,5 +559,79 @@ function paintIronBall(context: CanvasRenderingContext2D): void {
   context.lineTo(34, 21);
   context.moveTo(28, 33);
   context.quadraticCurveTo(31.5, 35.5, 35, 33);
+  context.stroke();
+}
+
+interface FishIconColors {
+  readonly body: string;
+  readonly fin: string;
+  readonly stripe: string;
+}
+
+/** O peixe nadador, azul-piscina de nadadeiras amarelas, com bolhinhas subindo. */
+function paintSwimmingFish(context: CanvasRenderingContext2D): void {
+  paintFish(context, { body: '#2bb7c9', fin: '#ffd23f', stripe: '#ffffff' }, 26);
+
+  context.strokeStyle = '#9fd3ff';
+  context.lineWidth = 1.5;
+
+  for (const [x, y, radius] of [[42, 14, 2.5], [38, 7, 1.8]] as const) {
+    circle(context, x, y, radius);
+    context.stroke();
+  }
+}
+
+/** O peixe saltador, coral de nadadeiras roxas, pulando de uma marolinha. */
+function paintJumpingFish(context: CanvasRenderingContext2D): void {
+  context.strokeStyle = '#2f9be8';
+  context.lineWidth = 3;
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(4, 44);
+  context.quadraticCurveTo(12, 38, 20, 44);
+  context.quadraticCurveTo(28, 50, 36, 44);
+  context.quadraticCurveTo(40, 41, 44, 44);
+  context.stroke();
+
+  paintFish(context, { body: '#ff6f91', fin: '#8e44c9', stripe: '#ffe14d' }, 22);
+}
+
+/** Peixe de perfil virado para a direita: rabo em leque, barbatana, listra e olho grande. */
+function paintFish(context: CanvasRenderingContext2D, colors: FishIconColors, centerY: number): void {
+  context.beginPath();
+  context.moveTo(12, centerY);
+  context.lineTo(3, centerY - 9);
+  context.lineTo(5, centerY);
+  context.lineTo(3, centerY + 9);
+  context.closePath();
+  fillAndOutline(context, colors.fin, 2);
+
+  context.beginPath();
+  context.moveTo(18, centerY - 9);
+  context.quadraticCurveTo(26, centerY - 19, 32, centerY - 9);
+  context.closePath();
+  fillAndOutline(context, colors.fin, 2);
+
+  ellipse(context, 25, centerY, 15, 11);
+  fillAndOutline(context, colors.body);
+
+  context.save();
+  ellipse(context, 25, centerY, 13.5, 9.5);
+  context.clip();
+  context.fillStyle = colors.stripe;
+  context.fillRect(18, centerY - 12, 4, 24);
+  context.fillStyle = lighten(colors.body, 0.45);
+  context.fillRect(10, centerY + 4, 30, 8);
+  context.restore();
+
+  shine(context, 22, centerY - 6, 4, 2);
+  eye(context, 32, centerY - 2, 3.6, 0.3);
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2;
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(37, centerY + 4);
+  context.quadraticCurveTo(39, centerY + 5.5, 40.5, centerY + 3.5);
   context.stroke();
 }

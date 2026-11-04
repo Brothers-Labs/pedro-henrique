@@ -55,3 +55,66 @@ export const BRUNO_OVERALLS: OverallsColors = {
   hair: '#d0632a',
   mustache: '#a84a1a',
 };
+
+/** Ana Faísca, a inventora: macacão grafite e botões dourados de engrenagem. */
+export const ANA_OVERALLS: OverallsColors = {
+  overalls: '#3d3a4a',
+  button: '#ffd23f',
+  shoe: '#2a2350',
+  hair: '#1b1b22',
+  mustache: '#1b1b22',
+};
+
+/** Caio Cometa: macacão prateado de astronauta e cabelo ruivo. */
+export const CAIO_OVERALLS: OverallsColors = {
+  overalls: '#9aa7b8',
+  button: '#ff4f9a',
+  shoe: '#1f3a8a',
+  hair: '#c8552a',
+  mustache: '#c8552a',
+};
+
+/** Nina Neblina: tons de azul-claro e cabelo prateado, leve como a névoa. */
+export const NINA_OVERALLS: OverallsColors = {
+  overalls: '#5b8fb9',
+  button: '#eef1f6',
+  shoe: '#46607a',
+  hair: '#c0c6d0',
+  mustache: '#c0c6d0',
+};
+
+/** Otto Onda, o surfista: macacão azul-petróleo e chinelos de madeira. */
+export const OTTO_OVERALLS: OverallsColors = {
+  overalls: '#1d4e5f',
+  button: '#ffd23f',
+  shoe: '#a0703c',
+  hair: '#4a2a12',
+  mustache: '#3a200c',
+};
+
+/** Vavá Varapau, o rival comprido: macacão cinza-chumbo e botinas cor de vinho. */
+export const VAVA_OVERALLS: OverallsColors = {
+  overalls: '#4a4f5c',
+  button: '#a6e22e',
+  shoe: '#5a1a2e',
+  hair: '#2a1a10',
+  mustache: '#2a1a10',
+};
+
+/** Rafa Rodopio, que imita todo mundo: macacão mostarda com botões turquesa. */
+export const RAFA_OVERALLS: OverallsColors = {
+  overalls: '#c99a1a',
+  button: '#2bb7c9',
+  shoe: '#3d2a1c',
+  hair: '#1b1b22',
+  mustache: '#1b1b22',
+};
+
+/** Duda Dínamo, baixinho e forte: macacão cor de tijolo e cabelo castanho. */
+export const DUDA_OVERALLS: OverallsColors = {
+  overalls: '#a8452f',
+  button: '#f4e3c3',
+  shoe: '#2a2350',
+  hair: '#6b3f22',
+  mustache: '#4a2a12',
+};

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-import { isSprunkAccessory, isSprunkCustomAction, isSprunkEyes } from '../data/sprunk-parts.data';
+import { isSprunkAccessory, isSprunkCostume, isSprunkCustomAction, isSprunkEyes } from '../data/sprunk-parts.data';
 import { isSprunkSoundId } from '../data/sprunk-sounds.data';
 import type { SprunkCharacter, SprunkDraft } from '../models/sprunk.model';
 
@@ -51,6 +51,7 @@ export function isValidDraft(draft: SprunkDraft): boolean {
     normalizeSprunkName(draft.name).length > 0 &&
     HEX_COLOR_PATTERN.test(draft.color) &&
     isSprunkAccessory(draft.accessory) &&
+    isSprunkCostume(draft.costume) &&
     isSprunkEyes(draft.eyes) &&
     isSprunkCustomAction(draft.action) &&
     isSprunkSoundId(draft.soundId)
@@ -114,6 +115,8 @@ function toCustomSprunk(entry: unknown): SprunkCharacter | null {
 
   const record = entry as Readonly<Record<string, unknown>>;
   const { id, name, color, accessory, eyes, action, soundId } = record;
+  // Bonecos guardados antes das fantasias existirem não têm o campo: vestem nenhuma.
+  const costume = record['costume'] ?? 'none';
 
   if (
     typeof id !== 'string' ||
@@ -121,6 +124,7 @@ function toCustomSprunk(entry: unknown): SprunkCharacter | null {
     typeof name !== 'string' ||
     typeof color !== 'string' ||
     typeof accessory !== 'string' ||
+    typeof costume !== 'string' ||
     typeof eyes !== 'string' ||
     typeof action !== 'string' ||
     typeof soundId !== 'string'
@@ -128,7 +132,7 @@ function toCustomSprunk(entry: unknown): SprunkCharacter | null {
     return null;
   }
 
-  const draft = { name, color, accessory, eyes, action, soundId } as SprunkDraft;
+  const draft = { name, color, accessory, costume, eyes, action, soundId } as SprunkDraft;
 
   if (!isValidDraft(draft)) {
     return null;

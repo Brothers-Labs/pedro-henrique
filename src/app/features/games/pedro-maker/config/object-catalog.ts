@@ -58,6 +58,8 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   thwomp: { surface: 'none', isUnique: false },
   'king-slime': { surface: 'none', isUnique: false },
   'iron-ball': { surface: 'none', isUnique: false },
+  fish: { surface: 'none', isUnique: false },
+  'jumping-fish': { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
@@ -189,6 +191,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'thwomp', category: 'inimigos', type: 'thwomp', label: 'Thwomp' },
   { id: 'king-slime', category: 'inimigos', type: 'king-slime', label: 'Rei Slime' },
   { id: 'iron-ball', category: 'inimigos', type: 'iron-ball', label: 'Bolão na Corrente' },
+  { id: 'fish', category: 'inimigos', type: 'fish', label: 'Peixe Nadador' },
+  { id: 'jumping-fish', category: 'inimigos', type: 'jumping-fish', label: 'Peixe Saltador' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'big-coin', category: 'itens', type: 'big-coin', label: 'Moeda Gigante 10' },

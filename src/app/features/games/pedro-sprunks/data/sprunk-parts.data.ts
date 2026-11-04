@@ -1,4 +1,4 @@
-import type { SprunkAccessory, SprunkCustomAction, SprunkEyes } from '../models/sprunk.model';
+import type { SprunkAccessory, SprunkCostume, SprunkCustomAction, SprunkEyes } from '../models/sprunk.model';
 
 /**
  * As peças do criador de bonecos, com o nome que o Pedro lê na tela.
@@ -9,6 +9,7 @@ import type { SprunkAccessory, SprunkCustomAction, SprunkEyes } from '../models/
 export const SPRUNK_ACCESSORY_LABELS: Readonly<Record<SprunkAccessory, string>> = {
   none: 'Nada',
   headphones: 'Fone',
+  'antenna-headphones': 'Fone com antenas',
   spikes: 'Espetos',
   propeller: 'Hélice',
   antennas: 'Antenas',
@@ -34,6 +35,18 @@ export const SPRUNK_EYES_LABELS: Readonly<Record<SprunkEyes, string>> = {
   happy: 'Felizes',
   shades: 'Óculos escuros',
   star: 'Estrelas',
+  glow: 'Brilhando',
+};
+
+export const SPRUNK_COSTUME_LABELS: Readonly<Record<SprunkCostume, string>> = {
+  none: 'Nenhuma',
+  bowtie: 'Gravata-borboleta',
+  tie: 'Gravata',
+  scarf: 'Cachecol',
+  cape: 'Capa',
+  overalls: 'Jardineira',
+  stripes: 'Listras',
+  skeleton: 'Esqueleto',
 };
 
 /** O avanço na corrente é só da bola de ferro, então não entra no criador. */
@@ -46,6 +59,7 @@ export const SPRUNK_CUSTOM_ACTION_LABELS: Readonly<Record<SprunkCustomAction, st
 
 export const SPRUNK_ACCESSORIES = Object.keys(SPRUNK_ACCESSORY_LABELS) as readonly SprunkAccessory[];
 export const SPRUNK_EYES = Object.keys(SPRUNK_EYES_LABELS) as readonly SprunkEyes[];
+export const SPRUNK_COSTUMES = Object.keys(SPRUNK_COSTUME_LABELS) as readonly SprunkCostume[];
 export const SPRUNK_CUSTOM_ACTIONS = Object.keys(SPRUNK_CUSTOM_ACTION_LABELS) as readonly SprunkCustomAction[];
 
 export function isSprunkAccessory(value: string): value is SprunkAccessory {
@@ -56,11 +70,18 @@ export function isSprunkEyes(value: string): value is SprunkEyes {
   return Object.hasOwn(SPRUNK_EYES_LABELS, value);
 }
 
+export function isSprunkCostume(value: string): value is SprunkCostume {
+  return Object.hasOwn(SPRUNK_COSTUME_LABELS, value);
+}
+
 export function isSprunkCustomAction(value: string): value is SprunkCustomAction {
   return Object.hasOwn(SPRUNK_CUSTOM_ACTION_LABELS, value);
 }
 
-/** Cores prontas para o corpo: vivas e com contorno escuro legível. */
+/**
+ * Cores prontas para o corpo: as vivas da turma do dia e, no fim, as escuras
+ * da turma da noite, que combinam com os olhos brilhando.
+ */
 export const SPRUNK_BODY_COLORS: readonly string[] = [
   '#e8483f',
   '#ff8a3d',
@@ -74,4 +95,7 @@ export const SPRUNK_BODY_COLORS: readonly string[] = [
   '#b5651d',
   '#9aa7b8',
   '#eef1f6',
+  '#3b2f5c',
+  '#1f3a4a',
+  '#2b2540',
 ];

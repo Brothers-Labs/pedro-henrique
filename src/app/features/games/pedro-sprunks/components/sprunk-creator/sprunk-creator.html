@@ -59,6 +59,22 @@
       </fieldset>
 
       <fieldset class="creator__group">
+        <legend class="creator__label">Fantasia</legend>
+        <div class="creator__chips">
+          @for (costume of costumes; track costume) {
+            <button
+              type="button"
+              class="creator__chip"
+              [attr.aria-pressed]="current.costume === costume"
+              (click)="update('costume', costume)"
+            >
+              {{ costumeLabels[costume] }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="creator__group">
         <legend class="creator__label">Olhos</legend>
         <div class="creator__chips">
           @for (eyes of eyesOptions; track eyes) {
