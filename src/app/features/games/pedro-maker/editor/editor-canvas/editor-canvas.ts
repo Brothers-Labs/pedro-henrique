@@ -519,7 +519,8 @@ export class EditorCanvas {
   }
 
   private iconFor(object: LevelObject, level: EditorLevel): HTMLCanvasElement {
-    const key = `${level.theme}:${object.type}:${object.properties?.powerUp ?? ''}`;
+    // O texto entra na chave: duas placas com frases diferentes têm ícones diferentes.
+    const key = `${level.theme}:${object.type}:${object.properties?.powerUp ?? ''}:${object.properties?.text ?? ''}`;
     const cached = this.icons.get(key);
 
     if (cached) {

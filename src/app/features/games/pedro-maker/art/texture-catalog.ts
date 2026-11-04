@@ -365,7 +365,7 @@ function drawIcon(
       fit(CRATE_SIZE, CRATE_SIZE, paintCrate);
       return;
     case 'sign':
-      paintSign(context);
+      paintSign(context, object.properties?.text ?? '');
       return;
     case 'hint':
     case 'mascot-tip':

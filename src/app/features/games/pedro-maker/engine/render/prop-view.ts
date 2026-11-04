@@ -6,14 +6,16 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  PlaneGeometry,
   SRGBColorSpace,
 } from 'three';
 
 import { context2d, createCanvas, darken, lighten } from '../../art/canvas';
 import type { ThemePalette } from '../../art/palettes';
+import { paintSignText } from '../../art/sign-text-art';
 import { SLIDE_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelTheme } from '../../models/level.model';
-import { CHEST_DROP_MS, type Checkpoint, type DoorKind, type TriggerSystem } from '../simulation/triggers';
+import { CHEST_DROP_MS, type Checkpoint, type DoorKind, type Sign, type TriggerSystem } from '../simulation/triggers';
 import { disposeTree } from './dispose';
 import { backOut, bounceOut } from './easing';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
@@ -26,6 +28,15 @@ const DECOR_Z = -0.95;
 const SLIDE_FRAME_Z = -0.4;
 const DOOR_Z = -0.55;
 const SIGN_Z = -0.6;
+
+/** Tábua da placa, em blocos: larga o bastante para uma frase curta ser lida de longe. */
+const SIGN_BOARD = { width: 1.5, height: 0.75, centerY: 1.15, depth: 0.1 } as const;
+/** Área das letras na frente da tábua, com uma margem de madeira em volta. */
+const SIGN_TEXT_WIDTH = SIGN_BOARD.width * 0.9;
+const SIGN_TEXT_HEIGHT = SIGN_BOARD.height * 0.8;
+/** Resolução da textura das letras: nítida mesmo com a câmera perto. */
+const SIGN_TEXTURE_WIDTH = 512;
+const SIGN_TEXT_MIN_FONT = 30;
 
 const DOOR_PARTS: Readonly<Record<DoorKind, () => readonly VoxelBox[]>> = {
   wooden: woodenDoor,
@@ -57,6 +68,8 @@ export class PropView {
   private readonly flagMaterialActive = new MeshStandardMaterial({ color: '#4cc94a', emissive: '#2f9e3f', emissiveIntensity: 0.6, roughness: 0.6 });
   private readonly voxelMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
   private readonly swirlTexture: CanvasTexture;
+  /** Uma textura por placa com texto; o `disposeTree` não libera texturas. */
+  private readonly signTextures: CanvasTexture[] = [];
   private readonly portal: Group | null = null;
   private readonly swirl: Mesh | null = null;
   private chest: { readonly root: Group; readonly lid: Group } | null = null;
@@ -101,6 +114,10 @@ export class PropView {
     this.flagMaterialIdle.dispose();
     this.flagMaterialActive.dispose();
     this.swirlTexture.dispose();
+
+    for (const texture of this.signTextures) {
+      texture.dispose();
+    }
   }
 
   /** A "árvore" de cada tema: cacto no deserto, coqueiro na praia. */
@@ -182,7 +199,13 @@ export class PropView {
     }
 
     for (const sign of this.triggers.signs) {
-      at(this.space.x(sign.x), this.space.y(sign.y), SIGN_Z, signPost());
+      const hasText = sign.text.trim().length > 0;
+
+      at(this.space.x(sign.x), this.space.y(sign.y), SIGN_Z, signPost(hasText));
+
+      if (hasText) {
+        this.root.add(this.signLettering(sign));
+      }
     }
 
     for (const door of this.triggers.doors) {
@@ -292,6 +315,33 @@ export class PropView {
     mesh.receiveShadow = true;
 
     return mesh;
+  }
+
+  /** As letras da placa, pintadas numa textura e coladas na frente da tábua. */
+  private signLettering(sign: Sign): Mesh {
+    const height = Math.round((SIGN_TEXTURE_WIDTH * SIGN_TEXT_HEIGHT) / SIGN_TEXT_WIDTH);
+    const canvas = createCanvas(SIGN_TEXTURE_WIDTH, height);
+
+    paintSignText(context2d(canvas), sign.text, { x: 0, y: 0, width: SIGN_TEXTURE_WIDTH, height }, SIGN_TEXT_MIN_FONT);
+
+    const texture = new CanvasTexture(canvas);
+
+    texture.colorSpace = SRGBColorSpace;
+    this.signTextures.push(texture);
+
+    const lettering = new Mesh(
+      new PlaneGeometry(SIGN_TEXT_WIDTH, SIGN_TEXT_HEIGHT),
+      new MeshStandardMaterial({ map: texture, transparent: true, roughness: 0.9 }),
+    );
+
+    lettering.name = 'texto-da-placa';
+    lettering.position.set(
+      this.space.x(sign.x),
+      this.space.y(sign.y) + SIGN_BOARD.centerY,
+      SIGN_Z + SIGN_BOARD.depth / 2 + 0.006,
+    );
+
+    return lettering;
   }
 
   private voxelMesh(parts: readonly VoxelBox[]): Mesh {
@@ -522,12 +572,23 @@ function spikes(): readonly VoxelBox[] {
   return parts;
 }
 
-function signPost(): readonly VoxelBox[] {
+/** Poste com a tábua; sem texto, duas riscas fazem as vezes das letras. */
+function signPost(hasText: boolean): readonly VoxelBox[] {
+  const { width, height, centerY, depth } = SIGN_BOARD;
+  const post = box(0, 0.45, 0, 0.12, 0.9, 0.12, '#8a5a33');
+  const board = box(0, centerY, 0, width, height, depth, '#d9a066');
+  const frame = box(0, centerY, -0.01, width + 0.08, height + 0.08, depth, '#8a5a33');
+
+  if (hasText) {
+    return [post, frame, board];
+  }
+
   return [
-    box(0, 0.45, 0, 0.12, 0.9, 0.12, '#8a5a33'),
-    box(0, 0.95, 0, 0.9, 0.5, 0.1, '#d9a066'),
-    box(0, 0.95, 0.055, 0.6, 0.06, 0.01, '#8a5a33'),
-    box(0, 0.85, 0.055, 0.5, 0.06, 0.01, '#8a5a33'),
+    post,
+    frame,
+    board,
+    box(0, centerY + 0.1, depth / 2 + 0.005, width * 0.66, 0.06, 0.01, '#8a5a33'),
+    box(0, centerY - 0.1, depth / 2 + 0.005, width * 0.55, 0.06, 0.01, '#8a5a33'),
   ];
 }
 
