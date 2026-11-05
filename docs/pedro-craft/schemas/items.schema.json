@@ -19,7 +19,7 @@
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "name": { "type": "string", "minLength": 1 },
         "kind": {
-          "enum": ["block", "tool", "weapon", "food", "material", "seed", "bucket", "ammo", "armor", "shield"],
+          "enum": ["block", "tool", "weapon", "food", "material", "seed", "bucket", "ammo", "armor", "shield", "vehicle"],
           "description": "armor protege da mochila mesmo, gastando um uso por golpe; shield na mão segura as flechas."
         },
         "maxStack": { "type": "integer", "minimum": 1, "maximum": 64 },
@@ -38,7 +38,7 @@
               "properties": {
                 "type": { "const": "sprite" },
                 "shape": {
-                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown"]
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown", "gem", "train"]
                 },
                 "colors": { "$ref": "common.schema.json#/$defs/colors" }
               }
@@ -53,7 +53,7 @@
           "additionalProperties": false,
           "properties": {
             "type": { "$ref": "common.schema.json#/$defs/toolType" },
-            "tier": { "type": "integer", "minimum": 1, "maximum": 4 },
+            "tier": { "type": "integer", "minimum": 1, "maximum": 5 },
             "speed": { "type": "number", "minimum": 1, "maximum": 20 }
           }
         },
@@ -84,6 +84,13 @@
             "becomes": { "$ref": "common.schema.json#/$defs/id" }
           },
           "oneOf": [{ "required": ["places"] }, { "required": ["collects"] }]
+        },
+        "vehicle": {
+          "type": "object",
+          "required": ["speed"],
+          "additionalProperties": false,
+          "description": "Só nos itens do tipo vehicle (o trem): usado num trilho, leva o herói pelos trilhos.",
+          "properties": { "speed": { "type": "number", "minimum": 1, "maximum": 20, "description": "Blocos por segundo." } }
         }
       }
     }

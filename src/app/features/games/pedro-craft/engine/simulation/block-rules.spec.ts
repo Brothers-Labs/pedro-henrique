@@ -34,6 +34,16 @@ describe('Regras de quebra do PedroCraft', () => {
     expect(canHarvest(catalog.block('gold-ore'), tool('iron-pickaxe'))).toBeTrue();
   });
 
+  it('tira o diamante só com picareta de ferro ou melhor, e a de diamante é a mais rápida', () => {
+    const ore = catalog.block('diamond-ore');
+
+    expect(canHarvest(ore, tool('stone-pickaxe'))).toBeFalse();
+    expect(canHarvest(ore, tool('iron-pickaxe'))).toBeTrue();
+    expect(canHarvest(ore, tool('diamond-pickaxe'))).toBeTrue();
+    expect(rollLoot(catalog.lootTable(ore.drops ?? ''), () => 0)).toEqual([{ item: 'diamond', count: 1 }]);
+    expect(breakDurationMs(ore, tool('diamond-pickaxe')) ?? 0).toBeLessThan(breakDurationMs(ore, tool('golden-pickaxe')) ?? 0);
+  });
+
   it('não deixa um machado fazer o papel da picareta', () => {
     expect(canHarvest(catalog.block('stone'), tool('golden-axe'))).toBeFalse();
   });

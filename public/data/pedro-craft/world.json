@@ -31,6 +31,9 @@
       { "block": "coal-ore", "chance": 0.07, "maxY": 30 },
       { "block": "iron-ore", "chance": 0.04, "maxY": 26 },
       { "block": "gold-ore", "chance": 0.018, "maxY": 22 }
+    ],
+    "rareOres": [
+      { "block": "diamond-ore", "chance": 0.012, "maxY": 18 }
     ]
   },
   "farm": { "radius": 9 },

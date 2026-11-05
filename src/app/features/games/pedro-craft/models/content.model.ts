@@ -42,6 +42,7 @@ export const TEXTURE_PATTERNS = [
   'crop',
   'torch',
   'panel',
+  'rail',
 ] as const;
 
 export type TexturePattern = (typeof TEXTURE_PATTERNS)[number];
@@ -77,7 +78,8 @@ export interface TextureSpec {
 
 /* Blocos ---------------------------------------------------------------------------- */
 
-export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab'] as const;
+/** `rail` é o trilho: chato no chão, liga-se sozinho aos trilhos vizinhos e leva o trem. */
+export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail'] as const;
 
 export type BlockShape = (typeof BLOCK_SHAPES)[number];
 
@@ -129,8 +131,11 @@ export interface BlockDefinition {
 
 /* Itens ------------------------------------------------------------------------------- */
 
-/** `armor` protege da mochila mesmo, gastando um uso por golpe; `shield` na mão segura as flechas. */
-export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo', 'armor', 'shield'] as const;
+/**
+ * `armor` protege da mochila mesmo, gastando um uso por golpe; `shield` na mão
+ * segura as flechas; `vehicle` é usado num trilho para passear (o trem).
+ */
+export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo', 'armor', 'shield', 'vehicle'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -169,6 +174,8 @@ export const ICON_SHAPES = [
   'armor',
   'shield',
   'crown',
+  'gem',
+  'train',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -180,7 +187,7 @@ export type ItemIcon =
 
 export interface ToolStats {
   readonly type: ToolType;
-  /** 1 madeira, 2 pedra, 3 ferro, 4 ouro. */
+  /** 1 madeira, 2 pedra, 3 ferro, 4 ouro, 5 diamante. */
   readonly tier: number;
   /** Quantas vezes mais rápido que a mão nos blocos da ferramenta. */
   readonly speed: number;
@@ -201,6 +208,11 @@ export interface BucketStats {
   readonly collects: string | null;
   /** Item em que o balde se transforma depois de usado. */
   readonly becomes: string;
+}
+
+export interface VehicleStats {
+  /** Blocos por segundo andando no trilho. */
+  readonly speed: number;
 }
 
 export interface ItemDefinition {
@@ -228,6 +240,8 @@ export interface ItemDefinition {
   readonly bucket: BucketStats | null;
   /** Estágios que o adubo faz uma planta crescer de uma vez; `null` para o que não aduba. */
   readonly fertilizer: number | null;
+  /** O trem: usado num trilho, leva o herói pelos trilhos; `null` para o resto. */
+  readonly vehicle: VehicleStats | null;
 }
 
 /* Receitas ---------------------------------------------------------------------------- */
@@ -454,7 +468,17 @@ export interface WorldDefinition {
   readonly lake: { readonly radius: number; readonly depth: number };
   readonly river: { readonly width: number; readonly meander: number };
   readonly forest: { readonly radius: number; readonly treeChance: number };
-  readonly quarry: { readonly radius: number; readonly height: number; readonly ores: readonly OreVein[] };
+  readonly quarry: {
+    readonly radius: number;
+    readonly height: number;
+    readonly ores: readonly OreVein[];
+    /**
+     * Minérios raros (o diamante), sorteados numa passada própria, cada um com
+     * a sua semente: entrar um minério novo aqui não mexe nas árvores nem nas
+     * flores dos mundos já salvos.
+     */
+    readonly rareOres: readonly OreVein[];
+  };
   readonly farm: { readonly radius: number };
   readonly tree: { readonly minHeight: number; readonly maxHeight: number };
   readonly decorationChance: number;

@@ -232,6 +232,30 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
     brush.rect(4, 10, 2, 2, gem ?? '#e53935');
     brush.rect(10, 10, 2, 2, gem ?? '#3fa3f5');
   },
+  gem: (brush, [face, shine]) => {
+    const color = face ?? '#4fe3e0';
+
+    brush.rect(5, 3, 6, 2, lighten(color, 0.25));
+    brush.rect(3, 5, 10, 2, color);
+    for (let row = 0; row < 4; row += 1) {
+      brush.rect(4 + row, 7 + row, 8 - row * 2, 1, darken(color, 0.15));
+    }
+    brush.pixel(6, 4, shine ?? '#ffffff');
+    brush.pixel(5, 6, shine ?? '#ffffff');
+  },
+  train: (brush, [boiler, cab, wheel]) => {
+    const body = boiler ?? '#e53935';
+
+    brush.rect(2, 7, 8, 4, body);
+    brush.rect(3, 4, 2, 3, '#2b2b2b');
+    brush.rect(9, 4, 5, 7, cab ?? '#2f8fe0');
+    brush.rect(10, 5, 3, 2, '#d6f1ff');
+    brush.rect(1, 11, 14, 1, darken(body, 0.35));
+    brush.pixel(1, 8, '#fff3b0');
+    for (const x of [4, 8, 12]) {
+      brush.disc(x, 13, 1.6, wheel ?? '#3d3d45');
+    }
+  },
   cane: (brush, [stalk, leaf]) => {
     for (const x of [5, 10]) {
       brush.line(x, 14, x, 2, stalk ?? '#9ccc65', 2);
@@ -260,11 +284,11 @@ export function paintItemIcon(catalog: CraftCatalog, itemId: string, size: numbe
   return canvas;
 }
 
-/** Bloco inteiro em perspectiva; planta, tocha e água ficam de frente, como aparecem no mundo. */
+/** Bloco inteiro em perspectiva; planta, tocha, água e trilho ficam de frente, como a criança os reconhece. */
 function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinition, size: number): void {
   const side = tileCanvas(block, 'side');
 
-  if (block.shape === 'cross' || block.shape === 'torch' || block.shape === 'liquid') {
+  if (block.shape === 'cross' || block.shape === 'torch' || block.shape === 'liquid' || block.shape === 'rail') {
     context.drawImage(side, 0, 0, size, size);
     return;
   }

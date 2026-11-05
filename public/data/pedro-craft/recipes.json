@@ -19,6 +19,7 @@
     { "id": "stone-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-pickaxe" } },
     { "id": "iron-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "iron-ingot", "S": "stick" }, "output": { "item": "iron-pickaxe" } },
     { "id": "golden-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "gold-ingot", "S": "stick" }, "output": { "item": "golden-pickaxe" } },
+    { "id": "diamond-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "diamond", "S": "stick" }, "output": { "item": "diamond-pickaxe" } },
 
     { "id": "wooden-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-axe" } },
     { "id": "stone-axe", "type": "shaped", "station": "workbench", "pattern": ["MM", "MS", " S"], "key": { "M": "cobblestone", "S": "stick" }, "output": { "item": "stone-axe" } },
@@ -56,7 +57,11 @@
     { "id": "lantern", "type": "shaped", "station": "workbench", "pattern": ["III", "ITI", "III"], "key": { "I": "iron-ingot", "T": "torch" }, "output": { "item": "lantern" } },
     { "id": "campfire", "type": "shaped", "station": "workbench", "pattern": [" S ", "SCS", "LLL"], "key": { "S": "stick", "C": "coal", "L": "oak-log" }, "output": { "item": "campfire" } },
     { "id": "bowl", "type": "shaped", "station": "workbench", "pattern": ["P P", " P "], "key": { "P": "oak-planks" }, "output": { "item": "bowl", "count": 4 } },
-    { "id": "cake", "type": "shaped", "station": "workbench", "pattern": ["WWW", "SES"], "key": { "W": "wheat", "S": "sugar", "E": "egg" }, "output": { "item": "cake" } }
+    { "id": "cake", "type": "shaped", "station": "workbench", "pattern": ["WWW", "SES"], "key": { "W": "wheat", "S": "sugar", "E": "egg" }, "output": { "item": "cake" } },
+    { "id": "diamond-block", "type": "shaped", "station": "workbench", "pattern": ["DDD", "DDD", "DDD"], "key": { "D": "diamond" }, "output": { "item": "diamond-block" } },
+    { "id": "diamond-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "diamond-block" }], "output": { "item": "diamond", "count": 9 } },
+    { "id": "rail", "type": "shaped", "station": "workbench", "pattern": ["I I", "ISI", "I I"], "key": { "I": "iron-ingot", "S": "stick" }, "output": { "item": "rail", "count": 16 } },
+    { "id": "train", "type": "shaped", "station": "workbench", "pattern": ["IFI", "III"], "key": { "I": "iron-ingot", "F": "furnace" }, "output": { "item": "train" } }
   ],
   "smelting": [
     { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },

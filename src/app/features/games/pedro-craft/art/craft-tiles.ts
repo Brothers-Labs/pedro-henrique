@@ -11,7 +11,7 @@ import type { TextureDetail, TextureSpec } from '../models/content.model';
  * pintor e no README dos dados.
  *
  * Pixel transparente (`null`) só existe nos blocos vazados: folhas, vidro,
- * plantas, tocha e porta aberta.
+ * plantas, tocha, trilho e porta aberta.
  */
 
 export const TILE_SIZE = VOXEL_TILE_SIZE;
@@ -286,6 +286,30 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
       [8, 5, '#ff7a1a'],
     ] as const) {
       set(x, y, color);
+    }
+  },
+
+  /**
+   * [trilho, dormente] — dois trilhos de cima a baixo sobre dormentes de
+   * madeira, com o fundo vazado. Simétrico em cima e embaixo: meio trilho
+   * (da curva) mostra a mesma coisa venha de que lado vier.
+   */
+  rail: ({ set, random, colors }) => {
+    clear(set);
+
+    const metal = colors[0];
+    const wood = at(colors, 1, '#8a5a32');
+
+    for (const top of [1, 5, 9, 13]) {
+      for (let x = 1; x < LAST; x += 1) {
+        set(x, top, random() < 0.2 ? darken(wood, 0.12) : wood);
+        set(x, top + 1, darken(wood, 0.2));
+      }
+    }
+
+    for (const left of [3, 11]) {
+      verticalLine(set, left, 0, LAST, lighten(metal, 0.25));
+      verticalLine(set, left + 1, 0, LAST, darken(metal, 0.2));
     }
   },
 

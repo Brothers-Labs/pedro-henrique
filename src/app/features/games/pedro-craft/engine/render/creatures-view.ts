@@ -122,7 +122,7 @@ export class CreaturesView {
 }
 
 /** Escurece cada face pela direção dela: em cima mais claro, embaixo mais escuro. */
-function shadeFaces(geometry: BufferGeometry): void {
+export function shadeFaces(geometry: BufferGeometry): void {
   const normals = geometry.getAttribute('normal') as BufferAttribute;
   const colors = geometry.getAttribute('color') as BufferAttribute;
 

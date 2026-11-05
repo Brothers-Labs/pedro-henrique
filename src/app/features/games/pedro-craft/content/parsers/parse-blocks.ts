@@ -11,8 +11,8 @@ import {
 } from '../../models/content.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
 
-/** Maior nível de ferramenta que existe (ouro). */
-export const MAX_TOOL_TIER = 4;
+/** Maior nível de ferramenta que existe (diamante). */
+export const MAX_TOOL_TIER = 5;
 
 const MAX_LIGHT = 15;
 

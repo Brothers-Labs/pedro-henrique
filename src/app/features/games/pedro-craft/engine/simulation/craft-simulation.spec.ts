@@ -190,6 +190,64 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     }
   });
 
+  describe('trilhos e trem', () => {
+    /** Uma linha reta de trilhos para o leste, começando na mira, com pedra embaixo. */
+    const layTrack = (length: number): void => {
+      for (let x = TARGET.x; x < TARGET.x + length; x += 1) {
+        put('stone', x, TARGET.y - 1);
+        put('rail', x);
+      }
+    };
+
+    it('o trilho só fica em cima de chão firme', () => {
+      put('stone');
+      simulation.inventory.slots[0] = { item: 'rail', count: 4, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+
+      put('stone', TARGET.x - 1, TARGET.y - 1);
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('rail'));
+      expect(simulation.inventory.slots[0]?.count).toBe(3);
+    });
+
+    it('o trem num trilho leva o herói pela linha, e o trem não se gasta', () => {
+      layTrack(5);
+      hold('train');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.train).not.toBeNull();
+      expect(events.some((event) => event.type === 'hint' && event.text.startsWith('🚂'))).toBeTrue();
+      expect(simulation.inventory.slots[0]?.item).toBe('train');
+
+      run(20);
+
+      expect(simulation.hero.body.x).toBeGreaterThan(TARGET.x + 1.5);
+      expect(simulation.hero.body.z).toBe(TARGET.z + 0.5);
+      expect(simulation.hero.body.y).toBe(simulation.train?.seatY ?? -1);
+    });
+
+    it('pular desce do trem', () => {
+      layTrack(5);
+      hold('train');
+      run(1, { secondaryPressed: true });
+      run(1, { jumpHeld: true });
+
+      expect(simulation.train).toBeNull();
+    });
+
+    it('fora do trilho, o trem conta onde ele anda', () => {
+      put('stone');
+      hold('train');
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.train).toBeNull();
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('trilho'))).toBeTrue();
+    });
+  });
+
   describe('água e fazenda', () => {
     const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
 

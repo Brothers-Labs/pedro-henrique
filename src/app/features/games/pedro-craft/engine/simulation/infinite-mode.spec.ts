@@ -20,24 +20,25 @@ describe('Modo infinito e baús grandes', () => {
     game.screens.open('chest', 12);
     expect(game.screens.containers.get(12)?.length).toBe(54);
     expect(game.screens.containers.get(12)?.every(slot => slot === null)).toBeTrue();
-    expect(game.inventory.count('golden-pickaxe')).toBe(0);
+    expect(game.inventory.count('diamond-pickaxe')).toBe(0);
   });
 
   it('começa com as melhores ferramentas e baú abastecido perto do herói', () => {
     const game = create();
-    expect(game.inventory.count('golden-pickaxe')).toBe(1);
+    expect(game.inventory.count('diamond-pickaxe')).toBe(1);
     expect(game.inventory.count('golden-axe')).toBe(1);
     expect(game.screens.containers.size).toBe(1);
     const [cell, slots] = [...game.screens.containers][0];
     const position = game.world.positionOf(cell);
     expect(game.catalog.blockAt(game.world.get(position.x, position.y, position.z))?.id).toBe('chest');
     expect(slots.length).toBe(54);
-    expect(slots.some(slot => slot?.item === 'golden-pickaxe')).toBeTrue();
+    expect(slots.some(slot => slot?.item === 'diamond-pickaxe')).toBeTrue();
     expect(slots.some(slot => slot?.item === 'gold-ingot')).toBeTrue();
     const bestFood = [...catalog.items.filter(item => item.heal !== null)]
       .sort((a, b) => (b.heal ?? 0) - (a.heal ?? 0))[0];
     expect(slots.some(slot => slot?.item === bestFood.id)).toBeTrue();
     expect(slots.some(slot => slot?.item === 'golden-armor')).toBeTrue();
+    expect(slots.some(slot => slot?.item === 'train')).toBeTrue();
     expect(slots.some(slot => slot?.item === 'wheat-seeds')).toBeTrue();
   });
 
@@ -66,7 +67,7 @@ describe('Modo infinito e baús grandes', () => {
       }
     }
     game.hero.yaw = -Math.PI / 2;
-    game.selectedSlot = game.inventory.slots.findIndex(slot => slot?.item === 'golden-pickaxe');
+    game.selectedSlot = game.inventory.slots.findIndex(slot => slot?.item === 'diamond-pickaxe');
     const durability = game.inventory.slots[game.selectedSlot]!.durability;
     game.world.set(7, 4, 5, catalog.blockNumber('stone'));
     for (let step = 0; step < 100; step += 1) {

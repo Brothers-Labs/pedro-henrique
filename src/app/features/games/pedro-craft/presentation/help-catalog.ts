@@ -124,6 +124,10 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
     return `Despeja ${catalog.block(item.bucket.places).name.toLowerCase()} onde você quiser.`;
   }
 
+  if (item.vehicle) {
+    return 'Use em cima de um trilho para passear. Pule para descer.';
+  }
+
   if (item.plants) {
     const crop = catalog.crop(item.plants);
     const soils = ALTERNATIVES.format(crop.soil.map((soil) => catalog.block(soil).name.toLowerCase()));

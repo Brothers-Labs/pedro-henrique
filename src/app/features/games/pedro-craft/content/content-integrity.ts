@@ -79,6 +79,10 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     item('items', owner, definition.bucket?.becomes ?? null);
   }
 
+  if (content.items.some((definition) => definition.vehicle) && !content.blocks.some((definition) => definition.shape === 'rail')) {
+    problems.push({ file: 'items', message: 'existe trem, mas nenhum bloco de trilho (shape "rail") para ele andar' });
+  }
+
   for (const recipe of content.recipes.crafting) {
     const owner = `receita "${recipe.id}"`;
     const ingredients = recipe.type === 'shaped' ? Object.values(recipe.key) : recipe.ingredients.map((entry) => entry.item);
@@ -168,6 +172,7 @@ function checkWorld(content: CraftContent, block: Checker, item: Checker, creatu
 
   decorations.forEach((id) => block('world', 'blocks.decorations', id));
   world.quarry.ores.forEach((ore) => block('world', 'quarry.ores', ore.block));
+  world.quarry.rareOres.forEach((ore) => block('world', 'quarry.rareOres', ore.block));
   block('world', 'calendar.greenhouseBlock', world.calendar.greenhouseBlock);
   creature('world', 'calendar.fullMoonVisitor', world.calendar.fullMoonVisitor);
   world.hero.startingInventory.forEach((entry) => item('world', 'hero.startingInventory', entry.item));

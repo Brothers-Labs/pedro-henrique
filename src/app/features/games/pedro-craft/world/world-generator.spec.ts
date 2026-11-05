@@ -1,5 +1,6 @@
-import type { CraftCatalog } from '../content/craft-catalog';
-import { loadTestCatalog } from '../testing/craft-test-content';
+import { CraftCatalog } from '../content/craft-catalog';
+import { parseCraftContent } from '../content/parse-content';
+import { fetchPublishedContentFiles, type JsonRecord, loadTestCatalog } from '../testing/craft-test-content';
 import { type GeneratedWorld, generateWorld } from './world-generator';
 
 function sameCells(first: Uint8Array, second: Uint8Array): boolean {
@@ -95,6 +96,35 @@ describe('Gerador de mundo do PedroCraft', () => {
 
     expect(countBlocks('coal-ore', quarry, radius)).toBeGreaterThan(0);
     expect(countBlocks('iron-ore', quarry, radius)).toBeGreaterThan(0);
+  });
+
+  it('esconde diamantes embaixo da pedreira, bem no fundo', () => {
+    const diamond = catalog.blockNumber('diamond-ore');
+    const [vein] = catalog.world.quarry.rareOres;
+    const cells = generated.world.snapshot;
+    const layerSize = generated.world.width * generated.world.depth;
+    const highest = cells.reduce((top, block, index) => (block === diamond ? Math.max(top, Math.floor(index / layerSize)) : top), -1);
+
+    expect(countBlocks('diamond-ore', generated.layout.quarry, catalog.world.quarry.radius)).toBeGreaterThan(0);
+    expect(highest).toBeLessThanOrEqual(vein.maxY);
+  });
+
+  it('põe os diamantes só no lugar de pedra: mundos salvos antes deles continuam iguais', async () => {
+    const files = await fetchPublishedContentFiles();
+    const quarry = (files.world as JsonRecord)['quarry'] as JsonRecord;
+
+    quarry['rareOres'] = [];
+
+    const before = generateWorld(new CraftCatalog(parseCraftContent(files)), 42);
+    const stone = catalog.blockNumber('stone');
+    const diamond = catalog.blockNumber('diamond-ore');
+    const beforeCells = before.world.snapshot;
+    const changed = [...generated.world.snapshot].filter((block, index) => block !== beforeCells[index]).length;
+    const swapped = [...generated.world.snapshot].filter((block, index) => block === diamond && beforeCells[index] === stone).length;
+
+    expect(changed).toBeGreaterThan(0);
+    expect(swapped).toBe(changed);
+    expect(before.layout).toEqual(generated.layout);
   });
 
   it('planta árvores no bosque e enche o lago', () => {
