@@ -50,7 +50,12 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'one-up': '#2fb84a',
   'cat-mushroom': '#ff9f1a',
   'leaf-mushroom': '#7cc242',
+  'raccoon-leaf': '#e8892b',
+  'giga-mushroom': '#d6336c',
 };
+
+/** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
+const GIGA_ITEM_SCALE = 1.3;
 
 type NumberedCoinKind = 'big-coin' | 'huge-coin' | GiantCoinType;
 
@@ -451,6 +456,10 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return [...mushroomParts(POWER_UP_COLORS['cat-mushroom']), ...catEarParts(POWER_UP_COLORS['cat-mushroom'])];
     case 'leaf-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['leaf-mushroom']), ...leafParts()];
+    case 'raccoon-leaf':
+      return raccoonLeafParts(POWER_UP_COLORS['raccoon-leaf']);
+    case 'giga-mushroom':
+      return scaleParts(mushroomParts(POWER_UP_COLORS['giga-mushroom']), GIGA_ITEM_SCALE);
     default:
       return null;
   }
@@ -490,6 +499,29 @@ function leafParts(): readonly VoxelBox[] {
     box(0.08, 0.326, 0, 0.3, 0.01, 0.03, '#b2f2bb'),
     box(-0.12, 0.3, 0, 0.08, 0.04, 0.04, '#2b8a3e'),
   ];
+}
+
+/** Folha de outono em pé, com a nervura escura e o rabo listrado de guaxinim aparecendo atrás. */
+function raccoonLeafParts(color: string): readonly VoxelBox[] {
+  const vein = '#9c4f12';
+
+  return [
+    box(0.2, -0.16, -0.04, 0.12, 0.12, 0.12, '#8a7f72'),
+    box(0.3, -0.08, -0.04, 0.1, 0.1, 0.1, '#3d3530'),
+    box(0.36, 0.02, -0.04, 0.08, 0.1, 0.08, '#8a7f72'),
+    box(0, 0, 0, 0.4, 0.34, 0.06, color),
+    box(0, 0.22, 0, 0.24, 0.12, 0.06, color),
+    box(0, -0.22, 0, 0.18, 0.1, 0.06, color),
+    box(0, 0.02, 0.031, 0.04, 0.5, 0.01, vein),
+    box(0, 0.04, 0.031, 0.3, 0.03, 0.01, vein),
+  ];
+}
+
+/** As mesmas peças, maiores a partir do centro do item. */
+function scaleParts(parts: readonly VoxelBox[], factor: number): readonly VoxelBox[] {
+  return parts.map((part) =>
+    box(part.x * factor, part.y * factor, part.z * factor, part.width * factor, part.height * factor, part.depth * factor, part.color),
+  );
 }
 
 function flowerParts(petals: string, ring: string): readonly VoxelBox[] {

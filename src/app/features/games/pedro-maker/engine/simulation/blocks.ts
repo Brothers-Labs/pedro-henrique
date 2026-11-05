@@ -1,7 +1,7 @@
 import { MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelObjectType, PlatformAxis, PowerUpKind, SurpriseContent } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
-import type { PhysicsBody, PlatformSurface } from './physics-body';
+import type { PhysicsBody, PlatformSurface, WorldArea } from './physics-body';
 import type { Player } from './player';
 import type { Scheduler } from './scheduler';
 import { COLLISION, type TileGrid } from './tile-grid';
@@ -57,12 +57,7 @@ export interface MovingPlatform extends PlatformSurface {
   velocity: number;
 }
 
-export interface Hazard {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type Hazard = WorldArea;
 
 export const MOVING_PLATFORM_WIDTH = TILE_SIZE * 2;
 export const MOVING_PLATFORM_HEIGHT = TILE_SIZE / 2;
@@ -186,17 +181,13 @@ export class BlockSystem {
       return;
     }
 
-    const centerX = (block.cellX + 0.5) * TILE_SIZE;
-    const centerY = (block.cellY + 0.5) * TILE_SIZE;
-
     if (block.kind === 'brick') {
-      block.isBroken = true;
-      this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
-      this.host.playSound('break');
-      this.host.effects.burst('poof', centerX, centerY, 14);
-      this.host.effects.shake('leve');
+      this.breakBrick(block);
       return;
     }
+
+    const centerX = (block.cellX + 0.5) * TILE_SIZE;
+    const centerY = (block.cellY + 0.5) * TILE_SIZE;
 
     block.bumpedAt = now;
 
@@ -211,6 +202,25 @@ export class BlockSystem {
 
     block.isUsed = true;
     this.releaseContents(block, centerX, centerY - TILE_SIZE);
+  }
+
+  /** Quebra de uma vez os tijolos que a área alcança: o rabo do guaxinim ou o herói gigante. */
+  breakBricksIn(area: WorldArea): void {
+    const firstColumn = Math.floor(area.x / TILE_SIZE);
+    const lastColumn = Math.ceil((area.x + area.width) / TILE_SIZE) - 1;
+    const firstRow = Math.floor(area.y / TILE_SIZE);
+    const lastRow = Math.ceil((area.y + area.height) / TILE_SIZE) - 1;
+
+    for (let row = firstRow; row <= lastRow; row += 1) {
+      for (let column = firstColumn; column <= lastColumn; column += 1) {
+        // Fora da grade a chave da célula cairia numa célula de verdade do outro lado.
+        const block = this.grid.contains(column, row) ? this.blockAt(column, row) : undefined;
+
+        if (block?.kind === 'brick' && !block.isBroken) {
+          this.breakBrick(block);
+        }
+      }
+    }
   }
 
   /** Pisou em cima: a mola lança, a plataforma frágil começa a tremer. */
@@ -232,6 +242,14 @@ export class BlockSystem {
         this.startCrumbling(block, now);
       }
     }
+  }
+
+  private breakBrick(block: InteractiveBlock): void {
+    block.isBroken = true;
+    this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
+    this.host.playSound('break');
+    this.host.effects.burst('poof', (block.cellX + 0.5) * TILE_SIZE, (block.cellY + 0.5) * TILE_SIZE, 14);
+    this.host.effects.shake('leve');
   }
 
   private addInteractive(object: LevelObject, kind: InteractiveKind, crystalIndex: number | undefined): void {

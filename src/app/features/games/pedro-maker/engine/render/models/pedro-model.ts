@@ -1,7 +1,7 @@
 import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
 
 import type { CharacterPalette } from '../../../config/character.config';
-import { BIG_PEDRO_SCALE } from '../../../config/physics.config';
+import { BIG_PEDRO_SCALE, GIGA_PEDRO_SCALE } from '../../../config/physics.config';
 import type { PlayerMode } from '../../simulation/player';
 import { disposeTree } from '../dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from '../voxel-geometry';
@@ -22,6 +22,14 @@ const CAT_STRIPE = '#c86a00';
 const LEAF_COLOR = '#2f9e44';
 /** Giros por segundo da folha na cabeça enquanto o herói plana, como uma hélice. */
 const LEAF_SPIN_RATE = 14;
+const RACCOON_FUR = '#8a7f72';
+const RACCOON_STRIPE = '#3d3530';
+/** Uma volta inteira do corpo a cada tantos milissegundos, no giro de rabo. */
+const TAIL_SPIN_TURN_MS = 160;
+const GIGA_GLOW = 0.2;
+const GIGA_COLOR = '#ffd23f';
+/** Piscada de aviso no fim do Giga Cogumelo: acende e apaga a cada tantos milissegundos. */
+const GIGA_WARNING_BLINK_MS = 140;
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -42,6 +50,14 @@ export interface PedroPose {
   readonly isClimbing: boolean;
   /** Planando com o Cogumelo Folha. */
   readonly isGliding: boolean;
+  readonly hasRaccoonSuit: boolean;
+  /** Subindo no ar com a Folha do Guaxinim. */
+  readonly isFlying: boolean;
+  readonly isSpinningTail: boolean;
+  /** Com o corpo dobrado do Giga Cogumelo. */
+  readonly isGiant: boolean;
+  /** Últimos segundos do Giga Cogumelo: o herói pisca para avisar. */
+  readonly isGigaEnding: boolean;
 }
 
 /**
@@ -64,6 +80,8 @@ export class PedroModel {
   private readonly wings: Group;
   private readonly catSuit: Group;
   private readonly leaf: Group;
+  private readonly raccoonSuit: Group;
+  private readonly raccoonTail: Group;
   private readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
 
   private heading = Math.PI / 2 - TURN_TOWARD_CAMERA;
@@ -87,7 +105,9 @@ export class PedroModel {
 
     this.catSuit = this.buildCatSuit(headTop, parts.hipY);
     this.leaf = this.buildLeaf(headTop);
-    this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings, this.catSuit, this.leaf);
+    this.raccoonTail = this.buildRaccoonTail(parts.hipY);
+    this.raccoonSuit = this.buildRaccoonSuit(headTop, this.raccoonTail);
+    this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings, this.catSuit, this.leaf, this.raccoonSuit);
 
     this.shield = new Mesh(
       new SphereGeometry(0.95, 20, 14),
@@ -104,6 +124,7 @@ export class PedroModel {
     this.wings.visible = pose.hasWings;
     this.catSuit.visible = pose.hasCatSuit;
     this.leaf.visible = pose.hasLeafSuit;
+    this.raccoonSuit.visible = pose.hasRaccoonSuit;
     this.shield.rotation.y = now / 600;
 
     this.turn(pose, deltaSeconds);
@@ -142,19 +163,31 @@ export class PedroModel {
   }
 
   private grow(pose: PedroPose, deltaSeconds: number): void {
-    const target = pose.isBig ? BIG_PEDRO_SCALE : 1;
+    const target = pose.isGiant ? GIGA_PEDRO_SCALE : pose.isBig ? BIG_PEDRO_SCALE : 1;
 
     this.size = MathUtils.lerp(this.size, target, 1 - Math.exp(-GROW_RATE * deltaSeconds));
     this.root.scale.setScalar(this.size);
   }
 
-  /** Estrela: o Pedro pisca em todas as cores. Flor de fogo: um brilho quente; de gelo, um frio. */
+  /**
+   * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado, que
+   * acende e apaga quando o efeito está para acabar. Flor de fogo: um brilho
+   * quente; de gelo, um frio.
+   */
   private glow(pose: PedroPose, now: number): void {
     const emissive = this.material.emissive;
 
     if (pose.hasStar) {
       emissive.setHSL((now / 400) % 1, 1, 0.5);
       this.material.emissiveIntensity = STAR_GLOW;
+    } else if (pose.isGigaEnding) {
+      const isWarningLit = Math.floor(now / GIGA_WARNING_BLINK_MS) % 2 === 0;
+
+      emissive.set(GIGA_COLOR);
+      this.material.emissiveIntensity = isWarningLit ? STAR_GLOW : 0;
+    } else if (pose.isGiant) {
+      emissive.set(GIGA_COLOR);
+      this.material.emissiveIntensity = GIGA_GLOW;
     } else if (pose.hasFireFlower || pose.hasIceFlower) {
       emissive.set(pose.hasFireFlower ? FIRE_COLOR : ICE_COLOR);
       this.material.emissiveIntensity = FLOWER_GLOW;
@@ -248,8 +281,27 @@ export class PedroModel {
     }
   }
 
-  /** Escalando, os braços vão alternando para cima; planando, abrem como asas e a folha gira. */
+  /**
+   * Escalando, os braços vão alternando para cima; planando, abrem como asas e
+   * a folha gira. Voando, o rabo de guaxinim abana rápido; no giro de rabo, o
+   * corpo inteiro dá voltas.
+   */
   private animateSuit(pose: PedroPose, deltaSeconds: number, now: number): void {
+    this.raccoonTail.rotation.set(0, 0, 0);
+
+    if (pose.isFlying) {
+      const flap = Math.sin(now / 45);
+
+      this.raccoonTail.rotation.x = flap * 0.6;
+      this.leftArm.rotation.set(0, 0, -1.2 - flap * 0.5);
+      this.rightArm.rotation.set(0, 0, 1.2 + flap * 0.5);
+    }
+
+    if (pose.isSpinningTail) {
+      this.body.rotation.y = this.heading + ((now % TAIL_SPIN_TURN_MS) / TAIL_SPIN_TURN_MS) * Math.PI * 2;
+      this.raccoonTail.rotation.x = -0.9;
+    }
+
     if (pose.isClimbing) {
       const reach = Math.sin(now / 70);
 
@@ -302,6 +354,35 @@ export class PedroModel {
     leaf.visible = false;
 
     return leaf;
+  }
+
+  /** Orelhas redondas de guaxinim no alto da cabeça, com o rabo listrado preso nas costas. */
+  private buildRaccoonSuit(headTop: number, tail: Group): Group {
+    const suit = new Group();
+
+    suit.add(
+      this.mesh(
+        [-1, 1].flatMap((side) => [
+          box(side * 0.17, headTop + 0.06, 0, 0.16, 0.14, 0.08, RACCOON_FUR),
+          box(side * 0.17, headTop + 0.07, 0.042, 0.08, 0.08, 0.01, RACCOON_STRIPE),
+        ]),
+      ),
+      tail,
+    );
+    suit.visible = false;
+
+    return suit;
+  }
+
+  /** Rabo grosso de faixas claras e escuras, com o pivô no quadril para abanar e girar. */
+  private buildRaccoonTail(hipY: number): Group {
+    const tail = new Group();
+    const stripes = [RACCOON_FUR, RACCOON_STRIPE, RACCOON_FUR, RACCOON_STRIPE, RACCOON_FUR];
+
+    tail.position.set(0, hipY + 0.04, -0.2);
+    tail.add(this.mesh(stripes.map((color, index) => box(0, index * 0.05, -0.08 - index * 0.07, 0.16, 0.16, 0.08, color))));
+
+    return tail;
   }
 
   private limb(parts: readonly VoxelBox[], x: number, pivotY: number): Group {

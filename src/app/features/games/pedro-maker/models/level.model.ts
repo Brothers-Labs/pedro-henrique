@@ -68,8 +68,10 @@ export function isEnemyKind(type: string): type is EnemyKind {
  *
  * Do cogumelo em diante são os clássicos dos jogos de plataforma: cogumelo que
  * faz crescer, flor de fogo, flor de gelo, estrela da invencibilidade e
- * cogumelo de vida. O Cogumelo Gato e o Cogumelo Folha também fazem crescer:
- * com o gato, o herói escala paredes; com a folha, plana segurando o pulo.
+ * cogumelo de vida. O Cogumelo Gato, o Cogumelo Folha e a Folha do Guaxinim
+ * também fazem crescer: com o gato, o herói escala paredes; com a folha, plana
+ * segurando o pulo; com o guaxinim, voa um pouquinho e gira o rabo. O Giga
+ * Cogumelo deixa o herói gigante por alguns segundos.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -84,6 +86,8 @@ export const POWER_UP_KINDS = [
   'one-up',
   'cat-mushroom',
   'leaf-mushroom',
+  'raccoon-leaf',
+  'giga-mushroom',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
@@ -97,6 +101,8 @@ export const CLASSIC_POWER_UPS = [
   'one-up',
   'cat-mushroom',
   'leaf-mushroom',
+  'raccoon-leaf',
+  'giga-mushroom',
 ] as const satisfies readonly PowerUpKind[];
 
 /**

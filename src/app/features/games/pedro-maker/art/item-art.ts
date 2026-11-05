@@ -110,6 +110,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'one-up': '#2fb84a',
   'cat-mushroom': '#ff9f1a',
   'leaf-mushroom': '#7cc242',
+  'raccoon-leaf': '#e8892b',
+  'giga-mushroom': '#d6336c',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -155,6 +157,12 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
     case 'leaf-mushroom':
       paintMushroom(context, color);
       paintLeaf(context);
+      break;
+    case 'raccoon-leaf':
+      paintRaccoonLeaf(context, color);
+      break;
+    case 'giga-mushroom':
+      paintGigaMushroom(context, color);
       break;
   }
 
@@ -279,6 +287,56 @@ function paintLeaf(context: CanvasRenderingContext2D): void {
   context.moveTo(19, 7);
   context.lineTo(31, 3);
   context.stroke();
+}
+
+/** Folha de outono grande, com nervuras e a ponta do rabo listrado de guaxinim saindo de trás. */
+function paintRaccoonLeaf(context: CanvasRenderingContext2D, color: string): void {
+  for (const [x, stripe] of [[25, '#8a7f72'], [29, '#3d3530'], [33, '#8a7f72']] as const) {
+    circle(context, x, 29, 3.5);
+    fillAndOutline(context, stripe, 2);
+  }
+
+  context.beginPath();
+  context.moveTo(20, 33);
+  context.quadraticCurveTo(5, 24, 11, 9);
+  context.quadraticCurveTo(20, 4, 29, 9);
+  context.quadraticCurveTo(35, 24, 20, 33);
+  context.closePath();
+  fillAndOutline(context, color, 2.5);
+
+  context.strokeStyle = darken(color, 0.35);
+  context.lineWidth = 1.8;
+  context.beginPath();
+  context.moveTo(20, 31);
+  context.lineTo(20, 9);
+
+  for (const side of [-1, 1] as const) {
+    context.moveTo(20, 24);
+    context.lineTo(20 + side * 7, 17);
+    context.moveTo(20, 17);
+    context.lineTo(20 + side * 5, 12);
+  }
+
+  context.stroke();
+}
+
+/** Cogumelo tão grande que não cabe na bolha, com setas para cima: é ele que deixa gigante. */
+function paintGigaMushroom(context: CanvasRenderingContext2D, color: string): void {
+  context.save();
+  context.translate(20, 22);
+  context.scale(1.2, 1.2);
+  context.translate(-20, -20);
+  paintMushroom(context, color);
+  context.restore();
+
+  for (const x of [5, 35] as const) {
+    context.beginPath();
+    context.moveTo(x, 4);
+    context.lineTo(x + 4, 10);
+    context.lineTo(x - 4, 10);
+    context.closePath();
+    fillAndOutline(context, '#ffffff', 1.5);
+  }
 }
 
 /** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */

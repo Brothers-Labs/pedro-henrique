@@ -86,6 +86,25 @@ test('Maker saves the cat and leaf mushrooms and the new giant coins', async ({ 
   await page.screenshot({ path: test.info().outputPath('cat-leaf-mushrooms-editor.png') });
 });
 
+test('Maker saves the raccoon leaf and the giga mushroom', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase do Guaxinim Gigante');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Cogumelos', exact: true }).click();
+  for (const [index, label] of ['Folha do Guaxinim', 'Giga Cogumelo'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 144 + index * 32, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase do Guaxinim Gigante')?.objects.map((object) => object.properties?.powerUp))
+    .toEqual(expect.arrayContaining(['raccoon-leaf', 'giga-mushroom']));
+  await page.screenshot({ path: test.info().outputPath('raccoon-giga-editor.png') });
+});
+
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
   for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo']) {
