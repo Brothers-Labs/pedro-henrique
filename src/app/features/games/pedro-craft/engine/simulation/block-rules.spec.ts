@@ -34,14 +34,34 @@ describe('Regras de quebra do PedroCraft', () => {
     expect(canHarvest(catalog.block('gold-ore'), tool('iron-pickaxe'))).toBeTrue();
   });
 
-  it('tira o diamante só com picareta de ferro ou melhor, e a de diamante é a mais rápida', () => {
+  it('tira o diamante só com picareta de ferro ou melhor, e a de diamante é mais rápida que a de ferro', () => {
     const ore = catalog.block('diamond-ore');
 
     expect(canHarvest(ore, tool('stone-pickaxe'))).toBeFalse();
     expect(canHarvest(ore, tool('iron-pickaxe'))).toBeTrue();
     expect(canHarvest(ore, tool('diamond-pickaxe'))).toBeTrue();
     expect(rollLoot(catalog.lootTable(ore.drops ?? ''), () => 0)).toEqual([{ item: 'diamond', count: 1 }]);
-    expect(breakDurationMs(ore, tool('diamond-pickaxe')) ?? 0).toBeLessThan(breakDurationMs(ore, tool('golden-pickaxe')) ?? 0);
+    expect(breakDurationMs(ore, tool('diamond-pickaxe')) ?? 0).toBeLessThan(breakDurationMs(ore, tool('iron-pickaxe')) ?? 0);
+  });
+
+  it('faz a picareta de ouro a mais rápida, mas a que gasta antes das outras de metal, sem passar do nível do diamante', () => {
+    const ore = catalog.block('gold-ore');
+    const durability = (id: string): number => catalog.item(id).durability ?? 0;
+
+    expect(tool('golden-pickaxe').tier).toBeGreaterThan(tool('iron-pickaxe').tier);
+    expect(tool('golden-pickaxe').tier).toBeLessThan(tool('diamond-pickaxe').tier);
+    expect(canHarvest(catalog.block('diamond-ore'), tool('golden-pickaxe'))).toBeTrue();
+    expect(breakDurationMs(ore, tool('golden-pickaxe')) ?? 0).toBeLessThan(breakDurationMs(ore, tool('diamond-pickaxe')) ?? 0);
+    expect(durability('golden-pickaxe')).toBeLessThan(durability('iron-pickaxe'));
+    expect(durability('golden-pickaxe')).toBeLessThan(durability('diamond-pickaxe'));
+  });
+
+  it('tira o bloco de ouro inteiro só com picareta de ferro ou melhor', () => {
+    const block = catalog.block('gold-block');
+
+    expect(canHarvest(block, tool('stone-pickaxe'))).toBeFalse();
+    expect(canHarvest(block, tool('iron-pickaxe'))).toBeTrue();
+    expect(rollLoot(catalog.lootTable(block.drops ?? ''), () => 0)).toEqual([{ item: 'gold-block', count: 1 }]);
   });
 
   it('não deixa um machado fazer o papel da picareta', () => {

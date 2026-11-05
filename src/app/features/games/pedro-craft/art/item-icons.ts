@@ -14,6 +14,9 @@ import { paintTile, TILE_SIZE } from './craft-tiles';
 const HANDLE = '#8a5a32';
 const SPRITE_SIZE = 16;
 
+/** Espessura do tapete no ícone: mais grosso que no mundo, para a beirada colorida aparecer na barra. */
+const CARPET_ICON_HEIGHT = 3 / 16;
+
 type Pixel = (x: number, y: number, color: string) => void;
 
 interface SpriteBrush {
@@ -284,7 +287,10 @@ export function paintItemIcon(catalog: CraftCatalog, itemId: string, size: numbe
   return canvas;
 }
 
-/** Bloco inteiro em perspectiva; planta, tocha, água e trilho ficam de frente, como a criança os reconhece. */
+/**
+ * Bloco inteiro em perspectiva; o tapete é a mesma peça, só que baixinha.
+ * Planta, tocha, água e trilho ficam de frente, como a criança os reconhece.
+ */
 function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinition, size: number): void {
   const side = tileCanvas(block, 'side');
 
@@ -294,10 +300,13 @@ function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinitio
   }
 
   const unit = size / TILE_SIZE;
+  const height = block.shape === 'carpet' ? CARPET_ICON_HEIGHT : 1;
+  // A peça baixa desce para o meio do ícone, em vez de ficar grudada no alto.
+  const drop = ((1 - height) * size) / 4;
   const faces: readonly (readonly [HTMLCanvasElement, readonly number[], string | null])[] = [
-    [tileCanvas(block, 'top'), [unit / 2, unit / 4, -unit / 2, unit / 4, size / 2, 0], null],
-    [side, [unit / 2, unit / 4, 0, unit / 2, 0, size / 4], 'rgba(0, 0, 0, 0.18)'],
-    [side, [unit / 2, -unit / 4, 0, unit / 2, size / 2, size / 2], 'rgba(0, 0, 0, 0.34)'],
+    [tileCanvas(block, 'top'), [unit / 2, unit / 4, -unit / 2, unit / 4, size / 2, drop], null],
+    [side, [unit / 2, unit / 4, 0, (unit / 2) * height, 0, size / 4 + drop], 'rgba(0, 0, 0, 0.18)'],
+    [side, [unit / 2, -unit / 4, 0, (unit / 2) * height, size / 2, size / 2 + drop], 'rgba(0, 0, 0, 0.34)'],
   ];
 
   for (const [tile, [a, b, c, d, e, f], shade] of faces) {

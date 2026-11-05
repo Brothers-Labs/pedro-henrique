@@ -61,7 +61,16 @@
     { "id": "diamond-block", "type": "shaped", "station": "workbench", "pattern": ["DDD", "DDD", "DDD"], "key": { "D": "diamond" }, "output": { "item": "diamond-block" } },
     { "id": "diamond-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "diamond-block" }], "output": { "item": "diamond", "count": 9 } },
     { "id": "rail", "type": "shaped", "station": "workbench", "pattern": ["I I", "ISI", "I I"], "key": { "I": "iron-ingot", "S": "stick" }, "output": { "item": "rail", "count": 16 } },
-    { "id": "train", "type": "shaped", "station": "workbench", "pattern": ["IFI", "III"], "key": { "I": "iron-ingot", "F": "furnace" }, "output": { "item": "train" } }
+    { "id": "train", "type": "shaped", "station": "workbench", "pattern": ["IFI", "III"], "key": { "I": "iron-ingot", "F": "furnace" }, "output": { "item": "train" } },
+    { "id": "gold-block", "type": "shaped", "station": "workbench", "pattern": ["GGG", "GGG", "GGG"], "key": { "G": "gold-ingot" }, "output": { "item": "gold-block" } },
+    { "id": "gold-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "gold-block" }], "output": { "item": "gold-ingot", "count": 9 } },
+    { "id": "carpet-white", "type": "shaped", "station": "hand", "pattern": ["WW"], "key": { "W": "wool" }, "output": { "item": "carpet-white", "count": 3 } },
+    { "id": "carpet-red", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "flower-red" }], "output": { "item": "carpet-red", "count": 3 } },
+    { "id": "carpet-orange", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "carrot" }], "output": { "item": "carpet-orange", "count": 3 } },
+    { "id": "carpet-yellow", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "flower-yellow" }], "output": { "item": "carpet-yellow", "count": 3 } },
+    { "id": "carpet-green", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "oak-leaves" }], "output": { "item": "carpet-green", "count": 3 } },
+    { "id": "carpet-purple", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "beetroot" }], "output": { "item": "carpet-purple", "count": 3 } },
+    { "id": "carpet-black", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "coal" }], "output": { "item": "carpet-black", "count": 3 } }
   ],
   "smelting": [
     { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },

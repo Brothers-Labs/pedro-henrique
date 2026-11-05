@@ -22,6 +22,7 @@ Cada fase cabe numa demanda própria, com o mesmo processo dos marcos M0 a M7.
 | F3 — Modos de jogo | Entregue: Criativo, Aventura e Sobrevivência gentil | M12 |
 | F4 — Noites mais justas | Entregue: armadura, escudo, dificuldade, aviso de anoitecer, Rei Slime, lanterna e fogueira | M13 |
 | Trilhos, trem e diamante (pedido à parte, 2026-11-04) | Entregue: trilho que se liga sozinho e faz curvas, trem que passeia pelos trilhos (escolhe o caminho pelo olhar, volta no fim da linha, pula para descer), minério de diamante sorteado à parte para não mudar mundos salvos, diamante, bloco de diamante, picareta de diamante e quatro missões novas | — |
+| Ouro e tapetes (pedido à parte, 2026-11-05) | Entregue: bloco de ouro, picareta de ouro rebalanceada (a mais rápida, mas gasta logo), tapetes em 7 cores que se atravessam andando e caem junto quando o chão some, ajuda "Ouro" e "Tapetes" e duas missões novas | — |
 | F5 a F8 | Não começadas | — |
 
 ---

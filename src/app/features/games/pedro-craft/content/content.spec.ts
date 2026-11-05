@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
-import type { ContentFile, CraftContent } from '../models/content.model';
+import { recipeRequirements } from '../engine/simulation/crafting';
+import type { ContentFile, CraftContent, CraftingRecipe } from '../models/content.model';
 import { CraftContentService } from '../services/craft-content.service';
 import {
   type ContentFiles as MutableFiles,
@@ -104,6 +105,35 @@ describe('Conteúdo do PedroCraft', () => {
 
         expect(seed?.plants).withContext(crop.id).toBe(crop.id);
       }
+    });
+
+    it('fazem cada tapete na mão, com 2 lãs e ingredientes que nenhuma outra receita usa igual', () => {
+      const carpets = content.blocks.filter((block) => block.shape === 'carpet');
+      const ingredientsOf = (recipe: CraftingRecipe): string =>
+        recipeRequirements(recipe)
+          .map((requirement) => `${requirement.count} ${requirement.item}`)
+          .sort()
+          .join(' + ');
+      const handRecipes = content.recipes.crafting.filter((recipe) => recipe.station === 'hand').map(ingredientsOf);
+
+      expect(carpets.length).toBeGreaterThan(1);
+
+      for (const carpet of carpets) {
+        const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === carpet.id);
+        const ingredients = recipe ? ingredientsOf(recipe) : '';
+
+        expect(recipe?.station).withContext(carpet.id).toBe('hand');
+        expect(ingredients).withContext(carpet.id).toContain('2 wool');
+        expect(handRecipes.filter((other) => other === ingredients).length).withContext(carpet.id).toBe(1);
+      }
+    });
+
+    it('troca 9 barras de ouro por um bloco de ouro e o bloco de volta pelas 9 barras', () => {
+      const toBlock = content.recipes.crafting.find((recipe) => recipe.output.item === 'gold-block');
+      const fromBlock = content.recipes.crafting.find((recipe) => recipe.type === 'shapeless' && recipe.ingredients.some((ingredient) => ingredient.item === 'gold-block'));
+
+      expect(toBlock?.type === 'shaped' ? toBlock.pattern.join('').length : 0).toBe(9);
+      expect(fromBlock?.output).toEqual({ item: 'gold-ingot', count: 9 });
     });
   });
 
@@ -223,6 +253,12 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'blocks', 'blocks', 'gravel')['id'] = 'air';
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('o id "air" é reservado');
+    });
+
+    it('não aceita tapete sólido: o herói anda por cima dele', () => {
+      entry(files, 'blocks', 'blocks', 'carpet-red')['solid'] = true;
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "carpet-red": um tapete não pode ser sólido');
     });
   });
 

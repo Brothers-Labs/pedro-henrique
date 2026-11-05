@@ -25,6 +25,8 @@
     { "id": "place-rails", "title": "Monte 8 trilhos", "emoji": "🛤️", "hint": "Na mesa, 6 barras de ferro e 1 graveto viram 16 trilhos. Coloque um do lado do outro.", "trigger": "place", "target": "rail", "count": 8 },
     { "id": "make-train", "title": "Faça um trem", "emoji": "🚂", "hint": "Uma fornalha e 5 barras de ferro na mesa. Depois, use o trem num trilho!", "trigger": "obtain", "target": "train" },
     { "id": "find-diamond", "title": "Ache um diamante", "emoji": "💎", "hint": "Cave bem embaixo da pedreira, com a picareta de ferro.", "trigger": "obtain", "target": "diamond" },
-    { "id": "diamond-pickaxe", "title": "Faça uma picareta de diamante", "emoji": "⛏️", "hint": "Três diamantes em cima e dois gravetos no meio da mesa.", "trigger": "obtain", "target": "diamond-pickaxe" }
+    { "id": "diamond-pickaxe", "title": "Faça uma picareta de diamante", "emoji": "⛏️", "hint": "Três diamantes em cima e dois gravetos no meio da mesa.", "trigger": "obtain", "target": "diamond-pickaxe" },
+    { "id": "gold-block", "title": "Faça um bloco de ouro", "emoji": "🟨", "hint": "Derreta o minério de ouro na fornalha. Na mesa, 9 barras de ouro viram um bloco.", "trigger": "obtain", "target": "gold-block" },
+    { "id": "place-carpets", "title": "Enfeite o chão com 4 tapetes vermelhos", "emoji": "🧶", "hint": "Na mochila, 2 lãs e 1 flor vermelha viram 3 tapetes vermelhos.", "trigger": "place", "target": "carpet-red", "count": 4 }
   ]
 }

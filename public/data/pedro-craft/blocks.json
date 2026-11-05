@@ -322,6 +322,19 @@
       "textures": { "all": { "pattern": "ore", "colors": ["#8f969e", "#f5c542", "#fff1a8"] } }
     },
     {
+      "id": "gold-block",
+      "name": "Bloco de ouro",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 3,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "gold-block",
+      "mapColor": "#f5c542",
+      "textures": { "all": { "pattern": "panel", "colors": ["#f5c542", "#d9a21f", "#fff1a8"], "detail": "plain" } }
+    },
+    {
       "id": "diamond-ore",
       "name": "Minério de diamante",
       "shape": "cube",
@@ -469,6 +482,83 @@
       "drops": "wool",
       "mapColor": "#f4f4f4",
       "textures": { "all": { "pattern": "speckle", "colors": ["#f4f4f4", "#e2e2e2", "#ffffff"] } }
+    },
+    {
+      "id": "carpet-white",
+      "name": "Tapete branco",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-white",
+      "mapColor": "#f4f4f4",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#f4f4f4", "#e2e2e2", "#ffffff"] } }
+    },
+    {
+      "id": "carpet-red",
+      "name": "Tapete vermelho",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-red",
+      "mapColor": "#d93a3a",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#d93a3a", "#b82e2e", "#ef5a5a"] } }
+    },
+    {
+      "id": "carpet-orange",
+      "name": "Tapete laranja",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-orange",
+      "mapColor": "#ff8c1a",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#ff8c1a", "#e0740d", "#ffa54a"] } }
+    },
+    {
+      "id": "carpet-yellow",
+      "name": "Tapete amarelo",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-yellow",
+      "mapColor": "#ffd23f",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#ffd23f", "#e5b82a", "#ffe27a"] } }
+    },
+    {
+      "id": "carpet-green",
+      "name": "Tapete verde",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-green",
+      "mapColor": "#4caf50",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#4caf50", "#3a8f3e", "#6fc873"] } }
+    },
+    {
+      "id": "carpet-purple",
+      "name": "Tapete roxo",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-purple",
+      "mapColor": "#8e44ad",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#8e44ad", "#73368c", "#a95cc8"] } }
+    },
+    {
+      "id": "carpet-black",
+      "name": "Tapete preto",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-black",
+      "mapColor": "#2b2b2b",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#2b2b2b", "#1e1e1e", "#3d3d3d"] } }
     },
     {
       "id": "potato-crop",
