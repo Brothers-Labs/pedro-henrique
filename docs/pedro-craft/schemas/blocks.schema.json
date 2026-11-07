@@ -17,7 +17,7 @@
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/id", "not": { "const": "air" } },
         "name": { "type": "string", "minLength": 1, "description": "Nome mostrado na tela, em português." },
-        "shape": { "enum": ["cube", "cross", "liquid", "torch", "fence", "slab", "rail"] },
+        "shape": { "enum": ["cube", "cross", "liquid", "torch", "fence", "slab", "rail", "carpet"], "description": "carpet: tapete fininho no chão; não pode ser sólido e precisa de chão firme embaixo." },
         "solid": { "type": "boolean" },
         "transparent": { "type": "boolean", "description": "Tem partes vazadas e não esconde as faces dos vizinhos." },
         "hardness": { "type": ["number", "null"], "minimum": 0, "maximum": 60, "description": "Segundos com a mão; null = não quebra." },

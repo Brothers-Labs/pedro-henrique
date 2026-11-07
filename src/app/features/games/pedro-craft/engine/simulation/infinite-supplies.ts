@@ -12,9 +12,12 @@ export function bestTools(catalog: CraftCatalog): readonly ItemDefinition[] {
 /** Renewable supply chest: strongest tools, building materials, then useful equipment. */
 export function infiniteSupplies(catalog: CraftCatalog): SlotContent[] {
   const tools = bestTools(catalog);
-  const decorative = ['oak-leaves', 'wool', 'flower-red', 'flower-yellow'];
+  // Decorations go last: when the chest runs out of room, they are the ones left out (every carpet included).
+  const decorative = ['oak-leaves', 'wool', 'flower-red', 'flower-yellow', 'gold-block', 'diamond-block'];
+  const isDecorative = (item: ItemDefinition): boolean =>
+    decorative.includes(item.id) || (item.places !== null && catalog.block(item.places).shape === 'carpet');
   const resources = catalog.items.filter(item => item.kind === 'material' || item.kind === 'block')
-    .sort((a, b) => Number(decorative.includes(a.id)) - Number(decorative.includes(b.id)));
+    .sort((a, b) => Number(isDecorative(a)) - Number(isDecorative(b)));
   const armor = [...catalog.items.filter(item => item.kind === 'armor')]
     .sort((a, b) => (b.durability ?? 0) - (a.durability ?? 0)).slice(0, 1);
   const equipment = catalog.items.filter(item => !item.tool && ['shield', 'ammo', 'bucket', 'weapon', 'vehicle'].includes(item.kind));

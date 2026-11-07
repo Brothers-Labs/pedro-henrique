@@ -181,6 +181,10 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
     return 'Ilumina a noite e espanta os inimigos.';
   }
 
+  if (block.shape === 'carpet') {
+    return 'Enfeita o chão: coloque em cima de um bloco firme e ande por cima.';
+  }
+
   return block.toggleInto ? 'Coloque e use para abrir e fechar.' : 'Bloco para construir.';
 }
 

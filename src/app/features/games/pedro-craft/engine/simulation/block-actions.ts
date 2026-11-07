@@ -9,7 +9,7 @@ import type { RayHit } from './raycast';
 import type { VisualEvent } from './simulation-events';
 
 /** Formas que precisam de chão firme embaixo: sem ele, caem junto. */
-const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail]);
+const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail, SHAPE_CODE.carpet]);
 
 export interface BlockActionsContext {
   readonly catalog: CraftCatalog;
@@ -189,7 +189,7 @@ export class BlockActions {
     }
   }
 
-  /** Planta, tocha ou trilho que ficou sem chão quebra junto, soltando o que dá. */
+  /** Planta, tocha, trilho ou tapete que ficou sem chão quebra junto, soltando o que dá. */
   private breakUnsupported(x: number, y: number, z: number): void {
     const { world, properties, catalog } = this.context;
     const number = world.get(x, y, z);

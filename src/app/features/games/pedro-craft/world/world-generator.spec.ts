@@ -1,10 +1,21 @@
 import { CraftCatalog } from '../content/craft-catalog';
 import { parseCraftContent } from '../content/parse-content';
-import { fetchPublishedContentFiles, type JsonRecord, loadTestCatalog } from '../testing/craft-test-content';
+import { type ContentFiles, fetchPublishedContentFiles, type JsonRecord, type JsonValue, loadTestCatalog } from '../testing/craft-test-content';
 import { type GeneratedWorld, generateWorld } from './world-generator';
 
 function sameCells(first: Uint8Array, second: Uint8Array): boolean {
   return first.length === second.length && first.every((value, index) => value === second[index]);
+}
+
+/** O conteúdo como era antes de os ids existirem: some toda entrada de lista que cita algum deles. */
+function withoutMentionsOf(files: ContentFiles, ids: readonly string[]): ContentFiles {
+  const mentions = (entry: JsonValue): boolean => ids.some((id) => JSON.stringify(entry).includes(`"${id}"`));
+  const prune = (content: JsonValue): JsonValue =>
+    Object.fromEntries(
+      Object.entries(content as JsonRecord).map(([key, value]) => [key, Array.isArray(value) ? value.filter((entry) => !mentions(entry)) : value]),
+    );
+
+  return Object.fromEntries(Object.entries(files).map(([file, content]) => [file, prune(content)])) as ContentFiles;
 }
 
 describe('Gerador de mundo do PedroCraft', () => {
@@ -31,6 +42,17 @@ describe('Gerador de mundo do PedroCraft', () => {
 
     return count;
   };
+
+  /** Camada mais alta onde o bloco aparece no mundo inteiro; -1 quando não aparece. */
+  const highestLayerOf = (id: string): number => {
+    const block = catalog.blockNumber(id);
+    const layerSize = generated.world.width * generated.world.depth;
+
+    return generated.world.snapshot.reduce((top, cell, index) => (cell === block ? Math.max(top, Math.floor(index / layerSize)) : top), -1);
+  };
+
+  const oreDepth = (id: string): number =>
+    [...catalog.world.quarry.ores, ...catalog.world.quarry.rareOres].find((vein) => vein.block === id)?.maxY ?? -1;
 
   it('gera o mesmo mundo, bloco a bloco, com a mesma semente', () => {
     const again = generateWorld(catalog, 42);
@@ -99,14 +121,32 @@ describe('Gerador de mundo do PedroCraft', () => {
   });
 
   it('esconde diamantes embaixo da pedreira, bem no fundo', () => {
-    const diamond = catalog.blockNumber('diamond-ore');
     const [vein] = catalog.world.quarry.rareOres;
-    const cells = generated.world.snapshot;
-    const layerSize = generated.world.width * generated.world.depth;
-    const highest = cells.reduce((top, block, index) => (block === diamond ? Math.max(top, Math.floor(index / layerSize)) : top), -1);
 
     expect(countBlocks('diamond-ore', generated.layout.quarry, catalog.world.quarry.radius)).toBeGreaterThan(0);
-    expect(highest).toBeLessThanOrEqual(vein.maxY);
+    expect(highestLayerOf('diamond-ore')).toBeLessThanOrEqual(vein.maxY);
+  });
+
+  it('esconde o ouro na pedreira, mais fundo que o ferro e mais raso que o diamante', () => {
+    expect(countBlocks('gold-ore', generated.layout.quarry, catalog.world.quarry.radius)).toBeGreaterThan(0);
+    expect(highestLayerOf('gold-ore')).toBeLessThanOrEqual(oreDepth('gold-ore'));
+    expect(oreDepth('gold-ore')).toBeLessThan(oreDepth('iron-ore'));
+    expect(oreDepth('gold-ore')).toBeGreaterThan(oreDepth('diamond-ore'));
+  });
+
+  it('gera o mesmo mundo, bloco a bloco, com ou sem o bloco de ouro e os tapetes no conteúdo', async () => {
+    const added = ['gold-block', ...catalog.content.blocks.filter((block) => block.shape === 'carpet').map((block) => block.id)];
+    const older = new CraftCatalog(parseCraftContent(withoutMentionsOf(await fetchPublishedContentFiles(), added)));
+    const before = generateWorld(older, 42);
+    const beforeCells = before.world.snapshot;
+    const different = generated.world.snapshot.reduce(
+      (count, cell, index) => count + Number(catalog.blockAt(cell)?.id !== older.blockAt(beforeCells[index])?.id),
+      0,
+    );
+
+    expect(added.every((id) => older.findBlockNumber(id) === null)).toBeTrue();
+    expect(different).toBe(0);
+    expect(before.layout).toEqual(generated.layout);
   });
 
   it('põe os diamantes só no lugar de pedra: mundos salvos antes deles continuam iguais', async () => {

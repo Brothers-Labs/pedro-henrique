@@ -71,6 +71,7 @@ const CUES: Readonly<Record<MakerSoundCue, Cue>> = {
   iceball: { tones: [tone(1320, 0, 0.08, 'sine', 0.08, 1760), tone(1760, 0.05, 0.08, 'sine', 0.06)] },
   freeze: { tones: [tone(1568, 0, 0.12, 'triangle', 0.1, 784), tone(2093, 0.08, 0.18, 'sine', 0.06)], noise: { duration: 0.08, gain: 0.03 } },
   slide: { tones: [tone(880, 0, 0.5, 'sine', 0.12, 330)] },
+  tailSpin: { tones: [tone(300, 0, 0.16, 'triangle', 0.1, 700)], noise: { duration: 0.1, gain: 0.05 } },
 };
 
 /** Escala pentatônica maior: qualquer combinação dessas notas soa bem. */

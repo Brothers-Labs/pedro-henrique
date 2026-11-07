@@ -62,6 +62,11 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
       problems.push({ file: 'blocks', message: `${owner}: um líquido não pode ser sólido` });
     }
 
+    // Sólido, o tapete ganharia uma caixa de colisão de pelo menos 0,1 bloco: um degrau onde a criança só vê chão.
+    if (definition.shape === 'carpet' && definition.solid) {
+      problems.push({ file: 'blocks', message: `${owner}: um tapete não pode ser sólido, o herói anda por cima dele` });
+    }
+
     loot('blocks', owner, definition.drops);
     block('blocks', owner, definition.toggleInto);
   }

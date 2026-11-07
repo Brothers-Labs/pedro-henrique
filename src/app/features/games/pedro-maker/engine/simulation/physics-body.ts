@@ -14,6 +14,14 @@ export interface PlatformSurface {
   readonly deltaY: number;
 }
 
+/** Retângulo do mundo, em pixels (y para baixo). */
+export interface WorldArea {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 /**
  * Caixa de colisão com velocidade, em pixels do mundo (y para baixo).
  *
@@ -106,13 +114,31 @@ export function bottom(body: PhysicsBody): number {
   return body.y + body.height;
 }
 
-export function overlaps(first: PhysicsBody, second: PhysicsBody): boolean {
+export function overlaps(first: WorldArea, second: WorldArea): boolean {
   return (
     first.x < second.x + second.width &&
     first.x + first.width > second.x &&
     first.y < second.y + second.height &&
     first.y + first.height > second.y
   );
+}
+
+/** Nenhuma célula sólida dentro da área: um corpo desse tamanho caberia ali sem ficar preso. */
+export function isAreaClear(grid: TileGrid, area: WorldArea): boolean {
+  const firstColumn = cellOf(area.x + EPSILON);
+  const lastColumn = cellOf(area.x + area.width - EPSILON);
+  const firstRow = cellOf(area.y + EPSILON);
+  const lastRow = cellOf(area.y + area.height - EPSILON);
+
+  for (let row = firstRow; row <= lastRow; row += 1) {
+    for (let column = firstColumn; column <= lastColumn; column += 1) {
+      if (grid.isSolidCell(column, row)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /**

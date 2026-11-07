@@ -1,9 +1,11 @@
 import type { HeroAbilities } from '../../config/hero.config';
 import {
   CAT_SUIT_PHYSICS,
+  GIGA_PHYSICS,
   LEAF_SUIT_PHYSICS,
   PLAYER_PHYSICS,
   POWER_UP_DURATION_MS,
+  RACCOON_SUIT_PHYSICS,
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
 } from '../../config/physics.config';
@@ -11,7 +13,7 @@ import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { InputSnapshot } from '../input/input-snapshot';
 import type { BallElement } from './fireballs';
-import { bottom, centerX, createBody, type PhysicsBody, placeFeet } from './physics-body';
+import { bottom, centerX, createBody, type PhysicsBody, placeFeet, type WorldArea } from './physics-body';
 import { rampSurfaceY, type SlideRamp } from './slides';
 import type { VisualEventQueue } from './visual-events';
 
@@ -22,6 +24,8 @@ export interface PlayerHost {
   readonly effects: VisualEventQueue;
   playSound(cue: MakerSoundCue): void;
   onPowerUpEnded(kind: PowerUpKind): void;
+  /** Cabe um corpo nesta área sem ficar preso no cenário? */
+  hasRoomFor(area: WorldArea): boolean;
 }
 
 /** O que há em volta do Pedro neste passo, medido pela partida. */
@@ -40,13 +44,20 @@ const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>([
   'ice-flower',
   'cat-mushroom',
   'leaf-mushroom',
+  'raccoon-leaf',
 ]);
 
 /**
  * Trajes: fazem o herói crescer e dão um jeito próprio de se mexer ou atacar.
  * Só se veste um de cada vez — pegar outro troca o de antes.
  */
-export const SUIT_POWER_UPS = ['fire-flower', 'ice-flower', 'cat-mushroom', 'leaf-mushroom'] as const satisfies readonly PowerUpKind[];
+export const SUIT_POWER_UPS = [
+  'fire-flower',
+  'ice-flower',
+  'cat-mushroom',
+  'leaf-mushroom',
+  'raccoon-leaf',
+] as const satisfies readonly PowerUpKind[];
 
 const SUIT_SET: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(SUIT_POWER_UPS);
 
@@ -87,14 +98,17 @@ const RUN_DUST_SPEED = 200;
  * Aqui mora a sensação do controle: aceleração e freio suaves, gelo
  * escorregadio, pulo que perdoa o botão apertado um pouquinho cedo ou tarde,
  * pulo curto ao soltar o botão, pulo duplo com a Asa, escalada e pulo de
- * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, braçadas na
- * água, a descida no escorregador e a piscada de invencibilidade depois de um toque.
+ * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, voo curto e
+ * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
+ * braçadas na água, a descida no escorregador e a piscada de invencibilidade
+ * depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
  *
  * Cada herói ajusta pulo e freio pelas próprias habilidades; a caixa de
  * colisão é a mesma para todos, e por isso toda fase serve para qualquer um.
+ * Só o Giga Cogumelo a aumenta, e por pouco tempo.
  */
 export class Player {
   readonly body: PhysicsBody = createBody(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight, true, PLAYER_PHYSICS.maxFallSpeed);
@@ -120,6 +134,9 @@ export class Player {
   private climbTimeLeftMs: number = CAT_SUIT_PHYSICS.climbMs;
   private climbing = false;
   private gliding = false;
+  private flightTimeLeftMs: number = RACCOON_SUIT_PHYSICS.flightMs;
+  private flying = false;
+  private tailSpinStartedAt = Number.NEGATIVE_INFINITY;
 
   constructor(
     feetX: number,
@@ -161,9 +178,35 @@ export class Player {
     return this.gliding;
   }
 
+  /** Subindo no ar com a Folha do Guaxinim. */
+  get isFlying(): boolean {
+    return this.flying;
+  }
+
+  /** Com o corpo dobrado do Giga Cogumelo. */
+  get isGiant(): boolean {
+    return this.body.height > PLAYER_PHYSICS.bodyHeight;
+  }
+
+  /** Super Estrela ou Giga Cogumelo: encostar derruba o inimigo, e nada machuca. */
+  get defeatsEnemiesOnTouch(): boolean {
+    return this.timedPowerUps.has('star') || this.timedPowerUps.has('giga-mushroom');
+  }
+
   /** O que o botão de ação lança: fogo, gelo ou nada, conforme a flor. */
   get flowerElement(): BallElement | null {
     return FLOWER_ELEMENTS.find(([flower]) => this.protections.has(flower))?.[1] ?? null;
+  }
+
+  isSpinningTail(now: number): boolean {
+    return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
+  }
+
+  /** Nos últimos segundos do Giga Cogumelo o herói pisca, para avisar que vai encolher. */
+  isGigaEnding(now: number): boolean {
+    const expiresAt = this.timedPowerUps.get('giga-mushroom');
+
+    return expiresAt !== undefined && expiresAt - now <= GIGA_PHYSICS.warningMs;
   }
 
   isInvincible(now: number): boolean {
@@ -192,10 +235,13 @@ export class Player {
     this.expirePowerUps(now);
     this.climbing = false;
     this.gliding = false;
+    this.flying = false;
 
     if (!this.isActive) {
       return;
     }
+
+    this.fitGigaSize();
 
     const grounded = this.isGrounded;
 
@@ -203,6 +249,7 @@ export class Player {
       this.lastGroundedAt = now;
       this.hasUsedDoubleJump = false;
       this.climbTimeLeftMs = CAT_SUIT_PHYSICS.climbMs;
+      this.flightTimeLeftMs = RACCOON_SUIT_PHYSICS.flightMs;
     }
 
     if (this.slideRide) {
@@ -219,7 +266,7 @@ export class Player {
 
     if (this.isInWater) {
       this.handleSwim(input, surroundings.isAtWaterSurface);
-    } else if (!this.climbWall(deltaMs, input, grounded)) {
+    } else if (!this.climbWall(deltaMs, input, grounded) && !this.fly(now, deltaMs, input, grounded)) {
       this.handleJump(now, input, grounded);
       this.glide(input, grounded);
     }
@@ -256,6 +303,19 @@ export class Player {
       this.protections.add('mushroom');
       this.dropOtherSuits(kind);
     }
+  }
+
+  /** Folha do Guaxinim: começa um giro de rabo, se o anterior já acabou de descansar. */
+  startTailSpin(now: number): boolean {
+    const isResting = now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinCooldownMs;
+
+    if (!this.isActive || isResting || !this.protections.has('raccoon-leaf')) {
+      return false;
+    }
+
+    this.tailSpinStartedAt = now;
+
+    return true;
   }
 
   /** Tira um poder de proteção, gasto num toque. */
@@ -417,6 +477,79 @@ export class Player {
     this.gliding = true;
     this.body.maxFallSpeed = LEAF_SUIT_PHYSICS.glideFallSpeed;
     this.body.vy = Math.min(this.body.vy, LEAF_SUIT_PHYSICS.glideFallSpeed);
+  }
+
+  /**
+   * Folha do Guaxinim: no ar e segurando o pulo, o herói sobe voando enquanto
+   * durar o fôlego. O voo só assume quando o pulo já perdeu força, então
+   * segurar o botão desde o chão emenda pulo e voo sem encurtar o pulo.
+   * Verdadeiro quando o voo cuidou do movimento deste passo.
+   */
+  private fly(now: number, deltaMs: number, input: InputSnapshot, grounded: boolean): boolean {
+    const isPastCoyoteTime = now - this.lastGroundedAt > PLAYER_PHYSICS.coyoteTimeMs;
+    const isRisingFasterThanFlight = this.body.vy < -RACCOON_SUIT_PHYSICS.flySpeed;
+
+    if (
+      grounded ||
+      !isPastCoyoteTime ||
+      !input.jumpHeld ||
+      isRisingFasterThanFlight ||
+      this.flightTimeLeftMs <= 0 ||
+      !this.protections.has('raccoon-leaf')
+    ) {
+      return false;
+    }
+
+    this.flightTimeLeftMs -= deltaMs;
+    this.body.vy = -RACCOON_SUIT_PHYSICS.flySpeed;
+    this.body.riding = null;
+    this.flying = true;
+
+    return true;
+  }
+
+  /**
+   * Giga Cogumelo: a caixa de colisão dobra, com os pés no mesmo lugar, mas só
+   * onde o corpo gigante cabe — crescer dentro de um túnel prenderia o herói
+   * na parede. Encolher é sempre seguro: a caixa menor fica dentro da maior,
+   * que já estava livre. Se uma porta ou o checkpoint levar o gigante para um
+   * lugar apertado, ele volta ao tamanho normal até ter espaço de novo.
+   */
+  private fitGigaSize(): void {
+    const isGigaActive = this.timedPowerUps.has('giga-mushroom');
+
+    if (this.isGiant) {
+      if (!isGigaActive || !this.host.hasRoomFor(this.body)) {
+        this.resizeBody(1);
+      }
+
+      return;
+    }
+
+    if (isGigaActive && this.host.hasRoomFor(this.areaWithScale(GIGA_PHYSICS.bodyScale))) {
+      this.resizeBody(GIGA_PHYSICS.bodyScale);
+    }
+  }
+
+  /** A caixa de colisão numa escala da normal, com os pés no mesmo ponto de agora. */
+  private areaWithScale(scale: number): WorldArea {
+    const width = PLAYER_PHYSICS.bodyWidth * scale;
+    const height = PLAYER_PHYSICS.bodyHeight * scale;
+
+    return { x: centerX(this.body) - width / 2, y: bottom(this.body) - height, width, height };
+  }
+
+  private resizeBody(scale: number): void {
+    const body = this.body;
+    const area = this.areaWithScale(scale);
+
+    // A posição anterior anda junto, para a tela não desenhar um salto entre os dois tamanhos.
+    body.previousX += area.x - body.x;
+    body.previousY += area.y - body.y;
+    body.x = area.x;
+    body.y = area.y;
+    body.width = area.width;
+    body.height = area.height;
   }
 
   /** Dentro da água a gravidade quase some e a queda fica lenta; ao entrar ou sair, espirra. */

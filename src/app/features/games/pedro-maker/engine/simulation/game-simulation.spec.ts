@@ -2,6 +2,7 @@ import { heroDefinition } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import {
   BIG_COIN_VALUE,
+  GIGA_PHYSICS,
   HUGE_COIN_VALUE,
   LEAF_SUIT_PHYSICS,
   MULTI_COIN_BLOCK_COUNT,
@@ -17,7 +18,7 @@ import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { GameSimulation, STEP_MS } from './game-simulation';
-import { bottom, centerX, centerY } from './physics-body';
+import { bottom, centerX, centerY, isAreaClear } from './physics-body';
 
 const META = { id: 'teste', name: 'Teste', theme: 'vale', targetTimeSeconds: 60 } as const;
 const SURFACE = 12;
@@ -427,6 +428,209 @@ describe('Simulação do Pedro Maker', () => {
       expect(fallSpeedFromHigh(harness, true)).toBeGreaterThan(LEAF_SUIT_PHYSICS.glideFallSpeed * 2);
       expect(harness.simulation.player.isGliding).toBeFalse();
     });
+  });
+
+  describe('Folha do Guaxinim', () => {
+    /** Pula segurando o botão pelo tempo pedido: devolve quanto os pés subiram e se chegou a voar. */
+    const heldJump = (harness: Harness, seconds: number): { readonly lift: number; readonly flew: boolean } => {
+      const player = harness.simulation.player;
+      const groundY = bottom(player.body);
+      let highest = groundY;
+      let flew = false;
+
+      harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true, jumpPressed: true });
+
+      for (let step = 0; step < Math.round((seconds * 1000) / STEP_MS); step += 1) {
+        harness.simulation.step({ ...IDLE_INPUT, jumpHeld: true });
+        highest = Math.min(highest, bottom(player.body));
+        flew ||= player.isFlying;
+      }
+
+      return { lift: groundY - highest, flew };
+    };
+
+    it('cresce, veste o traje e voa bem mais alto do que um pulo alcança', () => {
+      const withLeaf = start(levelWithPowerUp('raccoon-leaf').build(META));
+      const withoutLeaf = start(flatLevel().build(META));
+      run(withLeaf, 0.4, { right: true });
+      run(withLeaf, 0.6);
+      run(withoutLeaf, 0.2);
+
+      const player = withLeaf.simulation.player;
+
+      expect(player.isBig).toBeTrue();
+      expect(player.hasPowerUp('raccoon-leaf')).toBeTrue();
+
+      const flight = heldJump(withLeaf, 1.5);
+      const plain = heldJump(withoutLeaf, 1.5);
+
+      expect(flight.flew).toBeTrue();
+      expect(plain.flew).toBeFalse();
+      expect(flight.lift).toBeGreaterThan(plain.lift + TILE_SIZE * 3);
+    });
+
+    it('voa só enquanto durar o fôlego, e o fôlego só recarrega no chão', () => {
+      const harness = start(levelWithPowerUp('raccoon-leaf').build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.4, { right: true });
+      run(harness, 0.6);
+
+      heldJump(harness, 1.5);
+
+      expect(player.isFlying).toBeFalse();
+      expect(player.isGrounded).toBeFalse();
+
+      run(harness, 0.05);
+      jump(harness, 0.2);
+
+      expect(player.isFlying).withContext('sem fôlego, apertar de novo no ar não voa').toBeFalse();
+
+      run(harness, 3);
+
+      expect(player.isGrounded).toBeTrue();
+      expect(heldJump(harness, 0.6).flew).withContext('no chão, o fôlego volta').toBeTrue();
+    });
+
+    it('gira o rabo com o botão de ação e derruba o inimigo ao lado, sem perder coração', () => {
+      const harness = start(levelWithPowerUp('raccoon-leaf').add('spiky', 14, SURFACE - 1).build(META));
+      run(harness, 0.4, { right: true });
+
+      const spiky = harness.simulation.enemies[0];
+
+      harness.simulation.player.placeFeetAt(spiky.body.x - 20, bottom(spiky.body));
+      harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+
+      expect(spiky.isDefeated).toBeTrue();
+      expect(harness.simulation.player.isSpinningTail(harness.simulation.clockMs)).toBeTrue();
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'tailSpin')).toBeTrue();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+    });
+
+    it('quebra com o rabo o tijolo em que encostou, e sem a folha o botão não gira nada', () => {
+      const brickWall = (powerUp: PowerUpKind | null): Harness => {
+        const builder = flatLevel().add('brick', 8, SURFACE - 1);
+
+        return start((powerUp ? builder.add('power-up', 3, SURFACE - 1, { powerUp }) : builder).build(META));
+      };
+      const withLeaf = brickWall('raccoon-leaf');
+      const withoutLeaf = brickWall(null);
+
+      for (const harness of [withLeaf, withoutLeaf]) {
+        run(harness, 2, { right: true });
+        harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+      }
+
+      expect(withLeaf.simulation.blocks.blockAt(8, SURFACE - 1)?.isBroken).toBeTrue();
+      expect(withoutLeaf.simulation.blocks.blockAt(8, SURFACE - 1)?.isBroken).toBeFalse();
+    });
+
+    it('troca o traje anterior e o perde no toque, sem perder coração', () => {
+      const harness = start(levelWithPowerUp('raccoon-leaf').add('spiky', 14, SURFACE - 1).build(META));
+      const player = harness.simulation.player;
+
+      player.grantPowerUp('cat-mushroom', 0);
+      run(harness, 0.4, { right: true });
+
+      expect(player.hasPowerUp('cat-mushroom')).toBeFalse();
+      expect(player.hasPowerUp('raccoon-leaf')).toBeTrue();
+
+      bumpIntoFirstEnemy(harness);
+
+      expect(player.hasPowerUp('raccoon-leaf')).toBeFalse();
+      expect(player.isBig).toBeFalse();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'raccoon-leaf' });
+    });
+  });
+
+  describe('Giga Cogumelo', () => {
+    /** Anda o tempo pedido conferindo, passo a passo, que o corpo nunca entra no cenário. */
+    const runStayingClear = (harness: Harness, seconds: number, input: Partial<InputSnapshot> = {}): boolean => {
+      let isAlwaysClear = true;
+
+      for (let step = 0; step < Math.round((seconds * 1000) / STEP_MS); step += 1) {
+        harness.simulation.step({ ...IDLE_INPUT, ...input });
+        isAlwaysClear &&= isAreaClear(harness.simulation.grid, harness.simulation.player.body);
+      }
+
+      return isAlwaysClear;
+    };
+
+    it('fica gigante e invencível, e derruba o inimigo só de encostar', () => {
+      const harness = start(levelWithPowerUp('giga-mushroom').add('spiky', 14, SURFACE - 1).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.4, { right: true });
+
+      expect(player.isGiant).toBeTrue();
+      expect(player.body.height).toBe(PLAYER_PHYSICS.bodyHeight * GIGA_PHYSICS.bodyScale);
+      expect(player.body.width).toBe(PLAYER_PHYSICS.bodyWidth * GIGA_PHYSICS.bodyScale);
+      expect(bottom(player.body)).toBeCloseTo(SURFACE * TILE_SIZE, 3);
+
+      bumpIntoFirstEnemy(harness);
+
+      expect(harness.simulation.enemies[0]?.isDefeated ?? true).toBeTrue();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+      expect(harness.events.some((event) => event.type === 'damage')).toBeFalse();
+    });
+
+    it('quebra os tijolos em que esbarra e passa direto', () => {
+      const harness = start(levelWithPowerUp('giga-mushroom').add('brick', 8, SURFACE - 1).add('brick', 8, SURFACE - 2).build(META));
+
+      run(harness, 2.5, { right: true });
+
+      expect(harness.simulation.blocks.blockAt(8, SURFACE - 1)?.isBroken).toBeTrue();
+      expect(harness.simulation.blocks.blockAt(8, SURFACE - 2)?.isBroken).toBeTrue();
+      expect(centerX(harness.simulation.player.body)).toBeGreaterThan(9 * TILE_SIZE);
+    });
+
+    it('pisca no fim e volta ao tamanho e ao traje que tinha antes', () => {
+      const harness = start(flatLevel().add('power-up', 3, SURFACE - 1, { powerUp: 'fire-flower' }).add('power-up', 5, SURFACE - 1, { powerUp: 'giga-mushroom' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 1, { right: true });
+
+      expect(player.isGiant).toBeTrue();
+      expect(player.isGigaEnding(harness.simulation.clockMs)).toBeFalse();
+
+      run(harness, 8);
+
+      expect(player.isGiant).toBeTrue();
+      expect(player.isGigaEnding(harness.simulation.clockMs)).toBeTrue();
+
+      run(harness, 3);
+
+      expect(player.isGiant).toBeFalse();
+      expect(player.hasPowerUp('giga-mushroom')).toBeFalse();
+      expect(player.body.height).toBe(PLAYER_PHYSICS.bodyHeight);
+      expect(bottom(player.body)).toBeCloseTo(SURFACE * TILE_SIZE, 3);
+      expect(player.isBig).toBeTrue();
+      expect(player.flowerElement).toBe('fire');
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'giga-mushroom' });
+    });
+
+    it('só cresce onde cabe e, ao encolher, nunca fica preso no cenário', () => {
+      // Túnel baixo de pedra, das colunas 4 a 11: o Pedro normal passa, o gigante não cabe.
+      const harness = start(flatLevel().row('stone', 4, SURFACE - 3, 8).add('power-up', 6, SURFACE - 1, { powerUp: 'giga-mushroom' }).build(META));
+      const player = harness.simulation.player;
+
+      expect(runStayingClear(harness, 1, { right: true })).toBeTrue();
+      expect(player.hasPowerUp('giga-mushroom')).toBeTrue();
+      expect(player.isGiant).withContext('dentro do túnel não há espaço').toBeFalse();
+
+      expect(runStayingClear(harness, 1.5, { right: true })).toBeTrue();
+      expect(player.isGiant).withContext('fora do túnel, cresce').toBeTrue();
+
+      expect(runStayingClear(harness, 1, { left: true })).toBeTrue();
+      expect(player.body.x).withContext('gigante, não entra no túnel').toBeGreaterThanOrEqual(12 * TILE_SIZE - 0.001);
+
+      expect(runStayingClear(harness, 10, { left: true })).toBeTrue();
+      expect(player.isGiant).toBeFalse();
+      expect(centerX(player.body)).withContext('pequeno de novo, volta a passar pelo túnel').toBeLessThan(11 * TILE_SIZE);
+    });
+  });
+
+  it('o Lucky Block também sorteia a Folha do Guaxinim e o Giga Cogumelo', () => {
+    expect(CLASSIC_POWER_UPS).toContain('raccoon-leaf');
+    expect(CLASSIC_POWER_UPS).toContain('giga-mushroom');
   });
 
   it('troca de traje: o cogumelo novo tira a flor, e a flor nova tira o cogumelo', () => {

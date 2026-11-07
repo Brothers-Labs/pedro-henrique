@@ -114,6 +114,9 @@ const CROSS_INSET = 0.15;
 const RAIL_HEIGHT = 1 / 16;
 const RAIL_CROSSING_LIFT = 1 / 256;
 
+/** O tapete tem a espessura do trilho: deitado no chão, quase não muda a altura dos pés. */
+const CARPET_BOX = { min: [0, 0, 0], max: [1, 1 / 16, 1] } as const;
+
 interface Box {
   readonly min: Vector;
   readonly max: Vector;
@@ -173,7 +176,19 @@ class CellMesher {
       case SHAPE_CODE.rail:
         this.rail(writer, block, x, y, z);
         return;
+      case SHAPE_CODE.carpet:
+        this.carpet(writer, block, x, y, z);
+        return;
     }
+  }
+
+  /** Tapete: lâmina fina com a beirada à mostra, menos onde encosta noutro tapete, que a esconde. */
+  private carpet(writer: MeshWriter, block: number, x: number, y: number, z: number): void {
+    const { world, properties } = this.context;
+    const touchesCarpet = (face: FaceSpec): boolean =>
+      face.kind === 'side' && properties.shape[world.get(x + face.normal[0], y, z + face.normal[2])] === SHAPE_CODE.carpet;
+
+    this.box(writer, block, x, y, z, CARPET_BOX, (face) => this.isExposed(face, x, y, z, true) && !touchesCarpet(face));
   }
 
   /**
@@ -333,7 +348,7 @@ class CellMesher {
   }
 
   /**
-   * Caixa menor que o bloco (tocha, laje, cerca, água).
+   * Caixa menor que o bloco (tocha, laje, cerca, tapete, água).
    *
    * O canto da textura sai da posição dentro da célula: uma tocha fina usa só
    * a faixa do meio da textura, que é onde o cabo foi pintado.

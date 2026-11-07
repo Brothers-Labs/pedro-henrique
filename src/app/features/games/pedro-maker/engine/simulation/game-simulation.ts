@@ -1,6 +1,13 @@
 import { heroDefinition } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
-import { PLAYER_PHYSICS, POWER_UP_DURATION_MS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
+import {
+  GIGA_PHYSICS,
+  PLAYER_PHYSICS,
+  POWER_UP_DURATION_MS,
+  RACCOON_SUIT_PHYSICS,
+  SURPRISE_COIN_COUNT,
+  TILE_SIZE,
+} from '../../config/physics.config';
 import { SeededRandom, seedFromText } from '../../levels/seeded-random';
 import {
   CLASSIC_POWER_UPS,
@@ -21,7 +28,16 @@ import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
 import { type BallElement, type Fireball, FireballSystem } from './fireballs';
-import { bottom, centerX, centerY, overlaps, type PhysicsWorld, stepBody } from './physics-body';
+import {
+  bottom,
+  centerX,
+  centerY,
+  isAreaClear,
+  overlaps,
+  type PhysicsWorld,
+  stepBody,
+  type WorldArea,
+} from './physics-body';
 import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
@@ -38,16 +54,18 @@ const ENEMY_ACTIVE_DISTANCE = 1000;
 /** Distância, em células, a partir da qual o chefão acorda. */
 const BOSS_WAKE_DISTANCE = 11;
 
-/** O que cada flor solta, na dica do mascote. */
-const FLOWER_BALL_NAMES: Readonly<Partial<Record<PowerUpKind, string>>> = {
-  'fire-flower': 'fogo',
-  'ice-flower': 'gelo',
+/** O que o botão de ação faz com cada traje, na dica do mascote. */
+const ACTION_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
+  'fire-flower': 'para soltar bolas de fogo!',
+  'ice-flower': 'para soltar bolas de gelo!',
+  'raccoon-leaf': 'para girar o rabo! E segure o pulo no ar para voar.',
 };
 
-/** Dica do mascote para os cogumelos que mudam o jeito de se mexer. */
+/** Dica do mascote para os poderes que mudam o jeito de se mexer. */
 const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'cat-mushroom': 'Pule numa parede e continue indo para o lado dela: você escala!',
   'leaf-mushroom': 'Segure o pulo enquanto cai para planar como uma folha!',
+  'giga-mushroom': 'Você ficou gigante! Esbarre nos inimigos e nos tijolos!',
 };
 
 const VICTORY_DELAY_MS = 1300;
@@ -173,6 +191,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       this.reactToPlayerCollisions();
       this.catchSlide();
       this.throwBall(input);
+      this.spinTail(input);
+      this.crushBricksAsGiant();
     }
 
     this.cannons.update(this.clockMs, centerX(body), (x, y, direction) => {
@@ -359,6 +379,46 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.fireballs.throw(x, y, player.facing, element, this.clockMs);
   }
 
+  /** Com a Folha do Guaxinim, o botão de ação gira o rabo: derruba inimigos e quebra tijolos dos dois lados. */
+  private spinTail(input: InputSnapshot): void {
+    const player = this.player;
+
+    if (!input.actionPressed || this.triggers.nearDoor || !player.startTailSpin(this.clockMs)) {
+      return;
+    }
+
+    const body = player.body;
+    const reach = RACCOON_SUIT_PHYSICS.tailReach;
+    const area: WorldArea = { x: body.x - reach, y: body.y, width: body.width + reach * 2, height: body.height };
+    // Filtra antes de derrotar: o Rei Slime derrotado solta slimes novos, que não levam o mesmo golpe.
+    const targets = this.enemies.filter((enemy) => !enemy.isDefeated && !enemy.isHidden && overlaps(area, enemy.body));
+
+    this.playSound('tailSpin');
+    this.effects.burst('dust', centerX(body), bottom(body) - 10, 8);
+    this.blocks.breakBricksIn(area);
+
+    for (const enemy of targets) {
+      this.defeatEnemy(enemy);
+    }
+  }
+
+  /** Gigante, o herói quebra os tijolos em que esbarra de lado ou de cabeça; os de baixo dos pés ficam, para ele não afundar. */
+  private crushBricksAsGiant(): void {
+    if (!this.player.hasPowerUp('giga-mushroom')) {
+      return;
+    }
+
+    const body = this.player.body;
+    const reach = GIGA_PHYSICS.brickReach;
+
+    this.blocks.breakBricksIn({
+      x: body.x - reach,
+      y: body.y - reach,
+      width: body.width + reach * 2,
+      height: body.height + reach - 1,
+    });
+  }
+
   private updateFireballs(seconds: number): void {
     this.fireballs.update(this.world, seconds, this.clockMs, (fireball) => this.extinguish(fireball));
 
@@ -464,8 +524,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const body = this.player.body;
     const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
 
-    // Com a Super Estrela, encostar já derruba qualquer inimigo.
-    if (this.player.hasPowerUp('star')) {
+    // Com a Super Estrela ou gigante, encostar já derruba qualquer inimigo.
+    if (this.player.defeatsEnemiesOnTouch) {
       this.defeatEnemy(enemy);
       return;
     }
@@ -479,12 +539,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.hurtPlayer(centerX(enemy.body));
   }
 
-  /** O bloco de gelo não machuca: um pisão (ou a estrela) o quebra com o inimigo dentro. */
+  /** O bloco de gelo não machuca: um pisão (ou a estrela, ou o gigante) o quebra com o inimigo dentro. */
   private onFrozenEnemyContact(enemy: Enemy): void {
     const body = this.player.body;
     const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
 
-    if (!isStomp && !this.player.hasPowerUp('star')) {
+    if (!isStomp && !this.player.defeatsEnemiesOnTouch) {
       return;
     }
 
@@ -552,7 +612,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const player = this.player;
     const x = centerX(player.body);
 
-    if (player.isInvincible(now) || player.hasPowerUp('star') || !player.isActive) {
+    if (player.isInvincible(now) || player.defeatsEnemiesOnTouch || !player.isActive) {
       return;
     }
 
@@ -624,6 +684,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   onPowerUpEnded(kind: PowerUpKind): void {
     this.emit({ type: 'power-up-ended', kind });
+  }
+
+  hasRoomFor(area: WorldArea): boolean {
+    return isAreaClear(this.grid, area);
   }
 
   addCoins(amount: number, x: number, y: number): void {
@@ -788,11 +852,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.effects.floatingText(x, y - 30, `${emoji} ${label.toUpperCase()}!`, '#ffffff');
     this.emit({ type: 'power-up', kind, durationMs: POWER_UP_DURATION_MS[kind] });
 
-    const ballName = FLOWER_BALL_NAMES[kind];
+    const actionTip = ACTION_TIPS[kind];
 
-    if (ballName) {
+    if (actionTip) {
       const button = this.options.isTouch ? 'Toque em AÇÃO' : 'Aperte E';
-      this.emit({ type: 'mascot', text: `${button} para soltar bolas de ${ballName}!` });
+      this.emit({ type: 'mascot', text: `${button} ${actionTip}` });
     }
 
     const movementTip = MOVEMENT_TIPS[kind];

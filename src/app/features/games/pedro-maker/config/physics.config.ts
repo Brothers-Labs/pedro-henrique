@@ -67,6 +67,7 @@ export const POWER_UP_DURATION_MS = {
   magnet: 15000,
   wings: 20000,
   star: 10000,
+  'giga-mushroom': 10000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
@@ -74,6 +75,7 @@ export const POWER_UP_DURATION_MS = {
   'ice-flower': 0,
   'cat-mushroom': 0,
   'leaf-mushroom': 0,
+  'raccoon-leaf': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
 } as const;
@@ -110,6 +112,34 @@ export const LEAF_SUIT_PHYSICS = {
   glideFallSpeed: 110,
 } as const;
 
+/**
+ * Folha do Guaxinim: segurando o pulo no ar, o herói sobe voando a uma
+ * velocidade fixa — ao contrário da folha, que só freia a queda. O fôlego do
+ * voo só recarrega no chão. O botão de ação gira o rabo, que derruba inimigos e
+ * quebra tijolos ao alcance.
+ */
+export const RACCOON_SUIT_PHYSICS = {
+  flySpeed: 300,
+  flightMs: 900,
+  tailSpinMs: 320,
+  /** Espera entre um giro e outro: segurar o botão não vira um liquidificador. */
+  tailSpinCooldownMs: 450,
+  /** Quanto o rabo alcança além da caixa do herói, para cada lado. */
+  tailReach: 40,
+} as const;
+
+/**
+ * Giga Cogumelo: por alguns segundos a caixa de colisão dobra de tamanho, o
+ * herói não se machuca, derruba inimigos e quebra tijolos só de encostar.
+ * Antes de acabar, ele pisca para avisar.
+ */
+export const GIGA_PHYSICS = {
+  bodyScale: 2,
+  warningMs: 2500,
+  /** Folga além da caixa que ainda conta como esbarrão num tijolo. */
+  brickReach: 2,
+} as const;
+
 /** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */
 export const FIREBALL_PHYSICS = {
   size: 18,
@@ -144,6 +174,9 @@ export const SLIDE_PHYSICS = {
 
 /** Tamanho do Pedro com o Super Cogumelo, só no desenho: a colisão não muda. */
 export const BIG_PEDRO_SCALE = 1.35;
+
+/** Tamanho do Pedro gigante no desenho: o dobro do grande, como a caixa de colisão. */
+export const GIGA_PEDRO_SCALE = BIG_PEDRO_SCALE * GIGA_PHYSICS.bodyScale;
 
 /** Raio de atração do ímã, em pixels. */
 export const MAGNET_RADIUS = 190;

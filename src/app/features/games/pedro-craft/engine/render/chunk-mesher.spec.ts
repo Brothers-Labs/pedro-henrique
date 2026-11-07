@@ -175,6 +175,34 @@ describe('Malha dos chunks do PedroCraft', () => {
     });
   });
 
+  describe('tapete', () => {
+    const heights = (data: ChunkMeshData): readonly number[] =>
+      Array.from({ length: data.positions.length / 3 }, (_, index) => data.positions[index * 3 + 1]);
+
+    it('desenha o tapete fininho, deitado no chão e no passe recortado', () => {
+      put('stone', 5, 4, 5);
+      put('carpet-red', 5, 5, 5);
+
+      const result = mesh();
+      const carpet = heights(result.cutout);
+
+      // Topo e as quatro beiradas; a face de baixo fica escondida pela pedra.
+      expect(faces(result.cutout)).toBe(5);
+      expect(Math.min(...carpet)).toBe(5);
+      expect(Math.max(...carpet)).toBeCloseTo(5 + 1 / 16, 5);
+    });
+
+    it('esconde a beirada encostada noutro tapete, mesmo de outra cor', () => {
+      put('stone', 5, 4, 5);
+      put('stone', 6, 4, 5);
+      put('carpet-red', 5, 5, 5);
+      put('carpet-white', 6, 5, 5);
+
+      // Cada tapete perde a beirada do meio: 2 × (topo + 3 beiradas).
+      expect(faces(mesh().cutout)).toBe(8);
+    });
+  });
+
   it('só desenha o chunk pedido', () => {
     world = new VoxelWorld(32, 16, 32);
     put('stone', 20, 5, 20);

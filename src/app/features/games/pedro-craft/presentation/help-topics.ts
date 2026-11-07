@@ -124,7 +124,21 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { text: 'Tesoura: tira a lã da ovelha e pega folhas.', items: ['shears'] },
       { text: 'As ferramentas gastam com o uso. A barrinha embaixo do ícone mostra quanto falta.' },
     ],
-    tip: 'Madeira, pedra, ferro, ouro e diamante: quanto melhor o material, mais rápido e mais forte.',
+    tip: 'Madeira, pedra, ferro, ouro e diamante: quanto melhor o material, mais forte. A picareta de ouro é a mais rápida, mas gasta logo!',
+  },
+  {
+    id: 'ouro',
+    emoji: '🟨',
+    title: 'Ouro',
+    summary: 'O metal amarelo e brilhante que fica embaixo da pedreira.',
+    steps: [
+      { text: 'O ouro mora embaixo da pedreira, mais fundo que o ferro. Procure a pedra com pontinhos amarelos!', items: ['gold-ore'], control: 'break' },
+      { text: 'Só a picareta de ferro, de ouro ou de diamante tira o ouro da pedra.', items: ['iron-pickaxe', 'golden-pickaxe', 'diamond-pickaxe'] },
+      { text: 'Na fornalha, o minério de ouro vira barra de ouro.', items: ['gold-ore', 'coal', 'gold-ingot'] },
+      { text: 'Na mesa, 3 barras de ouro e 2 gravetos viram a picareta de ouro: a mais rápida de todas, mas gasta logo.', items: ['gold-ingot', 'stick', 'golden-pickaxe'] },
+      { text: '9 barras de ouro viram um bloco de ouro, brilhante para enfeitar a casa.', items: ['gold-ingot', 'gold-block'] },
+    ],
+    tip: 'Quer cavar rapidinho? Use a picareta de ouro. Quer que ela dure bastante? Use a de diamante.',
   },
   {
     id: 'diamante',
@@ -134,7 +148,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     steps: [
       { text: 'O diamante mora bem embaixo da pedreira. Cave para baixo e procure a pedra com pontinhos azuis!', items: ['diamond'], control: 'break' },
       { text: 'Só a picareta de ferro, de ouro ou de diamante tira o diamante da pedra.', items: ['iron-pickaxe', 'golden-pickaxe', 'diamond-pickaxe'] },
-      { text: 'Na mesa, 3 diamantes e 2 gravetos viram a picareta de diamante: a mais rápida e a que mais dura.', items: ['diamond', 'stick', 'diamond-pickaxe'] },
+      { text: 'Na mesa, 3 diamantes e 2 gravetos viram a picareta de diamante: a mais forte e a que mais dura.', items: ['diamond', 'stick', 'diamond-pickaxe'] },
       { text: '9 diamantes viram um bloco de diamante, para enfeitar a casa.', items: ['diamond', 'diamond-block'] },
     ],
     tip: 'Leve tochas quando for cavar fundo: lá embaixo é escurinho.',
@@ -236,6 +250,22 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { text: 'Para descer do trem, pule.', control: 'jump' },
     ],
     tip: 'No fim da linha, o trem espera um pouquinho e volta sozinho. E o trem nunca se gasta!',
+  },
+  {
+    id: 'tapetes',
+    emoji: '🧶',
+    title: 'Tapetes',
+    summary: 'Enfeite o chão da casa com tapetes coloridos.',
+    steps: [
+      { text: 'Use a tesoura na ovelha para ganhar lã.', items: ['shears', 'wool'] },
+      { text: 'Na mochila, 2 lãs viram 3 tapetes brancos.', items: ['wool', 'carpet-white'], control: 'backpack' },
+      {
+        text: 'Para colorir, junte 2 lãs e uma cor: flor vermelha, cenoura, flor amarela, folhas, beterraba ou carvão.',
+        items: ['flower-red', 'carrot', 'flower-yellow', 'oak-leaves', 'beetroot', 'coal'],
+      },
+      { text: 'Coloque o tapete no chão. Ele é fininho e dá para andar em cima!', items: ['carpet-red', 'carpet-green', 'carpet-purple'], control: 'use' },
+    ],
+    tip: 'O tapete precisa de chão firme embaixo. Se o chão sumir, o tapete cai junto.',
   },
   {
     id: 'animais',

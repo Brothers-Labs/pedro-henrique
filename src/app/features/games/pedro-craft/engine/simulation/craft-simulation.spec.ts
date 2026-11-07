@@ -248,6 +248,47 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     });
   });
 
+  describe('tapetes', () => {
+    it('o tapete só fica em cima de chão firme', () => {
+      put('stone');
+      simulation.inventory.slots[0] = { item: 'carpet-red', count: 4, durability: null };
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+
+      put('stone', TARGET.x - 1, TARGET.y - 1);
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('carpet-red'));
+      expect(simulation.inventory.slots[0]?.count).toBe(3);
+    });
+
+    it('o herói anda por cima do tapete sem subir degrau', () => {
+      for (let x = 6; x < 12; x += 1) {
+        put('carpet-green', x, FLOOR_TOP);
+      }
+
+      run(40, { forward: 1 });
+
+      expect(simulation.hero.body.x).toBeGreaterThan(TARGET.x);
+      expect(simulation.hero.body.y).toBe(FLOOR_TOP);
+    });
+
+    it('o tapete cai junto quando o chão dele é quebrado', () => {
+      world.fill(TARGET.x, 3, TARGET.z, catalog.blockNumber('dirt'));
+      put('carpet-purple', TARGET.x, 4);
+      simulation.hero.look(0, -0.5);
+      run(1);
+
+      expect(simulation.target).toEqual(jasmine.objectContaining({ x: TARGET.x, y: 3 }));
+
+      run(200, { primaryHeld: true });
+
+      expect(world.get(TARGET.x, 4, TARGET.z)).toBe(AIR);
+      expect(simulation.inventory.count('carpet-purple')).toBe(1);
+    });
+  });
+
   describe('água e fazenda', () => {
     const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
 
