@@ -382,6 +382,72 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     });
   });
 
+  describe('golem de ferro', () => {
+    const golems = (): readonly Creature[] => simulation.creatures.list.filter((creature) => creature.definition.id === 'iron-golem');
+    const hinted = (text: string): boolean => events.some((event) => event.type === 'hint' && event.text.includes(text));
+
+    it('usado no bloco mirado, o golem nasce na frente dele e o item é gasto', () => {
+      put('stone');
+      hold('iron-golem');
+      run(1, { secondaryPressed: true });
+
+      expect(golems().length).toBe(1);
+      expect(golems()[0].body.x).toBeCloseTo(TARGET.x - 0.5, 1);
+      expect(simulation.inventory.count('iron-golem')).toBe(0);
+      expect(hinted('chegou')).toBeTrue();
+    });
+
+    it('sem espaço para o corpo grandão, o golem não nasce e o item fica', () => {
+      put('stone');
+      put('stone', TARGET.x - 1, TARGET.y + 1);
+      hold('iron-golem');
+      run(1, { secondaryPressed: true });
+
+      expect(golems()).toEqual([]);
+      expect(simulation.inventory.count('iron-golem')).toBe(1);
+      expect(hinted('grandão')).toBeTrue();
+    });
+
+    it('com três golens no mundo, não nasce o quarto', () => {
+      for (let count = 0; count < 3; count += 1) {
+        simulation.creatures.spawn(catalog.creature('iron-golem'), 2.5 + count * 2, FLOOR_TOP, 12.5);
+      }
+
+      put('stone');
+      hold('iron-golem');
+      run(1, { secondaryPressed: true });
+
+      expect(golems().length).toBe(3);
+      expect(simulation.inventory.count('iron-golem')).toBe(1);
+      expect(hinted('já tem 3')).toBeTrue();
+    });
+
+    it('o golpe do herói não machuca o golem', () => {
+      const golem = simulation.creatures.spawn(catalog.creature('iron-golem'), 7, FLOOR_TOP, 5.5);
+
+      golem.moodLeftMs = 60_000;
+      hold('iron-sword');
+      run(1, { primaryPressed: true });
+
+      expect(simulation.targetCreature).toBe(golem);
+      expect(golem.health).toBe(golem.definition.health);
+      expect(hinted('é seu amigo')).toBeTrue();
+    });
+
+    it('à noite, o golem vence o zumbi, que solta o que tem', () => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      simulation.creatures.spawn(catalog.creature('iron-golem'), 9.5, FLOOR_TOP, 5.5);
+      const zombie = simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), 13.5, FLOOR_TOP, 5.5);
+
+      run(60 * 5);
+
+      expect(simulation.creatures.list).not.toContain(zombie);
+      expect(events).toContain({ type: 'sound', cue: 'enemyHit' });
+      expect(simulation.drainVisualEvents().some((event) => event.type === 'creature-poof')).toBeTrue();
+      expect(golems().length).toBe(1);
+    });
+  });
+
   describe('água e fazenda', () => {
     const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
 

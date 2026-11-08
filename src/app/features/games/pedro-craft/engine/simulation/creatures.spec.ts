@@ -27,6 +27,7 @@ describe('Bichos do PedroCraft', () => {
   let born: Creature[];
   let fusesLit: Creature[];
   let exploded: Creature[];
+  let defended: Creature[];
 
   beforeAll(async () => {
     catalog = await loadTestCatalog();
@@ -56,6 +57,7 @@ describe('Bichos do PedroCraft', () => {
     born = [];
     fusesLit = [];
     exploded = [];
+    defended = [];
     creatures = new Creatures(world, catalog, properties, new SeededRandom(7), {
       hero: () => hero,
       period: () => period,
@@ -68,6 +70,7 @@ describe('Bichos do PedroCraft', () => {
       difficulty: () => ({ speed: 1, attackCooldown: 1 }),
       fuseLit: (creature) => fusesLit.push(creature),
       exploded: (creature) => exploded.push(creature),
+      defend: (_guardian, foe) => defended.push(foe),
     });
   });
 
@@ -379,6 +382,69 @@ describe('Bichos do PedroCraft', () => {
 
       expect(creatures.hit(spider, 1, 3, 18.5, 20.5)).toBeFalse();
       expect(spider.mood).toBe('chase');
+    });
+  });
+
+  describe('golem de ferro', () => {
+    const distanceToHero = (creature: Creature): number => Math.hypot(creature.body.x - hero.x, creature.body.z - hero.z);
+
+    it('vai atrás do inimigo mais perto e golpeia quando encosta', () => {
+      period = 'night';
+      const golem = creatures.spawn(catalog.creature('iron-golem'), HERO.x + 4, FLOOR_TOP, HERO.z);
+      const zombie = creatures.spawn(catalog.creature('scarecrow-zombie'), HERO.x + 10, FLOOR_TOP, HERO.z);
+
+      run(5);
+
+      expect(golem.mood).toBe('chase');
+      expect(golem.foe).toBe(zombie);
+
+      run(60 * 3);
+
+      expect(defended).toContain(zombie);
+    });
+
+    it('não vai atrás de animal nem de inimigo longe dele', () => {
+      period = 'night';
+      const golem = creatures.spawn(catalog.creature('iron-golem'), HERO.x + 2, FLOOR_TOP, HERO.z);
+
+      creatures.spawn(catalog.creature('sheep'), HERO.x + 4, FLOOR_TOP, HERO.z);
+      creatures.spawn(catalog.creature('scarecrow-zombie'), HERO.x + 30, FLOOR_TOP, HERO.z);
+      run(1);
+
+      expect(golem.foe).toBeNull();
+      expect(golem.mood).not.toBe('chase');
+    });
+
+    it('sem inimigo por perto, vai atrás do herói e para perto dele', () => {
+      const golem = creatures.spawn(catalog.creature('iron-golem'), HERO.x + 15, FLOOR_TOP, HERO.z);
+
+      run(1);
+
+      expect(golem.mood).toBe('follow');
+
+      run(60 * 10);
+
+      expect(distanceToHero(golem)).toBeLessThan(8);
+    });
+
+    it('fica de dia e no Modo Paz, e não foge de quem bate', () => {
+      allowsHostiles = false;
+      const golem = creatures.spawn(catalog.creature('iron-golem'), HERO.x + 2, FLOOR_TOP, HERO.z);
+
+      run(1);
+
+      expect(creatures.list).toContain(golem);
+      expect(creatures.hit(golem, 1, 3, HERO.x, HERO.z)).toBeFalse();
+      expect(golem.mood).not.toBe('flee');
+    });
+
+    it('cabem três golens no mundo', () => {
+      for (let count = 0; count < 3; count += 1) {
+        expect(creatures.hasRoomForGuardian).toBeTrue();
+        creatures.spawn(catalog.creature('iron-golem'), HERO.x + 2 + count, FLOOR_TOP, HERO.z);
+      }
+
+      expect(creatures.hasRoomForGuardian).toBeFalse();
     });
   });
 });

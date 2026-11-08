@@ -35,6 +35,8 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
       return skeleton(color(0), color(1), color(2));
     case 'creeper':
       return creeper(color(0), color(1), color(2));
+    case 'iron-golem':
+      return ironGolem(color(0), color(1), color(2), color(3));
   }
 }
 
@@ -169,6 +171,25 @@ function creeper(skin: string, face: string, spots: string): readonly VoxelBox[]
     box(0.11, 1.46, -0.225, 0.1, 0.1, 0.01, face),
     box(-0.11, 1.46, -0.225, 0.1, 0.1, 0.01, face),
     box(0, 1.34, -0.225, 0.08, 0.1, 0.01, face),
+  ];
+}
+
+/** Cores: ferro, cipós, nariz e sobrancelha. Grandão de braços compridos, com cara de amigo. */
+function ironGolem(iron: string, vines: string, nose: string, brow: string): readonly VoxelBox[] {
+  return [
+    box(0.2, 0.35, 0, 0.26, 0.7, 0.26, iron),
+    box(-0.2, 0.35, 0, 0.26, 0.7, 0.26, iron),
+    box(0, 0.78, 0, 0.6, 0.16, 0.36, iron),
+    box(0, 1.2, 0, 0.9, 0.7, 0.5, iron),
+    box(0.56, 0.95, 0, 0.22, 1.1, 0.24, iron),
+    box(-0.56, 0.95, 0, 0.22, 1.1, 0.24, iron),
+    box(0.2, 1.3, -0.255, 0.08, 0.4, 0.01, vines),
+    box(-0.24, 1.08, -0.255, 0.08, 0.3, 0.01, vines),
+    box(0.56, 0.7, -0.125, 0.08, 0.3, 0.01, vines),
+    box(0, 1.72, -0.05, 0.4, 0.36, 0.4, iron),
+    box(0, 1.83, -0.255, 0.36, 0.05, 0.02, brow),
+    box(0, 1.63, -0.3, 0.1, 0.18, 0.1, nose),
+    ...eyes(0.1, 1.74, -0.26),
   ];
 }
 

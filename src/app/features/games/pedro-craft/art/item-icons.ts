@@ -259,6 +259,21 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
       brush.disc(x, 13, 1.6, wheel ?? '#3d3d45');
     }
   },
+  golem: (brush, [iron, vines, nose]) => {
+    const body = iron ?? '#d9d4c7';
+
+    brush.rect(5, 1, 6, 5, body);
+    brush.rect(3, 6, 10, 5, body);
+    brush.rect(1, 6, 2, 8, darken(body, 0.12));
+    brush.rect(13, 6, 2, 8, darken(body, 0.12));
+    brush.rect(4, 11, 3, 4, body);
+    brush.rect(9, 11, 3, 4, body);
+    brush.rect(6, 3, 1, 1, '#1f1f1f');
+    brush.rect(9, 3, 1, 1, '#1f1f1f');
+    brush.rect(7, 3, 2, 3, nose ?? '#c9b8a3');
+    brush.line(5, 7, 5, 10, vines ?? '#5f8f3a');
+    brush.line(11, 8, 10, 10, vines ?? '#5f8f3a');
+  },
   cane: (brush, [stalk, leaf]) => {
     for (const x of [5, 10]) {
       brush.line(x, 14, x, 2, stalk ?? '#9ccc65', 2);

@@ -17,13 +17,16 @@
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "name": { "type": "string", "minLength": 1 },
-        "temperament": { "enum": ["passive", "hostile"] },
+        "temperament": {
+          "enum": ["passive", "hostile", "guardian"],
+          "description": "guardian é o amigo que a criança chama com um item (o golem): segue o herói, enfrenta os inimigos e não nasce sozinho."
+        },
         "health": { "type": "integer", "minimum": 1, "maximum": 100 },
         "speed": { "type": "number", "minimum": 0.1, "maximum": 10, "description": "Blocos por segundo." },
         "damage": { "type": "integer", "minimum": 0, "maximum": 10, "default": 0, "description": "Corações por ataque." },
         "attackCooldownMs": { "type": "integer", "minimum": 200, "default": 1000 },
         "behavior": { "enum": ["grazer", "chaser", "hopper", "archer"] },
-        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton", "creeper"] },
+        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton", "creeper", "iron-golem"] },
         "colors": { "$ref": "common.schema.json#/$defs/colors" },
         "width": { "type": "number", "minimum": 0.2, "maximum": 2 },
         "height": { "type": "number", "minimum": 0.2, "maximum": 2.5 },

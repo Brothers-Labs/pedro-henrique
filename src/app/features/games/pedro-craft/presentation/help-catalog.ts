@@ -128,6 +128,10 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
     return 'Use em cima de um trilho para passear. Pule para descer.';
   }
 
+  if (item.summons) {
+    return 'Use no chão para chamar um amigo que enfrenta os monstros com você.';
+  }
+
   if (item.plants) {
     const crop = catalog.crop(item.plants);
     const soils = ALTERNATIVES.format(crop.soil.map((soil) => catalog.block(soil).name.toLowerCase()));

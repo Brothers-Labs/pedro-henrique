@@ -62,7 +62,19 @@ function parseItem(item: JsonObjectReader): ItemDefinition {
     fertilizer: item.optionalField('fertilizer')?.number({ integer: true, min: 1, max: 3 }) ?? null,
     bucket: bucket ? parseBucket(bucket.object()) : null,
     vehicle: parseVehicle(item, kind),
+    summons: parseSummons(item, kind),
   };
+}
+
+/** Só o item do tipo `summon` chama uma criatura, e ele sempre diz qual. */
+function parseSummons(item: JsonObjectReader, kind: ItemKind): string | null {
+  const summons = optionalId(item, 'summons');
+
+  if ((kind === 'summon') !== (summons !== null)) {
+    item.fail('item do tipo "summon" precisa de "summons", e só ele');
+  }
+
+  return summons;
 }
 
 /** Só o item do tipo `vehicle` anda no trilho, e ele sempre diz a velocidade. */
