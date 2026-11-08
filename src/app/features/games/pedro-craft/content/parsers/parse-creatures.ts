@@ -8,6 +8,7 @@ import {
   type Temperament,
 } from '../../models/content.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
+import { parseExplosion } from './parse-blocks';
 
 const TEMPERAMENTS: readonly Temperament[] = ['passive', 'hostile'];
 
@@ -30,6 +31,7 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
   const spawn = creature.optionalField('spawn');
   const split = creature.optionalField('splitInto')?.object() ?? null;
   const lays = creature.optionalField('lays')?.object() ?? null;
+  const explodes = creature.optionalField('explodes')?.object() ?? null;
 
   return {
     id: creature.field('id').id(),
@@ -53,6 +55,7 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
     lays: lays ? { item: lays.field('item').id(), everyMs: lays.field('everyMs').number({ integer: true, min: 1000 }) } : null,
     breedsWith: optionalId(creature, 'breedsWith'),
     babyGrowMs: creature.optionalField('babyGrowMs')?.number({ integer: true, min: 10000 }) ?? DEFAULT_BABY_GROW_MS,
+    explodes: explodes ? parseExplosion(explodes) : null,
   };
 }
 

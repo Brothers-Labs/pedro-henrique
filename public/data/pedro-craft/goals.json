@@ -27,6 +27,10 @@
     { "id": "find-diamond", "title": "Ache um diamante", "emoji": "💎", "hint": "Cave bem embaixo da pedreira, com a picareta de ferro.", "trigger": "obtain", "target": "diamond" },
     { "id": "diamond-pickaxe", "title": "Faça uma picareta de diamante", "emoji": "⛏️", "hint": "Três diamantes em cima e dois gravetos no meio da mesa.", "trigger": "obtain", "target": "diamond-pickaxe" },
     { "id": "gold-block", "title": "Faça um bloco de ouro", "emoji": "🟨", "hint": "Derreta o minério de ouro na fornalha. Na mesa, 9 barras de ouro viram um bloco.", "trigger": "obtain", "target": "gold-block" },
-    { "id": "place-carpets", "title": "Enfeite o chão com 4 tapetes vermelhos", "emoji": "🧶", "hint": "Na mochila, 2 lãs e 1 flor vermelha viram 3 tapetes vermelhos.", "trigger": "place", "target": "carpet-red", "count": 4 }
+    { "id": "place-carpets", "title": "Enfeite o chão com 4 tapetes vermelhos", "emoji": "🧶", "hint": "Na mochila, 2 lãs e 1 flor vermelha viram 3 tapetes vermelhos.", "trigger": "place", "target": "carpet-red", "count": 4 },
+    { "id": "find-emerald", "title": "Ache uma esmeralda", "emoji": "💚", "hint": "Cave fundo, perto da pedreira, com a picareta de ferro.", "trigger": "obtain", "target": "emerald" },
+    { "id": "place-blue-carpets", "title": "Enfeite o chão com 4 tapetes azuis", "emoji": "🟦", "hint": "Cave até achar o lápis-lazúli. Na mochila, 2 lãs e 1 lápis-lazúli viram 3 tapetes azuis.", "trigger": "place", "target": "carpet-blue", "count": 4 },
+    { "id": "mine-obsidian", "title": "Pegue uma obsidiana", "emoji": "🟪", "hint": "Ela fica lá no fundo, encostada na rocha-mãe. Só a picareta de diamante tira.", "trigger": "obtain", "target": "obsidian" },
+    { "id": "make-tnt", "title": "Faça uma TNT", "emoji": "🧨", "hint": "O creeper solta pólvora. Na mesa, 5 pólvoras e 4 areias viram uma TNT.", "trigger": "obtain", "target": "tnt" }
   ]
 }

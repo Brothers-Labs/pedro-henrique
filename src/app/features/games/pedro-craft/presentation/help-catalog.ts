@@ -185,6 +185,14 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
     return 'Enfeita o chão: coloque em cima de um bloco firme e ande por cima.';
   }
 
+  if (block.explosive) {
+    return `Coloque no chão e, para acender, use nela o item ${catalog.item(block.explosive.igniter).name.toLowerCase()}. Depois, corra para longe!`;
+  }
+
+  if (block.blastResistant) {
+    return 'Bloco para construir que aguenta explosão.';
+  }
+
   return block.toggleInto ? 'Coloque e use para abrir e fechar.' : 'Bloco para construir.';
 }
 

@@ -25,6 +25,8 @@ describe('Bichos do PedroCraft', () => {
   let shots: ProjectileLaunch[];
   let vanished: Creature[];
   let born: Creature[];
+  let fusesLit: Creature[];
+  let exploded: Creature[];
 
   beforeAll(async () => {
     catalog = await loadTestCatalog();
@@ -52,6 +54,8 @@ describe('Bichos do PedroCraft', () => {
     shots = [];
     vanished = [];
     born = [];
+    fusesLit = [];
+    exploded = [];
     creatures = new Creatures(world, catalog, properties, new SeededRandom(7), {
       hero: () => hero,
       period: () => period,
@@ -62,6 +66,8 @@ describe('Bichos do PedroCraft', () => {
       vanished: (creature) => vanished.push(creature),
       born: (baby) => born.push(baby),
       difficulty: () => ({ speed: 1, attackCooldown: 1 }),
+      fuseLit: (creature) => fusesLit.push(creature),
+      exploded: (creature) => exploded.push(creature),
     });
   });
 
@@ -323,6 +329,49 @@ describe('Bichos do PedroCraft', () => {
       expect(Math.hypot((king?.body.x ?? 0) - HERO.x, (king?.body.z ?? 0) - HERO.z)).toBeGreaterThanOrEqual(
         catalog.world.creatures.minSpawnDistance - 1,
       );
+    });
+
+    it('o creeper vai atrás do herói, chia perto dele e estoura em vez de golpear', () => {
+      period = 'night';
+      const creeper = creatures.spawn(catalog.creature('creeper'), HERO.x + 6.5, FLOOR_TOP, HERO.z);
+
+      run(60 * 6);
+
+      expect(fusesLit).toEqual([creeper]);
+      expect(exploded).toEqual([creeper]);
+      expect(strikes).not.toContain(creeper);
+      expect(creatures.list).not.toContain(creeper);
+    });
+
+    it('chiando, o creeper para de andar e incha até estourar', () => {
+      period = 'night';
+      const creeper = creatures.spawn(catalog.creature('creeper'), HERO.x + 2, FLOOR_TOP, HERO.z);
+
+      run(30);
+
+      const x = creeper.body.x;
+
+      run(10);
+
+      expect(creeper.fuseLeftMs).not.toBeNull();
+      expect(creeper.fuseProgress).toBeGreaterThan(0);
+      expect(creeper.body.x).toBeCloseTo(x, 1);
+    });
+
+    it('o pavio do creeper apaga quando o herói foge para longe', () => {
+      period = 'night';
+      const creeper = creatures.spawn(catalog.creature('creeper'), HERO.x + 2, FLOOR_TOP, HERO.z);
+
+      run(10);
+
+      expect(creeper.fuseLeftMs).not.toBeNull();
+
+      hero.x -= 8;
+      run(1);
+
+      expect(creeper.fuseLeftMs).toBeNull();
+      expect(creeper.fuseProgress).toBe(0);
+      expect(exploded).toEqual([]);
     });
 
     it('golpeado, o inimigo não foge: fica bravo e vem atrás', () => {

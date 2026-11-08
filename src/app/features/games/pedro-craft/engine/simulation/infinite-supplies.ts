@@ -13,7 +13,7 @@ export function bestTools(catalog: CraftCatalog): readonly ItemDefinition[] {
 export function infiniteSupplies(catalog: CraftCatalog): SlotContent[] {
   const tools = bestTools(catalog);
   // Decorations go last: when the chest runs out of room, they are the ones left out (every carpet included).
-  const decorative = ['oak-leaves', 'wool', 'flower-red', 'flower-yellow', 'gold-block', 'diamond-block'];
+  const decorative = ['oak-leaves', 'wool', 'flower-red', 'flower-yellow', 'gold-block', 'diamond-block', 'emerald-block'];
   const isDecorative = (item: ItemDefinition): boolean =>
     decorative.includes(item.id) || (item.places !== null && catalog.block(item.places).shape === 'carpet');
   const resources = catalog.items.filter(item => item.kind === 'material' || item.kind === 'block')

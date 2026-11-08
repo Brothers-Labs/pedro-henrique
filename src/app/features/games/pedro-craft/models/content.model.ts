@@ -59,6 +59,7 @@ export const TEXTURE_DETAILS = [
   'door',
   'door-open',
   'plain',
+  'band',
 ] as const;
 
 export type TextureDetail = (typeof TEXTURE_DETAILS)[number];
@@ -100,6 +101,27 @@ export interface BlockFaces {
   readonly bottom: TextureSpec;
 }
 
+/**
+ * Um estouro: a TNT acesa e o creeper que chegou perto demais.
+ *
+ * O dano cai do centro para a beirada, e a beirada ainda tira um coração.
+ */
+export interface ExplosionSpec {
+  /** Espera entre acender e estourar: o tempo de a criança sair de perto. */
+  readonly fuseMs: number;
+  /** Até onde a explosão alcança, em blocos. */
+  readonly radius: number;
+  /** Corações tirados bem no centro. */
+  readonly damage: number;
+  /** Abre buraco no mundo (a TNT). Sem isto, só empurra e machuca (o creeper não desmancha construções). */
+  readonly breaksBlocks: boolean;
+}
+
+/** Bloco que estoura (a TNT): só acende com o item certo na mão, para não estourar sem querer. */
+export interface ExplosiveBlock extends ExplosionSpec {
+  readonly igniter: string;
+}
+
 export interface BlockDefinition {
   readonly id: string;
   readonly name: string;
@@ -127,6 +149,10 @@ export interface BlockDefinition {
   /** Bloco que este vira ao ser usado (porta fechada ↔ aberta). */
   readonly toggleInto: string | null;
   readonly interaction: BlockInteraction | null;
+  /** Aguenta explosão sem quebrar (a obsidiana). */
+  readonly blastResistant: boolean;
+  /** Estoura depois de aceso; `null` nos blocos comuns. */
+  readonly explosive: ExplosiveBlock | null;
   /** Cor no mapa visto de cima, usado na miniatura do mundo. */
   readonly mapColor: string;
   readonly textures: BlockFaces;
@@ -302,7 +328,7 @@ export const CREATURE_BEHAVIORS = ['grazer', 'chaser', 'hopper', 'archer'] as co
 
 export type CreatureBehavior = (typeof CREATURE_BEHAVIORS)[number];
 
-export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'king-slime', 'scarecrow', 'spider', 'skeleton'] as const;
+export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'king-slime', 'scarecrow', 'spider', 'skeleton', 'creeper'] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];
 
@@ -358,6 +384,8 @@ export interface CreatureDefinition {
   readonly breedsWith: string | null;
   /** Quanto o filhote leva para crescer. */
   readonly babyGrowMs: number;
+  /** Em vez de golpear, chia perto do herói e estoura (o creeper); `null` para quem golpeia. */
+  readonly explodes: ExplosionSpec | null;
 }
 
 /* Plantações -------------------------------------------------------------------------- */

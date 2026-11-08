@@ -28,8 +28,10 @@ const RACCOON_STRIPE = '#3d3530';
 const TAIL_SPIN_TURN_MS = 160;
 const GIGA_GLOW = 0.2;
 const GIGA_COLOR = '#ffd23f';
-/** Piscada de aviso no fim do Giga Cogumelo: acende e apaga a cada tantos milissegundos. */
-const GIGA_WARNING_BLINK_MS = 140;
+/** Piscada de aviso no fim do Giga e do Turbo: acende e apaga a cada tantos milissegundos. */
+const WARNING_BLINK_MS = 140;
+const TURBO_GLOW = 0.35;
+const TURBO_COLOR = '#33d6ff';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -58,6 +60,10 @@ export interface PedroPose {
   readonly isGiant: boolean;
   /** Últimos segundos do Giga Cogumelo: o herói pisca para avisar. */
   readonly isGigaEnding: boolean;
+  /** Correndo com o Cogumelo Turbo. */
+  readonly hasTurboMushroom: boolean;
+  /** Últimos segundos do Cogumelo Turbo: o brilho elétrico pisca. */
+  readonly isTurboEnding: boolean;
 }
 
 /**
@@ -170,9 +176,9 @@ export class PedroModel {
   }
 
   /**
-   * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado, que
-   * acende e apaga quando o efeito está para acabar. Flor de fogo: um brilho
-   * quente; de gelo, um frio.
+   * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado; com
+   * o Cogumelo Turbo, um elétrico. Os dois acendem e apagam quando o efeito
+   * está para acabar. Flor de fogo: um brilho quente; de gelo, um frio.
    */
   private glow(pose: PedroPose, now: number): void {
     const emissive = this.material.emissive;
@@ -181,19 +187,28 @@ export class PedroModel {
       emissive.setHSL((now / 400) % 1, 1, 0.5);
       this.material.emissiveIntensity = STAR_GLOW;
     } else if (pose.isGigaEnding) {
-      const isWarningLit = Math.floor(now / GIGA_WARNING_BLINK_MS) % 2 === 0;
-
-      emissive.set(GIGA_COLOR);
-      this.material.emissiveIntensity = isWarningLit ? STAR_GLOW : 0;
+      this.blinkWarning(GIGA_COLOR, now);
     } else if (pose.isGiant) {
       emissive.set(GIGA_COLOR);
       this.material.emissiveIntensity = GIGA_GLOW;
+    } else if (pose.isTurboEnding) {
+      this.blinkWarning(TURBO_COLOR, now);
+    } else if (pose.hasTurboMushroom) {
+      emissive.set(TURBO_COLOR);
+      this.material.emissiveIntensity = TURBO_GLOW;
     } else if (pose.hasFireFlower || pose.hasIceFlower) {
       emissive.set(pose.hasFireFlower ? FIRE_COLOR : ICE_COLOR);
       this.material.emissiveIntensity = FLOWER_GLOW;
     } else {
       this.material.emissiveIntensity = 0;
     }
+  }
+
+  private blinkWarning(color: string, now: number): void {
+    const isWarningLit = Math.floor(now / WARNING_BLINK_MS) % 2 === 0;
+
+    this.material.emissive.set(color);
+    this.material.emissiveIntensity = isWarningLit ? STAR_GLOW : 0;
   }
 
   /** Esticar ao sair do chão e amassar ao pousar: o peso do personagem. */

@@ -33,7 +33,10 @@
       { "block": "gold-ore", "chance": 0.018, "maxY": 22 }
     ],
     "rareOres": [
-      { "block": "diamond-ore", "chance": 0.012, "maxY": 18 }
+      { "block": "diamond-ore", "chance": 0.012, "maxY": 18 },
+      { "block": "emerald-ore", "chance": 0.01, "maxY": 20 },
+      { "block": "lapis-ore", "chance": 0.02, "maxY": 22 },
+      { "block": "obsidian", "chance": 0.06, "maxY": 3 }
     ]
   },
   "farm": { "radius": 9 },

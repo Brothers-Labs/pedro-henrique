@@ -10,6 +10,7 @@ import {
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
   TILE_SIZE,
+  TURBO_MUSHROOM_PHYSICS,
 } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
@@ -589,12 +590,12 @@ describe('Simulação do Pedro Maker', () => {
       run(harness, 1, { right: true });
 
       expect(player.isGiant).toBeTrue();
-      expect(player.isGigaEnding(harness.simulation.clockMs)).toBeFalse();
+      expect(player.isPowerUpEnding('giga-mushroom', harness.simulation.clockMs)).toBeFalse();
 
       run(harness, 8);
 
       expect(player.isGiant).toBeTrue();
-      expect(player.isGigaEnding(harness.simulation.clockMs)).toBeTrue();
+      expect(player.isPowerUpEnding('giga-mushroom', harness.simulation.clockMs)).toBeTrue();
 
       run(harness, 3);
 
@@ -628,9 +629,146 @@ describe('Simulação do Pedro Maker', () => {
     });
   });
 
-  it('o Lucky Block também sorteia a Folha do Guaxinim e o Giga Cogumelo', () => {
+  it('o Lucky Block também sorteia a Folha do Guaxinim, o Giga Cogumelo e o Cogumelo Turbo', () => {
     expect(CLASSIC_POWER_UPS).toContain('raccoon-leaf');
     expect(CLASSIC_POWER_UPS).toContain('giga-mushroom');
+    expect(CLASSIC_POWER_UPS).toContain('turbo-mushroom');
+  });
+
+  describe('Cogumelo Turbo', () => {
+    /** Velocidade horizontal depois de correr um segundo para a direita. */
+    const topSpeedWith = (powerUp: PowerUpKind | null): number => {
+      const harness = start((powerUp ? levelWithPowerUp(powerUp) : flatLevel()).build(META));
+
+      run(harness, 1, { right: true });
+
+      return harness.simulation.player.body.vx;
+    };
+
+    it('corre mais rápido que sem poder e que com o Turbo dos power-ups, sem somar os dois', () => {
+      const normal = topSpeedWith(null);
+      const turbo = topSpeedWith('turbo');
+      const mushroom = topSpeedWith('turbo-mushroom');
+
+      expect(mushroom).toBeCloseTo(normal * TURBO_MUSHROOM_PHYSICS.speedMultiplier, 3);
+      expect(mushroom).toBeGreaterThan(turbo);
+
+      const harness = start(flatLevel().add('power-up', 3, SURFACE - 1, { powerUp: 'turbo' }).add('power-up', 5, SURFACE - 1, { powerUp: 'turbo-mushroom' }).build(META));
+      run(harness, 1.5, { right: true });
+
+      expect(harness.simulation.player.body.vx).toBeCloseTo(mushroom, 3);
+    });
+
+    it('arranca mais forte: no primeiro instante já anda mais que sem poder', () => {
+      const turbo = start(flatLevel().build(META));
+      const plain = start(flatLevel().build(META));
+      turbo.simulation.player.grantPowerUp('turbo-mushroom', turbo.simulation.clockMs);
+
+      run(turbo, 0.1, { right: true });
+      run(plain, 0.1, { right: true });
+
+      expect(turbo.simulation.player.body.vx)
+        .toBeCloseTo(plain.simulation.player.body.vx * TURBO_MUSHROOM_PHYSICS.accelerationMultiplier, 0);
+    });
+
+    it('deixa rastro de faíscas correndo, pisca no fim e avisa quando acaba', () => {
+      const harness = start(flatLevel(80).add('power-up', 3, SURFACE - 1, { powerUp: 'turbo-mushroom' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.5, { right: true });
+
+      expect(player.hasPowerUp('turbo-mushroom')).toBeTrue();
+      expect(player.isPowerUpEnding('turbo-mushroom', harness.simulation.clockMs)).toBeFalse();
+      expect(harness.events).toContain(jasmine.objectContaining({ type: 'mascot', text: jasmine.stringContaining('Turbo ligado') }));
+
+      harness.simulation.effects.drain();
+      run(harness, 0.5, { right: true });
+
+      expect(harness.simulation.effects.drain().some((effect) => effect.type === 'burst' && effect.kind === 'sparkle')).toBeTrue();
+
+      run(harness, 7.5);
+
+      expect(player.isPowerUpEnding('turbo-mushroom', harness.simulation.clockMs)).toBeTrue();
+
+      run(harness, 2);
+
+      expect(player.hasPowerUp('turbo-mushroom')).toBeFalse();
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'turbo-mushroom' });
+    });
+  });
+
+  describe('Grama invisível', () => {
+    /** Buraco das colunas 8 a 13 coberto só por grama invisível na altura do chão. */
+    const hiddenBridge = (): LevelBuilder => {
+      const builder = flatLevel();
+
+      for (let x = 8; x <= 13; x += 1) {
+        builder.remove(x, SURFACE).remove(x, SURFACE + 1).remove(x, SURFACE + 2);
+      }
+
+      return builder.row('invisible-grass', 8, SURFACE, 6);
+    };
+
+    it('segura o herói como chão, mesmo antes de aparecer', () => {
+      const harness = start(hiddenBridge().build(META));
+      const blocks = harness.simulation.blocks;
+
+      expect(blocks.blockAt(10, SURFACE)?.isUsed).withContext('escondida no começo').toBeFalse();
+
+      run(harness, 2.5, { right: true });
+
+      expect(centerX(harness.simulation.player.body)).toBeGreaterThan(14 * TILE_SIZE);
+      expect(bottom(harness.simulation.player.body)).toBeCloseTo(SURFACE * TILE_SIZE, 3);
+      expect(harness.events.some((event) => event.type === 'damage')).toBeFalse();
+    });
+
+    it('aparece onde o herói pisou e continua à mostra; a que ele não tocou fica escondida', () => {
+      const harness = start(hiddenBridge().row('invisible-grass', 20, SURFACE - 6, 2).build(META));
+      const blocks = harness.simulation.blocks;
+      run(harness, 1.2, { right: true });
+
+      expect(blocks.blockAt(8, SURFACE)?.isUsed).toBeTrue();
+      expect(blocks.blockAt(13, SURFACE)?.isUsed).toBeFalse();
+
+      run(harness, 2, { right: true });
+
+      expect(blocks.blockAt(8, SURFACE)?.isUsed).withContext('não some de novo').toBeTrue();
+      expect(blocks.blockAt(13, SURFACE)?.isUsed).toBeTrue();
+      expect(blocks.blockAt(20, SURFACE - 6)?.isUsed).withContext('lá no alto, ninguém encostou').toBeFalse();
+    });
+
+    it('aparece também com uma esbarrada de lado ou uma cabeçada por baixo', () => {
+      const harness = start(flatLevel().add('invisible-grass', 6, SURFACE - 1).add('invisible-grass', 3, SURFACE - 3).build(META));
+      const blocks = harness.simulation.blocks;
+
+      run(harness, 1, { right: true });
+
+      expect(blocks.blockAt(6, SURFACE - 1)?.isUsed).withContext('parede escondida').toBeTrue();
+      expect(centerX(harness.simulation.player.body)).toBeLessThan(6 * TILE_SIZE);
+
+      harness.simulation.player.placeFeetAt(3.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      jump(harness, 0.5);
+
+      expect(blocks.blockAt(3, SURFACE - 3)?.isUsed).withContext('teto escondido').toBeTrue();
+    });
+  });
+
+  describe('Castelo final', () => {
+    it('termina a fase como o portal, só com o desenho de castelo', () => {
+      const harness = start(new LevelBuilder(30, 15).ground(0, 29, SURFACE).add('start', 2, SURFACE - 1)
+        .add('portal', 8, SURFACE - 1, { portalLook: 'castle' }).build(META));
+
+      expect(harness.simulation.triggers.portal?.look).toBe('castle');
+
+      run(harness, 4, { right: true });
+
+      expect(harness.events.some((event) => event.type === 'completed')).toBeTrue();
+    });
+
+    it('sem desenho escolhido, o portal continua sendo o arco de sempre', () => {
+      const harness = start(flatLevel().build(META));
+
+      expect(harness.simulation.triggers.portal?.look).toBe('arch');
+    });
   });
 
   it('troca de traje: o cogumelo novo tira a flor, e a flor nova tira o cogumelo', () => {

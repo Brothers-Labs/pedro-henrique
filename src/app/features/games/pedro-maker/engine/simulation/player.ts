@@ -5,9 +5,11 @@ import {
   LEAF_SUIT_PHYSICS,
   PLAYER_PHYSICS,
   POWER_UP_DURATION_MS,
+  POWER_UP_WARNING_MS,
   RACCOON_SUIT_PHYSICS,
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
+  TURBO_MUSHROOM_PHYSICS,
 } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
@@ -100,8 +102,8 @@ const RUN_DUST_SPEED = 200;
  * pulo curto ao soltar o botão, pulo duplo com a Asa, escalada e pulo de
  * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, voo curto e
  * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
- * braçadas na água, a descida no escorregador e a piscada de invencibilidade
- * depois de um toque.
+ * a disparada do Cogumelo Turbo, braçadas na água, a descida no escorregador
+ * e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
  * não consome power-up nem invencibilidade.
@@ -137,6 +139,7 @@ export class Player {
   private flightTimeLeftMs: number = RACCOON_SUIT_PHYSICS.flightMs;
   private flying = false;
   private tailSpinStartedAt = Number.NEGATIVE_INFINITY;
+  private lastTurboTrailAt = Number.NEGATIVE_INFINITY;
 
   constructor(
     feetX: number,
@@ -202,11 +205,11 @@ export class Player {
     return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
   }
 
-  /** Nos últimos segundos do Giga Cogumelo o herói pisca, para avisar que vai encolher. */
-  isGigaEnding(now: number): boolean {
-    const expiresAt = this.timedPowerUps.get('giga-mushroom');
+  /** Nos últimos segundos de um poder com tempo (o Giga ou o Turbo) o herói pisca, para avisar que vai acabar. */
+  isPowerUpEnding(kind: PowerUpKind, now: number): boolean {
+    const expiresAt = this.timedPowerUps.get(kind);
 
-    return expiresAt !== undefined && expiresAt - now <= GIGA_PHYSICS.warningMs;
+    return expiresAt !== undefined && expiresAt - now <= POWER_UP_WARNING_MS;
   }
 
   isInvincible(now: number): boolean {
@@ -263,6 +266,7 @@ export class Player {
     this.handleLanding(grounded);
     this.moveHorizontally(deltaMs / 1000, input, grounded, surroundings.isOnIce);
     this.kickUpDust(now, grounded);
+    this.leaveTurboTrail(now);
 
     if (this.isInWater) {
       this.handleSwim(input, surroundings.isAtWaterSurface);
@@ -578,14 +582,16 @@ export class Player {
 
   private moveHorizontally(seconds: number, input: InputSnapshot, grounded: boolean, isOnIce: boolean): void {
     const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-    const turbo = this.timedPowerUps.has('turbo') ? PLAYER_PHYSICS.turboMultiplier : 1;
+    const hasTurboMushroom = this.timedPowerUps.has('turbo-mushroom');
     const swim = this.isInWater ? SWIM_PHYSICS.speedMultiplier : 1;
-    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * turbo * swim;
+    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * this.speedMultiplier() * swim;
 
     let rate: number;
 
     if (direction !== 0) {
-      rate = grounded ? PLAYER_PHYSICS.groundAcceleration * (isOnIce ? 0.35 : 1) : PLAYER_PHYSICS.airAcceleration;
+      const acceleration = grounded ? PLAYER_PHYSICS.groundAcceleration * (isOnIce ? 0.35 : 1) : PLAYER_PHYSICS.airAcceleration;
+
+      rate = acceleration * (hasTurboMushroom ? TURBO_MUSHROOM_PHYSICS.accelerationMultiplier : 1);
     } else if (grounded) {
       const braking = isOnIce ? PLAYER_PHYSICS.iceDeceleration : PLAYER_PHYSICS.groundDeceleration;
 
@@ -599,6 +605,15 @@ export class Player {
     if (direction !== 0) {
       this.facing = direction > 0 ? 1 : -1;
     }
+  }
+
+  /** Os dois turbos não se somam: vale o mais forte, para o herói não sair voando da tela. */
+  private speedMultiplier(): number {
+    if (this.timedPowerUps.has('turbo-mushroom')) {
+      return TURBO_MUSHROOM_PHYSICS.speedMultiplier;
+    }
+
+    return this.timedPowerUps.has('turbo') ? PLAYER_PHYSICS.turboMultiplier : 1;
   }
 
   private handleJump(now: number, input: InputSnapshot, grounded: boolean): void {
@@ -660,6 +675,18 @@ export class Player {
 
     this.lastRunDustAt = now;
     this.host.effects.burst('dust', centerX(this.body) - Math.sign(this.body.vx) * 10, bottom(this.body), 2);
+  }
+
+  /** Com o Cogumelo Turbo, faíscas ficam para trás enquanto o herói corre, no chão ou no ar. */
+  private leaveTurboTrail(now: number): void {
+    const isFastEnough = Math.abs(this.body.vx) >= TURBO_MUSHROOM_PHYSICS.trailMinSpeed;
+
+    if (!this.timedPowerUps.has('turbo-mushroom') || !isFastEnough || now - this.lastTurboTrailAt < TURBO_MUSHROOM_PHYSICS.trailIntervalMs) {
+      return;
+    }
+
+    this.lastTurboTrailAt = now;
+    this.host.effects.burst('sparkle', centerX(this.body) - Math.sign(this.body.vx) * 16, this.body.y + this.body.height / 2, 2);
   }
 
   private updateMode(now: number, grounded: boolean): void {

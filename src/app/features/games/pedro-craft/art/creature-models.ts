@@ -33,6 +33,8 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
       return spider(color(0), color(1), color(2));
     case 'skeleton':
       return skeleton(color(0), color(1), color(2));
+    case 'creeper':
+      return creeper(color(0), color(1), color(2));
   }
 }
 
@@ -153,6 +155,20 @@ function skeleton(bone: string, dark: string, bow: string): readonly VoxelBox[] 
     box(0, 1.58, 0, 0.4, 0.4, 0.4, bone),
     box(0.09, 1.62, -0.205, 0.09, 0.1, 0.01, dark),
     box(-0.09, 1.62, -0.205, 0.09, 0.1, 0.01, dark),
+  ];
+}
+
+/** Cores: corpo, rosto e manchas. Quatro pezinhos, corpo comprido e a cara de espanto, sem dentes. */
+function creeper(skin: string, face: string, spots: string): readonly VoxelBox[] {
+  return [
+    ...legs(0.13, 0.13, 0.2, 0.3, skin),
+    box(0, 0.75, 0, 0.44, 0.9, 0.3, skin),
+    box(0.12, 0.95, -0.155, 0.1, 0.1, 0.01, spots),
+    box(-0.1, 0.62, -0.155, 0.12, 0.1, 0.01, spots),
+    box(0, 1.4, 0, 0.44, 0.4, 0.44, skin),
+    box(0.11, 1.46, -0.225, 0.1, 0.1, 0.01, face),
+    box(-0.11, 1.46, -0.225, 0.1, 0.1, 0.01, face),
+    box(0, 1.34, -0.225, 0.08, 0.1, 0.01, face),
   ];
 }
 

@@ -7,6 +7,7 @@ import { BlockAtlas } from './block-atlas';
 import type { CraftStage } from './craft-stage';
 import { CreaturesView } from './creatures-view';
 import { DropsView } from './drops-view';
+import { FusesView } from './fuses-view';
 import { HandView } from './hand-view';
 import { ItemTextures } from './item-textures';
 import { ParticlesView } from './particles-view';
@@ -21,6 +22,10 @@ import { WorldView } from './world-view';
 const CHUNKS_PER_LOADING_BATCH = 4;
 
 const UNDERWATER_COLOR = new Color('#1f5f9e');
+
+/** O estouro: fogo e fumaça em nuvens espalhadas pelo meio do buraco. */
+const EXPLOSION_COLORS = ['#ff8c1a', '#ffd23f', '#9a9aa5', '#e8e8f0'] as const;
+const EXPLOSION_PUFFS = 8;
 
 /** O céu do meio do dia e o da noite funda; no crepúsculo, a cor passa de um para o outro. */
 const DAY_SKY = new Color('#8fd0ff');
@@ -51,6 +56,7 @@ export class CraftView {
   private readonly dropsView: DropsView;
   private readonly creaturesView: CreaturesView;
   private readonly trainView: TrainView;
+  private readonly fusesView: FusesView;
   private readonly projectilesView: ProjectilesView;
   private readonly weatherView: WeatherView;
   private readonly targetView: TargetView;
@@ -76,6 +82,7 @@ export class CraftView {
     this.dropsView = new DropsView(stage.scene, this.itemTextures);
     this.creaturesView = new CreaturesView(stage.scene, this.daylight);
     this.trainView = new TrainView(stage.scene, this.daylight);
+    this.fusesView = new FusesView(stage.scene);
     this.projectilesView = new ProjectilesView(stage.scene);
     this.weatherView = new WeatherView(stage.scene);
     this.atlas.applyPalette(simulation.calendar.season.palette);
@@ -96,7 +103,7 @@ export class CraftView {
     onProgress(1);
   }
 
-  /** Modo calmo e movimento reduzido apagam a poeira dos blocos. */
+  /** Modo calmo e movimento reduzido apagam a poeira dos blocos e trocam o pisca-pisca dos avisos por um brilho parado. */
   setEffectsEnabled(isEnabled: boolean): void {
     this.effectsEnabled = isEnabled;
   }
@@ -118,8 +125,9 @@ export class CraftView {
     this.updateSky();
     this.worldView.rebuild();
     this.dropsView.update(simulation.drops.list);
-    this.creaturesView.update(simulation.creatures.list, alpha, frameMs);
+    this.creaturesView.update(simulation.creatures.list, alpha, frameMs, !this.effectsEnabled);
     this.trainView.update(simulation.train, alpha);
+    this.fusesView.update(simulation.explosions.lit, !this.effectsEnabled);
     this.projectilesView.update(simulation.projectiles.list, alpha);
     this.weatherView.update(simulation.weather.current, camera.position, frameMs, !this.effectsEnabled);
     this.targetView.update(simulation.target, simulation.miningProgress);
@@ -137,6 +145,7 @@ export class CraftView {
     this.dropsView.dispose();
     this.creaturesView.dispose();
     this.trainView.dispose();
+    this.fusesView.dispose();
     this.projectilesView.dispose();
     this.weatherView.dispose();
     this.targetView.dispose();
@@ -172,7 +181,22 @@ export class CraftView {
             this.particles.burst(event.x - 0.5, event.y, event.z - 0.5, event.color);
           }
           break;
+        case 'explosion':
+          if (this.effectsEnabled) {
+            this.burstExplosion(event.x, event.y, event.z, event.radius);
+          }
+          break;
       }
+    }
+  }
+
+  private burstExplosion(x: number, y: number, z: number, radius: number): void {
+    const spread = radius / 2;
+
+    for (let puff = 0; puff < EXPLOSION_PUFFS; puff += 1) {
+      const color = EXPLOSION_COLORS[puff % EXPLOSION_COLORS.length];
+
+      this.particles.burst(x - 0.5 + (Math.random() - 0.5) * spread, y - 0.5 + Math.random() * spread, z - 0.5 + (Math.random() - 0.5) * spread, color);
     }
   }
 

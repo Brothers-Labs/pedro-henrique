@@ -1,3 +1,4 @@
+import { MAX_TOOL_TIER } from '../../content/parsers/parse-blocks';
 import type { BlockDefinition, ItemAmount, LootTable, ToolStats, ToolType } from '../../models/content.model';
 
 /** Segundos de dureza viram este tanto de milissegundos com a mão. */
@@ -19,7 +20,7 @@ const TOOL_NAMES: Readonly<Record<ToolType, string>> = {
   shears: 'uma tesoura',
 };
 
-const TIER_NAMES: readonly string[] = ['', 'de madeira', 'de pedra', 'de ferro', 'de ouro'];
+const TIER_NAMES: readonly string[] = ['', 'de madeira', 'de pedra', 'de ferro', 'de ouro', 'de diamante'];
 
 /** O bloco dá item com esta ferramenta? Bloco sem nível mínimo dá até com a mão. */
 export function canHarvest(block: BlockDefinition, tool: ToolStats | null): boolean {
@@ -56,7 +57,10 @@ export function missingToolHint(block: BlockDefinition): string | null {
     return null;
   }
 
-  return `Para pegar ${block.name.toLowerCase()}, use ${TOOL_NAMES[block.tool]} ${TIER_NAMES[block.minTier]} ou melhor.`;
+  // No nível mais alto não existe ferramenta melhor para oferecer.
+  const orBetter = block.minTier < MAX_TOOL_TIER ? ' ou melhor' : '';
+
+  return `Para pegar ${block.name.toLowerCase()}, use ${TOOL_NAMES[block.tool]} ${TIER_NAMES[block.minTier]}${orBetter}.`;
 }
 
 /** Sorteia o que cai de uma tabela; cada entrada é sorteada sozinha. */

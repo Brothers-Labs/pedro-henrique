@@ -8,6 +8,12 @@ import type { PhysicsBody } from './physics-body';
 import type { RayHit } from './raycast';
 import type { VisualEvent } from './simulation-events';
 
+/**
+ * Parte do que a explosão quebra vira item no chão: o buraco não enche o
+ * mundo de itens, e a criança ainda acha alguma coisa para recolher.
+ */
+const BLAST_DROP_CHANCE = 0.35;
+
 /** Formas que precisam de chão firme embaixo: sem ele, caem junto. */
 const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail, SHAPE_CODE.carpet]);
 
@@ -42,6 +48,44 @@ export class BlockActions {
    * metade da porta e a planta ou tocha em cima.
    */
   breakBlock(x: number, y: number, z: number, held: ItemDefinition | null): void {
+    this.breakCell(x, y, z, held, true);
+  }
+
+  /**
+   * A explosão quebra o que cabe na esfera em volta de (`centerX`, `centerY`,
+   * `centerZ`). Fica o que não quebra (rocha-mãe, água) e o que aguenta
+   * explosão (obsidiana); outra TNT não some: `ignite` acende o pavio dela.
+   */
+  blast(centerX: number, centerY: number, centerZ: number, radius: number, ignite: (x: number, y: number, z: number) => void): void {
+    const { world, catalog, random } = this.context;
+    const reach = Math.ceil(radius);
+    const originX = Math.floor(centerX);
+    const originY = Math.floor(centerY);
+    const originZ = Math.floor(centerZ);
+
+    for (let offsetY = -reach; offsetY <= reach; offsetY += 1) {
+      for (let offsetZ = -reach; offsetZ <= reach; offsetZ += 1) {
+        for (let offsetX = -reach; offsetX <= reach; offsetX += 1) {
+          const x = originX + offsetX;
+          const y = originY + offsetY;
+          const z = originZ + offsetZ;
+          const block = catalog.blockAt(world.get(x, y, z));
+
+          if (!block || block.hardness === null || block.blastResistant || Math.hypot(offsetX, offsetY, offsetZ) > radius) {
+            continue;
+          }
+
+          if (block.explosive) {
+            ignite(x, y, z);
+          } else {
+            this.breakCell(x, y, z, null, random() < BLAST_DROP_CHANCE);
+          }
+        }
+      }
+    }
+  }
+
+  private breakCell(x: number, y: number, z: number, held: ItemDefinition | null, shouldDrop: boolean): void {
     const { world, catalog } = this.context;
     const number = world.get(x, y, z);
     const block = catalog.blockAt(number);
@@ -60,7 +104,10 @@ export class BlockActions {
       this.removePartner(x, y, z, block);
     }
 
-    this.dropFrom(block, x, y, z, held, harvest);
+    if (shouldDrop) {
+      this.dropFrom(block, x, y, z, held, harvest);
+    }
+
     this.breakUnsupported(x, y + 1, z);
   }
 

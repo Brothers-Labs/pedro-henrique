@@ -4,6 +4,7 @@ import {
   type BlockDefinition,
   type BlockFaces,
   CONTENT_SCHEMA_VERSION,
+  type ExplosionSpec,
   TEXTURE_DETAILS,
   TEXTURE_PATTERNS,
   type TextureSpec,
@@ -15,6 +16,13 @@ import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optional
 export const MAX_TOOL_TIER = 5;
 
 const MAX_LIGHT = 15;
+
+/** Pavio curto demais não dá tempo de correr; longo demais, a criança esquece que acendeu. */
+const MIN_FUSE_MS = 500;
+const MAX_FUSE_MS = 10_000;
+
+/** Raio maior apagaria um pedaço grande demais do mundo de uma vez. */
+const MAX_BLAST_RADIUS = 5;
 
 export function parseBlocks(value: unknown): readonly BlockDefinition[] {
   const root = JsonReader.root('blocks', value).object();
@@ -30,6 +38,7 @@ export function parseBlocks(value: unknown): readonly BlockDefinition[] {
 
 function parseBlock(block: JsonObjectReader): BlockDefinition {
   const hardness = block.optionalField('hardness')?.number({ min: 0, max: 60 }) ?? null;
+  const explosive = block.optionalField('explosive')?.object() ?? null;
 
   return {
     id: block.field('id').id(),
@@ -47,8 +56,20 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
     pairsVertically: block.optionalField('pairsVertically')?.boolean() ?? false,
     toggleInto: optionalId(block, 'toggleInto'),
     interaction: block.optionalField('interaction')?.oneOf(BLOCK_INTERACTIONS) ?? null,
+    blastResistant: block.optionalField('blastResistant')?.boolean() ?? false,
+    explosive: explosive ? { ...parseExplosion(explosive), igniter: explosive.field('igniter').id() } : null,
     mapColor: block.field('mapColor').color(),
     textures: parseFaces(block.field('textures').object()),
+  };
+}
+
+/** O estouro da TNT e do creeper: o mesmo formato nos dois arquivos. */
+export function parseExplosion(explosion: JsonObjectReader): ExplosionSpec {
+  return {
+    fuseMs: explosion.field('fuseMs').number({ integer: true, min: MIN_FUSE_MS, max: MAX_FUSE_MS }),
+    radius: explosion.field('radius').number({ min: 1, max: MAX_BLAST_RADIUS }),
+    damage: explosion.field('damage').number({ integer: true, min: 1, max: 10 }),
+    breaksBlocks: explosion.optionalField('breaksBlocks')?.boolean() ?? false,
   };
 }
 

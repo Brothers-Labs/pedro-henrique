@@ -20,6 +20,8 @@ import {
   paintLava,
   paintMovingPlatform,
   paintPlatformTile,
+  paintCastleFrame,
+  paintInvisibleGrass,
   paintPortalFrame,
   paintPortalSwirl,
   paintMultiCoinBlock,
@@ -243,6 +245,9 @@ function drawIcon(
     case 'spikes':
       paintSpikes(context);
       return;
+    case 'invisible-grass':
+      paintInvisibleGrass(context, palette);
+      return;
     case 'cannon':
       paintCannon(context);
       return;
@@ -315,6 +320,13 @@ function drawIcon(
       return;
     case 'portal':
       fit(PORTAL_WIDTH, PORTAL_HEIGHT, (inner) => {
+        if (object.properties?.portalLook === 'castle') {
+          // O portão do castelo é menor que o arco: o redemoinho entra encolhido.
+          paintCastleFrame(inner);
+          inner.drawImage(paint(PORTAL_SWIRL_SIZE, PORTAL_SWIRL_SIZE, paintPortalSwirl), 34, 56, 44, 44);
+          return;
+        }
+
         inner.drawImage(paint(PORTAL_SWIRL_SIZE, PORTAL_SWIRL_SIZE, paintPortalSwirl), 8, 16);
         paintPortalFrame(inner);
       });

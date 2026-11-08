@@ -16,6 +16,7 @@ import { Calendar } from './calendar';
 import { Combat } from './combat';
 import { type Creature, type CreatureDifficulty, Creatures } from './creatures';
 import { DayClock } from './day-clock';
+import { Explosions } from './explosions';
 import { Farm } from './farm';
 import { FirstStepsGuide } from './first-steps';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
@@ -50,6 +51,7 @@ const HUNGRY_HINT = '🍎 Seu estômago roncou! Que tal comer alguma coisa?';
 const FULL_HINT = 'Você já está cheio de energia e de vida. Guarde a comida para depois.';
 const DUSK_HINT = '🌇 O sol está se pondo. Hora de acender tochas ou voltar para casa!';
 const TRAIN_BOARD_HINT = '🚂 Piuí! Nas encruzilhadas, olhe para o lado que quer seguir. Pule para descer.';
+const TNT_LIT_HINT = '🧨 A TNT foi acesa! Corra para longe antes de ela estourar.';
 const TRAIN_NEEDS_RAIL_HINT = 'O trem anda no trilho. Coloque trilhos no chão, com espaço livre em cima, e use o trem neles.';
 
 /** No Fácil, os inimigos andam mais devagar e esperam mais entre um golpe e outro. */
@@ -111,6 +113,7 @@ export class CraftSimulation {
   readonly farm: Farm;
   readonly creatures: Creatures;
   readonly projectiles = new Projectiles();
+  readonly explosions: Explosions;
   readonly clock: DayClock;
   readonly calendar: Calendar;
   readonly weather: Weather;
@@ -185,6 +188,12 @@ export class CraftSimulation {
       period: () => this.clock.period,
       allowsHostiles: () => this.allowsHostiles,
       difficulty: () => DIFFICULTIES[this.difficulty],
+      fuseLit: () => this.events.push({ type: 'sound', cue: 'fireball' }),
+      exploded: (creature, explosion) => {
+        const body = creature.body;
+
+        this.explosions.explode(body.x, body.y + body.height / 2, body.z, explosion);
+      },
       laid: (creature, item) => {
         const body = creature.body;
 
@@ -261,6 +270,14 @@ export class CraftSimulation {
         return harvest?.loot ?? null;
       },
       bodies: () => [this.hero.body, ...this.creatures.list.map((creature) => creature.body)],
+    });
+    this.explosions = new Explosions({
+      catalog: this.catalog,
+      world: this.world,
+      actions: this.actions,
+      combat: this.combat,
+      event: (event) => this.events.push(event),
+      visual: (event) => this.visualEvents.push(event),
     });
 
     this.screens = new ScreenController({
@@ -418,6 +435,7 @@ export class CraftSimulation {
     this.drops.step(this.terrain, this.collector);
     this.creatures.step(this.terrain);
     this.combat.step(this.terrain);
+    this.explosions.step(STEP_MS);
     this.water.step(STEP_MS);
     this.farm.step(STEP_MS);
     this.tickFurnaces(STEP_MS);
@@ -961,7 +979,10 @@ export class CraftSimulation {
     }
   }
 
-  /** Botão de usar: vale para o bicho mirado; usa a cama; abre a mesa, o baú ou a fornalha; abre a porta; senão, usa o item da mão. */
+  /**
+   * Botão de usar: vale para o bicho mirado; usa a cama; abre a mesa, o baú ou
+   * a fornalha; acende a TNT com a tocha; abre a porta; senão, usa o item da mão.
+   */
   private use(): void {
     if (this.targetCreature) {
       this.useOnCreature(this.targetCreature);
@@ -980,6 +1001,10 @@ export class CraftSimulation {
       return;
     }
 
+    if (target && this.ignite(target)) {
+      return;
+    }
+
     if (target && this.actions.toggle(target.x, target.y, target.z)) {
       this.events.push({ type: 'sound', cue: 'button' });
       return;
@@ -990,6 +1015,25 @@ export class CraftSimulation {
     if (held) {
       this.useHeld(held, target);
     }
+  }
+
+  /**
+   * A tocha na mão acende a TNT mirada, em vez de virar mais uma tocha em cima
+   * dela — também quando a TNT já está acesa. Devolve se o botão foi para a TNT.
+   */
+  private ignite(target: RayHit): boolean {
+    const explosive = this.catalog.blockAt(this.world.get(target.x, target.y, target.z))?.explosive ?? null;
+
+    if (!explosive || this.selectedItem?.id !== explosive.igniter) {
+      return false;
+    }
+
+    if (this.explosions.ignite(target.x, target.y, target.z)) {
+      this.events.push({ type: 'sound', cue: 'fireball' });
+      this.events.push({ type: 'hint', text: TNT_LIT_HINT });
+    }
+
+    return true;
   }
 
   /**

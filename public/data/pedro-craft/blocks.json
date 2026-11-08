@@ -361,6 +361,75 @@
       "textures": { "all": { "pattern": "panel", "colors": ["#5ee6e0", "#2fb7b1", "#d4fffd"], "detail": "plain" } }
     },
     {
+      "id": "emerald-ore",
+      "name": "Minério de esmeralda",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 4,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "emerald",
+      "mapColor": "#2ecc71",
+      "textures": { "all": { "pattern": "ore", "colors": ["#8f969e", "#2ecc71", "#b9f5cf"] } }
+    },
+    {
+      "id": "emerald-block",
+      "name": "Bloco de esmeralda",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 5,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "emerald-block",
+      "mapColor": "#2ecc71",
+      "textures": { "all": { "pattern": "panel", "colors": ["#2ecc71", "#1e9e55", "#b9f5cf"], "detail": "plain" } }
+    },
+    {
+      "id": "lapis-ore",
+      "name": "Minério de lápis-lazúli",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 3,
+      "tool": "pickaxe",
+      "minTier": 2,
+      "drops": "lapis",
+      "mapColor": "#2f5fd0",
+      "textures": { "all": { "pattern": "ore", "colors": ["#8f969e", "#2f5fd0", "#8fb0ff"] } }
+    },
+    {
+      "id": "obsidian",
+      "name": "Obsidiana",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 25,
+      "tool": "pickaxe",
+      "minTier": 5,
+      "drops": "obsidian",
+      "blastResistant": true,
+      "mapColor": "#2d1f47",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#2d1f47", "#1e1530", "#5a4387"] } }
+    },
+    {
+      "id": "tnt",
+      "name": "TNT",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt",
+      "explosive": { "fuseMs": 4000, "radius": 3, "damage": 4, "breaksBlocks": true, "igniter": "torch" },
+      "mapColor": "#d93a3a",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#d93a3a", "#8f2424", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#d93a3a", "#8f2424", "#f4f1e8"], "detail": "band" },
+        "bottom": { "pattern": "panel", "colors": ["#d93a3a", "#8f2424", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
       "id": "rail",
       "name": "Trilho",
       "shape": "rail",
@@ -559,6 +628,17 @@
       "drops": "carpet-black",
       "mapColor": "#2b2b2b",
       "textures": { "all": { "pattern": "speckle", "colors": ["#2b2b2b", "#1e1e1e", "#3d3d3d"] } }
+    },
+    {
+      "id": "carpet-blue",
+      "name": "Tapete azul",
+      "shape": "carpet",
+      "solid": false,
+      "transparent": false,
+      "hardness": 0.2,
+      "drops": "carpet-blue",
+      "mapColor": "#2f5fd0",
+      "textures": { "all": { "pattern": "speckle", "colors": ["#2f5fd0", "#244ca8", "#4f7ee6"] } }
     },
     {
       "id": "potato-crop",

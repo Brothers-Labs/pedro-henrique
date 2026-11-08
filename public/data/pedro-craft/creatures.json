@@ -144,6 +144,21 @@
       "height": 1.8,
       "drops": "skeleton",
       "spawn": { "period": "night", "on": ["grass", "stone", "gravel"], "groupMin": 1, "groupMax": 1, "weight": 1.5 }
+    },
+    {
+      "id": "creeper",
+      "name": "Creeper",
+      "temperament": "hostile",
+      "health": 8,
+      "speed": 1.4,
+      "behavior": "chaser",
+      "model": "creeper",
+      "colors": ["#5fbf4a", "#2f6b24", "#8fdc6e"],
+      "width": 0.6,
+      "height": 1.6,
+      "drops": "creeper",
+      "explodes": { "fuseMs": 1500, "radius": 3, "damage": 3 },
+      "spawn": { "period": "night", "on": ["grass", "dirt", "sand"], "groupMin": 1, "groupMax": 1, "weight": 1.5 }
     }
   ]
 }

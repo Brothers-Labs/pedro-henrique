@@ -1,5 +1,5 @@
 import { TILE_SIZE } from '../../config/physics.config';
-import type { LevelObject } from '../../models/level.model';
+import type { LevelObject, PortalLook } from '../../models/level.model';
 import type { VisualEventQueue } from './visual-events';
 
 export interface TriggerHost {
@@ -58,6 +58,8 @@ export interface Sign {
 export interface Portal {
   readonly x: number;
   readonly y: number;
+  /** Só o desenho muda: arco ou castelo, a entrada é a mesma. */
+  readonly look: PortalLook;
   /** Aceita o Pedro agora? Fica falso depois que ele entra. */
   isOpen: boolean;
   /** Trancado e invisível até o chefão ser vencido. */
@@ -165,7 +167,7 @@ export class TriggerSystem {
         this.doors.push({ x, y, pair: object.properties?.pair ?? null, kind: DOOR_KINDS[object.type], wasUsed: false });
         return;
       case 'portal':
-        this.portal = { x, y, isOpen: true, isLocked: false, openedAt: null };
+        this.portal = { x, y, look: object.properties?.portalLook ?? 'arch', isOpen: true, isLocked: false, openedAt: null };
         return;
       case 'sign':
         this.signs.push({ id: this.signs.length + 1, x, y, text: object.properties?.text ?? '', isNear: false });

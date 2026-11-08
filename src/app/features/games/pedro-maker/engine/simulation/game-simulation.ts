@@ -66,6 +66,7 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'cat-mushroom': 'Pule numa parede e continue indo para o lado dela: você escala!',
   'leaf-mushroom': 'Segure o pulo enquanto cai para planar como uma folha!',
   'giga-mushroom': 'Você ficou gigante! Esbarre nos inimigos e nos tijolos!',
+  'turbo-mushroom': 'Turbo ligado! Corra bem rápido antes que acabe!',
 };
 
 const VICTORY_DELAY_MS = 1300;
@@ -296,6 +297,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (body.landedRow >= 0) {
       this.blocks.handleLanding(this.player, body.landedRow, body.landedFromColumn, body.landedToColumn, this.clockMs);
     }
+
+    this.blocks.revealInvisibleGrassTouching(body);
   }
 
   private updateEnemies(seconds: number): void {

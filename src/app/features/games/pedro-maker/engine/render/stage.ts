@@ -41,6 +41,7 @@ const SUN_COLORS: Readonly<Partial<Record<LevelTheme, string>>> = {
   gelo: '#eef8ff',
   estrelas: '#c9b8ff',
   castelo: '#d9d4ff',
+  'castelo-rei-slime': '#e3ffd6',
   praia: '#fff1d6',
   classico: '#fffaf0',
 };

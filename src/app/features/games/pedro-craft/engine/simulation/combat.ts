@@ -1,7 +1,7 @@
 import { STEP_MS } from '../../config/craft-physics.config';
 import type { CraftCatalog } from '../../content/craft-catalog';
 import { HAND_ATTACK_COOLDOWN_MS, HAND_DAMAGE, HAND_KNOCKBACK } from '../../content/parsers/parse-items';
-import type { ItemDefinition, RangedStats } from '../../models/content.model';
+import type { ExplosionSpec, ItemDefinition, RangedStats } from '../../models/content.model';
 import type { PhysicsTerrain } from '../block-properties';
 import { rollLoot } from './block-rules';
 import type { Creature, Creatures } from './creatures';
@@ -9,6 +9,7 @@ import type { GoalEvent } from './goal-tracker';
 import type { HeroHealth } from './hero-health';
 import type { HeroMotion } from './hero-motion';
 import type { ItemDrops } from './item-drops';
+import type { PhysicsBody } from './physics-body';
 import type { Projectiles } from './projectiles';
 import type { SimulationEvent, VisualEvent } from './simulation-events';
 
@@ -21,6 +22,12 @@ const ARROW_KNOCKBACK = 3;
 
 /** A flecha sai um pouco à frente dos olhos, para não nascer dentro da cabeça. */
 const ARROW_MUZZLE = 0.4;
+
+/** A explosão alcança um pouco além do raio dos blocos: quem está na beirada do buraco também sente. */
+const BLAST_EDGE = 1;
+
+/** Empurrão da explosão nos bichos: mais forte que um golpe de espada. */
+const BLAST_KNOCKBACK = 8;
 
 /** Os filhotes do slime nascem espalhados em volta de onde ele estava. */
 const SPLIT_SPREAD = 0.4;
@@ -157,6 +164,30 @@ export class Combat {
 
     if (health.isDepleted) {
       this.context.fainted();
+    }
+  }
+
+  /**
+   * A explosão em (`x`, `y`, `z`) machuca e empurra quem está perto: o dano
+   * cai do centro para a beirada, e a beirada ainda tira um coração.
+   */
+  blast(x: number, y: number, z: number, explosion: ExplosionSpec): void {
+    const reach = explosion.radius + BLAST_EDGE;
+    const damageAt = (distance: number): number => Math.max(1, Math.ceil(explosion.damage * (1 - distance / reach)));
+    const distanceTo = (body: PhysicsBody): number => Math.hypot(body.x - x, body.y + body.height / 2 - y, body.z - z);
+    const heroDistance = distanceTo(this.context.hero.body);
+
+    if (heroDistance < reach) {
+      this.hurtHero(damageAt(heroDistance), x, z);
+    }
+
+    // Copia a lista: quem é derrotado sai dela (e o slime ainda se divide) no meio da volta.
+    for (const creature of [...this.context.creatures.list]) {
+      const distance = distanceTo(creature.body);
+
+      if (distance < reach) {
+        this.strike(creature, damageAt(distance), BLAST_KNOCKBACK, x, z);
+      }
     }
   }
 
