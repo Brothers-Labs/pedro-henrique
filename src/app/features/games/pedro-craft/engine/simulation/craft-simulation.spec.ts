@@ -322,6 +322,35 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(simulation.inventory.count('torch')).toBe(1);
     });
 
+    it('o isqueiro acende a TNT mirada e gasta um uso', () => {
+      putTntWithRoomForTorch();
+      hold('flint-and-steel');
+      run(1, { secondaryPressed: true });
+
+      expect(isLit(TARGET.x, TARGET.y, TARGET.z)).toBeTrue();
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('flint-and-steel').durability ?? 0) - 1);
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('TNT foi acesa'))).toBeTrue();
+    });
+
+    it('o isqueiro na TNT já acesa não gasta uso', () => {
+      putTntWithRoomForTorch();
+      hold('flint-and-steel');
+      simulation.explosions.ignite(TARGET.x, TARGET.y, TARGET.z);
+      run(1, { secondaryPressed: true });
+
+      expect(simulation.inventory.slots[0]?.durability).toBe(catalog.item('flint-and-steel').durability);
+    });
+
+    it('o isqueiro no último uso acende a TNT e avisa que quebrou', () => {
+      putTntWithRoomForTorch();
+      hold('flint-and-steel', 1);
+      run(1, { secondaryPressed: true });
+
+      expect(isLit(TARGET.x, TARGET.y, TARGET.z)).toBeTrue();
+      expect(simulation.inventory.slots[0]?.item).not.toBe('flint-and-steel');
+      expect(events).toContain({ type: 'tool-broke', item: 'flint-and-steel' });
+    });
+
     it('outro item na mão não acende a TNT', () => {
       put('tnt');
       hold('dirt');

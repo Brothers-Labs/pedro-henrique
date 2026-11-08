@@ -8,6 +8,7 @@
     { "id": "torch", "type": "shaped", "station": "hand", "pattern": ["C", "S"], "key": { "C": "coal", "S": "stick" }, "output": { "item": "torch", "count": 4 } },
     { "id": "stone-bricks", "type": "shaped", "station": "hand", "pattern": ["SS", "SS"], "key": { "S": "stone" }, "output": { "item": "stone-bricks", "count": 4 } },
     { "id": "shears", "type": "shaped", "station": "hand", "pattern": [" I", "I "], "key": { "I": "iron-ingot" }, "output": { "item": "shears" } },
+    { "id": "flint-and-steel", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "iron-ingot" }, { "item": "flint" }], "output": { "item": "flint-and-steel" } },
     { "id": "string", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool" }], "output": { "item": "string", "count": 4 } },
     { "id": "sugar", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "sugar-cane" }], "output": { "item": "sugar" } },
     { "id": "fertilizer-from-seeds", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wheat-seeds", "count": 4 }], "output": { "item": "fertilizer", "count": 2 } },

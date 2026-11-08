@@ -154,7 +154,26 @@ describe('Conteúdo do PedroCraft', () => {
       expect(recipe ? recipeRequirements(recipe).map((requirement) => requirement.item) : []).toContain('gunpowder');
       expect(creeper?.explodes?.breaksBlocks).toBeFalse();
       expect(creeperLoot?.entries.map((entry) => entry.item)).toContain('gunpowder');
-      expect(content.recipes.crafting.some((candidate) => candidate.output.item === tnt?.explosive?.igniter)).toBeTrue();
+      expect(tnt?.explosive?.igniters.every((igniter) => content.recipes.crafting.some((candidate) => candidate.output.item === igniter))).toBeTrue();
+    });
+
+    it('o isqueiro sai da mochila com ferro e a pederneira do cascalho, gasta e acende a TNT junto com a tocha', () => {
+      const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'flint-and-steel');
+      const lighter = content.items.find((item) => item.id === 'flint-and-steel');
+      const gravel = content.blocks.find((block) => block.id === 'gravel');
+      const gravelLoot = content.lootTables.find((table) => table.id === gravel?.drops);
+      const tnt = content.blocks.find((block) => block.id === 'tnt');
+
+      expect(recipe?.station).toBe('hand');
+      expect(recipe ? recipeRequirements(recipe) : []).toEqual(
+        jasmine.arrayWithExactContents([
+          { item: 'iron-ingot', count: 1 },
+          { item: 'flint', count: 1 },
+        ]),
+      );
+      expect(gravelLoot?.entries.find((entry) => entry.item === 'flint')?.chance).toBeLessThan(1);
+      expect(lighter?.durability).toBeGreaterThan(0);
+      expect(tnt?.explosive?.igniters).toEqual(jasmine.arrayWithExactContents(['torch', 'flint-and-steel']));
     });
 
     it('o golem de ferro sai da mesa com blocos de ferro e uma abóbora, e chama um amigo', () => {
@@ -315,9 +334,15 @@ describe('Conteúdo do PedroCraft', () => {
     });
 
     it('aponta o item que acende a TNT quando ele não existe', () => {
-      record(entry(files, 'blocks', 'blocks', 'tnt')['explosive'])['igniter'] = 'isqueiro';
+      record(entry(files, 'blocks', 'blocks', 'tnt')['explosive'])['igniters'] = ['torch', 'fosforo'];
 
-      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "tnt": item "isqueiro" não existe');
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "tnt": item "fosforo" não existe');
+    });
+
+    it('não aceita TNT sem nenhum item que acenda', () => {
+      record(entry(files, 'blocks', 'blocks', 'tnt')['explosive'])['igniters'] = [];
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('explosive.igniters');
     });
 
     it('não aceita animal manso que estoura', () => {

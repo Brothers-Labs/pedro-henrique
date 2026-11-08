@@ -38,7 +38,7 @@
               "properties": {
                 "type": { "const": "sprite" },
                 "shape": {
-                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown", "gem", "train", "golem"]
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown", "gem", "train", "golem", "flint", "flint-and-steel"]
                 },
                 "colors": { "$ref": "common.schema.json#/$defs/colors" }
               }

@@ -274,6 +274,28 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
     brush.line(5, 7, 5, 10, vines ?? '#5f8f3a');
     brush.line(11, 8, 10, 10, vines ?? '#5f8f3a');
   },
+  flint: (brush, [stone, edge]) => {
+    const body = stone ?? '#4a4c55';
+
+    for (let row = 0; row < 9; row += 1) {
+      const width = row < 5 ? 3 + row : 11 - row;
+
+      brush.rect(8 - Math.ceil(width / 2), 3 + row, width, 1, row % 3 === 0 ? darken(body, 0.15) : body);
+    }
+    brush.line(6, 4, 9, 7, edge ?? '#9a9ca6');
+  },
+  'flint-and-steel': (brush, [steel, stone]) => {
+    const ring = steel ?? '#c9ced6';
+
+    brush.rect(2, 3, 8, 2, ring);
+    brush.rect(2, 5, 2, 6, ring);
+    brush.rect(2, 11, 8, 2, darken(ring, 0.15));
+    brush.pixel(3, 4, lighten(ring, 0.3));
+    brush.rect(10, 7, 4, 5, stone ?? '#4a4c55');
+    brush.rect(11, 6, 2, 1, stone ?? '#4a4c55');
+    brush.pixel(9, 5, '#ffcf3f');
+    brush.pixel(8, 6, '#ff8c1a');
+  },
   cane: (brush, [stalk, leaf]) => {
     for (const x of [5, 10]) {
       brush.line(x, 14, x, 2, stalk ?? '#9ccc65', 2);

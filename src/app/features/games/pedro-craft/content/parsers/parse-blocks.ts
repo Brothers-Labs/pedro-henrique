@@ -5,6 +5,7 @@ import {
   type BlockFaces,
   CONTENT_SCHEMA_VERSION,
   type ExplosionSpec,
+  type ExplosiveBlock,
   TEXTURE_DETAILS,
   TEXTURE_PATTERNS,
   type TextureSpec,
@@ -57,9 +58,16 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
     toggleInto: optionalId(block, 'toggleInto'),
     interaction: block.optionalField('interaction')?.oneOf(BLOCK_INTERACTIONS) ?? null,
     blastResistant: block.optionalField('blastResistant')?.boolean() ?? false,
-    explosive: explosive ? { ...parseExplosion(explosive), igniter: explosive.field('igniter').id() } : null,
+    explosive: explosive ? parseExplosive(explosive) : null,
     mapColor: block.field('mapColor').color(),
     textures: parseFaces(block.field('textures').object()),
+  };
+}
+
+function parseExplosive(explosive: JsonObjectReader): ExplosiveBlock {
+  return {
+    ...parseExplosion(explosive),
+    igniters: explosive.field('igniters').array({ minLength: 1 }).map((igniter) => igniter.id()),
   };
 }
 
