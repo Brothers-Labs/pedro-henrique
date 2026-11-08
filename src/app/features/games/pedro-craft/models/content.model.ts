@@ -117,9 +117,10 @@ export interface ExplosionSpec {
   readonly breaksBlocks: boolean;
 }
 
-/** Bloco que estoura (a TNT): só acende com o item certo na mão, para não estourar sem querer. */
+/** Bloco que estoura (a TNT): só acende com um dos itens certos na mão, para não estourar sem querer. */
 export interface ExplosiveBlock extends ExplosionSpec {
-  readonly igniter: string;
+  /** Itens que acendem (a tocha e o isqueiro); um item que gasta perde um uso a cada pavio aceso. */
+  readonly igniters: readonly string[];
 }
 
 export interface BlockDefinition {
@@ -220,6 +221,8 @@ export const ICON_SHAPES = [
   'gem',
   'train',
   'golem',
+  'flint',
+  'flint-and-steel',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];

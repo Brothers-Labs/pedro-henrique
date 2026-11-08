@@ -74,7 +74,7 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
 
     loot('blocks', owner, definition.drops);
     block('blocks', owner, definition.toggleInto);
-    item('blocks', owner, definition.explosive?.igniter ?? null);
+    definition.explosive?.igniters.forEach((igniter) => item('blocks', owner, igniter));
   }
 
   for (const definition of content.items) {

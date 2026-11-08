@@ -6,7 +6,7 @@
     { "id": "dirt", "entries": [{ "item": "dirt" }] },
     { "id": "cobblestone", "entries": [{ "item": "cobblestone" }] },
     { "id": "sand", "entries": [{ "item": "sand" }] },
-    { "id": "gravel", "entries": [{ "item": "gravel" }] },
+    { "id": "gravel", "entries": [{ "item": "gravel" }, { "item": "flint", "chance": 0.25 }] },
     { "id": "oak-log", "entries": [{ "item": "oak-log" }] },
     {
       "id": "oak-leaves",

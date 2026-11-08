@@ -81,6 +81,7 @@
 
     { "id": "bow", "name": "Arco", "kind": "weapon", "maxStack": 1, "icon": { "type": "sprite", "shape": "bow", "colors": ["#8a5a32", "#f4f4f4"] }, "durability": 120, "attackCooldownMs": 700, "ranged": { "ammo": "arrow", "damage": 4, "speed": 26 } },
     { "id": "arrow", "name": "Flecha", "kind": "ammo", "maxStack": 64, "icon": { "type": "sprite", "shape": "arrow", "colors": ["#8a5a32", "#bfc6cf", "#f4f4f4"] } },
+    { "id": "flint-and-steel", "name": "Isqueiro", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "flint-and-steel", "colors": ["#c9ced6", "#4a4c55"] }, "durability": 64 },
     { "id": "shears", "name": "Tesoura", "kind": "tool", "maxStack": 1, "icon": { "type": "sprite", "shape": "shears", "colors": ["#e6e9ee"] }, "tool": { "type": "shears", "tier": 1, "speed": 5 }, "durability": 200 },
     { "id": "bucket", "name": "Balde", "kind": "bucket", "maxStack": 16, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee"] }, "bucket": { "collects": "water", "becomes": "water-bucket" } },
     { "id": "water-bucket", "name": "Balde com água", "kind": "bucket", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#2f8fe0"] }, "bucket": { "places": "water", "becomes": "bucket" } },
@@ -110,6 +111,7 @@
     { "id": "diamond", "name": "Diamante", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "gem", "colors": ["#4fe3e0", "#ffffff"] } },
     { "id": "emerald", "name": "Esmeralda", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "gem", "colors": ["#2ecc71", "#d7ffe6"] } },
     { "id": "lapis", "name": "Lápis-lazúli", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "lump", "colors": ["#2f5fd0", "#8fb0ff"] } },
+    { "id": "flint", "name": "Pederneira", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "flint", "colors": ["#4a4c55", "#9a9ca6"] } },
     { "id": "gunpowder", "name": "Pólvora", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "powder", "colors": ["#5f6168", "#3d3d45"] } },
     { "id": "feather", "name": "Pena", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "feather", "colors": ["#ffffff", "#d9d9d9"] } },
     { "id": "string", "name": "Linha", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "string", "colors": ["#f4f4f4"] } },

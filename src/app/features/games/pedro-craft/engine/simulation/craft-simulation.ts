@@ -1022,19 +1022,26 @@ export class CraftSimulation {
   }
 
   /**
-   * A tocha na mão acende a TNT mirada, em vez de virar mais uma tocha em cima
-   * dela — também quando a TNT já está acesa. Devolve se o botão foi para a TNT.
+   * A tocha ou o isqueiro na mão acende a TNT mirada, em vez de virar mais uma
+   * tocha em cima dela — também quando a TNT já está acesa. Devolve se o botão
+   * foi para a TNT.
    */
   private ignite(target: RayHit): boolean {
     const explosive = this.catalog.blockAt(this.world.get(target.x, target.y, target.z))?.explosive ?? null;
+    const held = this.selectedItem;
 
-    if (!explosive || this.selectedItem?.id !== explosive.igniter) {
+    if (!explosive || !held || !explosive.igniters.includes(held.id)) {
       return false;
     }
 
     if (this.explosions.ignite(target.x, target.y, target.z)) {
       this.events.push({ type: 'sound', cue: 'fireball' });
       this.events.push({ type: 'hint', text: TNT_LIT_HINT });
+
+      // Só o pavio que acendeu de verdade gasta o isqueiro: a TNT já acesa não come uso.
+      if (held.durability !== null) {
+        this.wearSelected(held);
+      }
     }
 
     return true;

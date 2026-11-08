@@ -113,7 +113,7 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
   }
 
   if (item.tool) {
-    return `${TOOL_PURPOSE[item.tool.type]}${item.durability ? ` Aguenta ${item.durability} usos.` : ''}`;
+    return `${TOOL_PURPOSE[item.tool.type]}${usesSentence(item)}`;
   }
 
   if (item.bucket?.collects) {
@@ -143,7 +143,18 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
     return blockSentence(item.places, catalog);
   }
 
+  const lights = catalog.content.blocks.filter((block) => block.explosive?.igniters.includes(item.id)).map((block) => block.name);
+
+  if (lights.length > 0) {
+    return `Acende o pavio de ${LIST.format(lights)}.${usesSentence(item)}`;
+  }
+
   return item.kind === 'ammo' ? 'Munição do arco.' : 'Material para fabricar.';
+}
+
+/** " Aguenta 64 usos.", com o espaço da frase anterior; vazio para o que não gasta. */
+function usesSentence(item: ItemDefinition): string {
+  return item.durability ? ` Aguenta ${item.durability} usos.` : '';
 }
 
 /** "Use em ovelha para ganhar lã": o que o item faz nos bichos, direto das interações do conteúdo. */
@@ -190,7 +201,9 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
   }
 
   if (block.explosive) {
-    return `Coloque no chão e, para acender, use nela o item ${catalog.item(block.explosive.igniter).name.toLowerCase()}. Depois, corra para longe!`;
+    const igniters = ALTERNATIVES.format(block.explosive.igniters.map((igniter) => catalog.item(igniter).name.toLowerCase()));
+
+    return `Coloque no chão e, para acender, use nela o item ${igniters}. Depois, corra para longe!`;
   }
 
   if (block.blastResistant) {
