@@ -289,6 +289,63 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     });
   });
 
+  describe('Portal do Nether', () => {
+    /** Moldura em pé ao longo de z, com o vão em x = 6, z 5 e 6, y 3 a 5; a mira cai na obsidiana atrás do vão. */
+    const buildFrame = (): void => {
+      for (const z of [5, 6]) {
+        put('obsidian', 6, 2, z);
+        put('obsidian', 6, 6, z);
+      }
+
+      for (let y = 3; y <= 5; y += 1) {
+        put('obsidian', 6, y, 4);
+        put('obsidian', 6, y, 7);
+      }
+
+      put('obsidian');
+    };
+    const isPortal = (y: number, z: number): boolean => world.get(6, y, z) === catalog.blockNumber('nether-portal');
+
+    it('o isqueiro na moldura acende o portal e gasta um uso', () => {
+      buildFrame();
+      hold('flint-and-steel');
+      run(1, { secondaryPressed: true });
+
+      expect([3, 4, 5].every((y) => isPortal(y, 5) && isPortal(y, 6))).toBeTrue();
+      expect(simulation.inventory.slots[0]?.durability).toBe((catalog.item('flint-and-steel').durability ?? 0) - 1);
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('O portal acendeu'))).toBeTrue();
+    });
+
+    it('a mira atravessa o portal aceso, como a água', () => {
+      buildFrame();
+      hold('flint-and-steel');
+      run(1, { secondaryPressed: true });
+      run(1);
+
+      expect(simulation.target).toEqual(jasmine.objectContaining(TARGET));
+    });
+
+    it('sem moldura pronta, o isqueiro ensina a montar e não gasta', () => {
+      put('obsidian');
+      hold('flint-and-steel');
+      run(1, { secondaryPressed: true });
+
+      expect(isPortal(4, 5)).toBeFalse();
+      expect(simulation.inventory.slots[0]?.durability).toBe(catalog.item('flint-and-steel').durability);
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('moldura de obsidiana em pé'))).toBeTrue();
+    });
+
+    it('parado no único portal aceso, o herói fica sabendo que falta o outro', () => {
+      buildFrame();
+      hold('flint-and-steel');
+      run(1, { secondaryPressed: true });
+      simulation.hero.teleport(6.5, 3, 5.5);
+      run(100);
+
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('único portal aceso'))).toBeTrue();
+    });
+  });
+
   describe('TNT e creeper', () => {
     const TNT_FUSE_STEPS = 260;
     const isLit = (x: number, y: number, z: number): boolean =>

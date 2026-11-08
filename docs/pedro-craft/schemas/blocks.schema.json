@@ -49,6 +49,21 @@
             }
           }
         },
+        "portal": {
+          "type": ["object", "null"],
+          "description": "Bloco que enche o vão de uma moldura em pé de `frame` (de 2 × 3 até 10 × 10, cantos opcionais) quando um dos `igniters` é usado nela. Leva o herói até outro portal igual. Não pode ser sólido.",
+          "required": ["frame", "igniters"],
+          "additionalProperties": false,
+          "properties": {
+            "frame": { "$ref": "common.schema.json#/$defs/id", "description": "Id do bloco da moldura." },
+            "igniters": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "common.schema.json#/$defs/id" },
+              "description": "Ids dos itens que acendem (o isqueiro). Um item com durabilidade perde um uso a cada portal aceso."
+            }
+          }
+        },
         "mapColor": { "$ref": "common.schema.json#/$defs/color" },
         "textures": {
           "type": "object",

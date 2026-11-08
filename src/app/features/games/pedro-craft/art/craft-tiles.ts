@@ -188,6 +188,21 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
   },
 
   /** [água, onda] */
+  /** [roxo, brilho, roxo escuro] — redemoinho com furinhos, para ver o outro lado. */
+  portal: ({ set, random, colors }) => {
+    const glow = at(colors, 1, lighten(colors[0], 0.3));
+    const deep = at(colors, 2, darken(colors[0], 0.3));
+    const center = LAST / 2;
+
+    for (let y = 0; y < TILE_SIZE; y += 1) {
+      for (let x = 0; x < TILE_SIZE; x += 1) {
+        const swirl = Math.sin(Math.hypot(x - center, y - center) * 1.3 + Math.atan2(y - center, x - center) * 2);
+
+        set(x, y, random() < 0.2 ? null : swirl > 0.45 ? glow : swirl < -0.45 ? deep : colors[0]);
+      }
+    }
+  },
+
   water: ({ solid, random, colors }) => {
     const wave = at(colors, 1, lighten(colors[0], 0.35));
 

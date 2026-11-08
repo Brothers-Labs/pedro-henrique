@@ -43,6 +43,7 @@ export const TEXTURE_PATTERNS = [
   'torch',
   'panel',
   'rail',
+  'portal',
 ] as const;
 
 export type TexturePattern = (typeof TEXTURE_PATTERNS)[number];
@@ -123,6 +124,15 @@ export interface ExplosiveBlock extends ExplosionSpec {
   readonly igniters: readonly string[];
 }
 
+/**
+ * O portal: acende ao usar um dos `igniters` numa moldura em pé de `frame`
+ * com o vão vazio, e leva o herói até outro portal igual.
+ */
+export interface PortalBlock {
+  readonly frame: string;
+  readonly igniters: readonly string[];
+}
+
 export interface BlockDefinition {
   readonly id: string;
   readonly name: string;
@@ -154,6 +164,8 @@ export interface BlockDefinition {
   readonly blastResistant: boolean;
   /** Estoura depois de aceso; `null` nos blocos comuns. */
   readonly explosive: ExplosiveBlock | null;
+  /** Bloco que enche o vão da moldura acesa; `null` nos blocos comuns. */
+  readonly portal: PortalBlock | null;
   /** Cor no mapa visto de cima, usado na miniatura do mundo. */
   readonly mapColor: string;
   readonly textures: BlockFaces;

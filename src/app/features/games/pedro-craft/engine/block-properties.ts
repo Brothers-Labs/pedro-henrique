@@ -32,6 +32,8 @@ export class BlockProperties {
   readonly shape: Uint8Array;
   /** Vazado (folhas, vidro, plantas): desenhado no passe recortado. */
   readonly isTransparent: Uint8Array;
+  /** A mira para nele; a água e o portal deixam a mira passar, como o ar. */
+  readonly isTargetable: Uint8Array;
 
   constructor(catalog: CraftCatalog) {
     const count = catalog.blockCount;
@@ -43,6 +45,7 @@ export class BlockProperties {
     this.light = new Uint8Array(count);
     this.shape = new Uint8Array(count);
     this.isTransparent = new Uint8Array(count);
+    this.isTargetable = new Uint8Array(count);
 
     for (let number = 1; number < count; number += 1) {
       const block = catalog.blockAt(number);
@@ -58,6 +61,7 @@ export class BlockProperties {
       this.light[number] = block.light;
       this.shape[number] = SHAPE_CODE[block.shape];
       this.isTransparent[number] = block.transparent ? 1 : 0;
+      this.isTargetable[number] = block.shape !== 'liquid' && block.portal === null ? 1 : 0;
     }
   }
 }

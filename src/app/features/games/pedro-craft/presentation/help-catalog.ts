@@ -143,13 +143,24 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
     return blockSentence(item.places, catalog);
   }
 
-  const lights = catalog.content.blocks.filter((block) => block.explosive?.igniters.includes(item.id)).map((block) => block.name);
+  const lights = igniterSentences(item, catalog);
 
   if (lights.length > 0) {
-    return `Acende o pavio de ${LIST.format(lights)}.${usesSentence(item)}`;
+    return `${lights.join(' ')}${usesSentence(item)}`;
   }
 
   return item.kind === 'ammo' ? 'Munição do arco.' : 'Material para fabricar.';
+}
+
+/** "Acende o pavio de TNT.", "Acende o Portal do Nether numa moldura de obsidiana.": o que o item acende, direto do conteúdo. */
+function igniterSentences(item: ItemDefinition, catalog: CraftCatalog): readonly string[] {
+  const blocks = catalog.content.blocks;
+  const fuses = blocks.filter((block) => block.explosive?.igniters.includes(item.id)).map((block) => block.name);
+  const portals = blocks.flatMap((block) =>
+    block.portal?.igniters.includes(item.id) ? [`Acende o ${block.name} numa moldura de ${catalog.block(block.portal.frame).name.toLowerCase()}.`] : [],
+  );
+
+  return [...(fuses.length > 0 ? [`Acende o pavio de ${LIST.format(fuses)}.`] : []), ...portals];
 }
 
 /** " Aguenta 64 usos.", com o espaço da frase anterior; vazio para o que não gasta. */

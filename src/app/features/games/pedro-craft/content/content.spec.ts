@@ -345,6 +345,18 @@ describe('Conteúdo do PedroCraft', () => {
       expect(errorOf(() => parseCraftContent(files)).message).toContain('explosive.igniters');
     });
 
+    it('não aceita portal sólido: o herói precisa entrar nele', () => {
+      entry(files, 'blocks', 'blocks', 'nether-portal')['solid'] = true;
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "nether-portal": um portal não pode ser sólido');
+    });
+
+    it('aponta a moldura do portal quando ela não existe', () => {
+      record(entry(files, 'blocks', 'blocks', 'nether-portal')['portal'])['frame'] = 'obsidiana-dourada';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "nether-portal": bloco "obsidiana-dourada" não existe');
+    });
+
     it('não aceita animal manso que estoura', () => {
       entry(files, 'creatures', 'creatures', 'creeper')['temperament'] = 'passive';
 

@@ -33,6 +33,7 @@
     { "id": "mine-obsidian", "title": "Pegue uma obsidiana", "emoji": "🟪", "hint": "Ela fica lá no fundo, encostada na rocha-mãe. Só a picareta de diamante tira.", "trigger": "obtain", "target": "obsidian" },
     { "id": "make-tnt", "title": "Faça uma TNT", "emoji": "🧨", "hint": "O creeper solta pólvora. Na mesa, 5 pólvoras e 4 areias viram uma TNT.", "trigger": "obtain", "target": "tnt" },
     { "id": "make-flint-and-steel", "title": "Faça um isqueiro", "emoji": "🔥", "hint": "Cave cascalho: às vezes sai uma pederneira. Na mochila, 1 barra de ferro e 1 pederneira viram um isqueiro.", "trigger": "obtain", "target": "flint-and-steel" },
+    { "id": "light-portal", "title": "Acenda um portal do Nether", "emoji": "🟣", "hint": "Faça uma moldura de obsidiana em pé, com um buraco de 2 por 3 no meio. Use o isqueiro na obsidiana de baixo.", "trigger": "place", "target": "nether-portal" },
     { "id": "make-iron-golem", "title": "Faça um golem de ferro", "emoji": "🛡️", "hint": "Na mesa: 4 blocos de ferro em T e uma abóbora em cima. Depois, use o golem no chão!", "trigger": "obtain", "target": "iron-golem" }
   ]
 }
