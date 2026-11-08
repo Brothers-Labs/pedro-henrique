@@ -156,6 +156,26 @@ describe('Conteúdo do PedroCraft', () => {
       expect(creeperLoot?.entries.map((entry) => entry.item)).toContain('gunpowder');
       expect(content.recipes.crafting.some((candidate) => candidate.output.item === tnt?.explosive?.igniter)).toBeTrue();
     });
+
+    it('o golem de ferro sai da mesa com blocos de ferro e uma abóbora, e chama um amigo', () => {
+      const ironBlock = content.recipes.crafting.find((recipe) => recipe.output.item === 'iron-block');
+      const fromBlock = content.recipes.crafting.find((recipe) => recipe.type === 'shapeless' && recipe.ingredients.some((ingredient) => ingredient.item === 'iron-block'));
+      const golemRecipe = content.recipes.crafting.find((recipe) => recipe.output.item === 'iron-golem');
+      const golemItem = content.items.find((item) => item.id === 'iron-golem');
+      const golem = content.creatures.find((creature) => creature.id === golemItem?.summons);
+
+      expect(ironBlock?.type === 'shaped' ? ironBlock.pattern.join('').length : 0).toBe(9);
+      expect(fromBlock?.output).toEqual({ item: 'iron-ingot', count: 9 });
+      expect(golemRecipe?.station).toBe('workbench');
+      expect(golemRecipe ? recipeRequirements(golemRecipe) : []).toEqual(
+        jasmine.arrayWithExactContents([
+          { item: 'pumpkin', count: 1 },
+          { item: 'iron-block', count: 4 },
+        ]),
+      );
+      expect(golem?.temperament).toBe('guardian');
+      expect(golem?.spawn).toBeNull();
+    });
   });
 
   describe('validação da forma', () => {
@@ -217,6 +237,12 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'items', 'items', 'wooden-sword')['maxStack'] = 2;
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('durabilidade precisa de maxStack 1');
+    });
+
+    it('recusa item que chama criatura sem ser do tipo "summon"', () => {
+      entry(files, 'items', 'items', 'iron-golem')['kind'] = 'material';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('item do tipo "summon" precisa de "summons", e só ele');
     });
 
     it('recusa mundo que não se divide em chunks', () => {
@@ -298,6 +324,24 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'creatures', 'creatures', 'creeper')['temperament'] = 'passive';
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('criatura "creeper": só um inimigo pode estourar');
+    });
+
+    it('não aceita item que chama inimigo: furaria o Modo Paz', () => {
+      entry(files, 'items', 'items', 'iron-golem')['summons'] = 'creeper';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('item "iron-golem": só dá para chamar um amigo');
+    });
+
+    it('aponta a criatura chamada quando ela não existe', () => {
+      entry(files, 'items', 'items', 'iron-golem')['summons'] = 'golem-de-barro';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('item "iron-golem": criatura "golem-de-barro" não existe');
+    });
+
+    it('não aceita amigo que nasce sozinho', () => {
+      entry(files, 'creatures', 'creatures', 'iron-golem')['spawn'] = { period: 'day', on: ['grass'], groupMin: 1, groupMax: 1, weight: 1 };
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('criatura "iron-golem": um amigo não nasce sozinho');
     });
   });
 

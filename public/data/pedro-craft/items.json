@@ -24,6 +24,7 @@
     { "id": "iron-ore", "name": "Minério de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-ore" }, "places": "iron-ore" },
     { "id": "gold-ore", "name": "Minério de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-ore" }, "places": "gold-ore" },
     { "id": "gold-block", "name": "Bloco de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-block" }, "places": "gold-block" },
+    { "id": "iron-block", "name": "Bloco de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-block" }, "places": "iron-block" },
     { "id": "diamond-block", "name": "Bloco de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-block" }, "places": "diamond-block" },
     { "id": "emerald-block", "name": "Bloco de esmeralda", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "emerald-block" }, "places": "emerald-block" },
     { "id": "obsidian", "name": "Obsidiana", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "obsidian" }, "places": "obsidian" },
@@ -84,6 +85,7 @@
     { "id": "bucket", "name": "Balde", "kind": "bucket", "maxStack": 16, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee"] }, "bucket": { "collects": "water", "becomes": "water-bucket" } },
     { "id": "water-bucket", "name": "Balde com água", "kind": "bucket", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#2f8fe0"] }, "bucket": { "places": "water", "becomes": "bucket" } },
     { "id": "train", "name": "Trem", "kind": "vehicle", "maxStack": 1, "icon": { "type": "sprite", "shape": "train", "colors": ["#e53935", "#2f8fe0", "#3d3d45"] }, "vehicle": { "speed": 5 } },
+    { "id": "iron-golem", "name": "Golem de ferro", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "golem", "colors": ["#d9d4c7", "#5f8f3a", "#c9b8a3"] }, "summons": "iron-golem" },
     { "id": "milk-bucket", "name": "Balde de leite", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#ffffff"] }, "heal": 4, "leftover": "bucket" },
 
     { "id": "apple", "name": "Maçã", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "apple", "colors": ["#e53935", "#4caf50"] }, "heal": 2 },

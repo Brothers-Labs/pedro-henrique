@@ -45,6 +45,16 @@ const ARROW_GRAVITY = 12;
 const FUSE_START_RANGE = 2.5;
 const FUSE_ESCAPE_RANGE = 5;
 
+/** Perto assim do golem, um inimigo vira alvo dele. */
+const GUARD_RANGE = 12;
+
+/** Longe assim do herói, o golem vai atrás dele; perto assim, para e fica de guarda. */
+const FOLLOW_START_RANGE = 8;
+const FOLLOW_STOP_RANGE = 3;
+
+/** Amigos chamados de uma vez: golem demais lotaria a casa e esconderia os inimigos. */
+export const GUARDIAN_CAP = 3;
+
 /** Quanto da velocidade desejada é alcançada por passo: o bicho acelera e freia macio. */
 const GRIP = 0.3;
 
@@ -72,7 +82,8 @@ const BREED_REST_MS = 5 * 60 * 1000;
 /** Teto de animais com os filhotes: o dobro do que nasce sozinho, para o mundo não lotar. */
 const BREED_CAP_FACTOR = 2;
 
-export type CreatureMood = 'idle' | 'wander' | 'flee' | 'chase';
+/** `follow` é o golem indo atrás do herói; `chase` é ir atrás de quem se quer golpear. */
+export type CreatureMood = 'idle' | 'wander' | 'flee' | 'chase' | 'follow';
 
 /** Um bicho no mundo: corpo, vida, humor e o que ele ainda está esperando para repetir. */
 export class Creature {
@@ -100,6 +111,8 @@ export class Creature {
   fuseLeftMs: number | null = null;
   /** Duração do pavio aceso agora, para o desenho saber quanto já queimou. */
   fuseTotalMs = 0;
+  /** O inimigo que o golem está enfrentando; `null` sem nenhum por perto. */
+  foe: Creature | null = null;
 
   /** Espera de cada interação, pelo item usado (a lã crescendo de volta). */
   private readonly cooldowns = new Map<string, number>();
@@ -123,6 +136,11 @@ export class Creature {
 
   get isHostile(): boolean {
     return this.definition.temperament === 'hostile';
+  }
+
+  /** O amigo chamado pela criança: protege o herói e não leva golpe dele. */
+  get isGuardian(): boolean {
+    return this.definition.temperament === 'guardian';
   }
 
   get isBaby(): boolean {
@@ -215,6 +233,8 @@ export interface CreaturesHost {
   fuseLit(creature: Creature): void;
   /** O pavio acabou: o creeper já saiu da lista e o estouro acontece onde ele estava. */
   exploded(creature: Creature, explosion: ExplosionSpec): void;
+  /** O golem alcançou um inimigo e deu um golpe nele. */
+  defend(guardian: Creature, foe: Creature): void;
 }
 
 /**
@@ -228,6 +248,9 @@ export interface CreaturesHost {
  * Novos bichos nascem de tempos em tempos fora da vista do herói: os animais
  * de dia, os inimigos só à noite, longe das tochas, e nunca no Modo Paz. Ao
  * amanhecer os inimigos "voltam para casa" numa nuvem.
+ *
+ * O golem não nasce sozinho: a criança o chama. Ele acompanha o herói e vai
+ * atrás do inimigo mais perto, de dia e de noite.
  */
 export class Creatures {
   private readonly creatures: Creature[] = [];
@@ -248,6 +271,11 @@ export class Creatures {
 
   get list(): readonly Creature[] {
     return this.creatures;
+  }
+
+  /** Ainda cabe mais um golem? */
+  get hasRoomForGuardian(): boolean {
+    return this.creatures.filter((creature) => creature.isGuardian).length < GUARDIAN_CAP;
   }
 
   spawn(definition: CreatureDefinition, x: number, y: number, z: number): Creature {
@@ -321,8 +349,12 @@ export class Creatures {
 
     const hero = this.host.hero();
 
-    for (let index = this.creatures.length - 1; index >= 0; index -= 1) {
-      const creature = this.creatures[index];
+    // Cópia, do último ao primeiro: o golpe do golem e o estouro do creeper tiram bichos da lista no meio da volta.
+    for (const creature of [...this.creatures].reverse()) {
+      if (!this.creatures.includes(creature)) {
+        continue;
+      }
+
       const body = creature.body;
 
       this.think(creature, hero);
@@ -331,7 +363,7 @@ export class Creatures {
       const explosion = this.burnFuse(creature, hero);
 
       if (explosion) {
-        this.creatures.splice(index, 1);
+        this.remove(creature);
         this.host.exploded(creature, explosion);
         continue;
       }
@@ -343,15 +375,15 @@ export class Creatures {
       const isLost = creature.isHostile && Math.hypot(body.x - hero.x, body.z - hero.z) > LEASH_RANGE;
 
       if (body.y < FALLOUT_Y || isLost) {
-        this.creatures.splice(index, 1);
+        this.remove(creature);
       }
     }
   }
 
   /**
    * Um golpe: tira vida e empurra para longe de quem bateu. O animal foge; o
-   * inimigo fica bravo e vem atrás. Devolve se o bicho foi derrotado — quem
-   * bate cuida do que ele solta.
+   * inimigo fica bravo e vem atrás; o golem só é empurrado e segue na guarda.
+   * Devolve se o bicho foi derrotado — quem bate cuida do que ele solta.
    */
   hit(creature: Creature, damage: number, knockback: number, fromX: number, fromZ: number): boolean {
     const body = creature.body;
@@ -369,6 +401,10 @@ export class Creatures {
     body.velocityX = (awayX / length) * knockback;
     body.velocityZ = (awayZ / length) * knockback;
     body.velocityY = KNOCKBACK_LIFT;
+
+    if (creature.isGuardian) {
+      return false;
+    }
 
     if (creature.isHostile) {
       creature.mood = 'chase';
@@ -430,13 +466,17 @@ export class Creatures {
   }
 
   private think(creature: Creature, hero: PhysicsBody): void {
+    if (creature.isGuardian && this.guard(creature, hero)) {
+      return;
+    }
+
     if (creature.isHostile && distanceBetween(creature.body, hero) < CHASE_RANGE) {
       creature.mood = 'chase';
       creature.yaw = yawTowards(creature.body, hero);
       return;
     }
 
-    if (creature.mood === 'chase') {
+    if (creature.mood === 'chase' || creature.mood === 'follow') {
       this.startIdle(creature);
     }
 
@@ -458,6 +498,49 @@ export class Creatures {
     }
   }
 
+  /**
+   * O golem vai atrás do inimigo mais perto dele; sem inimigo, volta para
+   * perto do herói. Devolve se decidiu para onde ir — senão, passeia por ali
+   * como os animais.
+   */
+  private guard(guardian: Creature, hero: PhysicsBody): boolean {
+    guardian.foe = this.nearestFoe(guardian);
+
+    if (guardian.foe) {
+      guardian.mood = 'chase';
+      guardian.yaw = yawTowards(guardian.body, guardian.foe.body);
+      return true;
+    }
+
+    const distance = distanceBetween(guardian.body, hero);
+    const isFollowing = guardian.mood === 'follow' ? distance > FOLLOW_STOP_RANGE : distance > FOLLOW_START_RANGE;
+
+    if (!isFollowing) {
+      return false;
+    }
+
+    guardian.mood = 'follow';
+    guardian.yaw = yawTowards(guardian.body, hero);
+
+    return true;
+  }
+
+  private nearestFoe(guardian: Creature): Creature | null {
+    let nearest: Creature | null = null;
+    let nearestDistance = GUARD_RANGE;
+
+    for (const other of this.creatures) {
+      const distance = other.isHostile ? distanceBetween(guardian.body, other.body) : Infinity;
+
+      if (distance < nearestDistance) {
+        nearest = other;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearest;
+  }
+
   private startIdle(creature: Creature): void {
     creature.mood = 'idle';
     creature.moodLeftMs = this.random.integer(IDLE_MS.min, IDLE_MS.max);
@@ -477,6 +560,7 @@ export class Creatures {
       case 'flee':
         return speed * FLEE_SPEED_FACTOR;
       case 'wander':
+      case 'follow':
         return speed;
       case 'chase': {
         if (creature.definition.behavior !== 'archer') {
@@ -508,7 +592,7 @@ export class Creatures {
 
     // Ninguém entra na água sozinho: para na beirada e, se estava passeando, dá meia-volta.
     if (speed > 0 && !body.isInWater && this.isWaterAhead(terrain, body, directionX, directionZ)) {
-      if (creature.mood !== 'chase') {
+      if (creature.mood === 'wander' || creature.mood === 'flee') {
         creature.yaw += Math.PI;
       }
       speed = 0;
@@ -555,13 +639,26 @@ export class Creatures {
     creature.hopLeftMs = this.random.integer(HOP_REST_MS.min, HOP_REST_MS.max);
   }
 
-  /** O inimigo que alcançou o herói golpeia; o esqueleto atira de longe, se enxerga o herói. */
+  /**
+   * O inimigo que alcançou o herói golpeia; o esqueleto atira de longe, se
+   * enxerga o herói; o golem golpeia o inimigo que alcançou.
+   */
   private attack(creature: Creature, hero: PhysicsBody): void {
     if (creature.mood !== 'chase' || creature.attackLeftMs > 0 || creature.definition.explodes) {
       return;
     }
 
     const definition = creature.definition;
+
+    if (creature.isGuardian) {
+      const foe = creature.foe;
+
+      if (foe && this.creatures.includes(foe) && isWithinReach(creature.body, foe.body)) {
+        creature.attackLeftMs = definition.attackCooldownMs;
+        this.host.defend(creature, foe);
+      }
+      return;
+    }
 
     if (definition.behavior === 'archer') {
       const distance = distanceBetween(creature.body, hero);
@@ -714,15 +811,15 @@ function distanceBetween(from: PhysicsBody, to: PhysicsBody): number {
 }
 
 /** Ângulo para olhar de `from` até `to`, no mesmo sentido do olhar do herói (frente é -z). */
-function yawTowards(from: PhysicsBody, to: PhysicsBody): number {
+export function yawTowards(from: PhysicsBody, to: PhysicsBody): number {
   return Math.atan2(-(to.x - from.x), -(to.z - from.z));
 }
 
 /** As duas caixas estão quase encostadas, na mesma altura mais ou menos? */
-function isWithinReach(creature: PhysicsBody, hero: PhysicsBody): boolean {
-  const gapX = Math.abs(hero.x - creature.x) - creature.halfWidth - hero.halfWidth;
-  const gapZ = Math.abs(hero.z - creature.z) - creature.halfWidth - hero.halfWidth;
-  const overlapsY = creature.y < hero.y + hero.height && hero.y < creature.y + creature.height + MELEE_GAP;
+function isWithinReach(attacker: PhysicsBody, target: PhysicsBody): boolean {
+  const gapX = Math.abs(target.x - attacker.x) - attacker.halfWidth - target.halfWidth;
+  const gapZ = Math.abs(target.z - attacker.z) - attacker.halfWidth - target.halfWidth;
+  const overlapsY = attacker.y < target.y + target.height && target.y < attacker.y + attacker.height + MELEE_GAP;
 
   return gapX < MELEE_GAP && gapZ < MELEE_GAP && overlapsY;
 }

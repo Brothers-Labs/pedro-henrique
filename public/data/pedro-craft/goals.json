@@ -31,6 +31,7 @@
     { "id": "find-emerald", "title": "Ache uma esmeralda", "emoji": "💚", "hint": "Cave fundo, perto da pedreira, com a picareta de ferro.", "trigger": "obtain", "target": "emerald" },
     { "id": "place-blue-carpets", "title": "Enfeite o chão com 4 tapetes azuis", "emoji": "🟦", "hint": "Cave até achar o lápis-lazúli. Na mochila, 2 lãs e 1 lápis-lazúli viram 3 tapetes azuis.", "trigger": "place", "target": "carpet-blue", "count": 4 },
     { "id": "mine-obsidian", "title": "Pegue uma obsidiana", "emoji": "🟪", "hint": "Ela fica lá no fundo, encostada na rocha-mãe. Só a picareta de diamante tira.", "trigger": "obtain", "target": "obsidian" },
-    { "id": "make-tnt", "title": "Faça uma TNT", "emoji": "🧨", "hint": "O creeper solta pólvora. Na mesa, 5 pólvoras e 4 areias viram uma TNT.", "trigger": "obtain", "target": "tnt" }
+    { "id": "make-tnt", "title": "Faça uma TNT", "emoji": "🧨", "hint": "O creeper solta pólvora. Na mesa, 5 pólvoras e 4 areias viram uma TNT.", "trigger": "obtain", "target": "tnt" },
+    { "id": "make-iron-golem", "title": "Faça um golem de ferro", "emoji": "🛡️", "hint": "Na mesa: 4 blocos de ferro em T e uma abóbora em cima. Depois, use o golem no chão!", "trigger": "obtain", "target": "iron-golem" }
   ]
 }

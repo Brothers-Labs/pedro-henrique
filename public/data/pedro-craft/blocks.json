@@ -335,6 +335,19 @@
       "textures": { "all": { "pattern": "panel", "colors": ["#f5c542", "#d9a21f", "#fff1a8"], "detail": "plain" } }
     },
     {
+      "id": "iron-block",
+      "name": "Bloco de ferro",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 3,
+      "tool": "pickaxe",
+      "minTier": 2,
+      "drops": "iron-block",
+      "mapColor": "#d6dbe1",
+      "textures": { "all": { "pattern": "panel", "colors": ["#dfe3e8", "#aab2bc", "#ffffff"], "detail": "plain" } }
+    },
+    {
       "id": "diamond-ore",
       "name": "Minério de diamante",
       "shape": "cube",

@@ -14,7 +14,7 @@ import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
 import { Calendar } from './calendar';
 import { Combat } from './combat';
-import { type Creature, type CreatureDifficulty, Creatures } from './creatures';
+import { type Creature, type CreatureDifficulty, Creatures, GUARDIAN_CAP, yawTowards } from './creatures';
 import { DayClock } from './day-clock';
 import { Explosions } from './explosions';
 import { Farm } from './farm';
@@ -27,6 +27,7 @@ import { tickFurnace } from './furnace';
 import { bestTools } from './infinite-supplies';
 import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 import { type DropCollector, ItemDrops } from './item-drops';
+import { PhysicsBody } from './physics-body';
 import { Projectiles } from './projectiles';
 import { castRay, type RayHit } from './raycast';
 import { Weather } from './weather';
@@ -53,6 +54,7 @@ const DUSK_HINT = '🌇 O sol está se pondo. Hora de acender tochas ou voltar p
 const TRAIN_BOARD_HINT = '🚂 Piuí! Nas encruzilhadas, olhe para o lado que quer seguir. Pule para descer.';
 const TNT_LIT_HINT = '🧨 A TNT foi acesa! Corra para longe antes de ela estourar.';
 const TRAIN_NEEDS_RAIL_HINT = 'O trem anda no trilho. Coloque trilhos no chão, com espaço livre em cima, e use o trem neles.';
+const GUARDIAN_NEEDS_ROOM_HINT = 'O golem é grandão: use num chão com espaço livre em cima.';
 
 /** No Fácil, os inimigos andam mais devagar e esperam mais entre um golpe e outro. */
 const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
@@ -61,6 +63,7 @@ const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
 };
 const FERTILIZER_COLOR = '#b6f56b';
 const LOVE_COLOR = '#ff7aa8';
+const GUARDIAN_COLOR = '#f2f4f7';
 
 export interface CraftSimulationOptions {
   readonly catalog: CraftCatalog;
@@ -194,6 +197,7 @@ export class CraftSimulation {
 
         this.explosions.explode(body.x, body.y + body.height / 2, body.z, explosion);
       },
+      defend: (guardian, foe) => this.combat.defend(guardian, foe),
       laid: (creature, item) => {
         const body = creature.body;
 
@@ -1061,6 +1065,11 @@ export class CraftSimulation {
       return;
     }
 
+    if (held.summons) {
+      this.summonGuardian(held.summons, target);
+      return;
+    }
+
     if (held.fertilizer !== null) {
       this.fertilize(held.fertilizer, target);
       return;
@@ -1102,6 +1111,38 @@ export class CraftSimulation {
     this.mining = null;
     this.hero.teleport(ride.x, ride.seatY, ride.z);
     this.events.push({ type: 'hint', text: TRAIN_BOARD_HINT });
+    this.confirmUse();
+  }
+
+  /**
+   * O item do golem usado na face mirada: o golem nasce ali, de frente para o
+   * herói, se couber. O item é gasto, menos no Criativo.
+   */
+  private summonGuardian(creatureId: string, target: RayHit): void {
+    const definition = this.catalog.creature(creatureId);
+
+    if (!this.creatures.hasRoomForGuardian) {
+      this.events.push({ type: 'hint', text: `${definition.name}: você já tem ${GUARDIAN_CAP}, e eles já protegem você!` });
+      return;
+    }
+
+    const x = target.x + target.normalX + 0.5;
+    const y = target.y + target.normalY;
+    const z = target.z + target.normalZ + 0.5;
+    const probe = new PhysicsBody(x, y, z, definition.width / 2, definition.height);
+
+    if (target.normalY < 0 || probe.collidesAt(this.terrain, 0, 0, 0)) {
+      this.events.push({ type: 'hint', text: GUARDIAN_NEEDS_ROOM_HINT });
+      return;
+    }
+
+    const guardian = this.creatures.spawn(definition, x, y, z);
+
+    guardian.yaw = yawTowards(guardian.body, this.hero.body);
+    this.useUpSelected();
+    this.visualEvents.push({ type: 'sparkle', x, y: y + definition.height, z, color: GUARDIAN_COLOR });
+    this.events.push({ type: 'sound', cue: 'powerup' });
+    this.events.push({ type: 'hint', text: `🛡️ ${definition.name} chegou! Agora você tem um amigo contra os monstros.` });
     this.confirmUse();
   }
 

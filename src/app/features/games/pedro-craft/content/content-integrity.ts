@@ -88,6 +88,14 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     block('items', owner, definition.bucket?.places ?? null);
     block('items', owner, definition.bucket?.collects ?? null);
     item('items', owner, definition.bucket?.becomes ?? null);
+    creature('items', owner, definition.summons);
+
+    // Um item que chamasse inimigo furaria o Modo Paz e traria monstro de dia.
+    const summoned = content.creatures.find((candidate) => candidate.id === definition.summons);
+
+    if (summoned && summoned.temperament !== 'guardian') {
+      problems.push({ file: 'items', message: `${owner}: só dá para chamar um amigo (temperament "guardian")` });
+    }
   }
 
   if (content.items.some((definition) => definition.vehicle) && !content.blocks.some((definition) => definition.shape === 'rail')) {
@@ -121,6 +129,11 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     // O pavio só acende quando o bicho vai atrás do herói: um animal manso que estoura nunca chegaria a estourar.
     if (definition.explodes && definition.temperament !== 'hostile') {
       problems.push({ file: 'creatures', message: `${owner}: só um inimigo pode estourar` });
+    }
+
+    // O amigo só aparece quando a criança chama: nascido sozinho, o mundo lotaria de golens.
+    if (definition.temperament === 'guardian' && definition.spawn) {
+      problems.push({ file: 'creatures', message: `${owner}: um amigo não nasce sozinho, tire o "spawn"` });
     }
 
     if (definition.splitInto?.creature === definition.id) {

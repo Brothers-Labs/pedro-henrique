@@ -5,12 +5,10 @@ import {
   type CreatureDefinition,
   type CreatureInteraction,
   type CreatureSpawn,
-  type Temperament,
+  TEMPERAMENTS,
 } from '../../models/content.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
 import { parseExplosion } from './parse-blocks';
-
-const TEMPERAMENTS: readonly Temperament[] = ['passive', 'hostile'];
 
 /** Filhote vira adulto em cinco minutos de jogo, se o JSON não disser outra coisa. */
 const DEFAULT_BABY_GROW_MS = 5 * 60 * 1000;

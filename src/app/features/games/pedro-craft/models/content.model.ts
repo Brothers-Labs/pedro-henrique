@@ -162,9 +162,23 @@ export interface BlockDefinition {
 
 /**
  * `armor` protege da mochila mesmo, gastando um uso por golpe; `shield` na mão
- * segura as flechas; `vehicle` é usado num trilho para passear (o trem).
+ * segura as flechas; `vehicle` é usado num trilho para passear (o trem);
+ * `summon` é usado no chão para chamar um amigo (o golem de ferro).
  */
-export const ITEM_KINDS = ['block', 'tool', 'weapon', 'food', 'material', 'seed', 'bucket', 'ammo', 'armor', 'shield', 'vehicle'] as const;
+export const ITEM_KINDS = [
+  'block',
+  'tool',
+  'weapon',
+  'food',
+  'material',
+  'seed',
+  'bucket',
+  'ammo',
+  'armor',
+  'shield',
+  'vehicle',
+  'summon',
+] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -205,6 +219,7 @@ export const ICON_SHAPES = [
   'crown',
   'gem',
   'train',
+  'golem',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -271,6 +286,8 @@ export interface ItemDefinition {
   readonly fertilizer: number | null;
   /** O trem: usado num trilho, leva o herói pelos trilhos; `null` para o resto. */
   readonly vehicle: VehicleStats | null;
+  /** Criatura amiga que nasce ao usar o item no chão (o golem de ferro); `null` para o resto. */
+  readonly summons: string | null;
 }
 
 /* Receitas ---------------------------------------------------------------------------- */
@@ -328,11 +345,29 @@ export const CREATURE_BEHAVIORS = ['grazer', 'chaser', 'hopper', 'archer'] as co
 
 export type CreatureBehavior = (typeof CREATURE_BEHAVIORS)[number];
 
-export const CREATURE_MODELS = ['chicken', 'cow', 'sheep', 'slime', 'king-slime', 'scarecrow', 'spider', 'skeleton', 'creeper'] as const;
+export const CREATURE_MODELS = [
+  'chicken',
+  'cow',
+  'sheep',
+  'slime',
+  'king-slime',
+  'scarecrow',
+  'spider',
+  'skeleton',
+  'creeper',
+  'iron-golem',
+] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];
 
-export type Temperament = 'passive' | 'hostile';
+/**
+ * `passive` é o animal que foge; `hostile` vai atrás do herói à noite;
+ * `guardian` é o amigo que a criança chama (o golem): segue o herói e
+ * enfrenta os inimigos por ele.
+ */
+export const TEMPERAMENTS = ['passive', 'hostile', 'guardian'] as const;
+
+export type Temperament = (typeof TEMPERAMENTS)[number];
 
 export type SpawnPeriod = 'day' | 'night';
 

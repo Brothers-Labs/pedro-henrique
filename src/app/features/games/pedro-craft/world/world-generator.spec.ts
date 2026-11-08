@@ -134,8 +134,8 @@ describe('Gerador de mundo do PedroCraft', () => {
     expect(oreDepth('gold-ore')).toBeGreaterThan(oreDepth('diamond-ore'));
   });
 
-  it('gera o mesmo mundo, bloco a bloco, com ou sem o bloco de ouro e os tapetes no conteúdo', async () => {
-    const added = ['gold-block', ...catalog.content.blocks.filter((block) => block.shape === 'carpet').map((block) => block.id)];
+  it('gera o mesmo mundo, bloco a bloco, com ou sem os blocos de ouro e de ferro e os tapetes no conteúdo', async () => {
+    const added = ['gold-block', 'iron-block', ...catalog.content.blocks.filter((block) => block.shape === 'carpet').map((block) => block.id)];
     const older = new CraftCatalog(parseCraftContent(withoutMentionsOf(await fetchPublishedContentFiles(), added)));
     const before = generateWorld(older, 42);
     const beforeCells = before.world.snapshot;

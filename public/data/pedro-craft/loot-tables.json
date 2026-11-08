@@ -30,6 +30,7 @@
     { "id": "iron-ore", "entries": [{ "item": "iron-ore" }] },
     { "id": "gold-ore", "entries": [{ "item": "gold-ore" }] },
     { "id": "gold-block", "entries": [{ "item": "gold-block" }] },
+    { "id": "iron-block", "entries": [{ "item": "iron-block" }] },
     { "id": "diamond", "entries": [{ "item": "diamond" }] },
     { "id": "diamond-block", "entries": [{ "item": "diamond-block" }] },
     { "id": "emerald", "entries": [{ "item": "emerald" }] },
@@ -90,6 +91,7 @@
     { "id": "lantern", "entries": [{ "item": "lantern" }] },
     { "id": "campfire", "entries": [{ "item": "campfire" }] },
     { "id": "skeleton", "entries": [{ "item": "arrow", "min": 2, "max": 4 }, { "item": "bone", "min": 1, "max": 2 }] },
-    { "id": "creeper", "entries": [{ "item": "gunpowder", "min": 1, "max": 2 }] }
+    { "id": "creeper", "entries": [{ "item": "gunpowder", "min": 1, "max": 2 }] },
+    { "id": "iron-golem", "entries": [{ "item": "iron-ingot", "min": 3, "max": 5 }, { "item": "flower-red", "chance": 0.5 }] }
   ]
 }

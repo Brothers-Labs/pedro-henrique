@@ -29,6 +29,9 @@ const BLAST_EDGE = 1;
 /** Empurrão da explosão nos bichos: mais forte que um golpe de espada. */
 const BLAST_KNOCKBACK = 8;
 
+/** O golem é forte: o inimigo que ele golpeia voa para longe. */
+const GUARDIAN_KNOCKBACK = 9;
+
 /** Os filhotes do slime nascem espalhados em volta de onde ele estava. */
 const SPLIT_SPREAD = 0.4;
 
@@ -88,7 +91,7 @@ export class Combat {
 
       if (hit.target === 'hero') {
         this.hurtHero(projectile.damage, fromX, fromZ, 'arrow');
-      } else {
+      } else if (!hit.creature.isGuardian) {
         this.strike(hit.creature, projectile.damage, ARROW_KNOCKBACK, fromX, fromZ);
       }
     }
@@ -106,6 +109,12 @@ export class Combat {
     }
 
     if (!target) {
+      return;
+    }
+
+    // O golem não leva golpe do herói: um golpe sem querer não pode custar o amigo.
+    if (target.isGuardian) {
+      this.context.event({ type: 'hint', text: `🛡️ ${target.definition.name} é seu amigo e protege você dos monstros.` });
       return;
     }
 
@@ -189,6 +198,13 @@ export class Combat {
         this.strike(creature, damageAt(distance), BLAST_KNOCKBACK, x, z);
       }
     }
+  }
+
+  /** O golem golpeia o inimigo que alcançou, com a força do JSON dele. */
+  defend(guardian: Creature, foe: Creature): void {
+    const body = guardian.body;
+
+    this.strike(foe, guardian.definition.damage, GUARDIAN_KNOCKBACK, body.x, body.z);
   }
 
   /** O inimigo foi embora numa nuvem de fumaça, sem soltar nada. */
