@@ -129,14 +129,14 @@ export const RACCOON_SUIT_PHYSICS = {
   tailReach: 40,
 } as const;
 
+/** Nos últimos segundos do Giga e do Cogumelo Turbo o herói pisca, avisando que o efeito vai acabar. */
+export const POWER_UP_WARNING_MS = 2500;
+
 /**
  * Giga Cogumelo: por alguns segundos a caixa de colisão dobra de tamanho, o
  * herói não se machuca, derruba inimigos e quebra tijolos só de encostar.
  * Antes de acabar, ele pisca para avisar.
  */
-/** Nos últimos segundos do Giga e do Cogumelo Turbo o herói pisca, avisando que o efeito vai acabar. */
-export const POWER_UP_WARNING_MS = 2500;
-
 export const GIGA_PHYSICS = {
   bodyScale: 2,
   /** Folga além da caixa que ainda conta como esbarrão num tijolo. */
