@@ -70,7 +70,11 @@
     { "id": "carpet-yellow", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "flower-yellow" }], "output": { "item": "carpet-yellow", "count": 3 } },
     { "id": "carpet-green", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "oak-leaves" }], "output": { "item": "carpet-green", "count": 3 } },
     { "id": "carpet-purple", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "beetroot" }], "output": { "item": "carpet-purple", "count": 3 } },
-    { "id": "carpet-black", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "coal" }], "output": { "item": "carpet-black", "count": 3 } }
+    { "id": "carpet-black", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "coal" }], "output": { "item": "carpet-black", "count": 3 } },
+    { "id": "carpet-blue", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "lapis" }], "output": { "item": "carpet-blue", "count": 3 } },
+    { "id": "emerald-block", "type": "shaped", "station": "workbench", "pattern": ["EEE", "EEE", "EEE"], "key": { "E": "emerald" }, "output": { "item": "emerald-block" } },
+    { "id": "emerald-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "emerald-block" }], "output": { "item": "emerald", "count": 9 } },
+    { "id": "tnt", "type": "shaped", "station": "workbench", "pattern": ["PSP", "SPS", "PSP"], "key": { "P": "gunpowder", "S": "sand" }, "output": { "item": "tnt" } }
   ],
   "smelting": [
     { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },

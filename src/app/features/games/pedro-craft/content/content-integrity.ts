@@ -67,8 +67,14 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
       problems.push({ file: 'blocks', message: `${owner}: um tapete não pode ser sólido, o herói anda por cima dele` });
     }
 
+    // A explosão acende a TNT vizinha em vez de quebrá-la: uma TNT que aguenta explosão nunca entraria na reação em cadeia.
+    if (definition.explosive && definition.blastResistant) {
+      problems.push({ file: 'blocks', message: `${owner}: um bloco que estoura não pode aguentar explosão` });
+    }
+
     loot('blocks', owner, definition.drops);
     block('blocks', owner, definition.toggleInto);
+    item('blocks', owner, definition.explosive?.igniter ?? null);
   }
 
   for (const definition of content.items) {
@@ -111,6 +117,11 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     check('creatures', owner, 'criatura', definition.splitInto?.creature ?? null, creatures);
     item('creatures', owner, definition.lays?.item ?? null);
     item('creatures', owner, definition.breedsWith);
+
+    // O pavio só acende quando o bicho vai atrás do herói: um animal manso que estoura nunca chegaria a estourar.
+    if (definition.explodes && definition.temperament !== 'hostile') {
+      problems.push({ file: 'creatures', message: `${owner}: só um inimigo pode estourar` });
+    }
 
     if (definition.splitInto?.creature === definition.id) {
       problems.push({ file: 'creatures', message: `${owner}: não pode se dividir em si mesma` });

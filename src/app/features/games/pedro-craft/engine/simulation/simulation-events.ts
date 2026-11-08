@@ -29,4 +29,6 @@ export type VisualEvent =
   | { readonly type: 'season-changed' }
   /** Brilhinho: o adubo na planta, os corações do animal alimentado. Posição do centro. */
   | { readonly type: 'sparkle'; readonly x: number; readonly y: number; readonly z: number; readonly color: string }
+  /** Estouro da TNT ou do creeper, centrado em (`x`, `y`, `z`). */
+  | { readonly type: 'explosion'; readonly x: number; readonly y: number; readonly z: number; readonly radius: number }
   | { readonly type: 'swing' };

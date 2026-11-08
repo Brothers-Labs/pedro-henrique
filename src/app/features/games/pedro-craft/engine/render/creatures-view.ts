@@ -14,6 +14,10 @@ const BOTTOM_BRIGHTNESS = 0.55;
 /** Tamanho do filhote perto do adulto. */
 const BABY_SCALE = 0.55;
 
+/** O creeper chiando pisca em branco e incha um pouco até estourar: dá tempo de ver e correr. */
+const FUSE_BLINK_MS = 150;
+const FUSE_SWELL = 0.25;
+
 /** O passinho de quem anda: o corpo sobe e desce de leve. */
 const STEP_BOB_HEIGHT = 0.05;
 const STEP_BOB_SPEED = 0.012;
@@ -33,9 +37,11 @@ interface CreatureMesh {
 export class CreaturesView {
   private readonly root = new Group();
   private readonly material = new MeshBasicMaterial({ vertexColors: true });
+  private readonly flashMaterial = new MeshBasicMaterial({ color: '#ffffff' });
   private readonly geometries = new Map<string, BufferGeometry>();
   private readonly meshes = new Map<number, CreatureMesh>();
   private elapsedMs = 0;
+  private isSteady = false;
 
   constructor(
     scene: Scene,
@@ -44,10 +50,12 @@ export class CreaturesView {
     scene.add(this.root);
   }
 
-  update(creatures: readonly Creature[], alpha: number, frameMs: number): void {
+  /** `isSteady`: no modo calmo, o creeper chiando só incha, sem piscar. */
+  update(creatures: readonly Creature[], alpha: number, frameMs: number, isSteady: boolean): void {
     const alive = new Set<number>();
 
     this.elapsedMs += frameMs;
+    this.isSteady = isSteady;
     this.material.color.copy(this.daylight.value);
 
     for (const creature of creatures) {
@@ -71,6 +79,7 @@ export class CreaturesView {
     this.geometries.clear();
     this.meshes.clear();
     this.material.dispose();
+    this.flashMaterial.dispose();
     this.root.removeFromParent();
   }
 
@@ -93,7 +102,12 @@ export class CreaturesView {
       lerp(creature.previousZ, body.z, alpha),
     );
     view.mesh.rotation.y = creature.yaw;
-    view.mesh.scale.setScalar(creature.isBaby ? BABY_SCALE : 1);
+    view.mesh.scale.setScalar((creature.isBaby ? BABY_SCALE : 1) * (1 + creature.fuseProgress * FUSE_SWELL));
+    view.mesh.material = this.isFlashing(creature) ? this.flashMaterial : this.material;
+  }
+
+  private isFlashing(creature: Creature): boolean {
+    return creature.fuseLeftMs !== null && !this.isSteady && Math.floor(this.elapsedMs / FUSE_BLINK_MS) % 2 === 0;
   }
 
   private create(creature: Creature, modelKey: string): CreatureMesh {

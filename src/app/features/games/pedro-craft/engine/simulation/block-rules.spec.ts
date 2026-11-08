@@ -56,6 +56,23 @@ describe('Regras de quebra do PedroCraft', () => {
     expect(durability('golden-pickaxe')).toBeLessThan(durability('diamond-pickaxe'));
   });
 
+  it('tira a obsidiana só com a picareta de diamante, e avisa qual picareta usar', () => {
+    const obsidian = catalog.block('obsidian');
+
+    expect(canHarvest(obsidian, tool('golden-pickaxe'))).toBeFalse();
+    expect(canHarvest(obsidian, tool('diamond-pickaxe'))).toBeTrue();
+    expect(obsidian.blastResistant).toBeTrue();
+    expect(missingToolHint(obsidian)).toBe('Para pegar obsidiana, use uma picareta de diamante.');
+  });
+
+  it('tira a esmeralda com picareta de ferro e o lápis-lazúli já com a de pedra', () => {
+    expect(canHarvest(catalog.block('emerald-ore'), tool('stone-pickaxe'))).toBeFalse();
+    expect(canHarvest(catalog.block('emerald-ore'), tool('iron-pickaxe'))).toBeTrue();
+    expect(canHarvest(catalog.block('lapis-ore'), tool('stone-pickaxe'))).toBeTrue();
+    expect(rollLoot(catalog.lootTable(catalog.block('emerald-ore').drops ?? ''), () => 0)).toEqual([{ item: 'emerald', count: 1 }]);
+    expect(rollLoot(catalog.lootTable(catalog.block('lapis-ore').drops ?? ''), () => 0)[0]?.item).toBe('lapis');
+  });
+
   it('tira o bloco de ouro inteiro só com picareta de ferro ou melhor', () => {
     const block = catalog.block('gold-block');
 

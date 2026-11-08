@@ -385,6 +385,20 @@ function paintPanelDetail(
       solid(11, 8, accent);
       solid(11, 7, accent);
       return;
+    case 'band':
+      // A faixa clara no meio, com três marquinhas escuras: a cara de TNT, sem precisar escrever.
+      for (let y = 6; y < 10; y += 1) {
+        for (let x = 1; x < LAST; x += 1) {
+          solid(x, y, accent);
+        }
+      }
+      for (const left of [3, 7, 11]) {
+        for (let y = 7; y < 9; y += 1) {
+          solid(left, y, border);
+          solid(left + 1, y, border);
+        }
+      }
+      return;
     case 'plain':
     case null:
     case 'sapling':

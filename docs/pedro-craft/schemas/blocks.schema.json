@@ -30,6 +30,20 @@
         "pairsVertically": { "type": "boolean", "default": false },
         "toggleInto": { "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }], "description": "Id de bloco." },
         "interaction": { "enum": ["workbench", "furnace", "chest", "bed", null] },
+        "blastResistant": { "type": "boolean", "default": false, "description": "Aguenta explosão sem quebrar (a obsidiana)." },
+        "explosive": {
+          "type": ["object", "null"],
+          "description": "Bloco que estoura depois de aceso com o item `igniter` na mão (a TNT). Não pode ter blastResistant.",
+          "required": ["fuseMs", "radius", "damage", "igniter"],
+          "additionalProperties": false,
+          "properties": {
+            "fuseMs": { "$ref": "common.schema.json#/$defs/fuseMs" },
+            "radius": { "$ref": "common.schema.json#/$defs/blastRadius" },
+            "damage": { "$ref": "common.schema.json#/$defs/blastDamage" },
+            "breaksBlocks": { "type": "boolean", "default": false, "description": "Abre buraco no mundo." },
+            "igniter": { "$ref": "common.schema.json#/$defs/id", "description": "Id de item que acende." }
+          }
+        },
         "mapColor": { "$ref": "common.schema.json#/$defs/color" },
         "textures": {
           "type": "object",

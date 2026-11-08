@@ -23,7 +23,7 @@
         "damage": { "type": "integer", "minimum": 0, "maximum": 10, "default": 0, "description": "Corações por ataque." },
         "attackCooldownMs": { "type": "integer", "minimum": 200, "default": 1000 },
         "behavior": { "enum": ["grazer", "chaser", "hopper", "archer"] },
-        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton"] },
+        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton", "creeper"] },
         "colors": { "$ref": "common.schema.json#/$defs/colors" },
         "width": { "type": "number", "minimum": 0.2, "maximum": 2 },
         "height": { "type": "number", "minimum": 0.2, "maximum": 2.5 },
@@ -74,7 +74,19 @@
           }
         },
         "breedsWith": { "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/id" }], "description": "Comida que faz dois animais iguais terem um filhote." },
-        "babyGrowMs": { "type": "integer", "minimum": 10000, "default": 300000, "description": "Quanto o filhote leva para crescer." }
+        "babyGrowMs": { "type": "integer", "minimum": 10000, "default": 300000, "description": "Quanto o filhote leva para crescer." },
+        "explodes": {
+          "type": ["object", "null"],
+          "description": "Em vez de golpear, chia perto do herói e estoura (o creeper). Só para inimigos.",
+          "required": ["fuseMs", "radius", "damage"],
+          "additionalProperties": false,
+          "properties": {
+            "fuseMs": { "$ref": "common.schema.json#/$defs/fuseMs" },
+            "radius": { "$ref": "common.schema.json#/$defs/blastRadius" },
+            "damage": { "$ref": "common.schema.json#/$defs/blastDamage" },
+            "breaksBlocks": { "type": "boolean", "default": false, "description": "Abre buraco no mundo; o creeper não abre, para não desmanchar construções." }
+          }
+        }
       }
     }
   }

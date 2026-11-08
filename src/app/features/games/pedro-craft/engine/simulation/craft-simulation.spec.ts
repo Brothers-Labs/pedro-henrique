@@ -289,6 +289,99 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     });
   });
 
+  describe('TNT e creeper', () => {
+    const TNT_FUSE_STEPS = 260;
+    const isLit = (x: number, y: number, z: number): boolean =>
+      [...simulation.explosions.lit].some((fuse) => fuse.x === x && fuse.y === y && fuse.z === z);
+    const exploded = (): boolean => simulation.drainVisualEvents().some((event) => event.type === 'explosion');
+
+    // Chão firme na frente da TNT: sem a regra da TNT, a tocha seria colocada ali.
+    const putTntWithRoomForTorch = (): void => {
+      put('tnt');
+      put('stone', TARGET.x - 1, TARGET.y - 1);
+    };
+
+    it('a tocha acende a TNT mirada, em vez de virar uma tocha na frente dela', () => {
+      putTntWithRoomForTorch();
+      hold('torch');
+      run(1, { secondaryPressed: true });
+
+      expect(isLit(TARGET.x, TARGET.y, TARGET.z)).toBeTrue();
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+      expect(simulation.inventory.count('torch')).toBe(1);
+      expect(events.some((event) => event.type === 'hint' && event.text.includes('TNT foi acesa'))).toBeTrue();
+    });
+
+    it('a tocha na TNT já acesa não vira uma tocha na frente dela', () => {
+      putTntWithRoomForTorch();
+      hold('torch');
+      simulation.explosions.ignite(TARGET.x, TARGET.y, TARGET.z);
+      run(1, { secondaryPressed: true });
+
+      expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(AIR);
+      expect(simulation.inventory.count('torch')).toBe(1);
+    });
+
+    it('outro item na mão não acende a TNT', () => {
+      put('tnt');
+      hold('dirt');
+      run(1, { secondaryPressed: true });
+
+      expect([...simulation.explosions.lit]).toEqual([]);
+    });
+
+    it('a TNT acesa estoura: abre buraco e machuca quem está perto, mas a obsidiana fica', () => {
+      put('tnt');
+      put('obsidian', TARGET.x + 2);
+      simulation.explosions.ignite(TARGET.x, TARGET.y, TARGET.z);
+      run(TNT_FUSE_STEPS);
+
+      expect(exploded()).toBeTrue();
+      expect(world.get(TARGET.x, TARGET.y, TARGET.z)).toBe(AIR);
+      expect(world.get(TARGET.x, FLOOR_TOP - 1, TARGET.z)).toBe(AIR);
+      expect(world.get(TARGET.x + 2, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('obsidian'));
+      expect(simulation.health.value).toBeLessThan(catalog.world.hero.maxHealth);
+    });
+
+    it('a explosão acende a TNT vizinha, que estoura logo depois', () => {
+      put('tnt');
+      put('tnt', TARGET.x + 2);
+      simulation.explosions.ignite(TARGET.x, TARGET.y, TARGET.z);
+      run(TNT_FUSE_STEPS);
+
+      expect(isLit(TARGET.x + 2, TARGET.y, TARGET.z)).toBeTrue();
+
+      run(40);
+
+      expect(world.get(TARGET.x + 2, TARGET.y, TARGET.z)).toBe(AIR);
+      expect([...simulation.explosions.lit]).toEqual([]);
+    });
+
+    it('quebrar a TNT acesa apaga o pavio, e ela volta inteira para a mochila', () => {
+      put('tnt');
+      simulation.explosions.ignite(TARGET.x, TARGET.y, TARGET.z);
+      run(5, { primaryHeld: true });
+      run(TNT_FUSE_STEPS);
+
+      expect(exploded()).toBeFalse();
+      expect(simulation.inventory.count('tnt')).toBe(1);
+      expect(simulation.health.isFull).toBeTrue();
+    });
+
+    it('o creeper chia perto do herói e estoura: machuca, mas não desmancha o chão', () => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      const creeper = simulation.creatures.spawn(catalog.creature('creeper'), 7, FLOOR_TOP, 5.5);
+
+      run(120);
+
+      expect(simulation.creatures.list).not.toContain(creeper);
+      expect(events).toContain({ type: 'sound', cue: 'fireball' });
+      expect(exploded()).toBeTrue();
+      expect(simulation.health.value).toBeLessThan(catalog.world.hero.maxHealth);
+      expect(world.get(7, FLOOR_TOP - 1, 5)).toBe(catalog.blockNumber('grass'));
+    });
+  });
+
   describe('água e fazenda', () => {
     const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
 

@@ -1,7 +1,7 @@
 import type { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { HERO_PHYSICS, STEP_MS } from '../../config/craft-physics.config';
 import type { CraftCatalog } from '../../content/craft-catalog';
-import type { CreatureDefinition, CreatureInteraction, SpawnPeriod, Temperament } from '../../models/content.model';
+import type { CreatureDefinition, CreatureInteraction, ExplosionSpec, SpawnPeriod, Temperament } from '../../models/content.model';
 import type { VoxelWorld } from '../../world/voxel-world';
 import type { BlockProperties, PhysicsTerrain } from '../block-properties';
 import { CreatureSpawner } from './creature-spawner';
@@ -40,6 +40,10 @@ const ARCHER_SHOOT_RANGE = 14;
 const ARCHER_ARROW_SPEED = 16;
 /** A flecha cai assim, em blocos por segundo ao quadrado: o esqueleto mira um pouco acima para compensar. */
 const ARROW_GRAVITY = 12;
+
+/** Perto assim, o creeper para e começa a chiar; longe assim, o herói escapou e o pavio apaga. */
+const FUSE_START_RANGE = 2.5;
+const FUSE_ESCAPE_RANGE = 5;
 
 /** Quanto da velocidade desejada é alcançada por passo: o bicho acelera e freia macio. */
 const GRIP = 0.3;
@@ -92,6 +96,10 @@ export class Creature {
   loveLeftMs = 0;
   /** Descanso depois de ter um filhote. */
   breedRestMs = 0;
+  /** Pavio aceso do creeper: quanto falta para estourar; `null` apagado. */
+  fuseLeftMs: number | null = null;
+  /** Duração do pavio aceso agora, para o desenho saber quanto já queimou. */
+  fuseTotalMs = 0;
 
   /** Espera de cada interação, pelo item usado (a lã crescendo de volta). */
   private readonly cooldowns = new Map<string, number>();
@@ -124,6 +132,11 @@ export class Creature {
   /** Pode comer para ter filhote agora? Precisa ser adulto, sem estar descansando nem já apaixonado. */
   get canBreed(): boolean {
     return this.definition.breedsWith !== null && !this.isBaby && this.loveLeftMs === 0 && this.breedRestMs === 0;
+  }
+
+  /** Quanto do pavio já queimou, de 0 a 1; 0 com o pavio apagado. */
+  get fuseProgress(): number {
+    return this.fuseLeftMs === null || this.fuseTotalMs === 0 ? 0 : 1 - this.fuseLeftMs / this.fuseTotalMs;
   }
 
   /** Alguma interação ainda está esperando: a ovelha tosquiada fica sem lã até lá. */
@@ -198,6 +211,10 @@ export interface CreaturesHost {
   born(baby: Creature): void;
   /** No Fácil, os inimigos são mais lentos e atacam menos. */
   difficulty(): CreatureDifficulty;
+  /** O creeper chegou perto e acendeu o pavio. */
+  fuseLit(creature: Creature): void;
+  /** O pavio acabou: o creeper já saiu da lista e o estouro acontece onde ele estava. */
+  exploded(creature: Creature, explosion: ExplosionSpec): void;
 }
 
 /**
@@ -310,6 +327,15 @@ export class Creatures {
 
       this.think(creature, hero);
       this.move(terrain, creature, hero);
+
+      const explosion = this.burnFuse(creature, hero);
+
+      if (explosion) {
+        this.creatures.splice(index, 1);
+        this.host.exploded(creature, explosion);
+        continue;
+      }
+
       this.attack(creature, hero);
       this.layEgg(creature);
       creature.tickCooldowns(STEP_MS);
@@ -441,6 +467,10 @@ export class Creatures {
   private walkSpeed(creature: Creature, hero: PhysicsBody): number {
     const speed = creature.definition.speed * (creature.isHostile ? this.host.difficulty().speed : 1);
 
+    if (creature.fuseLeftMs !== null) {
+      return 0;
+    }
+
     switch (creature.mood) {
       case 'idle':
         return 0;
@@ -527,7 +557,7 @@ export class Creatures {
 
   /** O inimigo que alcançou o herói golpeia; o esqueleto atira de longe, se enxerga o herói. */
   private attack(creature: Creature, hero: PhysicsBody): void {
-    if (creature.mood !== 'chase' || creature.attackLeftMs > 0) {
+    if (creature.mood !== 'chase' || creature.attackLeftMs > 0 || creature.definition.explodes) {
       return;
     }
 
@@ -547,6 +577,39 @@ export class Creatures {
       creature.attackLeftMs = definition.attackCooldownMs * this.host.difficulty().attackCooldown;
       this.host.strike(creature);
     }
+  }
+
+  /**
+   * O creeper não golpeia: perto do herói, para e acende o pavio. Se o herói
+   * se afastar a tempo, o pavio apaga; senão, estoura. Devolve o estouro, ou
+   * `null` enquanto não for a hora.
+   */
+  private burnFuse(creature: Creature, hero: PhysicsBody): ExplosionSpec | null {
+    const explodes = creature.definition.explodes;
+
+    if (!explodes) {
+      return null;
+    }
+
+    const distance = distanceBetween(creature.body, hero);
+
+    if (creature.fuseLeftMs === null) {
+      if (creature.mood === 'chase' && distance <= FUSE_START_RANGE) {
+        creature.fuseTotalMs = explodes.fuseMs * this.host.difficulty().attackCooldown;
+        creature.fuseLeftMs = creature.fuseTotalMs;
+        this.host.fuseLit(creature);
+      }
+      return null;
+    }
+
+    if (distance > FUSE_ESCAPE_RANGE) {
+      creature.fuseLeftMs = null;
+      return null;
+    }
+
+    creature.fuseLeftMs -= STEP_MS;
+
+    return creature.fuseLeftMs <= 0 ? explodes : null;
   }
 
   /** Flecha do olho do esqueleto até o peito do herói, mirando um pouco acima pela queda da flecha. */

@@ -135,6 +135,27 @@ describe('Conteúdo do PedroCraft', () => {
       expect(toBlock?.type === 'shaped' ? toBlock.pattern.join('').length : 0).toBe(9);
       expect(fromBlock?.output).toEqual({ item: 'gold-ingot', count: 9 });
     });
+
+    it('troca 9 esmeraldas por um bloco de esmeralda e o bloco de volta pelas 9 esmeraldas', () => {
+      const toBlock = content.recipes.crafting.find((recipe) => recipe.output.item === 'emerald-block');
+      const fromBlock = content.recipes.crafting.find((recipe) => recipe.type === 'shapeless' && recipe.ingredients.some((ingredient) => ingredient.item === 'emerald-block'));
+
+      expect(toBlock?.type === 'shaped' ? toBlock.pattern.join('').length : 0).toBe(9);
+      expect(fromBlock?.output).toEqual({ item: 'emerald', count: 9 });
+    });
+
+    it('a pólvora da TNT vem de um inimigo que estoura, e a TNT acende com um item que se fabrica', () => {
+      const tnt = content.blocks.find((block) => block.id === 'tnt');
+      const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'tnt');
+      const creeper = content.creatures.find((creature) => creature.id === 'creeper');
+      const creeperLoot = content.lootTables.find((table) => table.id === creeper?.drops);
+
+      expect(tnt?.explosive?.breaksBlocks).toBeTrue();
+      expect(recipe ? recipeRequirements(recipe).map((requirement) => requirement.item) : []).toContain('gunpowder');
+      expect(creeper?.explodes?.breaksBlocks).toBeFalse();
+      expect(creeperLoot?.entries.map((entry) => entry.item)).toContain('gunpowder');
+      expect(content.recipes.crafting.some((candidate) => candidate.output.item === tnt?.explosive?.igniter)).toBeTrue();
+    });
   });
 
   describe('validação da forma', () => {
@@ -259,6 +280,24 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'blocks', 'blocks', 'carpet-red')['solid'] = true;
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "carpet-red": um tapete não pode ser sólido');
+    });
+
+    it('não aceita TNT que aguenta explosão: a reação em cadeia nunca chegaria nela', () => {
+      entry(files, 'blocks', 'blocks', 'tnt')['blastResistant'] = true;
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "tnt": um bloco que estoura não pode aguentar explosão');
+    });
+
+    it('aponta o item que acende a TNT quando ele não existe', () => {
+      record(entry(files, 'blocks', 'blocks', 'tnt')['explosive'])['igniter'] = 'isqueiro';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "tnt": item "isqueiro" não existe');
+    });
+
+    it('não aceita animal manso que estoura', () => {
+      entry(files, 'creatures', 'creatures', 'creeper')['temperament'] = 'passive';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('criatura "creeper": só um inimigo pode estourar');
     });
   });
 

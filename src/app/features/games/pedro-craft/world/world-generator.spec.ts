@@ -149,7 +149,31 @@ describe('Gerador de mundo do PedroCraft', () => {
     expect(before.layout).toEqual(generated.layout);
   });
 
-  it('põe os diamantes só no lugar de pedra: mundos salvos antes deles continuam iguais', async () => {
+  it('esconde a esmeralda e o lápis-lazúli no fundo, e a obsidiana encostada na rocha-mãe', () => {
+    for (const id of ['emerald-ore', 'lapis-ore']) {
+      expect(countBlocks(id, generated.layout.quarry, catalog.world.quarry.radius)).withContext(id).toBeGreaterThan(0);
+      expect(highestLayerOf(id)).withContext(id).toBeLessThanOrEqual(oreDepth(id));
+    }
+
+    expect(countBlocks('obsidian', generated.layout.quarry, catalog.world.quarry.radius)).toBeGreaterThan(0);
+    expect(highestLayerOf('obsidian')).toBeLessThanOrEqual(oreDepth('obsidian'));
+    expect(oreDepth('obsidian')).toBeLessThan(oreDepth('diamond-ore'));
+  });
+
+  it('os minérios raros novos não mudam os diamantes de mundos salvos', async () => {
+    const files = await fetchPublishedContentFiles();
+    const quarry = (files.world as JsonRecord)['quarry'] as JsonRecord;
+
+    quarry['rareOres'] = (quarry['rareOres'] as JsonValue[]).slice(0, 1);
+
+    const older = new CraftCatalog(parseCraftContent(files));
+    const diamond = (cells: Uint8Array, source: CraftCatalog): number[] =>
+      [...cells].flatMap((cell, index) => (source.blockAt(cell)?.id === 'diamond-ore' ? [index] : []));
+
+    expect(diamond(generated.world.snapshot, catalog)).toEqual(diamond(generateWorld(older, 42).world.snapshot, older));
+  });
+
+  it('põe os minérios raros só no lugar de pedra: mundos salvos antes deles continuam iguais', async () => {
     const files = await fetchPublishedContentFiles();
     const quarry = (files.world as JsonRecord)['quarry'] as JsonRecord;
 
@@ -157,10 +181,10 @@ describe('Gerador de mundo do PedroCraft', () => {
 
     const before = generateWorld(new CraftCatalog(parseCraftContent(files)), 42);
     const stone = catalog.blockNumber('stone');
-    const diamond = catalog.blockNumber('diamond-ore');
+    const rareOres = new Set(catalog.world.quarry.rareOres.map((vein) => catalog.blockNumber(vein.block)));
     const beforeCells = before.world.snapshot;
     const changed = [...generated.world.snapshot].filter((block, index) => block !== beforeCells[index]).length;
-    const swapped = [...generated.world.snapshot].filter((block, index) => block === diamond && beforeCells[index] === stone).length;
+    const swapped = [...generated.world.snapshot].filter((block, index) => rareOres.has(block) && beforeCells[index] === stone).length;
 
     expect(changed).toBeGreaterThan(0);
     expect(swapped).toBe(changed);

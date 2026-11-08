@@ -11,6 +11,9 @@
     },
     "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
     "colors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/color" } },
+    "fuseMs": { "type": "integer", "minimum": 500, "maximum": 10000, "description": "Espera entre acender e estourar." },
+    "blastRadius": { "type": "number", "minimum": 1, "maximum": 5, "description": "Até onde a explosão alcança, em blocos." },
+    "blastDamage": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Corações tirados bem no centro; a beirada ainda tira um." },
     "itemAmount": {
       "type": "object",
       "required": ["item"],
@@ -30,7 +33,7 @@
           "enum": ["speckle", "cobble", "grass-side", "planks", "log-side", "log-top", "leaves", "ore", "bricks", "glass", "farmland", "water", "plant", "crop", "torch", "panel", "rail"]
         },
         "colors": { "$ref": "#/$defs/colors" },
-        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain"] }
+        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain", "band"], "description": "band: faixa clara no meio, com três marquinhas (a TNT)." }
       }
     },
     "toolType": { "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "shears"] }
