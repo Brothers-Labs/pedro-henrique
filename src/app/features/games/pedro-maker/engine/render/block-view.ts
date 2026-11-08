@@ -19,6 +19,13 @@ const WATER_TOP = 0.86;
 const WATER_OPACITY = 0.62;
 const BLOCK_SIZE = 0.98;
 
+/** Faces de um bloco: a de cima pode ter desenho próprio, como a grama. */
+interface BlockTiles {
+  readonly side: VoxelTile;
+  readonly top: VoxelTile;
+  readonly bottom: VoxelTile;
+}
+
 interface BlockMesh {
   readonly mesh: InstancedMesh;
   readonly blocks: readonly InteractiveBlock[];
@@ -42,6 +49,7 @@ export class BlockView {
   private readonly springs: BlockMesh;
   private readonly notes: BlockMesh;
   private readonly crumbles: BlockMesh;
+  private readonly invisibleGrass: BlockMesh;
   private readonly lava: InstancedMesh | null;
   private readonly water: InstancedMesh | null;
   /** Para cada célula de água, se ela é a de cima (a que ondula). */
@@ -75,6 +83,8 @@ export class BlockView {
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
     this.notes = this.blockMesh(byKind('note'), 'note', BLOCK_SIZE);
     this.crumbles = this.blockMesh(byKind('crumble'), 'crumble', BLOCK_SIZE, 0.45);
+    // Revelada, a grama invisível vira um bloco de grama igual ao do terreno.
+    this.invisibleGrass = this.blockMesh(byKind('invisible-grass'), { side: 'grass-side', top: 'grass-top', bottom: 'dirt' }, BLOCK_SIZE);
     this.lava = this.buildLava();
     this.waterSurface = this.findWaterSurface();
     this.water = this.buildWater();
@@ -90,6 +100,7 @@ export class BlockView {
     this.updateBlocks(this.springs, now, () => true);
     this.updateBlocks(this.notes, now, () => true);
     this.updateBlocks(this.crumbles, now, (block) => !block.isHidden);
+    this.updateBlocks(this.invisibleGrass, now, (block) => block.isUsed);
     this.updateLava(now);
     this.updateWater(now);
     this.updatePlatforms(alpha);
@@ -99,9 +110,12 @@ export class BlockView {
     disposeTree(this.root);
   }
 
-  private blockMesh(blocks: readonly InteractiveBlock[], tile: VoxelTile, size: number, height = size): BlockMesh {
-    const region = this.atlas.lookup(tile);
-    const geometry = buildTexturedBoxGeometry(size, height, size, () => region);
+  private blockMesh(blocks: readonly InteractiveBlock[], tile: VoxelTile | BlockTiles, size: number, height = size): BlockMesh {
+    const tiles: BlockTiles = typeof tile === 'string' ? { side: tile, top: tile, bottom: tile } : tile;
+    const side = this.atlas.lookup(tiles.side);
+    const top = this.atlas.lookup(tiles.top);
+    const bottom = this.atlas.lookup(tiles.bottom);
+    const geometry = buildTexturedBoxGeometry(size, height, size, ({ isTop, isBottom }) => (isTop ? top : isBottom ? bottom : side));
     const material = new MeshStandardMaterial({ map: this.atlas.texture, roughness: 0.7 });
     const mesh = new InstancedMesh(geometry, material, Math.max(1, blocks.length));
 

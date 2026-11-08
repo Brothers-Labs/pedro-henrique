@@ -22,7 +22,7 @@ export interface SpawnExtra {
   readonly crystalIndex?: number;
 }
 
-export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note';
+export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note' | 'invisible-grass';
 
 /** Bloco que reage ao Pedro. A tela lê os momentos para animar. */
 export interface InteractiveBlock {
@@ -33,6 +33,7 @@ export interface InteractiveBlock {
   readonly contents?: SurpriseContent;
   readonly powerUp?: PowerUpKind;
   readonly crystalIndex?: number;
+  /** Surpresa já aberta, tábua frágil já pisada ou grama invisível que já apareceu. */
   isUsed: boolean;
   isBroken: boolean;
   /** Plataforma frágil que desabou e ainda não voltou. */
@@ -69,7 +70,17 @@ const MOVING_SPEED = 90;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
 
-const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(['brick', 'surprise', 'spring', 'crumble', 'note']);
+/** Folga em volta do herói que conta como encostar: parado em cima ou de lado, ele já está a 0 pixel do bloco. */
+const INVISIBLE_GRASS_TOUCH_REACH = 2;
+
+const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>([
+  'brick',
+  'surprise',
+  'spring',
+  'crumble',
+  'note',
+  'invisible-grass',
+]);
 
 function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
   return INTERACTIVE_KINDS.has(type);
@@ -78,10 +89,11 @@ function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
 /**
  * Blocos que reagem ao Pedro.
  *
- * Quebrável, surpresa e mola ocupam a grade como sólidos; a plataforma frágil,
- * como chão de mão única. A reação vem do lado do contato: cabeçada por baixo
- * quebra ou abre, pisar em cima faz a mola saltar, o bloco musical quicar e a
- * plataforma frágil tremer.
+ * Quebrável, surpresa, mola e grama invisível ocupam a grade como sólidos; a
+ * plataforma frágil, como chão de mão única. A reação vem do lado do contato:
+ * cabeçada por baixo quebra ou abre, pisar em cima faz a mola saltar, o bloco
+ * musical quicar e a plataforma frágil tremer. A grama invisível aparece com
+ * qualquer encostada, por cima, por baixo ou de lado.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -223,6 +235,29 @@ export class BlockSystem {
     }
   }
 
+  /**
+   * A grama invisível que o herói encosta aparece e fica à mostra até o fim da
+   * partida: a criança entende onde estava o chão escondido e pode usá-lo de novo.
+   */
+  revealInvisibleGrassTouching(body: PhysicsBody): void {
+    const reach = INVISIBLE_GRASS_TOUCH_REACH;
+    const firstColumn = Math.floor((body.x - reach) / TILE_SIZE);
+    const lastColumn = Math.floor((body.x + body.width + reach) / TILE_SIZE);
+    const firstRow = Math.floor((body.y - reach) / TILE_SIZE);
+    const lastRow = Math.floor((body.y + body.height + reach) / TILE_SIZE);
+
+    for (let row = firstRow; row <= lastRow; row += 1) {
+      for (let column = firstColumn; column <= lastColumn; column += 1) {
+        // Fora da grade a chave da célula cairia numa célula de verdade do outro lado.
+        const block = this.grid.contains(column, row) ? this.blockAt(column, row) : undefined;
+
+        if (block?.kind === 'invisible-grass' && !block.isUsed) {
+          this.reveal(block);
+        }
+      }
+    }
+  }
+
   /** Pisou em cima: a mola lança, a plataforma frágil começa a tremer. */
   handleLanding(player: Player, row: number, fromColumn: number, toColumn: number, now: number): void {
     for (let column = fromColumn; column <= toColumn; column += 1) {
@@ -250,6 +285,12 @@ export class BlockSystem {
     this.host.playSound('break');
     this.host.effects.burst('poof', (block.cellX + 0.5) * TILE_SIZE, (block.cellY + 0.5) * TILE_SIZE, 14);
     this.host.effects.shake('leve');
+  }
+
+  private reveal(block: InteractiveBlock): void {
+    block.isUsed = true;
+    this.host.playSound('secret');
+    this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, (block.cellY + 0.5) * TILE_SIZE, 10);
   }
 
   private addInteractive(object: LevelObject, kind: InteractiveKind, crystalIndex: number | undefined): void {

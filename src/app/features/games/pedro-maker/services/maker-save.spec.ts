@@ -82,5 +82,24 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
       expect(sanitizeCustomLevel({ ...valid, id: 7 })).toBeNull();
       expect(sanitizeCustomLevel({ ...valid, theme: 'lua' })?.theme).toBe('vale');
     });
+
+    it('guarda o Castelo do Rei Slime, a grama invisível e o castelo final, e descarta desenho de portal inventado', () => {
+      const level = sanitizeCustomLevel({
+        ...valid,
+        theme: 'castelo-rei-slime',
+        objects: [
+          { id: 'grama', type: 'invisible-grass', x: 3, y: 14 },
+          { id: 'castelo', type: 'portal', x: 30, y: 13, properties: { portalLook: 'castle' } },
+          { id: 'foguete', type: 'portal', x: 32, y: 13, properties: { portalLook: 'foguete' } },
+        ],
+      });
+
+      expect(level?.theme).toBe('castelo-rei-slime');
+      expect(level?.objects).toEqual([
+        { id: 'grama', type: 'invisible-grass', x: 3, y: 14 },
+        { id: 'castelo', type: 'portal', x: 30, y: 13, properties: { portalLook: 'castle' } },
+        { id: 'foguete', type: 'portal', x: 32, y: 13 },
+      ]);
+    });
   });
 });

@@ -91,7 +91,7 @@ export class PropView {
     if (portal) {
       this.portal = new Group();
       this.portal.position.set(space.x(portal.x), space.y(portal.y), -0.3);
-      this.portal.add(this.voxelMesh(portalFrame()));
+      this.portal.add(this.voxelMesh(portal.look === 'castle' ? castleFrame() : portalFrame()));
 
       this.swirl = new Mesh(
         new CircleGeometry(0.82, 36),
@@ -644,6 +644,35 @@ function portalFrame(): readonly VoxelBox[] {
     box(-1.05, 0.08, 0, 0.6, 0.16, 0.7, darken(stone, 0.2)),
     box(1.05, 0.08, 0, 0.6, 0.16, 0.7, darken(stone, 0.2)),
     box(0, 2.45, 0.31, 0.3, 0.2, 0.02, '#ffe066'),
+  ];
+}
+
+/**
+ * Castelo do fim da fase: duas torres com ameias e telhado vermelho, a muralha
+ * por cima do portão e a bandeira no alto. O portão tem a largura do arco do
+ * portal, para o redemoinho caber nele do mesmo jeito.
+ */
+function castleFrame(): readonly VoxelBox[] {
+  const wall = '#9aa3b5';
+  const tower = darken(wall, 0.12);
+  const roof = '#e8343a';
+  const towers = [-1, 1].flatMap((side) => [
+    box(side * 1.3, 1.5, 0, 0.72, 3, 0.8, tower),
+    box(side * 1.3, 3.12, 0, 0.84, 0.24, 0.9, darken(tower, 0.15)),
+    box(side * 1.3, 3.42, 0, 0.6, 0.36, 0.66, roof),
+    box(side * 1.3, 3.74, 0, 0.32, 0.28, 0.36, roof),
+    box(side * 1.3, 2.2, 0.41, 0.18, 0.3, 0.02, '#2a2350'),
+    box(side * 1.3, 0.08, 0, 0.9, 0.16, 0.95, darken(wall, 0.25)),
+  ]);
+  const battlements = [-0.6, 0, 0.6].map((x) => box(x, 3.06, 0, 0.3, 0.22, 0.6, wall));
+
+  return [
+    ...towers,
+    box(0, 2.62, 0, 1.9, 0.76, 0.6, wall),
+    ...battlements,
+    box(0, 2.3, 0.31, 1.6, 0.06, 0.02, lighten(wall, 0.25)),
+    box(0, 3.72, 0, 0.06, 1.1, 0.06, '#e6e8f0'),
+    box(0.24, 4.05, 0, 0.42, 0.3, 0.04, '#ffd23f'),
   ];
 }
 

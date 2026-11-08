@@ -86,6 +86,7 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   vulcao: 55,
   estrelas: 65,
   castelo: 53,
+  'castelo-rei-slime': 52,
   praia: 61,
   classico: 60,
 };

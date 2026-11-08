@@ -36,6 +36,27 @@ export function paintTerrainTile(context: CanvasRenderingContext2D, material: Te
   paintEdges(context);
 }
 
+/** Opacidade da grama invisível no editor: o criador vê onde pôs, mas percebe que é diferente. */
+const INVISIBLE_GRASS_OPACITY = 0.35;
+
+/**
+ * Grama invisível no editor: a grama de sempre, apagadinha e com contorno
+ * tracejado. Na partida ela não aparece até o herói encostar.
+ */
+export function paintInvisibleGrass(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  context.save();
+  context.globalAlpha = INVISIBLE_GRASS_OPACITY;
+  paintTerrainTile(context, 'ground', palette);
+  context.restore();
+
+  context.save();
+  context.setLineDash([6, 4]);
+  context.lineWidth = 2.5;
+  context.strokeStyle = '#ffffff';
+  context.strokeRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+  context.restore();
+}
+
 function paintSoil(context: CanvasRenderingContext2D, palette: ThemePalette): void {
   context.fillStyle = palette.soil;
   context.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
@@ -505,6 +526,50 @@ export function paintPortalFrame(context: CanvasRenderingContext2D): void {
     star(context, x, y, 7, 3);
     fillAndOutline(context, '#ffd23f', 2);
   }
+}
+
+/**
+ * Castelo final no editor: duas torres com ameias, a bandeira no alto e o
+ * portão em arco, onde o redemoinho é pintado por cima.
+ */
+export function paintCastleFrame(context: CanvasRenderingContext2D): void {
+  const wall = '#9aa3b5';
+  const roof = '#e8343a';
+
+  context.fillStyle = darken(wall, 0.15);
+
+  for (const x of [4, 80] as const) {
+    context.fillRect(x, 30, 28, 98);
+    context.strokeStyle = OUTLINE;
+    context.lineWidth = 3;
+    context.strokeRect(x, 30, 28, 98);
+
+    for (const offset of [0, 18] as const) {
+      context.fillRect(x + offset, 20, 10, 10);
+      context.strokeRect(x + offset, 20, 10, 10);
+    }
+  }
+
+  context.beginPath();
+  context.moveTo(32, 128);
+  context.lineTo(32, 40);
+  context.lineTo(80, 40);
+  context.lineTo(80, 128);
+  context.lineTo(74, 128);
+  context.lineTo(74, 72);
+  context.quadraticCurveTo(56, 40, 38, 72);
+  context.lineTo(38, 128);
+  context.closePath();
+  fillAndOutline(context, wall, 3);
+
+  context.fillStyle = OUTLINE;
+  context.fillRect(55, 0, 3, 40);
+  context.beginPath();
+  context.moveTo(58, 2);
+  context.lineTo(76, 9);
+  context.lineTo(58, 16);
+  context.closePath();
+  fillAndOutline(context, roof, 2);
 }
 
 export const PORTAL_SWIRL_SIZE = 96;

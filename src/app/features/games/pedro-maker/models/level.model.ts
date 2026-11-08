@@ -18,6 +18,7 @@ export type LevelTheme =
   | 'vulcao'
   | 'estrelas'
   | 'castelo'
+  | 'castelo-rei-slime'
   | 'praia'
   | 'classico';
 
@@ -71,7 +72,8 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * cogumelo de vida. O Cogumelo Gato, o Cogumelo Folha e a Folha do Guaxinim
  * também fazem crescer: com o gato, o herói escala paredes; com a folha, plana
  * segurando o pulo; com o guaxinim, voa um pouquinho e gira o rabo. O Giga
- * Cogumelo deixa o herói gigante por alguns segundos.
+ * Cogumelo deixa o herói gigante por alguns segundos, e o Cogumelo Turbo, bem
+ * mais rápido.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -88,6 +90,7 @@ export const POWER_UP_KINDS = [
   'leaf-mushroom',
   'raccoon-leaf',
   'giga-mushroom',
+  'turbo-mushroom',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
@@ -103,6 +106,7 @@ export const CLASSIC_POWER_UPS = [
   'leaf-mushroom',
   'raccoon-leaf',
   'giga-mushroom',
+  'turbo-mushroom',
 ] as const satisfies readonly PowerUpKind[];
 
 /**
@@ -127,7 +131,9 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
  * segura ninguém: quem entra nela nada. Os espinhos seguram, mas machucam
- * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele.
+ * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele. A grama
+ * invisível é chão de verdade que não aparece: só se mostra depois que o
+ * herói encosta nela.
  */
 export type BlockType =
   | 'cannon'
@@ -140,7 +146,8 @@ export type BlockType =
   | 'lava'
   | 'water'
   | 'spikes'
-  | 'note';
+  | 'note'
+  | 'invisible-grass';
 
 /**
  * Valores das moedas gigantes numeradas, da menor para a maior.
@@ -152,6 +159,7 @@ export type BlockType =
  */
 export const GIANT_COIN_VALUES = [
   5, 25, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
+  5_000_000, 10_000_000, 25_000_000, 50_000_000,
 ] as const;
 
 export type GiantCoinValue = (typeof GIANT_COIN_VALUES)[number];
@@ -211,6 +219,14 @@ export function formatCoinValue(value: number): string {
 export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | GiantCoinType | 'crystal' | 'heart' | 'power-up';
 
 /**
+ * Desenho do portal final: o arco de pedra ou o castelo, que a criança
+ * reconhece como o fim da fase nos jogos de plataforma. Só muda o visual.
+ */
+export const PORTAL_LOOKS = ['arch', 'castle'] as const;
+
+export type PortalLook = (typeof PORTAL_LOOKS)[number];
+
+/**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na
  * primeira passagem ainda dá um punhado de moedas.
  */
@@ -268,6 +284,8 @@ export interface LevelObjectProperties {
   readonly touchText?: string;
   /** Portas com o mesmo par se ligam uma à outra. */
   readonly pair?: string;
+  /** Desenho do portal final; sem ele, o arco de pedra. */
+  readonly portalLook?: PortalLook;
 }
 
 export interface LevelObject {

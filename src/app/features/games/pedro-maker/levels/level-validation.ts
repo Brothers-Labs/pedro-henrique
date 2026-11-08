@@ -4,6 +4,7 @@ import {
   type LevelObject,
   type LevelObjectProperties,
   type LevelObjectType,
+  PORTAL_LOOKS,
   POWER_UP_KINDS,
   SURPRISE_CONTENTS,
 } from '../models/level.model';
@@ -113,6 +114,7 @@ function sanitizeProperties(value: unknown): LevelObjectProperties | null {
   const text = typeof source['text'] === 'string' ? source['text'].slice(0, 80) : undefined;
   const touchText = typeof source['touchText'] === 'string' ? source['touchText'].slice(0, 80) : undefined;
   const pair = typeof source['pair'] === 'string' ? source['pair'].slice(0, 12) : undefined;
+  const portalLook = pickOne(source['portalLook'], PORTAL_LOOKS);
 
   const properties: LevelObjectProperties = {
     ...(contents ? { contents } : {}),
@@ -122,6 +124,7 @@ function sanitizeProperties(value: unknown): LevelObjectProperties | null {
     ...(text !== undefined ? { text } : {}),
     ...(touchText !== undefined ? { touchText } : {}),
     ...(pair !== undefined ? { pair } : {}),
+    ...(portalLook ? { portalLook } : {}),
   };
 
   return Object.keys(properties).length > 0 ? properties : null;

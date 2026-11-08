@@ -52,6 +52,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'leaf-mushroom': '#7cc242',
   'raccoon-leaf': '#e8892b',
   'giga-mushroom': '#d6336c',
+  'turbo-mushroom': '#1fa2ff',
 };
 
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
@@ -460,6 +461,8 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return raccoonLeafParts(POWER_UP_COLORS['raccoon-leaf']);
     case 'giga-mushroom':
       return scaleParts(mushroomParts(POWER_UP_COLORS['giga-mushroom']), GIGA_ITEM_SCALE);
+    case 'turbo-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['turbo-mushroom']), ...speedStreakParts()];
     default:
       return null;
   }
@@ -498,6 +501,17 @@ function leafParts(): readonly VoxelBox[] {
     box(0.08, 0.3, 0, 0.34, 0.05, 0.18, '#2f9e44'),
     box(0.08, 0.326, 0, 0.3, 0.01, 0.03, '#b2f2bb'),
     box(-0.12, 0.3, 0, 0.08, 0.04, 0.04, '#2b8a3e'),
+  ];
+}
+
+/** Riscos amarelos de velocidade atrás do cogumelo, como se ele já estivesse correndo. */
+function speedStreakParts(): readonly VoxelBox[] {
+  const streak = '#ffd23f';
+
+  return [
+    box(-0.42, 0.12, -0.05, 0.22, 0.05, 0.05, streak),
+    box(-0.46, 0, -0.05, 0.3, 0.05, 0.05, streak),
+    box(-0.42, -0.12, -0.05, 0.22, 0.05, 0.05, streak),
   ];
 }
 

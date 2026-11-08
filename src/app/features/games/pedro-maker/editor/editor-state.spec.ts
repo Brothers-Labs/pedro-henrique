@@ -145,6 +145,10 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'door', properties: { pair: 'B' } })?.id).toBe('door-b');
     expect(findEditorPiece({ type: 'surprise', properties: { contents: 'heart' } })?.id).toBe('surprise-heart');
     expect(findEditorPiece({ type: 'ground' })?.id).toBe('ground');
+    expect(findEditorPiece({ type: 'portal' })?.id).toBe('portal');
+    expect(findEditorPiece({ type: 'portal', properties: { portalLook: 'castle' } })?.id).toBe('portal-castle');
+    expect(findEditorPiece({ type: 'invisible-grass' })?.id).toBe('invisible-grass');
+    expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'turbo-mushroom' } })?.id).toBe('power-turbo-mushroom');
   });
 
   it('corta o que sobra ao diminuir a fase e respeita os limites de largura', () => {

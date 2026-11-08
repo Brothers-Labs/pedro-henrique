@@ -68,6 +68,7 @@ export const POWER_UP_DURATION_MS = {
   wings: 20000,
   star: 10000,
   'giga-mushroom': 10000,
+  'turbo-mushroom': 10000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
@@ -133,11 +134,26 @@ export const RACCOON_SUIT_PHYSICS = {
  * herói não se machuca, derruba inimigos e quebra tijolos só de encostar.
  * Antes de acabar, ele pisca para avisar.
  */
+/** Nos últimos segundos do Giga e do Cogumelo Turbo o herói pisca, avisando que o efeito vai acabar. */
+export const POWER_UP_WARNING_MS = 2500;
+
 export const GIGA_PHYSICS = {
   bodyScale: 2,
-  warningMs: 2500,
   /** Folga além da caixa que ainda conta como esbarrão num tijolo. */
   brickReach: 2,
+} as const;
+
+/**
+ * Cogumelo Turbo: mais rápido que o Turbo dos power-ups e com arrancada forte,
+ * para a criança sentir a diferença logo no primeiro passo. O rastro de
+ * faíscas mostra que o efeito está ligado.
+ */
+export const TURBO_MUSHROOM_PHYSICS = {
+  speedMultiplier: 1.6,
+  accelerationMultiplier: 1.6,
+  trailIntervalMs: 70,
+  /** Abaixo desta velocidade o herói está quase parado e não deixa rastro. */
+  trailMinSpeed: 120,
 } as const;
 
 /** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */

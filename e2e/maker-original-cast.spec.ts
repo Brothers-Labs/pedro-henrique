@@ -3,7 +3,11 @@ import { expect, test } from '@playwright/test';
 interface SavedLevel {
   readonly id: string;
   readonly name: string;
-  readonly objects: readonly { readonly type: string; readonly properties?: { readonly powerUp?: string } }[];
+  readonly theme: string;
+  readonly objects: readonly {
+    readonly type: string;
+    readonly properties?: { readonly powerUp?: string; readonly portalLook?: string };
+  }[];
 }
 
 /** Read saved levels after real UI actions, without changing game state through test hooks. */
@@ -103,6 +107,27 @@ test('Maker saves the raccoon leaf and the giga mushroom', async ({ page }) => {
     .find((level) => level.name === 'Fase do Guaxinim Gigante')?.objects.map((object) => object.properties?.powerUp))
     .toEqual(expect.arrayContaining(['raccoon-leaf', 'giga-mushroom']));
   await page.screenshot({ path: test.info().outputPath('raccoon-giga-editor.png') });
+});
+
+test('Maker saves the turbo mushroom, the invisible grass and the castle portal in the Slime King castle', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase do Castelo do Rei Slime');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  await page.getByRole('combobox', { name: 'Tema da fase' }).selectOption('castelo-rei-slime');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  for (const [index, [tab, label]] of [['Cogumelos', 'Cogumelo Turbo'], ['Terreno', 'Grama Invisível'], ['Portais', 'Castelo final']].entries()) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 144 + index * 32, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => {
+    const level = (await savedLevels(page)).find((saved) => saved.name === 'Fase do Castelo do Rei Slime');
+    return { theme: level?.theme, types: level?.objects.map((object) => object.properties?.powerUp ?? object.properties?.portalLook ?? object.type) };
+  }).toEqual({ theme: 'castelo-rei-slime', types: expect.arrayContaining(['turbo-mushroom', 'invisible-grass', 'castle']) });
+  await page.screenshot({ path: test.info().outputPath('slime-king-castle-editor.png') });
 });
 
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {

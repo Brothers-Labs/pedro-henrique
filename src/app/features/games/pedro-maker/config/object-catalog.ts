@@ -39,6 +39,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   note: { surface: 'solid', isUnique: false },
+  'invisible-grass': { surface: 'solid', isUnique: false },
   spring: { surface: 'one-way', isUnique: false },
   crumble: { surface: 'one-way', isUnique: false },
   platform: { surface: 'one-way', isUnique: false },
@@ -169,6 +170,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'lava', category: 'terreno', type: 'lava', label: 'Lava' },
   { id: 'water', category: 'terreno', type: 'water', label: 'Água' },
   { id: 'spikes', category: 'terreno', type: 'spikes', label: 'Espinhos' },
+  { id: 'invisible-grass', category: 'terreno', type: 'invisible-grass', label: 'Grama Invisível' },
 
   { id: 'cannon', category: 'blocos', type: 'cannon', label: 'Canhão' },
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
@@ -264,6 +266,13 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'power-leaf-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Folha', properties: { powerUp: 'leaf-mushroom' } },
   { id: 'power-raccoon-leaf', category: 'cogumelos', type: 'power-up', label: 'Folha do Guaxinim', properties: { powerUp: 'raccoon-leaf' } },
   { id: 'power-giga-mushroom', category: 'cogumelos', type: 'power-up', label: 'Giga Cogumelo', properties: { powerUp: 'giga-mushroom' } },
+  {
+    id: 'power-turbo-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo Turbo',
+    properties: { powerUp: 'turbo-mushroom' },
+  },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
   {
     id: 'surprise-mushroom',
@@ -275,6 +284,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
 
   { id: 'start', category: 'portais', type: 'start', label: 'Início' },
   { id: 'portal', category: 'portais', type: 'portal', label: 'Portal final' },
+  { id: 'portal-castle', category: 'portais', type: 'portal', label: 'Castelo final', properties: { portalLook: 'castle' } },
   { id: 'door-a', category: 'portais', type: 'door', label: 'Porta A', properties: { pair: 'A' } },
   { id: 'door-b', category: 'portais', type: 'door', label: 'Porta B', properties: { pair: 'B' } },
   // Par próprio: duas portas douradas já se ligam sem mexer nas portas A e B.
@@ -287,15 +297,19 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
  * Peça da paleta que corresponde a uma peça já colocada na fase.
  *
  * O mesmo tipo pode ter várias peças (Porta A e Porta B, surpresa de moedas e
- * de coração): vale a que tem as mesmas propriedades; sem nenhuma igual, a
- * primeira do tipo.
+ * de coração): vale a que tem as mesmas propriedades, da mais específica para
+ * a mais geral — o castelo final não pode passar por portal comum só porque a
+ * peça do portal não tem propriedade nenhuma. Sem nenhuma igual, a primeira do
+ * tipo.
  */
 export function findEditorPiece(object: Pick<LevelObject, 'type' | 'properties'>): EditorPiece | undefined {
   const sameType = EDITOR_PIECES.filter((piece) => piece.type === object.type);
   const properties = object.properties ?? {};
+  const propertyCount = (piece: EditorPiece): number => Object.keys(piece.properties ?? {}).length;
+  const mostSpecificFirst = [...sameType].sort((first, second) => propertyCount(second) - propertyCount(first));
 
   return (
-    sameType.find((piece) =>
+    mostSpecificFirst.find((piece) =>
       Object.entries(piece.properties ?? {}).every(([key, value]) => properties[key as keyof LevelObjectProperties] === value),
     ) ?? sameType[0]
   );
@@ -316,6 +330,7 @@ export const POWER_UP_LABELS = {
   'leaf-mushroom': { label: 'Cogumelo Folha', emoji: '🍃' },
   'raccoon-leaf': { label: 'Folha do Guaxinim', emoji: '🦝' },
   'giga-mushroom': { label: 'Giga Cogumelo', emoji: '💪' },
+  'turbo-mushroom': { label: 'Cogumelo Turbo', emoji: '💨' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {
@@ -327,6 +342,7 @@ export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string;
   vulcao: { label: 'Vulcão', emoji: '🌋' },
   estrelas: { label: 'Estrelas', emoji: '🌌' },
   castelo: { label: 'Castelo', emoji: '🏰' },
+  'castelo-rei-slime': { label: 'Castelo do Rei Slime', emoji: '👑' },
   praia: { label: 'Praia', emoji: '🏖️' },
   classico: { label: 'Clássico', emoji: '🍄' },
 };
@@ -340,6 +356,7 @@ export const EDITOR_THEMES: readonly LevelTheme[] = [
   'gelo',
   'vulcao',
   'estrelas',
+  'castelo-rei-slime',
   'praia',
   'classico',
 ];
