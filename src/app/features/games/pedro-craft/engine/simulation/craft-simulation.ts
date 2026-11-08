@@ -28,6 +28,7 @@ import { bestTools } from './infinite-supplies';
 import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
 import { type DropCollector, ItemDrops } from './item-drops';
 import { PhysicsBody } from './physics-body';
+import { Portals } from './portals';
 import { Projectiles } from './projectiles';
 import { castRay, type RayHit } from './raycast';
 import { Weather } from './weather';
@@ -55,6 +56,12 @@ const TRAIN_BOARD_HINT = '🚂 Piuí! Nas encruzilhadas, olhe para o lado que qu
 const TNT_LIT_HINT = '🧨 A TNT foi acesa! Corra para longe antes de ela estourar.';
 const TRAIN_NEEDS_RAIL_HINT = 'O trem anda no trilho. Coloque trilhos no chão, com espaço livre em cima, e use o trem neles.';
 const GUARDIAN_NEEDS_ROOM_HINT = 'O golem é grandão: use num chão com espaço livre em cima.';
+const PORTAL_LIT_HINT = '🟣 Vuuum! O portal acendeu. Faça outro portal longe daqui e entre num deles para viajar.';
+const PORTAL_NEEDS_FRAME_HINT =
+  'O portal precisa de uma moldura de obsidiana em pé, com um buraco vazio de pelo menos 2 de largura e 3 de altura. Use o isqueiro na obsidiana de baixo, por dentro.';
+const PORTAL_ALONE_HINT = 'Este é o único portal aceso. Construa outro portal para viajar entre os dois!';
+const PORTAL_ARRIVED_HINT = '✨ Você atravessou o portal!';
+const PORTAL_COLOR = '#c58cff';
 
 /** No Fácil, os inimigos andam mais devagar e esperam mais entre um golpe e outro. */
 const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
@@ -117,6 +124,7 @@ export class CraftSimulation {
   readonly creatures: Creatures;
   readonly projectiles = new Projectiles();
   readonly explosions: Explosions;
+  readonly portals: Portals;
   readonly clock: DayClock;
   readonly calendar: Calendar;
   readonly weather: Weather;
@@ -284,6 +292,8 @@ export class CraftSimulation {
       visual: (event) => this.visualEvents.push(event),
     });
 
+    this.portals = new Portals(this.world, this.catalog);
+
     this.screens = new ScreenController({
       catalog: this.catalog,
       infinite: this.mode === 'infinite',
@@ -416,6 +426,7 @@ export class CraftSimulation {
 
     this.applySelection(input);
     this.moveHero(input);
+    this.travelThroughPortal();
     this.observeFirstSteps(input);
     this.target = this.findTarget();
     this.targetCreature = this.findCreature(this.target?.distance ?? this.catalog.world.hero.reach);
@@ -460,6 +471,30 @@ export class CraftSimulation {
 
     this.ride = null;
     this.hero.step(this.terrain, input, this.autoJump, this.mode === 'creative');
+  }
+
+  /** Parado um instante dentro do portal, o herói aparece no portal mais perto. De trem, o portal não leva. */
+  private travelThroughPortal(): void {
+    if (this.ride) {
+      return;
+    }
+
+    const body = this.hero.body;
+    const trip = this.portals.step(body.x, body.y, body.z, STEP_MS);
+
+    if (trip?.type === 'alone') {
+      this.events.push({ type: 'hint', text: PORTAL_ALONE_HINT });
+    }
+
+    if (trip?.type !== 'travel') {
+      return;
+    }
+
+    this.hero.teleport(trip.x, trip.y, trip.z);
+    this.mining = null;
+    this.events.push({ type: 'sound', cue: 'secret' });
+    this.events.push({ type: 'hint', text: PORTAL_ARRIVED_HINT });
+    this.visualEvents.push({ type: 'sparkle', x: trip.x, y: trip.y + 1, z: trip.z, color: PORTAL_COLOR });
   }
 
   /** As fornalhas assam mesmo com a tela delas aberta: a criança gosta de ver o pão ficar pronto. */
@@ -786,11 +821,11 @@ export class CraftSimulation {
     }
   }
 
-  /** A mira atravessa a água: dá para quebrar e construir no fundo do lago. */
+  /** A mira atravessa a água e o portal: dá para construir no fundo do lago e mirar a moldura por dentro. */
   private findTarget(): RayHit | null {
     const properties = this.properties;
 
-    return this.castFromEyes((block) => block !== AIR && properties.isLiquid[block] === 0);
+    return this.castFromEyes((block) => properties.isTargetable[block] === 1);
   }
 
   /** Animal na mira até `reach`: quem passa na frente do bloco mirado ganha a mira. */
@@ -1005,7 +1040,7 @@ export class CraftSimulation {
       return;
     }
 
-    if (target && this.ignite(target)) {
+    if (target && (this.ignite(target) || this.lightPortal(target))) {
       return;
     }
 
@@ -1042,6 +1077,35 @@ export class CraftSimulation {
       if (held.durability !== null) {
         this.wearSelected(held);
       }
+    }
+
+    return true;
+  }
+
+  /**
+   * O isqueiro na moldura de obsidiana acende o portal. Devolve se o botão foi
+   * para a moldura — também quando ela ainda não está pronta, com a dica de
+   * como montar.
+   */
+  private lightPortal(target: RayHit): boolean {
+    const held = this.selectedItem;
+    const lighting = held ? this.portals.light(target, held.id) : null;
+
+    if (!held || !lighting) {
+      return false;
+    }
+
+    if (lighting.type === 'no-frame') {
+      this.events.push({ type: 'hint', text: PORTAL_NEEDS_FRAME_HINT });
+      return true;
+    }
+
+    this.events.push({ type: 'sound', cue: 'secret' });
+    this.events.push({ type: 'hint', text: PORTAL_LIT_HINT });
+    this.recordGoal({ trigger: 'place', target: lighting.portal.id, count: 1 });
+
+    if (held.durability !== null) {
+      this.wearSelected(held);
     }
 
     return true;

@@ -6,6 +6,7 @@ import {
   CONTENT_SCHEMA_VERSION,
   type ExplosionSpec,
   type ExplosiveBlock,
+  type PortalBlock,
   TEXTURE_DETAILS,
   TEXTURE_PATTERNS,
   type TextureSpec,
@@ -40,6 +41,7 @@ export function parseBlocks(value: unknown): readonly BlockDefinition[] {
 function parseBlock(block: JsonObjectReader): BlockDefinition {
   const hardness = block.optionalField('hardness')?.number({ min: 0, max: 60 }) ?? null;
   const explosive = block.optionalField('explosive')?.object() ?? null;
+  const portal = block.optionalField('portal')?.object() ?? null;
 
   return {
     id: block.field('id').id(),
@@ -59,16 +61,23 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
     interaction: block.optionalField('interaction')?.oneOf(BLOCK_INTERACTIONS) ?? null,
     blastResistant: block.optionalField('blastResistant')?.boolean() ?? false,
     explosive: explosive ? parseExplosive(explosive) : null,
+    portal: portal ? parsePortal(portal) : null,
     mapColor: block.field('mapColor').color(),
     textures: parseFaces(block.field('textures').object()),
   };
 }
 
 function parseExplosive(explosive: JsonObjectReader): ExplosiveBlock {
-  return {
-    ...parseExplosion(explosive),
-    igniters: explosive.field('igniters').array({ minLength: 1 }).map((igniter) => igniter.id()),
-  };
+  return { ...parseExplosion(explosive), igniters: parseIgniters(explosive) };
+}
+
+function parsePortal(portal: JsonObjectReader): PortalBlock {
+  return { frame: portal.field('frame').id(), igniters: parseIgniters(portal) };
+}
+
+/** Os itens que acendem: a TNT e o portal pedem pelo menos um, para não ficarem impossíveis de acender. */
+function parseIgniters(owner: JsonObjectReader): readonly string[] {
+  return owner.field('igniters').array({ minLength: 1 }).map((igniter) => igniter.id());
 }
 
 /** O estouro da TNT e do creeper: o mesmo formato nos dois arquivos. */

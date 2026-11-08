@@ -305,6 +305,20 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Cada TNT acesa gasta um uso do isqueiro. Na TNT que já está piscando, ele não gasta.',
   },
   {
+    id: 'portal',
+    emoji: '🟣',
+    title: 'Portal do Nether',
+    summary: 'Construa dois portais e viaje de um para o outro num instante.',
+    steps: [
+      { text: 'Junte 10 obsidianas. Só a picareta de diamante tira a obsidiana lá do fundo.', items: ['diamond-pickaxe', 'obsidian'], control: 'break' },
+      { text: 'Monte uma moldura em pé: 2 obsidianas no chão, 3 de cada lado e 2 em cima. Os cantos podem ficar vazios.', items: ['obsidian'], control: 'use' },
+      { text: 'O buraco do meio precisa ficar vazio, com 2 de largura e 3 de altura. Pode ser maior também!' },
+      { text: 'Escolha o isqueiro e use na obsidiana de baixo, por dentro da moldura. Vuuum, o portal acende!', items: ['flint-and-steel'], control: 'use' },
+      { text: 'Faça outro portal longe dali. Entre num portal, espere um pouquinho e você aparece no outro!', control: 'move' },
+    ],
+    tip: 'Quebrou um pedaço da moldura, o portal apaga. É só usar o isqueiro de novo. E a TNT não quebra o portal.',
+  },
+  {
     id: 'tapetes',
     emoji: '🧶',
     title: 'Tapetes',

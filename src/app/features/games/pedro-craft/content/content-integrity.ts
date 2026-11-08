@@ -75,6 +75,17 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     loot('blocks', owner, definition.drops);
     block('blocks', owner, definition.toggleInto);
     definition.explosive?.igniters.forEach((igniter) => item('blocks', owner, igniter));
+    block('blocks', owner, definition.portal?.frame ?? null);
+    definition.portal?.igniters.forEach((igniter) => item('blocks', owner, igniter));
+
+    // O herói precisa entrar no portal para viajar: sólido, ele bateria de cara.
+    if (definition.portal && definition.solid) {
+      problems.push({ file: 'blocks', message: `${owner}: um portal não pode ser sólido, o herói entra nele` });
+    }
+
+    if (definition.portal?.frame === definition.id) {
+      problems.push({ file: 'blocks', message: `${owner}: o portal não pode ser a própria moldura` });
+    }
   }
 
   for (const definition of content.items) {
