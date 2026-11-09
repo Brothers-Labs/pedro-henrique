@@ -690,6 +690,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.emit({ type: 'sound', cue });
   }
 
+  playNote(degree: number): void {
+    this.emit({ type: 'note', degree });
+  }
+
   onPowerUpEnded(kind: PowerUpKind): void {
     this.emit({ type: 'power-up-ended', kind });
   }

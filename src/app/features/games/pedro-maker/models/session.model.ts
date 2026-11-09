@@ -52,6 +52,8 @@ export type GameSessionEvent =
   | { readonly type: 'ready' }
   | { readonly type: 'hud'; readonly hud: HudState }
   | { readonly type: 'sound'; readonly cue: MakerSoundCue }
+  /** Bloco musical tocado: `degree` é a nota na escala pentatônica, 0 a mais grave. */
+  | { readonly type: 'note'; readonly degree: number }
   | { readonly type: 'damage' }
   | { readonly type: 'checkpoint' }
   | { readonly type: 'power-up'; readonly kind: PowerUpKind; readonly durationMs: number }

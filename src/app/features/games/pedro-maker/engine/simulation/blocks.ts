@@ -12,6 +12,8 @@ export interface BlockHost {
   readonly effects: VisualEventQueue;
   readonly scheduler: Scheduler;
   playSound(cue: MakerSoundCue): void;
+  /** Nota do bloco musical, na escala pentatônica; 0 é a mais grave. */
+  playNote(degree: number): void;
   addCoins(amount: number, x: number, y: number): void;
   spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void;
   /** Sorteio do Lucky Block; quem tem o dado é a partida, para a mesma fase sortear igual. */
@@ -79,6 +81,8 @@ const MOVING_SPEED = 90;
 const SKELETON_SPEED = 70;
 /** Uns três blocos de altura: o cogumelo quica bem à vista, mas abaixo do quique do herói. */
 const ENEMY_NOTE_BOUNCE_VELOCITY = 720;
+/** Duas oitavas da escala pentatônica: agudo o bastante sem chegar a apitar. */
+const NOTE_BLOCK_DEGREES = 10;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
 
@@ -219,7 +223,7 @@ export class BlockSystem {
 
     if (block?.kind === 'note') {
       block.bumpedAt = now;
-      this.host.playSound('spring');
+      this.playNoteOf(block);
       return;
     }
 
@@ -325,7 +329,7 @@ export class BlockSystem {
       if (block?.kind === 'note') {
         body.vy = -ENEMY_NOTE_BOUNCE_VELOCITY;
         block.bumpedAt = now;
-        this.host.playSound('spring');
+        this.playNoteOf(block);
         this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 4);
         return;
       }
@@ -479,8 +483,16 @@ export class BlockSystem {
   private bounceOnNote(player: Player, block: InteractiveBlock, now: number): void {
     player.bounce(PLAYER_PHYSICS.noteBlockVelocity, true);
     block.bumpedAt = now;
-    this.host.playSound('spring');
+    this.playNoteOf(block);
     this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 6);
+  }
+
+  /**
+   * Quanto mais alto o bloco, mais aguda a nota: uma escadinha de blocos
+   * musicais toca a escala. Passando de duas oitavas, a escala recomeça.
+   */
+  private playNoteOf(block: InteractiveBlock): void {
+    this.host.playNote((this.grid.height - 1 - block.cellY) % NOTE_BLOCK_DEGREES);
   }
 
   private startCrumbling(block: InteractiveBlock, now: number): void {
