@@ -66,8 +66,11 @@ import {
   paintLamp,
   paintRock,
   paintSnowman,
+  paintPumpkinDecor,
   paintToadstool,
   paintTree,
+  PUMPKIN_HEIGHT,
+  PUMPKIN_WIDTH,
   ROCK_HEIGHT,
   ROCK_WIDTH,
   SNOWMAN_HEIGHT,
@@ -297,6 +300,9 @@ function drawIcon(
     case 'iron-ball':
     case 'fish':
     case 'jumping-fish':
+    case 'king-cactus':
+    case 'living-pumpkin':
+    case 'witch':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':
@@ -380,6 +386,9 @@ function drawIcon(
       return;
     case 'arrow':
       fit(ARROW_WIDTH, ARROW_HEIGHT, paintArrowSign);
+      return;
+    case 'pumpkin':
+      fit(PUMPKIN_WIDTH, PUMPKIN_HEIGHT, paintPumpkinDecor);
       return;
     case 'crate':
       fit(CRATE_SIZE, CRATE_SIZE, paintCrate);

@@ -12,6 +12,7 @@ import {
   roundedRect,
   shine,
 } from './canvas';
+import { paintPumpkinFace, paintPumpkinShape } from './pumpkin-art';
 
 const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   slime: paintSlime,
@@ -31,6 +32,9 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   'iron-ball': paintIronBall,
   fish: paintSwimmingFish,
   'jumping-fish': paintJumpingFish,
+  'king-cactus': paintKingCactus,
+  'living-pumpkin': paintLivingPumpkin,
+  witch: paintWitch,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -504,6 +508,110 @@ function paintKingSlime(context: CanvasRenderingContext2D): void {
   fillAndOutline(context, '#ffc629', 2.5);
   circle(context, 24, 14, 2.5);
   fillAndOutline(context, '#e8343f', 1.5);
+}
+
+/** Cacto grandão de braços para cima, com espinhos claros (não se pisa) e a coroa do Rei. */
+function paintKingCactus(context: CanvasRenderingContext2D): void {
+  const color = '#4fae4a';
+
+  for (const [x, y, width, height] of [
+    [6, 20, 8, 16],
+    [34, 16, 8, 18],
+  ] as const) {
+    roundedRect(context, x, y, width, height, 4);
+    fillAndOutline(context, color, 2.5);
+  }
+
+  roundedRect(context, 13, 13, 22, 34, 9);
+  fillAndOutline(context, color);
+  shine(context, 19, 20, 3, 5);
+
+  context.fillStyle = '#fff3d6';
+
+  for (const [x, y] of [
+    [16, 36],
+    [32, 36],
+    [24, 42],
+    [9, 26],
+    [39, 24],
+  ] as const) {
+    circle(context, x, y, 1.6);
+    context.fill();
+  }
+
+  eye(context, 19.5, 25, 3.8, 0);
+  eye(context, 28.5, 25, 3.8, 0);
+  smile(context, 24, 31, 3);
+
+  // Coroa dourada pequena, com a pedra rosa da flor do cacto.
+  context.beginPath();
+  context.moveTo(16, 14);
+  context.lineTo(16, 5);
+  context.lineTo(20, 9);
+  context.lineTo(24, 2);
+  context.lineTo(28, 9);
+  context.lineTo(32, 5);
+  context.lineTo(32, 14);
+  context.closePath();
+  fillAndOutline(context, '#ffc629', 2.5);
+  circle(context, 24, 10.5, 2.2);
+  fillAndOutline(context, '#ff7aa8', 1.5);
+}
+
+/** A abóbora do Dia das Bruxas com cara de lanterna e dois pezinhos para pular. */
+function paintLivingPumpkin(context: CanvasRenderingContext2D): void {
+  for (const footX of [16, 32]) {
+    ellipse(context, footX, 44, 5.5, 3);
+    fillAndOutline(context, '#3d6b22', 2);
+  }
+
+  paintPumpkinShape(context, 24, 29, 19, 14);
+  paintPumpkinFace(context, 24, 29, 12, '#ffe066');
+}
+
+/** Bruxa sorridente de vassoura, com o chapéu pontudo e a fita amarela. */
+function paintWitch(context: CanvasRenderingContext2D): void {
+  // A vassoura passa por baixo dela, de um lado ao outro.
+  context.strokeStyle = '#8a5a32';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(4, 40);
+  context.lineTo(38, 34);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(36, 30);
+  context.lineTo(46, 30);
+  context.lineTo(46, 40);
+  context.lineTo(37, 38);
+  context.closePath();
+  fillAndOutline(context, '#e8c25a', 2);
+
+  // Vestido.
+  context.beginPath();
+  context.moveTo(14, 40);
+  context.lineTo(18, 24);
+  context.lineTo(30, 24);
+  context.lineTo(34, 40);
+  context.closePath();
+  fillAndOutline(context, '#9b5de5');
+
+  circle(context, 24, 20, 8);
+  fillAndOutline(context, '#a8e07a');
+  eye(context, 21, 20, 2.8, 0.2);
+  eye(context, 27.5, 20, 2.8, 0.2);
+  smile(context, 24, 23.5, 2.4);
+
+  // Chapéu pontudo com a aba larga e o laço.
+  context.beginPath();
+  context.moveTo(17, 13);
+  context.lineTo(26, -1);
+  context.lineTo(32, 13);
+  context.closePath();
+  fillAndOutline(context, '#5a48b0', 2.5);
+  ellipse(context, 24, 13.5, 13, 3);
+  fillAndOutline(context, '#5a48b0', 2.5);
+  context.fillStyle = '#ffe066';
+  context.fillRect(19, 9, 11, 3);
 }
 
 function smile(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {

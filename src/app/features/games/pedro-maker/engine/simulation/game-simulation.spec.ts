@@ -1345,6 +1345,84 @@ describe('Simulação do Pedro Maker', () => {
     expect(player.body.vy).toBeLessThan(0);
   });
 
+  describe('Inimigos do Dia das Bruxas', () => {
+    /** Pisão de cima no inimigo: o herói cai sobre a cabeça dele. */
+    const stompOn = (harness: Harness, index = 0): void => {
+      const enemy = harness.simulation.enemies[index];
+      const player = harness.simulation.player;
+
+      player.placeFeetAt(centerX(enemy.body), enemy.body.y - 4);
+      player.body.vy = 300;
+      run(harness, 0.1);
+    };
+
+    it('o Rei Cacto tem espinhos: pisar nele machuca e ele continua de pé', () => {
+      const harness = start(flatLevel().add('king-cactus', 12, SURFACE - 1).build(META));
+      run(harness, 0.2);
+      stompOn(harness);
+
+      expect(harness.simulation.enemies[0].isDefeated).toBeFalse();
+      expect(lastHud(harness.events)?.hearts).toBe(2);
+    });
+
+    it('o Rei Cacto patrulha devagar, mais devagar que o slime', () => {
+      const harness = start(flatLevel().add('king-cactus', 8, SURFACE - 1).add('slime', 16, SURFACE - 1).build(META));
+      const [cactus, slime] = harness.simulation.enemies;
+      const cactusStart = centerX(cactus.body);
+      const slimeStart = centerX(slime.body);
+      run(harness, 1);
+
+      expect(Math.abs(centerX(cactus.body) - cactusStart)).toBeGreaterThan(0);
+      expect(Math.abs(centerX(cactus.body) - cactusStart)).toBeLessThan(Math.abs(centerX(slime.body) - slimeStart));
+    });
+
+    it('a abóbora viva anda aos pulinhos e cai com um pisão', () => {
+      const harness = start(flatLevel().add('living-pumpkin', 12, SURFACE - 1).build(META));
+      const pumpkin = harness.simulation.enemies[0];
+      const ground = bottom(pumpkin.body);
+      let highest = ground;
+
+      for (let step = 0; step < Math.round(2000 / STEP_MS); step += 1) {
+        harness.simulation.step(IDLE_INPUT);
+        highest = Math.min(highest, bottom(pumpkin.body));
+      }
+
+      expect(ground - highest).toBeGreaterThan(TILE_SIZE / 2);
+      expect(ground - highest).toBeLessThan(TILE_SIZE * 3);
+
+      run(harness, 1.5);
+      stompOn(harness);
+
+      expect(pumpkin.isDefeated).toBeTrue();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+    });
+
+    it('a bruxa voa de vassoura de um lado para o outro, sem cair', () => {
+      const harness = start(flatLevel().add('witch', 15, SURFACE - 5).build(META));
+      const witch = harness.simulation.enemies[0];
+      const startX = centerX(witch.body);
+      let farthest = 0;
+
+      for (let step = 0; step < Math.round(5000 / STEP_MS); step += 1) {
+        harness.simulation.step(IDLE_INPUT);
+        farthest = Math.max(farthest, Math.abs(centerX(witch.body) - startX));
+      }
+
+      expect(farthest).toBeGreaterThan(TILE_SIZE * 3);
+      expect(bottom(witch.body)).toBeLessThan((SURFACE - 2) * TILE_SIZE);
+    });
+
+    it('a bruxa cai com um pisão', () => {
+      const harness = start(flatLevel().add('witch', 12, SURFACE - 3).build(META));
+      const witch = harness.simulation.enemies[0];
+      run(harness, 0.2);
+      stompOn(harness);
+
+      expect(witch.isDefeated).toBeTrue();
+      expect(lastHud(harness.events)?.hearts).toBe(3);
+    });
+  });
+
   it('derrota o goomba com um pisão', () => {
     const harness = start(flatLevel().add('goomba', 12, SURFACE - 1).build(META));
     run(harness, 0.2);

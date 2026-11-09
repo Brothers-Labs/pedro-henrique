@@ -68,6 +68,9 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   'iron-ball': { surface: 'none', isUnique: false },
   fish: { surface: 'none', isUnique: false },
   'jumping-fish': { surface: 'none', isUnique: false },
+  'king-cactus': { surface: 'none', isUnique: false },
+  'living-pumpkin': { surface: 'none', isUnique: false },
+  witch: { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
@@ -90,6 +93,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   fence: { surface: 'none', isUnique: false },
   snowman: { surface: 'none', isUnique: false },
   toadstool: { surface: 'none', isUnique: false },
+  pumpkin: { surface: 'none', isUnique: false },
   barrel: { surface: 'none', isUnique: false },
   lamp: { surface: 'none', isUnique: false },
   grass: { surface: 'none', isUnique: false },
@@ -213,6 +217,9 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'iron-ball', category: 'inimigos', type: 'iron-ball', label: 'Bolão na Corrente' },
   { id: 'fish', category: 'inimigos', type: 'fish', label: 'Peixe Nadador' },
   { id: 'jumping-fish', category: 'inimigos', type: 'jumping-fish', label: 'Peixe Saltador' },
+  { id: 'king-cactus', category: 'inimigos', type: 'king-cactus', label: 'Rei Cacto' },
+  { id: 'living-pumpkin', category: 'inimigos', type: 'living-pumpkin', label: 'Abóbora Viva' },
+  { id: 'witch', category: 'inimigos', type: 'witch', label: 'Bruxa' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   ...GIANT_COIN_PIECES,
@@ -249,6 +256,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'fence', category: 'decoracao', type: 'fence', label: 'Cerca' },
   { id: 'snowman', category: 'decoracao', type: 'snowman', label: 'Boneco de Neve' },
   { id: 'toadstool', category: 'decoracao', type: 'toadstool', label: 'Cogumelinho' },
+  { id: 'pumpkin', category: 'decoracao', type: 'pumpkin', label: 'Abóbora' },
   { id: 'barrel', category: 'decoracao', type: 'barrel', label: 'Barril' },
   { id: 'lamp', category: 'decoracao', type: 'lamp', label: 'Poste' },
   { id: 'grass', category: 'decoracao', type: 'grass', label: 'Matinho' },
@@ -349,6 +357,7 @@ export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string;
   'castelo-rei-slime': { label: 'Castelo do Rei Slime', emoji: '👑' },
   praia: { label: 'Praia', emoji: '🏖️' },
   classico: { label: 'Clássico', emoji: '🍄' },
+  'dia-das-bruxas': { label: 'Dia das Bruxas', emoji: '🎃' },
 };
 
 /** Temas que o Pedro pode escolher para as próprias fases. */
@@ -363,4 +372,5 @@ export const EDITOR_THEMES: readonly LevelTheme[] = [
   'castelo-rei-slime',
   'praia',
   'classico',
+  'dia-das-bruxas',
 ];

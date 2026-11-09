@@ -26,7 +26,7 @@ interface LevelNode {
 }
 
 /**
- * Mapa da aventura: os cinco mundos e a trilha de fases do mundo escolhido.
+ * Mapa da aventura: os seis mundos e a trilha de fases do mundo escolhido.
  *
  * O mundo vem da URL (`?mundo=2`), para que o botão JOGAR abra direto onde a
  * aventura parou e o "voltar" do navegador funcione como a criança espera.

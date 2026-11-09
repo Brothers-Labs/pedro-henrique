@@ -120,13 +120,15 @@ export class PropView {
     }
   }
 
-  /** A "árvore" de cada tema: cacto no deserto, coqueiro na praia. */
+  /** A "árvore" de cada tema: cacto no deserto, coqueiro na praia, árvore seca no Dia das Bruxas. */
   private treeModel(): readonly VoxelBox[] {
     switch (this.theme) {
       case 'deserto':
         return cactus(this.palette);
       case 'praia':
         return palm(this.palette);
+      case 'dia-das-bruxas':
+        return spookyTree(this.palette);
       default:
         return tree(this.palette);
     }
@@ -184,6 +186,9 @@ export class PropView {
           break;
         case 'crate':
           at(x, y, DECOR_Z, crate());
+          break;
+        case 'pumpkin':
+          at(x, y, DECOR_Z + 0.3, pumpkin());
           break;
         case 'spikes':
           // Bloco do terreno: ocupa a célula inteira, no plano do Pedro.
@@ -443,6 +448,35 @@ function snowman(): readonly VoxelBox[] {
     box(0, 0.22, 0.305, 0.07, 0.07, 0.02, '#2a2350'),
     box(0, 1.13, 0, 0.5, 0.05, 0.46, '#2a2350'),
     box(0, 1.28, 0, 0.3, 0.26, 0.28, '#2a2350'),
+  ];
+}
+
+/** Árvore seca do Dia das Bruxas: tronco torto, galhos sem folha e duas folhinhas laranja que sobraram. */
+function spookyTree(palette: ThemePalette): readonly VoxelBox[] {
+  const bark = palette.trunk;
+
+  return [
+    box(0, 0.9, 0, 0.4, 1.8, 0.4, bark),
+    box(0.1, 2.0, 0, 0.3, 0.6, 0.3, darken(bark, 0.1)),
+    box(-0.45, 1.7, 0, 0.6, 0.16, 0.16, bark),
+    box(-0.78, 1.95, 0, 0.16, 0.5, 0.16, bark),
+    box(0.5, 2.2, 0, 0.6, 0.14, 0.14, bark),
+    box(0.82, 2.45, 0, 0.14, 0.4, 0.14, bark),
+    box(0.15, 2.45, 0, 0.14, 0.4, 0.14, bark),
+    box(-0.78, 2.25, 0, 0.18, 0.12, 0.12, palette.foliage),
+    box(0.82, 2.7, 0, 0.16, 0.12, 0.12, palette.foliage),
+  ];
+}
+
+/** Abóbora de enfeite: gomos laranja, cabinho verde e a cara de lanterna acesa na frente. */
+function pumpkin(): readonly VoxelBox[] {
+  return [
+    box(0, 0.24, 0, 0.62, 0.42, 0.52, '#ff8a1f'),
+    box(0, 0.24, 0, 0.46, 0.48, 0.58, '#ff9a33'),
+    box(0, 0.52, 0, 0.08, 0.14, 0.08, '#5a8a2e'),
+    box(-0.11, 0.3, 0.295, 0.1, 0.08, 0.01, '#ffe066'),
+    box(0.11, 0.3, 0.295, 0.1, 0.08, 0.01, '#ffe066'),
+    box(0, 0.16, 0.295, 0.28, 0.06, 0.01, '#ffe066'),
   ];
 }
 

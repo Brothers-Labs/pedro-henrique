@@ -2,10 +2,10 @@ import type { World, WorldId } from '../models/campaign.model';
 import type { EnemyKind } from '../models/level.model';
 
 /**
- * Os cinco mundos da aventura.
+ * Os seis mundos da aventura.
  *
  * Cada chefão é original e tem desenho próprio — gelatina, cacto, bloco de gelo,
- * rocha de magma e cometa —, além de cor, fúria e ajudantes próprios.
+ * rocha de magma, cometa e abóbora —, além de cor, fúria e ajudantes próprios.
  */
 export const WORLDS: readonly World[] = [
   {
@@ -98,6 +98,24 @@ export const WORLDS: readonly World[] = [
       look: 'comet',
     },
   },
+  {
+    id: 6,
+    name: 'Dia das Bruxas',
+    emoji: '🎃',
+    description: 'Noite roxa, abóboras vivas, bruxas de vassoura e o castelo do Rei Abóbora.',
+    theme: 'dia-das-bruxas',
+    color: '#8a4fd1',
+    boss: {
+      name: 'Rei Abóbora',
+      emoji: '🎃',
+      color: '#ff8a1f',
+      accent: '#ffe066',
+      hitPoints: 3,
+      fury: 1.5,
+      minion: 'living-pumpkin',
+      look: 'pumpkin',
+    },
+  },
 ];
 
 /** Inimigos que aparecem nas fases geradas de cada mundo, do mais comum ao mais raro. */
@@ -107,6 +125,7 @@ export const WORLD_ENEMIES: Readonly<Record<WorldId, readonly [EnemyKind, ...Ene
   3: ['slime', 'bat', 'spiky'],
   4: ['robot', 'spiky', 'bat'],
   5: ['ghost', 'bat', 'robot'],
+  6: ['living-pumpkin', 'living-pumpkin', 'witch', 'ghost', 'king-cactus'],
 };
 
 /** Nomes das fases 1 a 9 de cada mundo. */
@@ -165,6 +184,17 @@ export const WORLD_LEVEL_NAMES: Readonly<Record<WorldId, readonly string[]>> = {
     'Caminho da Via Láctea',
     'Constelação do Pedro',
     'Portão das Estrelas',
+  ],
+  6: [
+    'Abóboras Saltitantes',
+    'Floresta Assombrada',
+    'Torre da Bruxa',
+    'Rua dos Doces',
+    'Lua Cheia',
+    'Ponte das Bruxas',
+    'Mansão Mal-Assombrada',
+    'Caldeirão Borbulhante',
+    'Portão das Abóboras',
   ],
 };
 

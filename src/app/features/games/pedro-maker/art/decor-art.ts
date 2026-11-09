@@ -1,6 +1,7 @@
 import type { LevelTheme } from '../models/level.model';
 import { circle, darken, ellipse, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
 import type { ThemePalette } from './palettes';
+import { paintPumpkinFace, paintPumpkinShape } from './pumpkin-art';
 
 export const TREE_WIDTH = 96;
 export const TREE_HEIGHT = 144;
@@ -23,12 +24,14 @@ export const GRASS_HEIGHT = 28;
 export const ARROW_WIDTH = 48;
 export const ARROW_HEIGHT = 48;
 export const CRATE_SIZE = 40;
+export const PUMPKIN_WIDTH = 48;
+export const PUMPKIN_HEIGHT = 40;
 
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
  * floresta e na neve, cacto no deserto, cristal na caverna, rocha em chamas
  * no vulcão, cogumelo mágico nas estrelas, tocha nos castelos, coqueiro na
- * praia e árvore redonda no clássico.
+ * praia, árvore redonda no clássico e árvore seca no Dia das Bruxas.
  */
 export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, palette: ThemePalette): void {
   switch (theme) {
@@ -59,7 +62,45 @@ export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, 
     case 'praia':
       paintPalm(context, palette);
       return;
+    case 'dia-das-bruxas':
+      paintSpookyTree(context, palette);
+      return;
   }
+}
+
+/** Tronco torto com galhos secos e duas folhinhas laranja que ainda não caíram. */
+function paintSpookyTree(context: CanvasRenderingContext2D, palette: ThemePalette): void {
+  context.lineCap = 'round';
+
+  for (const [fromX, fromY, toX, toY, width] of [
+    [48, 144, 46, 50, 18],
+    [46, 92, 18, 62, 9],
+    [18, 62, 12, 38, 6],
+    [47, 70, 78, 42, 8],
+    [78, 42, 86, 22, 5],
+    [46, 54, 54, 16, 7],
+  ] as const) {
+    context.beginPath();
+    context.moveTo(fromX, fromY);
+    context.lineTo(toX, toY);
+    context.lineWidth = width + 5;
+    context.strokeStyle = OUTLINE;
+    context.stroke();
+    context.lineWidth = width;
+    context.strokeStyle = palette.trunk;
+    context.stroke();
+  }
+
+  for (const [x, y] of [[12, 34], [86, 18]] as const) {
+    ellipse(context, x, y, 6, 4);
+    fillAndOutline(context, palette.foliage, 2);
+  }
+}
+
+/** A abóbora de enfeite já vem com a cara de lanterna acesa. */
+export function paintPumpkinDecor(context: CanvasRenderingContext2D): void {
+  paintPumpkinShape(context, 24, 24, 21, 14);
+  paintPumpkinFace(context, 24, 24, 12, '#ffe066');
 }
 
 function paintRoundTree(context: CanvasRenderingContext2D, palette: ThemePalette): void {

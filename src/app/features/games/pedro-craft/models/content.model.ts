@@ -371,6 +371,10 @@ export const CREATURE_MODELS = [
   'skeleton',
   'creeper',
   'iron-golem',
+  'verity',
+  'lovity',
+  'falsity',
+  'cruelty',
 ] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];

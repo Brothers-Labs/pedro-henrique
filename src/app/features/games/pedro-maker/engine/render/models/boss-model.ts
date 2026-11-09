@@ -136,6 +136,17 @@ function bodyParts(definition: BossDefinition): readonly VoxelBox[] {
         box(0, 1.75, 0, 1.6, 0.3, 1.2, light),
         box(0, 0.08, 0, 2.3, 0.16, 1.7, dark),
       ];
+    case 'pumpkin':
+      // Abóbora gigante em gomos: o miolo mais claro passa um pouco à frente dos lados.
+      return [
+        box(0, 0.85, 0, 2.1, 1.5, 1.5, color),
+        box(0, 0.85, 0, 1.4, 1.62, 1.7, light),
+        box(0, 0.08, 0, 1.6, 0.16, 1.3, dark),
+        box(-0.72, 0.85, 0.76, 0.06, 1.3, 0.02, dark),
+        box(0.72, 0.85, 0.76, 0.06, 1.3, 0.02, dark),
+        box(0, 1.72, 0, 0.24, 0.3, 0.24, '#5a8a2e'),
+        box(0.22, 1.7, 0, 0.28, 0.06, 0.18, '#6fb43a'),
+      ];
     case 'comet':
       return [
         box(0, 0.9, 0, 1.9, 1.5, 1.5, color),
@@ -153,7 +164,7 @@ function bodyParts(definition: BossDefinition): readonly VoxelBox[] {
   }
 }
 
-/** Detalhes na cor de destaque: coroa, espinhos, rachaduras que brilham, cauda. */
+/** Detalhes na cor de destaque: coroa, espinhos, rachaduras que brilham, cauda, sorriso de lanterna. */
 function decorations(definition: BossDefinition): readonly VoxelBox[] {
   const accent = definition.accent;
 
@@ -174,6 +185,14 @@ function decorations(definition: BossDefinition): readonly VoxelBox[] {
         box(0.1, 0.3, 0.96, 0.08, 0.3, 0.02, accent),
         box(0, 1.8, 0, 0.4, 0.2, 0.4, accent),
       ];
+    case 'pumpkin':
+      // Coroa dourada torta em cima do cabinho e o sorriso de lanterna aceso na frente.
+      return [
+        box(0.3, 1.98, 0, 0.6, 0.16, 0.5, accent),
+        ...[0.08, 0.3, 0.52].map((x) => box(x, 2.12, 0, 0.12, 0.14, 0.12, accent)),
+        box(0, 0.5, FACE_Z.pumpkin + 0.02, 0.9, 0.14, 0.03, accent),
+        ...[-0.3, 0, 0.3].map((x) => box(x, 0.62, FACE_Z.pumpkin + 0.02, 0.14, 0.1, 0.03, accent)),
+      ];
     case 'comet':
       return [
         box(-1.3, 1.2, -0.2, 0.8, 0.8, 0.8, accent),
@@ -190,6 +209,7 @@ const FACE_Z: Readonly<Record<BossDefinition['look'], number>> = {
   ice: 0.8,
   comet: 0.75,
   cactus: 0.55,
+  pumpkin: 0.85,
 };
 
 function awakeEyes(face: number): readonly VoxelBox[] {

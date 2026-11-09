@@ -160,3 +160,30 @@ test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^Giuseppe\b/ })).toHaveAttribute('aria-pressed', 'true');
   await page.screenshot({ path: test.info().outputPath('original-heroes.png'), fullPage: true });
 });
+
+test('Maker builds a Halloween level with the new enemies and plays it', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Noite das Abóboras');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  await page.getByRole('combobox', { name: 'Tema da fase' }).selectOption('dia-das-bruxas');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Inimigos', exact: true }).click();
+  for (const [index, label] of ['Rei Cacto', 'Abóbora Viva', 'Bruxa'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 96, y: 112 } });
+  }
+  await page.getByRole('tab', { name: 'Decoração', exact: true }).click();
+  await page.getByRole('button', { name: 'Abóbora', exact: true }).click();
+  await grid.click({ position: { x: 176, y: 208 } });
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => {
+    const level = (await savedLevels(page)).find((saved) => saved.name === 'Noite das Abóboras');
+    return { theme: level?.theme, types: level?.objects.map((object) => object.type) };
+  }).toEqual({ theme: 'dia-das-bruxas', types: expect.arrayContaining(['king-cactus', 'living-pumpkin', 'witch', 'pumpkin']) });
+  await page.screenshot({ path: test.info().outputPath('halloween-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('halloween-in-game.png') });
+});
