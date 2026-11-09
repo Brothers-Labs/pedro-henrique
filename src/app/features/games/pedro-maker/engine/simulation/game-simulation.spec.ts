@@ -18,6 +18,7 @@ import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../
 import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
+import { MOVING_PLATFORM_WIDTH } from './blocks';
 import { GameSimulation, STEP_MS } from './game-simulation';
 import { bottom, centerX, centerY, isAreaClear } from './physics-body';
 
@@ -992,7 +993,22 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(platform?.x).toBe(WALL * TILE_SIZE - (platform?.width ?? 0));
       expect(platform?.velocity).toBe(0);
-      expect(centerX(harness.simulation.player.body)).toBeGreaterThan((WALL - 3) * TILE_SIZE);
+      expect(centerX(harness.simulation.player.body)).toBeGreaterThan(platform?.x ?? Number.POSITIVE_INFINITY);
+    });
+
+    it('é uma ponte de quatro esqueletos, do tamanho de quatro plataformas móveis', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', WALL, ROW).build(META));
+
+      expect(skeletonOf(harness)?.width).toBe(MOVING_PLATFORM_WIDTH * 4);
+    });
+
+    it('para na primeira parede, mesmo que ela fique embaixo da ponte', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', 15, ROW).build(META));
+      run(harness, 0.2);
+      rideFrom(harness, 12);
+      run(harness, 2);
+
+      expect(skeletonOf(harness)?.x).toBe(12 * TILE_SIZE);
     });
 
     it('sem parede no caminho, vai até o fim da fase', () => {
@@ -1303,6 +1319,44 @@ describe('Simulação do Pedro Maker', () => {
 
     expect(goomba.isDefeated).toBeTrue();
     expect(lastHud(harness.events)?.hearts).toBe(3);
+  });
+
+  describe('Cogumelo no bloco musical', () => {
+    /** O ponto mais alto que o pé do inimigo alcança em `seconds`. */
+    const highestFeet = (harness: Harness, seconds: number): number => {
+      const body = harness.simulation.enemies[0].body;
+      let highest = bottom(body);
+
+      for (let step = 0; step < Math.round((seconds * 1000) / STEP_MS); step += 1) {
+        harness.simulation.step(IDLE_INPUT);
+        highest = Math.min(highest, bottom(body));
+      }
+
+      return highest;
+    };
+
+    it('o goomba em cima do bloco musical quica, com o som da mola', () => {
+      const harness = start(flatLevel().add('note', 12, SURFACE - 1).add('goomba', 12, SURFACE - 2).build(META));
+      const noteTop = (SURFACE - 1) * TILE_SIZE;
+
+      expect(highestFeet(harness, 1.5)).toBeLessThan(noteTop - TILE_SIZE * 2);
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeTrue();
+    });
+
+    it('o slime no bloco musical não quica: é coisa de cogumelo', () => {
+      const harness = start(flatLevel().add('note', 12, SURFACE - 1).add('slime', 12, SURFACE - 2).build(META));
+      const noteTop = (SURFACE - 1) * TILE_SIZE;
+
+      expect(highestFeet(harness, 1.5)).toBeGreaterThan(noteTop - TILE_SIZE / 2);
+    });
+
+    it('o goomba congelado no bloco musical fica parado', () => {
+      const harness = start(flatLevel().add('note', 12, SURFACE - 1).add('goomba', 12, SURFACE - 2).build(META));
+      harness.simulation.enemies[0].freezeInIce(0);
+      const noteTop = (SURFACE - 1) * TILE_SIZE;
+
+      expect(highestFeet(harness, 0.5)).toBeGreaterThan(noteTop - TILE_SIZE / 2);
+    });
   });
 
   it('divide o Rei Slime em dois slimes no pisão, sem machucar quem pisou', () => {
