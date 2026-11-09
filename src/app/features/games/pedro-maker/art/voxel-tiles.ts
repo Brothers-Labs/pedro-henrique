@@ -31,7 +31,8 @@ export type VoxelTile =
   | 'lava'
   | 'water'
   | 'lucky'
-  | 'note';
+  | 'note'
+  | 'bone';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -54,6 +55,7 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'water',
   'lucky',
   'note',
+  'bone',
 ];
 
 /** Blocos por linha no atlas. */
@@ -187,6 +189,18 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
         set(x, y, '#e14b4b');
       }
     }
+  },
+  /** Osso branquinho com as costelas marcadas: a plataforma de esqueleto. */
+  bone: ({ set, random }) => {
+    speckle(set, random, '#efe6d2', ['#f8f3e6', '#dcd0b6'], 0.3);
+
+    for (let x = 2; x < VOXEL_TILE_SIZE - 1; x += 4) {
+      for (let y = 3; y < VOXEL_TILE_SIZE - 3; y += 1) {
+        set(x, y, '#b9ab8e');
+      }
+    }
+
+    frame(set, '#8c7e64', 0);
   },
   lava: ({ set, random }) => {
     speckle(set, random, '#ff6a00', ['#ffd23f', '#ff9a1f', '#c2330a'], 0.45);

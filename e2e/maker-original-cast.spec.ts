@@ -130,6 +130,24 @@ test('Maker saves the turbo mushroom, the invisible grass and the castle portal 
   await page.screenshot({ path: test.info().outputPath('slime-king-castle-editor.png') });
 });
 
+test('Maker saves the skeleton platform and the upside-down spring', async ({ page }) => {
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase dos Ossos');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Plataformas', exact: true }).click();
+  for (const [index, label] of ['Móvel Esqueleto', 'Mola de Cabeça pra Baixo'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 144 + index * 128, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page)).find((saved) => saved.name === 'Fase dos Ossos')?.objects.map((object) => object.type))
+    .toEqual(expect.arrayContaining(['skeleton-platform', 'ceiling-spring']));
+  await page.screenshot({ path: test.info().outputPath('skeleton-ceiling-spring-editor.png') });
+});
+
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
   for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo']) {

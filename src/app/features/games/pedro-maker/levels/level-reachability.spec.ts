@@ -41,6 +41,12 @@ describe('Validador de alcance', () => {
     expect(analyzeReachability(wall.build(META)).isPortalReachable).toBeTrue();
   });
 
+  it('atravessa de plataforma de esqueleto um buraco largo demais para o pulo', () => {
+    const builder = flatLevel().clearColumns(15, 24).add('skeleton-platform', 15, 12).add('portal', 35, 11);
+
+    expect(analyzeReachability(builder.build(META)).isPortalReachable).toBeTrue();
+  });
+
   it('trata a lava como perigo, e não como chão', () => {
     const builder = flatLevel().clearColumns(15, 24).fill('lava', 15, 24, 12, 12).add('portal', 35, 11);
 

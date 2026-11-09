@@ -927,6 +927,86 @@ describe('Simulação do Pedro Maker', () => {
     expect(lastHud(harness.events)?.hearts).toBe(3);
   });
 
+  describe('Mola de cabeça pra baixo', () => {
+    const ROW = SURFACE - 4;
+
+    it('a cabeçada nela lança o herói para baixo, na queda mais rápida', () => {
+      const harness = start(flatLevel().add('ceiling-spring', 10, ROW).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt(10.5 * TILE_SIZE, (ROW + 1) * TILE_SIZE + player.body.height + 2);
+      player.body.vy = -600;
+      let fastestFall = 0;
+
+      for (let step = 0; step < 6; step += 1) {
+        harness.simulation.step(IDLE_INPUT);
+        fastestFall = Math.max(fastestFall, player.body.vy);
+      }
+
+      expect(fastestFall).toBe(PLAYER_PHYSICS.maxFallSpeed);
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeTrue();
+      expect(harness.simulation.blocks.blockAt(10, ROW)?.bumpedAt).toBeGreaterThan(Number.NEGATIVE_INFINITY);
+    });
+
+    it('é chão firme por cima: pisar nela não lança', () => {
+      const harness = start(flatLevel().add('ceiling-spring', 10, ROW).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt(10.5 * TILE_SIZE, ROW * TILE_SIZE - 2);
+      run(harness, 0.5);
+
+      expect(harness.simulation.grid.isSolidCell(10, ROW)).toBeTrue();
+      expect(bottom(player.body)).toBeCloseTo(ROW * TILE_SIZE, 0);
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeFalse();
+    });
+  });
+
+  describe('Plataforma de esqueleto', () => {
+    const ROW = SURFACE - 3;
+    const WALL = 24;
+    const skeletonOf = (harness: Harness) => harness.simulation.blocks.platforms.find((platform) => platform.kind === 'skeleton');
+    const rideFrom = (harness: Harness, x: number): void => {
+      harness.simulation.player.placeFeetAt((x + 1) * TILE_SIZE, ROW * TILE_SIZE - 2);
+    };
+
+    it('fica parada esperando o herói', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', WALL, ROW).build(META));
+      run(harness, 2);
+
+      expect(skeletonOf(harness)?.x).toBe(12 * TILE_SIZE);
+    });
+
+    it('com o herói em cima, segue para a direita e para encostada na parede, com ele junto', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', WALL, ROW).build(META));
+      run(harness, 0.2);
+      rideFrom(harness, 12);
+      run(harness, 0.5);
+
+      const platform = skeletonOf(harness);
+
+      expect(platform?.x).toBeGreaterThan(12 * TILE_SIZE);
+
+      run(harness, 12);
+
+      expect(platform?.x).toBe(WALL * TILE_SIZE - (platform?.width ?? 0));
+      expect(platform?.velocity).toBe(0);
+      expect(centerX(harness.simulation.player.body)).toBeGreaterThan((WALL - 3) * TILE_SIZE);
+    });
+
+    it('sem parede no caminho, vai até o fim da fase', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).build(META));
+      run(harness, 0.2);
+      rideFrom(harness, 12);
+      run(harness, 30);
+
+      const platform = skeletonOf(harness);
+
+      expect(platform?.x).toBe(harness.simulation.grid.width * TILE_SIZE - (platform?.width ?? 0));
+    });
+  });
+
   it('quica alto no bloco musical segurando o pulo', () => {
     const harness = start(flatLevel().add('note', 10, SURFACE - 1).build(META));
     const player = harness.simulation.player;

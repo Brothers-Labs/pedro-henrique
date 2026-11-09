@@ -18,6 +18,7 @@ import {
   paintDoor,
   paintGoldenDoor,
   paintLava,
+  paintCeilingSpring,
   paintMovingPlatform,
   paintPlatformTile,
   paintCastleFrame,
@@ -28,6 +29,7 @@ import {
   paintSlide,
   paintSecretDoor,
   paintSign,
+  paintSkeletonPlatform,
   paintSpikes,
   paintSpring,
   paintSurprise,
@@ -263,6 +265,9 @@ function drawIcon(
     case 'spring':
       paintSpring(context);
       return;
+    case 'ceiling-spring':
+      paintCeilingSpring(context);
+      return;
     case 'slide':
       paintSlide(context);
       return;
@@ -271,6 +276,9 @@ function drawIcon(
       return;
     case 'moving-platform':
       fit(MOVING_PLATFORM_WIDTH, MOVING_PLATFORM_HEIGHT * 2, paintMovingPlatform);
+      return;
+    case 'skeleton-platform':
+      fit(MOVING_PLATFORM_WIDTH, MOVING_PLATFORM_HEIGHT * 2, paintSkeletonPlatform);
       return;
     case 'slime':
     case 'spiky':

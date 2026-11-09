@@ -251,6 +251,15 @@ export function paintSpring(context: CanvasRenderingContext2D): void {
   fillAndOutline(context, '#4b4470', 3);
 }
 
+/** A mesma mola, virada: presa no teto, com o pino para baixo. */
+export function paintCeilingSpring(context: CanvasRenderingContext2D): void {
+  context.save();
+  context.translate(0, TILE_SIZE);
+  context.scale(1, -1);
+  paintSpring(context);
+  context.restore();
+}
+
 /** Escorregador de parquinho: escada à esquerda e a rampa vermelha descendo para a direita. */
 export function paintSlide(context: CanvasRenderingContext2D): void {
   context.lineCap = 'round';
@@ -333,6 +342,26 @@ export function paintMovingPlatform(context: CanvasRenderingContext2D): void {
   context.fill();
   circle(context, 88, 12, 2);
   context.fill();
+}
+
+/** Plataforma de ossos: uma caveirinha na frente e as costelas atrás, do tamanho da plataforma móvel. */
+export function paintSkeletonPlatform(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 1.5, 3, 93, 18, 8);
+  fillAndOutline(context, '#efe6d2', 3);
+  context.fillStyle = '#b9ab8e';
+
+  for (let rib = 0; rib < 6; rib += 1) {
+    context.fillRect(30 + rib * 10, 6, 4, 12);
+  }
+
+  circle(context, 14, 12, 10);
+  fillAndOutline(context, '#f8f3e6', 3);
+  context.fillStyle = OUTLINE;
+  circle(context, 10, 10, 2.5);
+  context.fill();
+  circle(context, 18, 10, 2.5);
+  context.fill();
+  context.fillRect(12, 16, 4, 2);
 }
 
 /** Lava ondulando, com bolhas claras. */

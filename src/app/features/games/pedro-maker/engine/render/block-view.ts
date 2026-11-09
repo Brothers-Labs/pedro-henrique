@@ -2,7 +2,14 @@ import { Color, Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion,
 
 import type { VoxelTile } from '../../art/voxel-tiles';
 import { TILE_SIZE } from '../../config/physics.config';
-import { type BlockSystem, type InteractiveBlock, MOVING_PLATFORM_HEIGHT, MOVING_PLATFORM_WIDTH } from '../simulation/blocks';
+import {
+  type BlockSystem,
+  type InteractiveBlock,
+  MOVING_PLATFORM_HEIGHT,
+  MOVING_PLATFORM_WIDTH,
+  type MovingPlatform,
+  type MovingPlatformKind,
+} from '../simulation/blocks';
 import { disposeTree } from './dispose';
 import { pulse } from './easing';
 import type { VoxelAtlasTexture } from './voxel-atlas-texture';
@@ -31,6 +38,17 @@ interface BlockMesh {
   readonly blocks: readonly InteractiveBlock[];
 }
 
+interface PlatformMesh {
+  readonly mesh: InstancedMesh;
+  readonly platforms: readonly MovingPlatform[];
+}
+
+/** A de vai e volta é de madeira com laterais de mola; a de esqueleto, toda de osso. */
+const PLATFORM_TILES: Readonly<Record<MovingPlatformKind, { readonly top: VoxelTile; readonly side: VoxelTile }>> = {
+  shuttle: { top: 'platform', side: 'spring' },
+  skeleton: { top: 'bone', side: 'bone' },
+};
+
 /**
  * Blocos que reagem ao Pedro, em malhas instanciadas.
  *
@@ -47,6 +65,7 @@ export class BlockView {
   private readonly multiCoinBlocks: BlockMesh;
   private readonly usedSurprises: BlockMesh;
   private readonly springs: BlockMesh;
+  private readonly ceilingSprings: BlockMesh;
   private readonly notes: BlockMesh;
   private readonly crumbles: BlockMesh;
   private readonly invisibleGrass: BlockMesh;
@@ -54,7 +73,7 @@ export class BlockView {
   private readonly water: InstancedMesh | null;
   /** Para cada célula de água, se ela é a de cima (a que ondula). */
   private readonly waterSurface: readonly boolean[];
-  private readonly platforms: InstancedMesh | null;
+  private readonly platforms: readonly PlatformMesh[];
 
   private readonly matrix = new Matrix4();
   private readonly position = new Vector3();
@@ -81,6 +100,7 @@ export class BlockView {
     this.multiCoinBlocks = this.blockMesh(surpriseBlocks.filter(isMultiCoin), 'brick', BLOCK_SIZE);
     this.usedSurprises = this.blockMesh(surpriseBlocks, 'surprise-used', BLOCK_SIZE);
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
+    this.ceilingSprings = this.blockMesh(byKind('ceiling-spring'), 'spring', 0.9);
     this.notes = this.blockMesh(byKind('note'), 'note', BLOCK_SIZE);
     this.crumbles = this.blockMesh(byKind('crumble'), 'crumble', BLOCK_SIZE, 0.45);
     // Revelada, a grama invisível vira um bloco de grama igual ao do terreno.
@@ -88,7 +108,7 @@ export class BlockView {
     this.lava = this.buildLava();
     this.waterSurface = this.findWaterSurface();
     this.water = this.buildWater();
-    this.platforms = this.buildPlatforms();
+    this.platforms = (['shuttle', 'skeleton'] as const).flatMap((kind) => this.buildPlatforms(kind));
   }
 
   update(now: number, alpha: number): void {
@@ -98,6 +118,7 @@ export class BlockView {
     this.updateBlocks(this.multiCoinBlocks, now, (block) => !block.isUsed);
     this.updateBlocks(this.usedSurprises, now, (block) => block.isUsed);
     this.updateBlocks(this.springs, now, () => true);
+    this.updateBlocks(this.ceilingSprings, now, () => true);
     this.updateBlocks(this.notes, now, () => true);
     this.updateBlocks(this.crumbles, now, (block) => !block.isHidden);
     this.updateBlocks(this.invisibleGrass, now, (block) => block.isUsed);
@@ -136,7 +157,9 @@ export class BlockView {
     target.blocks.forEach((block, index) => {
       const visible = isVisible(block);
       const bump = pulse(now - block.bumpedAt, BUMP_MS);
-      const isSpring = block.kind === 'spring';
+      const isSpring = block.kind === 'spring' || block.kind === 'ceiling-spring';
+      // A mola do teto amassa para cima, presa pela base lá em cima.
+      const squashTowards = block.kind === 'ceiling-spring' ? -1 : 1;
       const isCrumble = block.kind === 'crumble';
       const shake = isCrumble && block.isUsed && !block.isHidden ? Math.sin(now / 22) * 0.05 : 0;
       const squash = isSpring ? 1 - pulse(now - block.bumpedAt, SPRING_SQUASH_MS) * 0.4 : 1;
@@ -145,7 +168,7 @@ export class BlockView {
       const baseY = this.space.y((block.cellY + (isCrumble ? 0.23 : 0.5)) * TILE_SIZE);
       const springDrop = isSpring ? (1 - squash) * 0.45 : 0;
 
-      this.position.set(block.cellX + 0.5 + shake, baseY + lift - springDrop, 0);
+      this.position.set(block.cellX + 0.5 + shake, baseY + lift - springDrop * squashTowards, 0);
       this.scale.set(visible ? 1 : 0, visible ? squash : 0, visible ? 1 : 0);
       this.matrix.compose(this.position, this.rotation, this.scale);
       target.mesh.setMatrixAt(index, this.matrix);
@@ -251,15 +274,15 @@ export class BlockView {
     water.instanceMatrix.needsUpdate = true;
   }
 
-  private buildPlatforms(): InstancedMesh | null {
-    const platforms = this.system.platforms;
+  private buildPlatforms(kind: MovingPlatformKind): readonly PlatformMesh[] {
+    const platforms = this.system.platforms.filter((platform) => platform.kind === kind);
 
     if (platforms.length === 0) {
-      return null;
+      return [];
     }
 
-    const top = this.atlas.lookup('platform');
-    const side = this.atlas.lookup('spring');
+    const top = this.atlas.lookup(PLATFORM_TILES[kind].top);
+    const side = this.atlas.lookup(PLATFORM_TILES[kind].side);
     const geometry = buildTexturedBoxGeometry(
       this.space.length(MOVING_PLATFORM_WIDTH),
       this.space.length(MOVING_PLATFORM_HEIGHT),
@@ -274,20 +297,20 @@ export class BlockView {
     mesh.frustumCulled = false;
     this.root.add(mesh);
 
-    return mesh;
+    return [{ mesh, platforms }];
   }
 
   private updatePlatforms(alpha: number): void {
-    const mesh = this.platforms;
-
-    if (!mesh) {
-      return;
-    }
-
     const halfWidth = this.space.length(MOVING_PLATFORM_WIDTH) / 2;
     const halfHeight = this.space.length(MOVING_PLATFORM_HEIGHT) / 2;
 
-    this.system.platforms.forEach((platform, index) => {
+    for (const { mesh, platforms } of this.platforms) {
+      this.placePlatforms(mesh, platforms, alpha, halfWidth, halfHeight);
+    }
+  }
+
+  private placePlatforms(mesh: InstancedMesh, platforms: readonly MovingPlatform[], alpha: number, halfWidth: number, halfHeight: number): void {
+    platforms.forEach((platform, index) => {
       const x = platform.previousX + (platform.x - platform.previousX) * alpha;
       const y = platform.previousY + (platform.y - platform.previousY) * alpha;
 
