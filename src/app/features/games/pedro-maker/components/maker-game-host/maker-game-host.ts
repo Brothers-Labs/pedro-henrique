@@ -264,12 +264,18 @@ export class MakerGameHost {
   /**
    * Evento do motor.
    *
-   * O som toca direto, fora da zona: é o evento mais frequente e não muda
-   * nada na tela. O resto entra na zona para a tela reagir.
+   * O som e as notas do bloco musical tocam direto, fora da zona: são os
+   * eventos mais frequentes e não mudam nada na tela. O resto entra na zona
+   * para a tela reagir.
    */
   private receive(event: GameSessionEvent): void {
     if (event.type === 'sound') {
       this.audio.play(event.cue);
+      return;
+    }
+
+    if (event.type === 'note') {
+      this.audio.playNote(event.degree);
       return;
     }
 
@@ -332,6 +338,7 @@ export class MakerGameHost {
         this.phase.set('error');
         return;
       case 'sound':
+      case 'note':
         return;
     }
   }
