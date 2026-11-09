@@ -174,6 +174,66 @@
       "width": 0.9,
       "height": 1.9,
       "drops": "iron-golem"
+    },
+    {
+      "id": "verity",
+      "name": "Verity",
+      "temperament": "passive",
+      "health": 8,
+      "speed": 1.4,
+      "behavior": "grazer",
+      "model": "verity",
+      "colors": ["#fff3d6", "#f7f7f2", "#ffcf3f"],
+      "width": 0.5,
+      "height": 1.6,
+      "drops": "verity",
+      "spawn": { "period": "day", "on": ["grass"], "groupMin": 1, "groupMax": 1, "weight": 1 }
+    },
+    {
+      "id": "lovity",
+      "name": "Lovity",
+      "temperament": "passive",
+      "health": 8,
+      "speed": 1.4,
+      "behavior": "grazer",
+      "model": "lovity",
+      "colors": ["#ffe0e8", "#ff8fb8", "#e8344e"],
+      "width": 0.5,
+      "height": 1.6,
+      "drops": "lovity",
+      "spawn": { "period": "day", "on": ["grass", "sand"], "groupMin": 1, "groupMax": 1, "weight": 1 }
+    },
+    {
+      "id": "falsity",
+      "name": "Falsity",
+      "temperament": "hostile",
+      "health": 8,
+      "speed": 2.4,
+      "damage": 1,
+      "attackCooldownMs": 1200,
+      "behavior": "hopper",
+      "model": "falsity",
+      "colors": ["#c9f2b0", "#7a3fbf", "#3b1f63"],
+      "width": 0.5,
+      "height": 1.6,
+      "drops": "falsity",
+      "spawn": { "period": "night", "on": ["grass", "dirt"], "groupMin": 1, "groupMax": 1, "weight": 1.5 }
+    },
+    {
+      "id": "cruelty",
+      "name": "Cruelty",
+      "temperament": "hostile",
+      "health": 12,
+      "speed": 1.6,
+      "damage": 1,
+      "attackCooldownMs": 1000,
+      "behavior": "chaser",
+      "model": "cruelty",
+      "colors": ["#f2c1b0", "#8c1c2b", "#2a1a1f"],
+      "width": 0.5,
+      "height": 1.6,
+      "drops": "cruelty",
+      "spawn": { "period": "night", "on": ["grass", "dirt", "stone"], "groupMin": 1, "groupMax": 1, "weight": 1.5 }
     }
   ]
 }

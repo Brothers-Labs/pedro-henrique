@@ -231,6 +231,18 @@ export class EnemyModel {
         this.body.rotation.x = Math.sin(time * 3) * 0.35;
         this.wagTail(time * 16);
         return;
+      case 'king-cactus':
+        // Pesadão: balança devagar de um lado para o outro enquanto anda.
+        this.body.rotation.z = pose.isMoving ? Math.sin(time * 5) * 0.05 : 0;
+        return;
+      case 'living-pumpkin':
+        this.body.rotation.z = pose.isMoving ? Math.sin(time * 10) * 0.08 : 0;
+        return;
+      case 'witch':
+        // Na vassoura, sobe e desce e inclina de leve, como quem voa de verdade.
+        this.body.position.y = Math.sin(time * 3) * 0.04;
+        this.body.rotation.z = Math.sin(time * 2) * 0.08;
+        return;
       case 'iron-ball':
         // Rola na direção do bote e treme forte no aviso, para dar tempo de fugir.
         this.body.rotation.y = this.heading * 0.3;
@@ -262,7 +274,7 @@ export class EnemyModel {
 
   private showIce(isFrozen: boolean): void {
     if (isFrozen && !this.iceBlock) {
-      const size = this.kind === 'king-slime' ? KING_ICE_BLOCK_SIZE : ICE_BLOCK_SIZE;
+      const size = this.kind === 'king-slime' || this.kind === 'king-cactus' ? KING_ICE_BLOCK_SIZE : ICE_BLOCK_SIZE;
 
       this.iceBlock = new Mesh(new BoxGeometry(size, size, size), this.materials.ice);
       // O morcego é desenhado a partir do centro; os outros, a partir dos pés.
@@ -531,6 +543,59 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(0.13, 0.55, 0.356, 0.16, 0.04, 0.01, '#2a2350'),
     box(0, 0.24, 0.356, 0.14, 0.035, 0.01, '#2a2350'),
     ...eyes(0.42, 0.356, 0.12, 0.11),
+  ],
+  // Cacto grandão de braços para cima, espinhos claros na frente e a coroa do Rei.
+  'king-cactus': [
+    box(0, 0.04, 0, 0.7, 0.08, 0.6, '#3d8a3a'),
+    box(0, 0.55, 0, 0.62, 1.0, 0.56, '#4fae4a'),
+    box(0, 1.08, 0, 0.48, 0.08, 0.44, '#63c45c'),
+    box(-0.42, 0.55, 0, 0.24, 0.16, 0.22, '#4fae4a'),
+    box(-0.52, 0.76, 0, 0.18, 0.38, 0.2, '#4fae4a'),
+    box(0.42, 0.42, 0, 0.24, 0.16, 0.22, '#4fae4a'),
+    box(0.52, 0.6, 0, 0.18, 0.32, 0.2, '#4fae4a'),
+    ...[
+      [-0.2, 0.3],
+      [0.2, 0.3],
+      [0, 0.18],
+      [-0.2, 0.92],
+      [0.2, 0.92],
+    ].map(([x, y]) => box(x, y, 0.29, 0.06, 0.06, 0.04, '#fff3d6')),
+    box(0, 0.5, 0.285, 0.2, 0.05, 0.02, '#2a2350'),
+    ...eyes(0.7, 0.285, 0.14, 0.13),
+    box(0, 1.2, 0, 0.42, 0.14, 0.36, '#ffc629'),
+    ...[-0.15, 0, 0.15].map((x) => box(x, 1.32, 0, 0.09, 0.1, 0.09, '#ffc629')),
+    box(0, 1.2, 0.185, 0.09, 0.07, 0.02, '#ff7aa8'),
+  ],
+  // Abóbora em gomos com cara de lanterna acesa e dois pezinhos para pular.
+  'living-pumpkin': [
+    box(-0.17, 0.04, 0.04, 0.18, 0.08, 0.24, '#3d6b22'),
+    box(0.17, 0.04, 0.04, 0.18, 0.08, 0.24, '#3d6b22'),
+    box(0, 0.33, 0, 0.74, 0.5, 0.62, '#ff8a1f'),
+    box(0, 0.33, 0, 0.56, 0.56, 0.68, '#ff9a33'),
+    box(-0.19, 0.33, 0.345, 0.03, 0.44, 0.02, '#d96a0a'),
+    box(0.19, 0.33, 0.345, 0.03, 0.44, 0.02, '#d96a0a'),
+    box(0, 0.65, 0, 0.1, 0.14, 0.1, '#5a8a2e'),
+    box(0.11, 0.62, 0, 0.14, 0.04, 0.1, '#6fb43a'),
+    box(-0.12, 0.42, 0.352, 0.12, 0.1, 0.01, '#ffe066'),
+    box(0.12, 0.42, 0.352, 0.12, 0.1, 0.01, '#ffe066'),
+    box(0, 0.24, 0.352, 0.34, 0.07, 0.01, '#ffe066'),
+    box(0, 0.2, 0.352, 0.16, 0.05, 0.01, '#ffe066'),
+  ],
+  // Bruxa sorridente na vassoura: a frente da vassoura aponta para onde ela voa.
+  witch: [
+    // Cores claras de propósito: na noite roxa do Dia das Bruxas, roupa escura some no fundo.
+    box(0, 0.08, 0.05, 0.06, 0.06, 1.0, '#8a5a32'),
+    box(0, 0.08, -0.52, 0.22, 0.18, 0.2, '#e8c25a'),
+    box(0, 0.3, 0, 0.44, 0.36, 0.38, '#9b5de5'),
+    box(0, 0.6, 0.02, 0.32, 0.3, 0.3, '#a8e07a'),
+    box(-0.18, 0.56, -0.02, 0.06, 0.26, 0.26, '#ff8a1f'),
+    box(0.18, 0.56, -0.02, 0.06, 0.26, 0.26, '#ff8a1f'),
+    ...eyes(0.62, 0.175, 0.07, 0.08),
+    box(0, 0.78, 0.02, 0.56, 0.05, 0.5, '#5a48b0'),
+    box(0, 0.84, 0, 0.32, 0.06, 0.3, '#ffe066'),
+    box(0, 0.94, 0, 0.3, 0.16, 0.28, '#5a48b0'),
+    box(0, 1.08, -0.03, 0.16, 0.14, 0.16, '#5a48b0'),
+    box(0, 1.18, -0.07, 0.07, 0.08, 0.07, '#5a48b0'),
   ],
   fish: fishBody(FISH_COLORS.fish),
   'jumping-fish': fishBody(FISH_COLORS['jumping-fish']),

@@ -33,6 +33,10 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   'iron-ball': { speed: 0, bodyWidth: 36, bodyHeight: 36, flies: true, isStompable: false, isFireproof: true },
   fish: { speed: 70, bodyWidth: 34, bodyHeight: 22, flies: true, isStompable: true, isFireproof: false },
   'jumping-fish': { speed: 0, bodyWidth: 30, bodyHeight: 22, flies: true, isStompable: true, isFireproof: false },
+  // Coberto de espinhos como o espinhudo: pisar machuca, só o fogo e o gelo dão conta dele.
+  'king-cactus': { speed: 35, bodyWidth: 50, bodyHeight: 58, flies: false, isStompable: false, isFireproof: false },
+  'living-pumpkin': { speed: 60, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true, isFireproof: false },
+  witch: { speed: 80, bodyWidth: 34, bodyHeight: 34, flies: true, isStompable: true, isFireproof: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -62,6 +66,14 @@ const BEE_BOB_HEIGHT = 30;
 /** O peixe nadador vai e volta mais longe que a abelha e ondula mais de leve. */
 const FISH_PATROL = TILE_SIZE * 4;
 const FISH_BOB_HEIGHT = 14;
+
+/** A bruxa voa de vassoura mais longe que a abelha, subindo e descendo devagar. */
+const WITCH_PATROL = TILE_SIZE * 5;
+const WITCH_BOB_HEIGHT = 24;
+
+/** A abóbora viva anda pulando: um pulinho baixo a cada intervalo, sempre no chão. */
+const PUMPKIN_HOP_VELOCITY = 520;
+const PUMPKIN_HOP_INTERVAL_MS = 900;
 
 /** Um salto para fora do líquido: tempo mergulhado, tempo no ar e a altura do arco. */
 interface LeapProfile {
@@ -146,6 +158,10 @@ export const ENEMY_DEFEAT_MS = 280;
  * saltador pula para fora da água como a bolinha de lava, e mergulhado também
  * não machuca; diferente dela, é pisável e o fogo e o gelo pegam nele.
  *
+ * Do Dia das Bruxas vêm três: o Rei Cacto, grandão e coberto de espinhos,
+ * patrulha devagar e não se pisa; a abóbora viva patrulha aos pulinhos; e a
+ * bruxa voa de vassoura de um lado para o outro, subindo e descendo.
+ *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
  * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
  */
@@ -171,6 +187,7 @@ export class Enemy {
   private readonly homeX: number;
   private readonly homeY: number;
   private pausedUntil = 0;
+  private nextHopAt = 0;
   private piranhaCycleMs: number;
   private lastStepAt: number | null = null;
   private thwompState: ThwompState = 'waiting';
@@ -270,7 +287,14 @@ export class Enemy {
       case 'penguin':
       case 'goomba':
       case 'king-slime':
+      case 'king-cactus':
         this.patrolLedges();
+        return;
+      case 'living-pumpkin':
+        this.hopAlong(now);
+        return;
+      case 'witch':
+        this.hover(now, WITCH_PATROL, WITCH_BOB_HEIGHT);
         return;
       case 'robot':
         this.patrolRegion(now);
@@ -363,6 +387,16 @@ export class Enemy {
     }
 
     body.vx = this.direction * this.profile.speed * this.speedMultiplier;
+  }
+
+  /** Patrulha como o slime, mas pulando: cada pulinho sai do chão, nunca do ar. */
+  private hopAlong(now: number): void {
+    this.patrolLedges();
+
+    if (this.body.blockedDown && now >= this.nextHopAt) {
+      this.body.vy = -PUMPKIN_HOP_VELOCITY;
+      this.nextHopAt = now + PUMPKIN_HOP_INTERVAL_MS;
+    }
   }
 
   private patrolRegion(now: number): void {

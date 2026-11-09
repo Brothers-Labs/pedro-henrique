@@ -1,6 +1,6 @@
 import type { BossDefinition, LevelBlueprint, LevelTheme } from './level.model';
 
-export type WorldId = 1 | 2 | 3 | 4 | 5;
+export type WorldId = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface World {
   readonly id: WorldId;
@@ -20,7 +20,7 @@ export type CampaignLevelKind = 'normal' | 'boss' | 'secret';
  * Ficha de uma fase da campanha.
  *
  * A planta da fase é montada só quando alguém vai jogá-la: o mapa lista as
- * cinquenta fases sem pagar o custo de construir nenhuma.
+ * sessenta fases sem pagar o custo de construir nenhuma.
  */
 export interface CampaignLevel {
   readonly id: string;

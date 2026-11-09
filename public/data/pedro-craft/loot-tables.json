@@ -92,6 +92,10 @@
     { "id": "campfire", "entries": [{ "item": "campfire" }] },
     { "id": "skeleton", "entries": [{ "item": "arrow", "min": 2, "max": 4 }, { "item": "bone", "min": 1, "max": 2 }] },
     { "id": "creeper", "entries": [{ "item": "gunpowder", "min": 1, "max": 2 }] },
-    { "id": "iron-golem", "entries": [{ "item": "iron-ingot", "min": 3, "max": 5 }, { "item": "flower-red", "chance": 0.5 }] }
+    { "id": "iron-golem", "entries": [{ "item": "iron-ingot", "min": 3, "max": 5 }, { "item": "flower-red", "chance": 0.5 }] },
+    { "id": "verity", "entries": [{ "item": "flower-yellow", "min": 1, "max": 2 }, { "item": "gold-ingot", "chance": 0.2 }] },
+    { "id": "lovity", "entries": [{ "item": "flower-red", "min": 1, "max": 2 }, { "item": "apple", "chance": 0.5 }] },
+    { "id": "falsity", "entries": [{ "item": "lapis", "min": 1, "max": 2 }, { "item": "emerald", "chance": 0.2 }] },
+    { "id": "cruelty", "entries": [{ "item": "coal", "min": 1, "max": 2 }, { "item": "bone", "chance": 0.5 }] }
   ]
 }

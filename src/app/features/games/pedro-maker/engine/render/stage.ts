@@ -44,6 +44,8 @@ const SUN_COLORS: Readonly<Partial<Record<LevelTheme, string>>> = {
   'castelo-rei-slime': '#e3ffd6',
   praia: '#fff1d6',
   classico: '#fffaf0',
+  // Luar arroxeado.
+  'dia-das-bruxas': '#c9b8ff',
 };
 
 /**

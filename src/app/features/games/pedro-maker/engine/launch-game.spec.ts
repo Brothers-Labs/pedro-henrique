@@ -127,7 +127,7 @@ describe('Motor 3D do Pedro Maker (WebGL de verdade)', () => {
     BOOT_TIMEOUT_MS * 3,
   );
 
-  for (const id of ['1-2', '1-3', '1-10', '1-S', '3-6', '5-10']) {
+  for (const id of ['1-2', '1-3', '1-10', '1-S', '3-6', '5-10', '6-3', '6-10']) {
     it(
       `monta a fase ${id} sem erro`,
       async () => {
