@@ -22,7 +22,7 @@ export interface SpawnExtra {
   readonly crystalIndex?: number;
 }
 
-export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note' | 'invisible-grass';
+export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note' | 'invisible-grass' | 'ceiling-spring';
 
 /** Bloco que reage ao Pedro. A tela lê os momentos para animar. */
 export interface InteractiveBlock {
@@ -45,7 +45,14 @@ export interface InteractiveBlock {
   crumbleStartedAt: number;
 }
 
+/**
+ * `shuttle` vai e volta sem parar entre `start` e `end`; `skeleton` espera o
+ * herói pisar e então segue até `end`, a parede, onde para de vez.
+ */
+export type MovingPlatformKind = 'shuttle' | 'skeleton';
+
 export interface MovingPlatform extends PlatformSurface {
+  readonly kind: MovingPlatformKind;
   x: number;
   y: number;
   deltaX: number;
@@ -67,6 +74,8 @@ export const MOVING_PLATFORM_HEIGHT = TILE_SIZE / 2;
 const SPIKE_REACH = 2;
 
 const MOVING_SPEED = 90;
+/** Mais devagar que a de vai e volta: a criança tem tempo de ver aonde a de esqueleto está indo. */
+const SKELETON_SPEED = 70;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
 
@@ -80,6 +89,7 @@ const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>
   'crumble',
   'note',
   'invisible-grass',
+  'ceiling-spring',
 ]);
 
 function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
@@ -89,11 +99,12 @@ function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
 /**
  * Blocos que reagem ao Pedro.
  *
- * Quebrável, surpresa, mola e grama invisível ocupam a grade como sólidos; a
- * plataforma frágil, como chão de mão única. A reação vem do lado do contato:
- * cabeçada por baixo quebra ou abre, pisar em cima faz a mola saltar, o bloco
- * musical quicar e a plataforma frágil tremer. A grama invisível aparece com
- * qualquer encostada, por cima, por baixo ou de lado.
+ * Quebrável, surpresa, as molas e grama invisível ocupam a grade como
+ * sólidos; a plataforma frágil, como chão de mão única. A reação vem do lado
+ * do contato: cabeçada por baixo quebra ou abre (e a mola do teto lança para
+ * baixo), pisar em cima faz a mola saltar, o bloco musical quicar e a
+ * plataforma frágil tremer. A grama invisível aparece com qualquer encostada,
+ * por cima, por baixo ou de lado.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -119,6 +130,8 @@ export class BlockSystem {
         this.addInteractive(object, object.type, crystalIndexOf.get(object));
       } else if (object.type === 'moving-platform') {
         this.addMovingPlatform(object);
+      } else if (object.type === 'skeleton-platform') {
+        this.addSkeletonPlatform(object);
       } else if (object.type === 'lava') {
         const x = object.x * TILE_SIZE;
         const y = object.y * TILE_SIZE;
@@ -165,7 +178,7 @@ export class BlockSystem {
       const clamped = Math.min(platform.end, Math.max(platform.start, position));
 
       if (clamped !== position) {
-        platform.velocity = -platform.velocity;
+        platform.velocity = platform.kind === 'shuttle' ? -platform.velocity : 0;
       }
 
       if (isHorizontal) {
@@ -179,9 +192,27 @@ export class BlockSystem {
     }
   }
 
-  /** Cabeçada por baixo: o tijolo quebra, a surpresa abre. */
-  handleHeadHit(cellX: number, cellY: number, now: number): void {
+  /** O herói está em cima de uma plataforma de esqueleto parada: ela acorda e sai andando. */
+  wakePlatform(riding: PlatformSurface | null): void {
+    const platform = this.platforms.find((candidate) => candidate === riding);
+
+    if (platform?.kind !== 'skeleton' || platform.velocity !== 0 || platform.x >= platform.end) {
+      return;
+    }
+
+    platform.velocity = SKELETON_SPEED;
+    this.host.playSound('button');
+    this.host.effects.burst('dust', platform.x + platform.width / 2, platform.y, 6);
+  }
+
+  /** Cabeçada por baixo: o tijolo quebra, a surpresa abre, a mola do teto lança para baixo. */
+  handleHeadHit(player: Player, cellX: number, cellY: number, now: number): void {
     const block = this.blockAt(cellX, cellY);
+
+    if (block?.kind === 'ceiling-spring') {
+      this.launchDown(player, block, now);
+      return;
+    }
 
     if (block?.kind === 'note') {
       block.bumpedAt = now;
@@ -334,6 +365,7 @@ export class BlockSystem {
     const isHorizontal = axis === 'horizontal';
 
     this.platforms.push({
+      kind: 'shuttle',
       x,
       y,
       width: MOVING_PLATFORM_WIDTH,
@@ -345,6 +377,33 @@ export class BlockSystem {
       start: isHorizontal ? x : y - range,
       end: isHorizontal ? x + range : y,
       velocity: isHorizontal ? MOVING_SPEED : -MOVING_SPEED,
+    });
+  }
+
+  /** Parada até alguém pisar; o caminho acaba na primeira parede sólida à direita, ou no fim da fase. */
+  private addSkeletonPlatform(object: LevelObject): void {
+    const x = object.x * TILE_SIZE;
+    const y = object.y * TILE_SIZE;
+    const widthInCells = MOVING_PLATFORM_WIDTH / TILE_SIZE;
+    let wall = object.x + widthInCells;
+
+    while (wall < this.grid.width && this.grid.collisionAt(wall, object.y) !== COLLISION.solid) {
+      wall += 1;
+    }
+
+    this.platforms.push({
+      kind: 'skeleton',
+      x,
+      y,
+      width: MOVING_PLATFORM_WIDTH,
+      deltaX: 0,
+      deltaY: 0,
+      previousX: x,
+      previousY: y,
+      axis: 'horizontal',
+      start: x,
+      end: Math.max(x, wall * TILE_SIZE - MOVING_PLATFORM_WIDTH),
+      velocity: 0,
     });
   }
 
@@ -388,6 +447,14 @@ export class BlockSystem {
     block.bumpedAt = now;
     this.host.playSound('spring');
     this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 8);
+  }
+
+  /** A mola do teto empurra para baixo, já na queda mais rápida. */
+  private launchDown(player: Player, block: InteractiveBlock, now: number): void {
+    player.pushDown(PLAYER_PHYSICS.maxFallSpeed);
+    block.bumpedAt = now;
+    this.host.playSound('spring');
+    this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, (block.cellY + 1) * TILE_SIZE, 8);
   }
 
   /** Diferente da mola, o quique pode ser cortado: soltar o pulo vira um saltinho. */

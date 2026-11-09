@@ -295,6 +295,13 @@ export class Player {
     this.hasUsedDoubleJump = false;
   }
 
+  /** Empurrão para baixo (a mola do teto): o herói despenca na hora, mesmo segurando o pulo. */
+  pushDown(velocity: number): void {
+    this.stopSliding();
+    this.body.vy = velocity;
+    this.body.riding = null;
+  }
+
   grantPowerUp(kind: PowerUpKind, now: number): void {
     if (!PROTECTIVE_POWER_UPS.has(kind)) {
       this.timedPowerUps.set(kind, now + POWER_UP_DURATION_MS[kind]);

@@ -102,6 +102,11 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
       continue;
     }
 
+    // O caminho da plataforma de esqueleto depende das paredes: só dá para marcar depois de todas elas.
+    if (object.type === 'skeleton-platform') {
+      continue;
+    }
+
     switch (OBJECT_BEHAVIOR[object.type].surface) {
       case 'solid':
         mark(object.x, object.y, Surface.Solid);
@@ -120,7 +125,23 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
     }
   }
 
+  blueprint.objects
+    .filter((object) => object.type === 'skeleton-platform')
+    .forEach((object) => markSkeletonPath(object, width, (x, y) => surfaces[y * width + x] === Surface.Solid, mark));
+
   return { width, height, surfaces };
+}
+
+/** Da posição dela até a primeira parede sólida à direita: é tudo chão por onde a criança pode passar. */
+function markSkeletonPath(
+  object: LevelObject,
+  width: number,
+  isWall: (x: number, y: number) => boolean,
+  mark: (x: number, y: number, surface: Surface) => void,
+): void {
+  for (let x = object.x; x < width && !isWall(x, object.y); x += 1) {
+    mark(x, object.y, Surface.OneWay);
+  }
 }
 
 /**

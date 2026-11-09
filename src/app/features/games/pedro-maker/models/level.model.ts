@@ -133,7 +133,8 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
  * segura ninguém: quem entra nela nada. Os espinhos seguram, mas machucam
  * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele. A grama
  * invisível é chão de verdade que não aparece: só se mostra depois que o
- * herói encosta nela.
+ * herói encosta nela. A mola de cabeça pra baixo fica presa no teto: quem
+ * bate a cabeça nela é lançado para baixo.
  */
 export type BlockType =
   | 'cannon'
@@ -147,7 +148,8 @@ export type BlockType =
   | 'water'
   | 'spikes'
   | 'note'
-  | 'invisible-grass';
+  | 'invisible-grass'
+  | 'ceiling-spring';
 
 /**
  * Valores das moedas gigantes numeradas, da menor para a maior.
@@ -252,12 +254,15 @@ export type TriggerType = 'hint' | 'mascot-tip';
 
 /**
  * O escorregador fica em pé no chão, com a escada à esquerda: quem pousa na
- * rampa desce sozinho, ganhando velocidade, e sai correndo lá embaixo.
+ * rampa desce sozinho, ganhando velocidade, e sai correndo lá embaixo. A
+ * plataforma de esqueleto espera parada: quando o herói pisa, ela segue
+ * para a direita até bater numa parede, e ali fica.
  */
 export type LevelObjectType =
   | TerrainType
   | BlockType
   | 'moving-platform'
+  | 'skeleton-platform'
   | 'slide'
   | EnemyKind
   | 'boss'

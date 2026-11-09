@@ -1,4 +1,5 @@
 import { DEFAULT_LOOK } from '../config/character.config';
+import type { LevelObject } from '../models/level.model';
 import { sanitizeCustomLevel } from './custom-level.service';
 import { reconcile } from './maker-progress.service';
 
@@ -100,6 +101,15 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
         { id: 'castelo', type: 'portal', x: 30, y: 13, properties: { portalLook: 'castle' } },
         { id: 'foguete', type: 'portal', x: 32, y: 13 },
       ]);
+    });
+
+    it('guarda a plataforma de esqueleto e a mola de cabeça pra baixo', () => {
+      const objects: readonly LevelObject[] = [
+        { id: 'ossos', type: 'skeleton-platform', x: 8, y: 11 },
+        { id: 'mola', type: 'ceiling-spring', x: 12, y: 6 },
+      ];
+
+      expect(sanitizeCustomLevel({ ...valid, objects })?.objects).toEqual(objects);
     });
   });
 });

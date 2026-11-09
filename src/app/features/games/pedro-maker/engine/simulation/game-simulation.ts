@@ -291,7 +291,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const body = this.player.body;
 
     if (body.headHitColumn >= 0) {
-      this.blocks.handleHeadHit(body.headHitColumn, body.headHitRow, this.clockMs);
+      this.blocks.handleHeadHit(this.player, body.headHitColumn, body.headHitRow, this.clockMs);
     }
 
     if (body.landedRow >= 0) {
@@ -299,6 +299,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
 
     this.blocks.revealInvisibleGrassTouching(body);
+    this.blocks.wakePlatform(body.riding);
   }
 
   private updateEnemies(seconds: number): void {

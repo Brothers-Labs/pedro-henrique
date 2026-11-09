@@ -24,6 +24,9 @@ export const EDITOR_CELL = 32;
 export const MIN_EDITOR_ZOOM = 0.4;
 export const MAX_EDITOR_ZOOM = 2;
 
+/** Tracejado curto na frente da plataforma de esqueleto: mostra para que lado ela vai. */
+const SKELETON_PATH_HINT_CELLS = 2;
+
 export type EditorTool = 'pincel' | 'retangulo' | 'apagar' | 'selecionar' | 'conta-gotas' | 'mover';
 
 /** `cancel` avisa que o traço foi abandonado: entrou um segundo dedo para dar zoom. */
@@ -449,7 +452,7 @@ export class EditorCanvas {
     const x = object.x * size;
     const y = object.y * size;
 
-    if (object.type === 'moving-platform') {
+    if (object.type === 'moving-platform' || object.type === 'skeleton-platform') {
       this.drawMovingPath(context, object, size);
       context.drawImage(icon, x, y, size * 2, size);
       return;
@@ -481,8 +484,9 @@ export class EditorCanvas {
   }
 
   /** Linha tracejada mostrando até onde a plataforma móvel vai. */
+  /** O caminho da plataforma; a de esqueleto ganha só o começo dele, porque segue até a parede que achar. */
   private drawMovingPath(context: CanvasRenderingContext2D, object: LevelObject, size: number): void {
-    const range = (object.properties?.range ?? 3) * size;
+    const range = (object.type === 'skeleton-platform' ? SKELETON_PATH_HINT_CELLS : (object.properties?.range ?? 3)) * size;
     const isVertical = object.properties?.axis === 'vertical';
     const startX = object.x * size + size;
     const startY = object.y * size + size / 2;
