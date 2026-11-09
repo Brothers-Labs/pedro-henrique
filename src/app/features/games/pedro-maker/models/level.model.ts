@@ -20,7 +20,8 @@ export type LevelTheme =
   | 'castelo'
   | 'castelo-rei-slime'
   | 'praia'
-  | 'classico';
+  | 'classico'
+  | 'dia-das-bruxas';
 
 /**
  * A tartaruga anda devagar e pode ser pisada; a planta carnívora mora num
@@ -35,6 +36,9 @@ export type LevelTheme =
  *
  * Os peixes moram na água: o nadador vai e volta ondulando, e o saltador fica
  * mergulhado e pula para fora num arco alto. Os dois caem com um pisão.
+ *
+ * Os do Dia das Bruxas: o Rei Cacto, grandão de coroa e espinhos, que não se
+ * pisa; a abóbora viva, que anda aos pulinhos; e a bruxa de vassoura.
  */
 export const ENEMY_KINDS = [
   'slime',
@@ -54,6 +58,9 @@ export const ENEMY_KINDS = [
   'iron-ball',
   'fish',
   'jumping-fish',
+  'king-cactus',
+  'living-pumpkin',
+  'witch',
 ] as const;
 
 export type EnemyKind = (typeof ENEMY_KINDS)[number];
@@ -247,7 +254,8 @@ export type DecorType =
   | 'lamp'
   | 'grass'
   | 'arrow'
-  | 'crate';
+  | 'crate'
+  | 'pumpkin';
 
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';
@@ -302,7 +310,7 @@ export interface LevelObject {
 }
 
 /** Molde do desenho do chefão: cada mundo tem o seu. */
-export type BossLook = 'slime' | 'cactus' | 'ice' | 'magma' | 'comet';
+export type BossLook = 'slime' | 'cactus' | 'ice' | 'magma' | 'comet' | 'pumpkin';
 
 /** Chefão da fase final de cada mundo. */
 export interface BossDefinition {

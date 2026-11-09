@@ -37,6 +37,14 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
       return creeper(color(0), color(1), color(2));
     case 'iron-golem':
       return ironGolem(color(0), color(1), color(2), color(3));
+    case 'verity':
+      return [...doll(color(0), color(1)), ...halo(color(2))];
+    case 'lovity':
+      return [...doll(color(0), color(1)), ...hearts(color(2))];
+    case 'falsity':
+      return [...doll(color(0), color(1)), ...halfMask(color(2))];
+    case 'cruelty':
+      return [...doll(color(0), color(1)), ...horns(color(2))];
   }
 }
 
@@ -190,6 +198,79 @@ function ironGolem(iron: string, vines: string, nose: string, brow: string): rea
     box(0, 1.83, -0.255, 0.36, 0.05, 0.02, brow),
     box(0, 1.63, -0.3, 0.1, 0.18, 0.1, nose),
     ...eyes(0.1, 1.74, -0.26),
+  ];
+}
+
+/** Topo da cabeça do boneco, onde ficam auréola e chifrinhos. */
+const DOLL_HEAD_TOP = 1.56;
+/** A frente da cara do boneco, onde ficam os olhos e a máscara. */
+const DOLL_FACE_Z = -0.235;
+/** A frente do peito do boneco, onde fica o coração. */
+const DOLL_CHEST_Z = -0.135;
+
+/**
+ * Cores: pele e roupa. O boneco de Verity, Lovity, Falsity e Cruelty: o mesmo
+ * corpinho de cabeça grande, e cada um ganha o seu enfeite por cima.
+ */
+function doll(skin: string, outfit: string): readonly VoxelBox[] {
+  return [
+    box(0.1, 0.3, 0, 0.16, 0.6, 0.18, outfit),
+    box(-0.1, 0.3, 0, 0.16, 0.6, 0.18, outfit),
+    box(0, 0.86, 0, 0.42, 0.52, 0.26, outfit),
+    box(0.28, 0.9, 0, 0.12, 0.44, 0.14, skin),
+    box(-0.28, 0.9, 0, 0.12, 0.44, 0.14, skin),
+    box(0, 1.34, 0, 0.46, 0.44, 0.46, skin),
+    ...eyes(0.1, 1.36, DOLL_FACE_Z, 0.1),
+  ];
+}
+
+/** Verity: a auréola dourada em cima da cabeça e uma estrelinha no peito. */
+function halo(gold: string): readonly VoxelBox[] {
+  const y = DOLL_HEAD_TOP + 0.14;
+
+  return [
+    box(0, y, 0.18, 0.4, 0.05, 0.05, gold),
+    box(0, y, -0.18, 0.4, 0.05, 0.05, gold),
+    box(0.18, y, 0, 0.05, 0.05, 0.4, gold),
+    box(-0.18, y, 0, 0.05, 0.05, 0.4, gold),
+    box(0, 0.94, DOLL_CHEST_Z, 0.14, 0.05, 0.01, gold),
+    box(0, 0.94, DOLL_CHEST_Z, 0.05, 0.14, 0.01, gold),
+  ];
+}
+
+/** Lovity: um coração no peito e outro na ponta da anteninha. */
+function hearts(heart: string): readonly VoxelBox[] {
+  const heartAt = (y: number, z: number, size: number): readonly VoxelBox[] => [
+    box(size / 2, y + size / 2, z, size, size, 0.02, heart),
+    box(-size / 2, y + size / 2, z, size, size, 0.02, heart),
+    box(0, y, z, size * 1.4, size, 0.02, heart),
+    box(0, y - size / 2, z, size * 0.6, size * 0.6, 0.02, heart),
+  ];
+
+  return [
+    ...heartAt(0.92, DOLL_CHEST_Z, 0.08),
+    box(0, DOLL_HEAD_TOP + 0.1, 0, 0.03, 0.2, 0.03, heart),
+    ...heartAt(DOLL_HEAD_TOP + 0.24, 0, 0.06),
+  ];
+}
+
+/** Falsity: a meia máscara sobre um lado da cara, que nunca mostra o rosto inteiro. */
+function halfMask(mask: string): readonly VoxelBox[] {
+  return [
+    box(0.12, 1.36, DOLL_FACE_Z - 0.02, 0.22, 0.24, 0.02, mask),
+    box(0.1, 1.36, DOLL_FACE_Z - 0.035, 0.1, 0.1, 0.01, EYE),
+    box(0.1, 1.35, DOLL_FACE_Z - 0.045, 0.05, 0.06, 0.01, PUPIL),
+  ];
+}
+
+/** Cruelty: dois chifrinhos pontudos e a sobrancelha emburrada, sem dente nenhum. */
+function horns(horn: string): readonly VoxelBox[] {
+  return [
+    box(0.14, DOLL_HEAD_TOP + 0.05, 0, 0.1, 0.1, 0.1, horn),
+    box(-0.14, DOLL_HEAD_TOP + 0.05, 0, 0.1, 0.1, 0.1, horn),
+    box(0.16, DOLL_HEAD_TOP + 0.14, 0, 0.05, 0.08, 0.05, horn),
+    box(-0.16, DOLL_HEAD_TOP + 0.14, 0, 0.05, 0.08, 0.05, horn),
+    box(0, 1.44, DOLL_FACE_Z - 0.01, 0.34, 0.04, 0.01, horn),
   ];
 }
 

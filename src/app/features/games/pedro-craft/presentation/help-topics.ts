@@ -350,6 +350,19 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Com lã e tábuas você faz uma cama!',
   },
   {
+    id: 'bonecos',
+    emoji: '🧸',
+    title: 'Bonecos',
+    summary: 'Verity e Lovity passeiam de dia; Falsity e Cruelty aparecem à noite.',
+    steps: [
+      { text: 'Verity: a boneca da auréola dourada. É amiga, passeia na grama de dia e às vezes deixa ouro.', items: ['gold-ingot'] },
+      { text: 'Lovity: o boneco do coração. É amigo, aparece de dia na grama e na areia e deixa flor e, às vezes, maçã.', items: ['apple'] },
+      { text: 'Falsity: o boneco da meia máscara. Aparece à noite, pula rápido e vem atrás de você.' },
+      { text: 'Cruelty: o boneco dos chifrinhos. Aparece à noite e corre atrás de você. Use a espada!', items: ['wooden-sword'], control: 'break' },
+    ],
+    tip: 'Com o Modo Paz 🕊️, só os bonecos amigos aparecem.',
+  },
+  {
     id: 'vida',
     emoji: '❤️',
     title: 'Vida e comida',

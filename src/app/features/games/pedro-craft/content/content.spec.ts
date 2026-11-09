@@ -195,6 +195,18 @@ describe('Conteúdo do PedroCraft', () => {
       expect(golem?.temperament).toBe('guardian');
       expect(golem?.spawn).toBeNull();
     });
+
+    it('Verity e Lovity são bonecos amigos do dia; Falsity e Cruelty, inimigos da noite', () => {
+      const dolls = ['verity', 'lovity', 'falsity', 'cruelty'].map((id) => content.creatures.find((creature) => creature.id === id));
+
+      expect(dolls.map((doll) => [doll?.name, doll?.temperament, doll?.spawn?.period, doll?.model])).toEqual([
+        ['Verity', 'passive', 'day', 'verity'],
+        ['Lovity', 'passive', 'day', 'lovity'],
+        ['Falsity', 'hostile', 'night', 'falsity'],
+        ['Cruelty', 'hostile', 'night', 'cruelty'],
+      ]);
+      expect(dolls.every((doll) => doll?.drops === doll?.id && content.lootTables.some((table) => table.id === doll?.drops))).toBeTrue();
+    });
   });
 
   describe('validação da forma', () => {

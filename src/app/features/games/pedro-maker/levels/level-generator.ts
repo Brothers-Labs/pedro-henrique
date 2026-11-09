@@ -358,6 +358,9 @@ function fillPit(builder: LevelBuilder, theme: LevelTheme, fromX: number, toX: n
   }
 }
 
+/** Quem voa nasce acima do chão, na altura de um pulo. */
+const FLYING_ENEMIES: ReadonlySet<EnemyKind> = new Set<EnemyKind>(['bat', 'ghost', 'witch']);
+
 function placeEnemy(
   builder: LevelBuilder,
   random: SeededRandom,
@@ -366,7 +369,7 @@ function placeEnemy(
   surface: number,
 ): void {
   const kind = random.pick(enemies);
-  const y = kind === 'bat' || kind === 'ghost' ? surface - 3 : surface - 1;
+  const y = FLYING_ENEMIES.has(kind) ? surface - 3 : surface - 1;
 
   builder.add(kind, x, y);
 }

@@ -89,6 +89,8 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   'castelo-rei-slime': 52,
   praia: 61,
   classico: 60,
+  // Mais grave que o vale, como a caverna: misterioso sem ficar triste.
+  'dia-das-bruxas': 57,
 };
 
 /** Dó central, até a primeira trilha dizer o tom. */

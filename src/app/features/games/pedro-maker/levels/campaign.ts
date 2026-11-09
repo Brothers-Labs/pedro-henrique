@@ -3,6 +3,12 @@ import type { LevelBlueprint } from '../models/level.model';
 import { buildBossArena } from './campaign/boss-arena';
 import { buildCavernaDosCristais } from './campaign/caverna-dos-cristais';
 import {
+  buildAboborasSaltitantes,
+  buildFlorestaAssombrada,
+  buildSalaDosDoces,
+  buildTorreDaBruxa,
+} from './campaign/dia-das-bruxas';
+import {
   buildAreiaQuente,
   buildCamaraDourada,
   buildOasisEscondido,
@@ -43,6 +49,7 @@ export const SECRET_ENTRANCES: Readonly<Record<WorldId, string>> = {
   3: '3-3',
   4: '4-2',
   5: '5-2',
+  6: '6-2',
 };
 
 /** Fase secreta de cada mundo, liberada pela porta dourada da fase de entrada. */
@@ -52,6 +59,7 @@ const SECRET_LEVELS: Readonly<Record<WorldId, { readonly name: string; readonly 
   3: { name: 'Palácio de Gelo', build: buildPalacioDeGelo },
   4: { name: 'Forja Secreta', build: buildForjaSecreta },
   5: { name: 'Observatório Estelar', build: buildObservatorioEstelar },
+  6: { name: 'Sala dos Doces', build: buildSalaDosDoces },
 };
 
 /**
@@ -74,10 +82,13 @@ const HANDCRAFTED: Readonly<Record<string, () => LevelBlueprint>> = {
   '5-1': buildEscadaDeNuvens,
   '5-2': buildJardimDeEstrelas,
   '5-3': buildLuaSaltitante,
+  '6-1': buildAboborasSaltitantes,
+  '6-2': buildFlorestaAssombrada,
+  '6-3': buildTorreDaBruxa,
 };
 
 /**
- * Campanha completa: cinco mundos, dez fases cada e uma fase secreta por mundo.
+ * Campanha completa: seis mundos, dez fases cada e uma fase secreta por mundo.
  *
  * As três primeiras fases de cada mundo e todas as arenas de chefão são
  * desenhadas à mão.

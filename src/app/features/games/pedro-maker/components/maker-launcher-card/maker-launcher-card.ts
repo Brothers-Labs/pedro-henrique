@@ -25,7 +25,7 @@ import { RouterLink } from '@angular/router';
         <h2 class="launcher__title">PEDRO MAKER</h2>
         <p class="launcher__subtitle">A grande aventura — crie, jogue, explore e evolua!</p>
         <ul class="launcher__features">
-          <li>🗺️ 5 mundos e 50 fases</li>
+          <li>🗺️ 6 mundos e 60 fases</li>
           <li>👑 Chefões no fim de cada mundo</li>
           <li>🛠️ Editor para criar as suas fases</li>
         </ul>
