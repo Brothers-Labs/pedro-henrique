@@ -91,6 +91,11 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   classico: 60,
 };
 
+/** Dó central, até a primeira trilha dizer o tom. */
+const DEFAULT_NOTE_ROOT = 60;
+/** A nota mais aguda do bloco musical: duas oitavas acima da mais grave. */
+const MAX_NOTE_DEGREE = 9;
+
 const MUSIC_TEMPO_BPM = 112;
 const STEPS_PER_BAR = 16;
 const MUSIC_GAIN = 0.045;
@@ -120,6 +125,8 @@ export class MakerAudioService {
   private musicPattern: readonly MusicStep[] = [];
   private nextStepTime = 0;
   private stepIndex = 0;
+  /** Tônica do tema em jogo: as notas do bloco musical ficam no tom da trilha. */
+  private noteRoot = DEFAULT_NOTE_ROOT;
 
   private readonly canPlaySounds = computed(() => this.settings.settings().sounds && !this.calmMode.isEnabled());
   private readonly canPlayMusic = computed(() => this.settings.settings().music && !this.calmMode.isEnabled());
@@ -150,9 +157,29 @@ export class MakerAudioService {
     }
   }
 
+  /** Uma nota do bloco musical: um sino curto, na escala da trilha do tema, uma oitava acima dela. */
+  playNote(degree: number): void {
+    if (!this.canPlaySounds() || !Number.isFinite(degree)) {
+      return;
+    }
+
+    const context = this.resolveContext();
+
+    if (!context) {
+      return;
+    }
+
+    const step = Math.min(MAX_NOTE_DEGREE, Math.max(0, Math.round(degree)));
+    const frequency = midiToHertz(this.noteRoot + 12 + scaleNote(step));
+
+    playTone(context, context.destination, tone(frequency, 0, 0.42, 'sine', 0.18));
+    playTone(context, context.destination, tone(frequency * 2, 0, 0.16, 'triangle', 0.05));
+  }
+
   /** Começa a trilha do tema. Chamar de novo troca de trilha sem sobrepor. */
   startMusic(theme: LevelTheme): void {
     this.stopMusic();
+    this.noteRoot = THEME_ROOTS[theme];
 
     if (!this.canPlayMusic()) {
       return;

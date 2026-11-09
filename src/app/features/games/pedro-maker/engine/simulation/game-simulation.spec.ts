@@ -1037,8 +1037,47 @@ describe('Simulação do Pedro Maker', () => {
     }
 
     expect(fastestRise).toBeLessThan(-PLAYER_PHYSICS.jumpVelocity);
-    expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeTrue();
+    expect(harness.events.some((event) => event.type === 'note')).toBeTrue();
     expect(harness.simulation.grid.isSolidCell(10, SURFACE - 1)).toBeTrue();
+  });
+
+  describe('Notas do bloco musical', () => {
+    const notesOf = (harness: Harness): readonly number[] =>
+      harness.events.flatMap((event) => (event.type === 'note' ? [event.degree] : []));
+    const landOn = (harness: Harness, column: number, row: number): void => {
+      harness.simulation.player.placeFeetAt((column + 0.5) * TILE_SIZE, row * TILE_SIZE - 2);
+      run(harness, 0.15);
+    };
+
+    it('toca uma nota da escala, e não o som da mola', () => {
+      const harness = start(flatLevel().add('note', 10, SURFACE - 1).build(META));
+      run(harness, 0.2);
+      landOn(harness, 10, SURFACE - 1);
+
+      expect(notesOf(harness)[0]).toBe((harness.simulation.grid.height - SURFACE) % 10);
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeFalse();
+    });
+
+    it('o bloco mais alto toca a nota mais aguda: a escadinha vira escala', () => {
+      const harness = start(flatLevel().add('note', 10, SURFACE - 1).add('note', 16, SURFACE - 3).build(META));
+      run(harness, 0.2);
+      landOn(harness, 10, SURFACE - 1);
+      const low = notesOf(harness)[0];
+
+      landOn(harness, 16, SURFACE - 3);
+      const high = notesOf(harness).at(-1) ?? low;
+
+      expect(high - low).toBe(2);
+    });
+
+    it('a cabeçada por baixo também toca a nota do bloco', () => {
+      const harness = start(flatLevel().add('note', 10, SURFACE - 4).build(META));
+      run(harness, 0.2);
+      harness.simulation.player.placeFeetAt(10.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      jump(harness, 0.4);
+
+      expect(notesOf(harness)).toContain((harness.simulation.grid.height - (SURFACE - 3)) % 10);
+    });
   });
 
   it('derrota o pinguim com um pisão', () => {
@@ -1335,12 +1374,12 @@ describe('Simulação do Pedro Maker', () => {
       return highest;
     };
 
-    it('o goomba em cima do bloco musical quica, com o som da mola', () => {
+    it('o goomba em cima do bloco musical quica, tocando a nota do bloco', () => {
       const harness = start(flatLevel().add('note', 12, SURFACE - 1).add('goomba', 12, SURFACE - 2).build(META));
       const noteTop = (SURFACE - 1) * TILE_SIZE;
 
       expect(highestFeet(harness, 1.5)).toBeLessThan(noteTop - TILE_SIZE * 2);
-      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'spring')).toBeTrue();
+      expect(harness.events.some((event) => event.type === 'note')).toBeTrue();
     });
 
     it('o slime no bloco musical não quica: é coisa de cogumelo', () => {
