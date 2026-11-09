@@ -15,6 +15,8 @@ import {
 
 import { THEME_PALETTES } from '../../art/palettes';
 import { paintObjectIcon } from '../../art/texture-catalog';
+import { OBJECT_BEHAVIOR } from '../../config/object-catalog';
+import { SKELETON_PLATFORM_CELLS, SKELETON_PLATFORM_SEGMENTS, SKELETON_SEGMENT_CELLS, skeletonWallColumn } from '../../levels/skeleton-platform';
 import type { LevelObject } from '../../models/level.model';
 import type { EditorLevel, GridCell } from '../editor-state';
 
@@ -24,8 +26,8 @@ export const EDITOR_CELL = 32;
 export const MIN_EDITOR_ZOOM = 0.4;
 export const MAX_EDITOR_ZOOM = 2;
 
-/** Tracejado curto na frente da plataforma de esqueleto: mostra para que lado ela vai. */
-const SKELETON_PATH_HINT_CELLS = 2;
+/** A plataforma móvel comum ocupa duas células. */
+const MOVING_PLATFORM_CELLS = 2;
 
 export type EditorTool = 'pincel' | 'retangulo' | 'apagar' | 'selecionar' | 'conta-gotas' | 'mover';
 
@@ -107,6 +109,8 @@ export class EditorCanvas {
   protected readonly cellSize = computed(() => Math.round(EDITOR_CELL * this.zoom()));
   protected readonly contentWidth = computed(() => this.level().width * this.cellSize());
   protected readonly contentHeight = computed(() => this.level().height * this.cellSize());
+  /** Onde cada plataforma de esqueleto vai parar: só muda quando a fase muda, não a cada quadro. */
+  private readonly skeletonWalls = computed(() => skeletonWallsOf(this.level()));
 
   constructor() {
     afterNextRender(() => {
@@ -378,7 +382,7 @@ export class EditorCanvas {
     this.drawBackground(context, level, size, first, last);
 
     for (const object of level.objects) {
-      if (object.x >= first - 2 && object.x <= last) {
+      if (this.rightEdgeOf(object) >= first && object.x <= last) {
         this.drawObject(context, object, level, size);
       }
     }
@@ -452,9 +456,14 @@ export class EditorCanvas {
     const x = object.x * size;
     const y = object.y * size;
 
-    if (object.type === 'moving-platform' || object.type === 'skeleton-platform') {
+    if (object.type === 'skeleton-platform') {
+      this.drawSkeletonPlatform(context, object, icon, size);
+      return;
+    }
+
+    if (object.type === 'moving-platform') {
       this.drawMovingPath(context, object, size);
-      context.drawImage(icon, x, y, size * 2, size);
+      context.drawImage(icon, x, y, size * MOVING_PLATFORM_CELLS, size);
       return;
     }
 
@@ -484,22 +493,49 @@ export class EditorCanvas {
   }
 
   /** Linha tracejada mostrando até onde a plataforma móvel vai. */
-  /** O caminho da plataforma; a de esqueleto ganha só o começo dele, porque segue até a parede que achar. */
   private drawMovingPath(context: CanvasRenderingContext2D, object: LevelObject, size: number): void {
-    const range = (object.type === 'skeleton-platform' ? SKELETON_PATH_HINT_CELLS : (object.properties?.range ?? 3)) * size;
+    const range = (object.properties?.range ?? 3) * size;
     const isVertical = object.properties?.axis === 'vertical';
     const startX = object.x * size + size;
     const startY = object.y * size + size / 2;
 
+    this.drawDashedLine(context, startX, startY, isVertical ? startX : startX + range, isVertical ? startY - range : startY);
+  }
+
+  /** Os quatro esqueletos enfileirados e, na frente deles, a linha do caminho inteiro, até a parede onde a ponte para. */
+  private drawSkeletonPlatform(context: CanvasRenderingContext2D, object: LevelObject, icon: HTMLCanvasElement, size: number): void {
+    const front = object.x + SKELETON_PLATFORM_CELLS;
+    const wall = this.skeletonWalls().get(object) ?? front;
+    const middleY = object.y * size + size / 2;
+
+    if (wall > front) {
+      this.drawDashedLine(context, front * size, middleY, wall * size, middleY);
+    }
+
+    for (let segment = 0; segment < SKELETON_PLATFORM_SEGMENTS; segment += 1) {
+      context.drawImage(icon, (object.x + segment * SKELETON_SEGMENT_CELLS) * size, object.y * size, size * SKELETON_SEGMENT_CELLS, size);
+    }
+  }
+
+  private drawDashedLine(context: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number): void {
     context.save();
     context.setLineDash([6, 5]);
     context.strokeStyle = 'rgba(42, 35, 80, 0.55)';
     context.lineWidth = 2;
     context.beginPath();
-    context.moveTo(startX, startY);
-    context.lineTo(isVertical ? startX : startX + range, isVertical ? startY - range : startY);
+    context.moveTo(fromX, fromY);
+    context.lineTo(toX, toY);
     context.stroke();
     context.restore();
+  }
+
+  /** A última coluna que o desenho do objeto alcança: a ponte de esqueletos e a linha dela vão longe. */
+  private rightEdgeOf(object: LevelObject): number {
+    if (object.type !== 'skeleton-platform') {
+      return object.x + MOVING_PLATFORM_CELLS;
+    }
+
+    return Math.max(object.x + SKELETON_PLATFORM_CELLS, this.skeletonWalls().get(object) ?? 0);
   }
 
   private drawArea(context: CanvasRenderingContext2D, area: GridArea | null, size: number): void {
@@ -550,4 +586,20 @@ export class EditorCanvas {
 
 function sameCell(first: GridCell | null, second: GridCell | null): boolean {
   return first?.x === second?.x && first?.y === second?.y;
+}
+
+/** A coluna da parede de cada plataforma de esqueleto da fase, com a mesma regra do jogo. */
+function skeletonWallsOf(level: EditorLevel): ReadonlyMap<LevelObject, number> {
+  const platforms = level.objects.filter((object) => object.type === 'skeleton-platform');
+
+  if (platforms.length === 0) {
+    return new Map();
+  }
+
+  const keyOf = (x: number, y: number): number => y * level.width + x;
+  const walls = new Set(
+    level.objects.filter((object) => OBJECT_BEHAVIOR[object.type].surface === 'solid').map((object) => keyOf(object.x, object.y)),
+  );
+
+  return new Map(platforms.map((platform) => [platform, skeletonWallColumn(platform, level.width, (x, y) => walls.has(keyOf(x, y)))]));
 }

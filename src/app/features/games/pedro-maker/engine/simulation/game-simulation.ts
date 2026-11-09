@@ -586,6 +586,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   /** A pancada do thwomp no chão treme a tela e levanta poeira. */
   private reactToEnemyLanding(enemy: Enemy): void {
+    if (enemy.bouncesOnNoteBlocks) {
+      this.blocks.bounceEnemyOnNote(enemy.body, this.clockMs);
+    }
+
     if (!enemy.takeLanding()) {
       return;
     }

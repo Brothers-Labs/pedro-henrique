@@ -290,7 +290,8 @@ export class BlockView {
       ({ isTop }) => (isTop ? top : side),
     );
     const material = new MeshStandardMaterial({ map: this.atlas.texture, roughness: 0.6, metalness: 0.2 });
-    const mesh = new InstancedMesh(geometry, material, platforms.length);
+    const segmentCount = platforms.reduce((total, platform) => total + segmentsOf(platform), 0);
+    const mesh = new InstancedMesh(geometry, material, segmentCount);
 
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -309,17 +310,27 @@ export class BlockView {
     }
   }
 
+  /** Cada pedaço do tamanho de uma plataforma comum é uma cópia: a ponte de esqueletos repete o osso em vez de esticá-lo. */
   private placePlatforms(mesh: InstancedMesh, platforms: readonly MovingPlatform[], alpha: number, halfWidth: number, halfHeight: number): void {
-    platforms.forEach((platform, index) => {
+    let index = 0;
+
+    for (const platform of platforms) {
       const x = platform.previousX + (platform.x - platform.previousX) * alpha;
       const y = platform.previousY + (platform.y - platform.previousY) * alpha;
 
-      this.position.set(this.space.x(x) + halfWidth, this.space.y(y) - halfHeight, 0);
-      this.scale.set(1, 1, 1);
-      this.matrix.compose(this.position, this.rotation, this.scale);
-      mesh.setMatrixAt(index, this.matrix);
-    });
+      for (let segment = 0; segment < segmentsOf(platform); segment += 1) {
+        this.position.set(this.space.x(x + segment * MOVING_PLATFORM_WIDTH) + halfWidth, this.space.y(y) - halfHeight, 0);
+        this.scale.set(1, 1, 1);
+        this.matrix.compose(this.position, this.rotation, this.scale);
+        mesh.setMatrixAt(index, this.matrix);
+        index += 1;
+      }
+    }
 
     mesh.instanceMatrix.needsUpdate = true;
   }
+}
+
+function segmentsOf(platform: MovingPlatform): number {
+  return Math.max(1, Math.round(platform.width / MOVING_PLATFORM_WIDTH));
 }
