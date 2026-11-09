@@ -1,4 +1,5 @@
 import { MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
+import { SKELETON_PLATFORM_CELLS, skeletonWallColumn } from '../../levels/skeleton-platform';
 import type { LevelObject, LevelObjectType, PlatformAxis, PowerUpKind, SurpriseContent } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { PhysicsBody, PlatformSurface, WorldArea } from './physics-body';
@@ -76,6 +77,8 @@ const SPIKE_REACH = 2;
 const MOVING_SPEED = 90;
 /** Mais devagar que a de vai e volta: a criança tem tempo de ver aonde a de esqueleto está indo. */
 const SKELETON_SPEED = 70;
+/** Uns três blocos de altura: o cogumelo quica bem à vista, mas abaixo do quique do herói. */
+const ENEMY_NOTE_BOUNCE_VELOCITY = 720;
 const CRUMBLE_DELAY_MS = 450;
 const CRUMBLE_RESPAWN_MS = 3000;
 
@@ -103,8 +106,8 @@ function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
  * sólidos; a plataforma frágil, como chão de mão única. A reação vem do lado
  * do contato: cabeçada por baixo quebra ou abre (e a mola do teto lança para
  * baixo), pisar em cima faz a mola saltar, o bloco musical quicar e a
- * plataforma frágil tremer. A grama invisível aparece com qualquer encostada,
- * por cima, por baixo ou de lado.
+ * plataforma frágil tremer. O goomba também quica no bloco musical. A grama
+ * invisível aparece com qualquer encostada, por cima, por baixo ou de lado.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -310,6 +313,25 @@ export class BlockSystem {
     }
   }
 
+  /** O inimigo que pousou num bloco musical quica nele, como o herói, só que sem segurar pulo nenhum. */
+  bounceEnemyOnNote(body: PhysicsBody, now: number): void {
+    if (body.landedRow < 0) {
+      return;
+    }
+
+    for (let column = body.landedFromColumn; column <= body.landedToColumn; column += 1) {
+      const block = this.blockAt(column, body.landedRow);
+
+      if (block?.kind === 'note') {
+        body.vy = -ENEMY_NOTE_BOUNCE_VELOCITY;
+        block.bumpedAt = now;
+        this.host.playSound('spring');
+        this.host.effects.burst('sparkle', (block.cellX + 0.5) * TILE_SIZE, block.cellY * TILE_SIZE, 4);
+        return;
+      }
+    }
+  }
+
   private breakBrick(block: InteractiveBlock): void {
     block.isBroken = true;
     this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
@@ -384,25 +406,21 @@ export class BlockSystem {
   private addSkeletonPlatform(object: LevelObject): void {
     const x = object.x * TILE_SIZE;
     const y = object.y * TILE_SIZE;
-    const widthInCells = MOVING_PLATFORM_WIDTH / TILE_SIZE;
-    let wall = object.x + widthInCells;
-
-    while (wall < this.grid.width && this.grid.collisionAt(wall, object.y) !== COLLISION.solid) {
-      wall += 1;
-    }
+    const width = SKELETON_PLATFORM_CELLS * TILE_SIZE;
+    const wall = skeletonWallColumn(object, this.grid.width, (column, row) => this.grid.collisionAt(column, row) === COLLISION.solid);
 
     this.platforms.push({
       kind: 'skeleton',
       x,
       y,
-      width: MOVING_PLATFORM_WIDTH,
+      width,
       deltaX: 0,
       deltaY: 0,
       previousX: x,
       previousY: y,
       axis: 'horizontal',
       start: x,
-      end: Math.max(x, wall * TILE_SIZE - MOVING_PLATFORM_WIDTH),
+      end: Math.max(x, wall * TILE_SIZE - width),
       velocity: 0,
     });
   }

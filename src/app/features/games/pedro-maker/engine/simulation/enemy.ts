@@ -238,6 +238,11 @@ export class Enemy {
     return !this.isDefeated && !this.isHidden && !this.isFrozen;
   }
 
+  /** O goomba, o cogumelo que anda, quica no bloco musical; preso no gelo, não. */
+  get bouncesOnNoteBlocks(): boolean {
+    return this.kind === 'goomba' && !this.isFrozen;
+  }
+
   /** A bolinha de lava é quente demais: o gelo derrete nela. */
   get canBeFrozen(): boolean {
     return !this.profile.isFireproof;

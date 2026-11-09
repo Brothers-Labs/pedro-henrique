@@ -1,6 +1,7 @@
 import { OBJECT_BEHAVIOR } from '../config/object-catalog';
 import { GRAVITY, PLAYER_PHYSICS, TILE_SIZE, VALIDATION_PHYSICS } from '../config/physics.config';
 import { isGiantCoinType, type LevelBlueprint, type LevelObject } from '../models/level.model';
+import { skeletonWallColumn } from './skeleton-platform';
 
 /**
  * Validador de alcance: a fase pode ser vencida?
@@ -139,7 +140,9 @@ function markSkeletonPath(
   isWall: (x: number, y: number) => boolean,
   mark: (x: number, y: number, surface: Surface) => void,
 ): void {
-  for (let x = object.x; x < width && !isWall(x, object.y); x += 1) {
+  const wall = skeletonWallColumn(object, width, isWall);
+
+  for (let x = object.x; x < wall; x += 1) {
     mark(x, object.y, Surface.OneWay);
   }
 }
