@@ -71,6 +71,10 @@ const FISH_BOB_HEIGHT = 14;
 const WITCH_PATROL = TILE_SIZE * 5;
 const WITCH_BOB_HEIGHT = 24;
 
+/** O Rei Cacto solta o primeiro espinhudo pouco depois de acordar, e depois um de tempos em tempos. */
+const CACTUS_FIRST_SPROUT_MS = 1500;
+const CACTUS_SPROUT_INTERVAL_MS = 4000;
+
 /** A abóbora viva anda pulando: um pulinho baixo a cada intervalo, sempre no chão. */
 const PUMPKIN_HOP_VELOCITY = 520;
 const PUMPKIN_HOP_INTERVAL_MS = 900;
@@ -159,7 +163,7 @@ export const ENEMY_DEFEAT_MS = 280;
  * não machuca; diferente dela, é pisável e o fogo e o gelo pegam nele.
  *
  * Do Dia das Bruxas vêm três: o Rei Cacto, grandão e coberto de espinhos,
- * patrulha devagar e não se pisa; a abóbora viva patrulha aos pulinhos; e a
+ * patrulha devagar, não se pisa e, de tempos em tempos, solta um espinhudo; a abóbora viva patrulha aos pulinhos; e a
  * bruxa voa de vassoura de um lado para o outro, subindo e descendo.
  *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
@@ -194,6 +198,8 @@ export class Enemy {
   private hasLanded = false;
   private ironBallState: IronBallState = 'idle';
   private lungeTarget: WorldPoint = { x: 0, y: 0 };
+  private nextSproutAt: number | null = null;
+  private hasSprout = false;
 
   constructor(
     readonly id: number,
@@ -287,8 +293,11 @@ export class Enemy {
       case 'penguin':
       case 'goomba':
       case 'king-slime':
+        this.patrolLedges();
+        return;
       case 'king-cactus':
         this.patrolLedges();
+        this.growSprout(now);
         return;
       case 'living-pumpkin':
         this.hopAlong(now);
@@ -341,6 +350,15 @@ export class Enemy {
     return hasLanded;
   }
 
+  /** Verdadeiro uma única vez a cada espinhudo que o Rei Cacto solta, para a partida fazê-lo nascer. */
+  takeSprout(): boolean {
+    const hasSprout = this.hasSprout;
+
+    this.hasSprout = false;
+
+    return hasSprout;
+  }
+
   /** Longe do Pedro, o inimigo espera: poupa processamento e não foge da fase. */
   standStill(): void {
     this.body.vx = 0;
@@ -387,6 +405,21 @@ export class Enemy {
     }
 
     body.vx = this.direction * this.profile.speed * this.speedMultiplier;
+  }
+
+  /** O espinhudo brota com o Rei Cacto de pé no chão: nunca no meio de uma queda. */
+  private growSprout(now: number): void {
+    if (this.nextSproutAt === null) {
+      this.nextSproutAt = now + CACTUS_FIRST_SPROUT_MS;
+      return;
+    }
+
+    if (now < this.nextSproutAt || !this.body.blockedDown) {
+      return;
+    }
+
+    this.hasSprout = true;
+    this.nextSproutAt = now + CACTUS_SPROUT_INTERVAL_MS;
   }
 
   /** Patrulha como o slime, mas pulando: cada pulinho sai do chão, nunca do ar. */

@@ -87,6 +87,8 @@ const THEME_ROOTS: Readonly<Record<LevelTheme, number>> = {
   estrelas: 65,
   castelo: 53,
   'castelo-rei-slime': 52,
+  // Meio tom acima do deserto: o mesmo clima, um pouco mais tenso no castelo.
+  'castelo-rei-cacto': 59,
   praia: 61,
   classico: 60,
   // Mais grave que o vale, como a caverna: misterioso sem ficar triste.

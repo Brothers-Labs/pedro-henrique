@@ -12,6 +12,8 @@ export interface PlatformSurface {
   /** Quanto ela andou neste passo; quem está em cima anda junto. */
   readonly deltaX: number;
   readonly deltaY: number;
+  /** Plataforma desmanchada: não segura ninguém até voltar. */
+  readonly isHidden: boolean;
 }
 
 /** Retângulo do mundo, em pixels (y para baixo). */
@@ -161,7 +163,7 @@ export function stepBody(body: PhysicsBody, world: PhysicsWorld, seconds: number
   const platform = body.riding;
   body.riding = null;
 
-  if (platform && overlapsHorizontally(body, platform.x, platform.width)) {
+  if (platform && !platform.isHidden && overlapsHorizontally(body, platform.x, platform.width)) {
     moveHorizontally(body, world.grid, platform.deltaX);
     body.y = platform.y - body.height;
   }
@@ -237,6 +239,10 @@ function fall(body: PhysicsBody, world: PhysicsWorld, distance: number): void {
   }
 
   for (const platform of world.platforms) {
+    if (platform.isHidden) {
+      continue;
+    }
+
     const previousTop = platform.y - platform.deltaY;
     const wasAbove = currentBottom <= Math.max(platform.y, previousTop) + 1;
 

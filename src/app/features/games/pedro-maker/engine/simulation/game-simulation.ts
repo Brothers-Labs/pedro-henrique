@@ -76,6 +76,12 @@ const CHEST_COINS = 10;
 const GOLDEN_DOOR_COINS = 10;
 /** Tempo em que os slimes do Rei Slime não machucam: nascem colados no herói que pisou. */
 const SPLIT_GRACE_MS = 600;
+/** Espinhudos do mesmo Rei Cacto soltos ao mesmo tempo: o bastante para o desafio, sem lotar a tela. */
+const MAX_CACTUS_SPROUTS = 2;
+/** O espinhudo do Rei Cacto é um filhote: menor que o espinhudo comum. */
+const CACTUS_SPROUT_SCALE = 0.7;
+/** O pulinho com que o espinhudo sai do Rei Cacto. */
+const CACTUS_SPROUT_HOP_VELOCITY = 420;
 
 export interface SimulationOptions {
   readonly blueprint: LevelBlueprint;
@@ -129,6 +135,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   private bossWakeX = 0;
   private bossGroundY = 0;
   private nextEnemyId = 1;
+  /** Espinhudos que cada Rei Cacto já soltou. */
+  private readonly cactusSprouts = new Map<Enemy, readonly Enemy[]>();
 
   constructor(private readonly options: SimulationOptions) {
     const { blueprint } = options;
@@ -325,6 +333,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         enemy.step(this.clockMs, playerX, playerY);
         stepBody(body, this.world, seconds, true);
         this.reactToEnemyLanding(enemy);
+        this.sproutSpiky(enemy);
       } else {
         enemy.standStill();
         body.previousX = body.x;
@@ -569,6 +578,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (enemy.kind === 'king-slime') {
       this.splitKingSlime(enemy);
     }
+
+    this.cactusSprouts.delete(enemy);
   }
 
   /** O Rei Slime derrotado vira dois slimes, que saem cada um para um lado. */
@@ -582,6 +593,33 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       slime.direction = direction;
       slime.harmlessUntil = this.clockMs + SPLIT_GRACE_MS;
     }
+  }
+
+  /**
+   * O Rei Cacto solta um espinhudo pequeno, que sai pulando para o lado em que
+   * ele olha. Nasce sem machucar por um instante, como os slimes do Rei Slime.
+   */
+  private sproutSpiky(king: Enemy): void {
+    if (!king.takeSprout()) {
+      return;
+    }
+
+    const sprouts = (this.cactusSprouts.get(king) ?? []).filter((sprout) => !sprout.isDefeated && this.enemies.includes(sprout));
+
+    if (sprouts.length >= MAX_CACTUS_SPROUTS) {
+      this.cactusSprouts.set(king, sprouts);
+      return;
+    }
+
+    const cellX = Math.floor(centerX(king.body) / TILE_SIZE);
+    const cellY = Math.floor((bottom(king.body) - 1) / TILE_SIZE);
+    const spiky = this.addEnemy('spiky', cellX, cellY, CACTUS_SPROUT_SCALE);
+
+    spiky.direction = king.direction;
+    spiky.harmlessUntil = this.clockMs + SPLIT_GRACE_MS;
+    spiky.body.vy = -CACTUS_SPROUT_HOP_VELOCITY;
+    this.cactusSprouts.set(king, [...sprouts, spiky]);
+    this.effects.burst('dust', centerX(king.body), centerY(king.body), 8);
   }
 
   /** A pancada do thwomp no chão treme a tela e levanta poeira. */

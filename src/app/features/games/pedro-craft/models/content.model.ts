@@ -235,6 +235,8 @@ export const ICON_SHAPES = [
   'golem',
   'flint',
   'flint-and-steel',
+  'hamburger',
+  'fries',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -375,6 +377,9 @@ export const CREATURE_MODELS = [
   'lovity',
   'falsity',
   'cruelty',
+  'obesity',
+  'squareity',
+  'pointy',
 ] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];

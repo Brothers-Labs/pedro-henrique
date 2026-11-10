@@ -43,6 +43,7 @@ export const WORLDS: readonly World[] = [
       minion: 'spiky',
       look: 'cactus',
     },
+    castle: { theme: 'castelo-rei-cacto', wall: 'desert-mountain' },
   },
   {
     id: 3,

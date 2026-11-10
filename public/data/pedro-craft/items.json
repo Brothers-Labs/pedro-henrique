@@ -100,6 +100,8 @@
     { "id": "melon-slice", "name": "Fatia de melancia", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "melon-slice", "colors": ["#e53935", "#4caf50"] }, "heal": 2 },
     { "id": "sunflower-seeds", "name": "Sementes de girassol", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "seeds", "colors": ["#3d3d3d", "#f4f1e8"] }, "heal": 1, "plants": "sunflower" },
     { "id": "pumpkin-pie", "name": "Torta de abóbora", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "pie", "colors": ["#d9953f", "#ff8c1a"] }, "heal": 6 },
+    { "id": "hamburger", "name": "Hambúrguer", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "hamburger", "colors": ["#d9953f", "#6b3a1f", "#4caf50"] }, "heal": 6 },
+    { "id": "fries", "name": "Batata frita", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "fries", "colors": ["#ffd23f", "#e53935"] }, "heal": 3 },
     { "id": "cake", "name": "Bolo", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "cake", "colors": ["#fff5e6", "#ff7aa8"] }, "heal": 8 },
 
     { "id": "wheat", "name": "Trigo", "kind": "material", "maxStack": 64, "icon": { "type": "sprite", "shape": "wheat", "colors": ["#e5c44a", "#c9a03a"] } },

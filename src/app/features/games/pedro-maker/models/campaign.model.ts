@@ -1,4 +1,4 @@
-import type { BossDefinition, LevelBlueprint, LevelTheme } from './level.model';
+import type { BossDefinition, LevelBlueprint, LevelTheme, TerrainType } from './level.model';
 
 export type WorldId = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -12,6 +12,14 @@ export interface World {
   /** Cor de destaque do mundo no mapa. */
   readonly color: string;
   readonly boss: BossDefinition;
+  /** O castelo próprio do chefão, na fase 10; sem ele, o castelo de pedra comum. */
+  readonly castle?: CastleLook;
+}
+
+/** Cenário e paredão da fase do castelo. */
+export interface CastleLook {
+  readonly theme: LevelTheme;
+  readonly wall: TerrainType;
 }
 
 export type CampaignLevelKind = 'normal' | 'boss' | 'secret';

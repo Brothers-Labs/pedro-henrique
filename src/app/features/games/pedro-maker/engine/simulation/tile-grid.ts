@@ -15,7 +15,17 @@ export type Collision = (typeof COLLISION)[keyof typeof COLLISION];
 /** Blocos fixos desenhados como parte do terreno. */
 export type TerrainMaterial = TerrainType | 'platform' | 'cloud';
 
-const TERRAIN_MATERIAL_LIST: readonly TerrainMaterial[] = ['ground', 'stone', 'ice', 'sand', 'wood', 'pipe', 'platform', 'cloud'];
+const TERRAIN_MATERIAL_LIST: readonly TerrainMaterial[] = [
+  'ground',
+  'stone',
+  'ice',
+  'sand',
+  'wood',
+  'pipe',
+  'desert-mountain',
+  'platform',
+  'cloud',
+];
 
 const TERRAIN_MATERIALS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>(TERRAIN_MATERIAL_LIST);
 

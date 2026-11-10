@@ -38,13 +38,19 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
     case 'iron-golem':
       return ironGolem(color(0), color(1), color(2), color(3));
     case 'verity':
-      return [...doll(color(0), color(1)), ...halo(color(2))];
-    case 'lovity':
-      return [...doll(color(0), color(1)), ...hearts(color(2))];
+      return verity(blobShape(definition), color(0), color(1), color(2));
     case 'falsity':
-      return [...doll(color(0), color(1)), ...halfMask(color(2))];
+      return falsity(blobShape(definition), color(0), color(1), color(2));
     case 'cruelty':
-      return [...doll(color(0), color(1)), ...horns(color(2))];
+      return cruelty(blobShape(definition), color(0), color(1), color(2));
+    case 'lovity':
+      return lovity(blobShape(definition), color(0), color(1), color(2));
+    case 'obesity':
+      return obesity(blobShape(definition), color(0), color(1), color(2), color(3));
+    case 'squareity':
+      return squareity(blobShape(definition), color(0), color(1), color(2));
+    case 'pointy':
+      return pointy(blobShape(definition), color(0), color(1), color(2));
   }
 }
 
@@ -201,76 +207,205 @@ function ironGolem(iron: string, vines: string, nose: string, brow: string): rea
   ];
 }
 
-/** Topo da cabeça do boneco, onde ficam auréola e chifrinhos. */
-const DOLL_HEAD_TOP = 1.56;
-/** A frente da cara do boneco, onde ficam os olhos e a máscara. */
-const DOLL_FACE_Z = -0.235;
-/** A frente do peito do boneco, onde fica o coração. */
-const DOLL_CHEST_Z = -0.135;
-
 /**
- * Cores: pele e roupa. O boneco de Verity, Lovity, Falsity e Cruelty: o mesmo
- * corpinho de cabeça grande, e cada um ganha o seu enfeite por cima.
+ * Medidas de um boneco-bolinha, tiradas do tamanho dele no `creatures.json`:
+ * os bonecos foram desenhados pelo Pedro como bolinhas de uma cor só, com
+ * olhos pretos grandes e dois pezinhos.
  */
-function doll(skin: string, outfit: string): readonly VoxelBox[] {
+interface BlobShape {
+  readonly width: number;
+  readonly depth: number;
+  /** Altura dos pezinhos: o corpo começa aqui. */
+  readonly feet: number;
+  readonly bodyHeight: number;
+  /** A frente da cara, um tiquinho para fora do corpo. */
+  readonly faceZ: number;
+}
+
+function blobShape(definition: CreatureDefinition): BlobShape {
+  const feet = definition.height * 0.1;
+  const depth = definition.width * 0.8;
+
+  return { width: definition.width, depth, feet, bodyHeight: definition.height - feet, faceZ: -depth / 2 - 0.01 };
+}
+
+/** Altura dentro do corpo, de 0 (embaixo) a 1 (em cima). */
+function bodyY(shape: BlobShape, fraction: number): number {
+  return shape.feet + shape.bodyHeight * fraction;
+}
+
+/** O corpo em forma de ovo: largo no meio e mais estreito em cima e embaixo, com dois pezinhos. */
+function blob(shape: BlobShape, skin: string): readonly VoxelBox[] {
+  const { width, depth, feet, bodyHeight } = shape;
+
   return [
-    box(0.1, 0.3, 0, 0.16, 0.6, 0.18, outfit),
-    box(-0.1, 0.3, 0, 0.16, 0.6, 0.18, outfit),
-    box(0, 0.86, 0, 0.42, 0.52, 0.26, outfit),
-    box(0.28, 0.9, 0, 0.12, 0.44, 0.14, skin),
-    box(-0.28, 0.9, 0, 0.12, 0.44, 0.14, skin),
-    box(0, 1.34, 0, 0.46, 0.44, 0.46, skin),
-    ...eyes(0.1, 1.36, DOLL_FACE_Z, 0.1),
+    box(width * 0.22, feet / 2, 0, width * 0.22, feet, depth * 0.4, skin),
+    box(-width * 0.22, feet / 2, 0, width * 0.22, feet, depth * 0.4, skin),
+    box(0, bodyY(shape, 0.1), 0, width * 0.74, bodyHeight * 0.2, depth * 0.74, skin),
+    box(0, bodyY(shape, 0.5), 0, width, bodyHeight * 0.6, depth, skin),
+    box(0, bodyY(shape, 0.9), 0, width * 0.7, bodyHeight * 0.2, depth * 0.7, skin),
   ];
 }
 
-/** Verity: a auréola dourada em cima da cabeça e uma estrelinha no peito. */
-function halo(gold: string): readonly VoxelBox[] {
-  const y = DOLL_HEAD_TOP + 0.14;
+/** Dois olhos pretos e redondos, como bolinhas de caneta. */
+function dotEyes(shape: BlobShape, y: number): readonly VoxelBox[] {
+  const size = shape.width * 0.2;
 
   return [
-    box(0, y, 0.18, 0.4, 0.05, 0.05, gold),
-    box(0, y, -0.18, 0.4, 0.05, 0.05, gold),
-    box(0.18, y, 0, 0.05, 0.05, 0.4, gold),
-    box(-0.18, y, 0, 0.05, 0.05, 0.4, gold),
-    box(0, 0.94, DOLL_CHEST_Z, 0.14, 0.05, 0.01, gold),
-    box(0, 0.94, DOLL_CHEST_Z, 0.05, 0.14, 0.01, gold),
+    box(shape.width * 0.2, y, shape.faceZ, size, size, 0.02, PUPIL),
+    box(-shape.width * 0.2, y, shape.faceZ, size, size, 0.02, PUPIL),
   ];
 }
 
-/** Lovity: um coração no peito e outro na ponta da anteninha. */
-function hearts(heart: string): readonly VoxelBox[] {
-  const heartAt = (y: number, z: number, size: number): readonly VoxelBox[] => [
-    box(size / 2, y + size / 2, z, size, size, 0.02, heart),
-    box(-size / 2, y + size / 2, z, size, size, 0.02, heart),
-    box(0, y, z, size * 1.4, size, 0.02, heart),
-    box(0, y - size / 2, z, size * 0.6, size * 0.6, 0.02, heart),
-  ];
+/** Um traço de boca ou de sorriso na frente da cara. */
+function faceMark(shape: BlobShape, x: number, y: number, width: number, height: number, color: string, layer = 1): VoxelBox {
+  return box(x, y, shape.faceZ - 0.01 * layer, width, height, 0.02, color);
+}
+
+/** Verity: amarela, com o sorrisão subindo para os dois lados e a bochecha mais clara. */
+function verity(shape: BlobShape, skin: string, cheek: string, mouth: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const smileY = bodyY(shape, 0.38);
 
   return [
-    ...heartAt(0.92, DOLL_CHEST_Z, 0.08),
-    box(0, DOLL_HEAD_TOP + 0.1, 0, 0.03, 0.2, 0.03, heart),
-    ...heartAt(DOLL_HEAD_TOP + 0.24, 0, 0.06),
+    ...blob(shape, skin),
+    box(width * 0.12, bodyY(shape, 0.32), shape.faceZ + 0.005, width * 0.5, shape.bodyHeight * 0.3, 0.01, cheek),
+    ...dotEyes(shape, bodyY(shape, 0.72)),
+    faceMark(shape, 0, smileY, width * 0.5, width * 0.1, mouth),
+    faceMark(shape, -width * 0.27, smileY + width * 0.06, width * 0.1, width * 0.18, mouth),
+    faceMark(shape, width * 0.27, smileY + width * 0.1, width * 0.1, width * 0.26, mouth),
   ];
 }
 
-/** Falsity: a meia máscara sobre um lado da cara, que nunca mostra o rosto inteiro. */
-function halfMask(mask: string): readonly VoxelBox[] {
+/** Falsity: azul, com a mancha em volta dos olhos e a boca de dois dentinhos separados. */
+function falsity(shape: BlobShape, skin: string, patch: string, mouth: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const mouthY = bodyY(shape, 0.42);
+  const tooth = width * 0.08;
+
   return [
-    box(0.12, 1.36, DOLL_FACE_Z - 0.02, 0.22, 0.24, 0.02, mask),
-    box(0.1, 1.36, DOLL_FACE_Z - 0.035, 0.1, 0.1, 0.01, EYE),
-    box(0.1, 1.35, DOLL_FACE_Z - 0.045, 0.05, 0.06, 0.01, PUPIL),
+    ...blob(shape, skin),
+    box(width * 0.08, bodyY(shape, 0.66), shape.faceZ + 0.005, width * 0.36, shape.bodyHeight * 0.32, 0.01, patch),
+    ...dotEyes(shape, bodyY(shape, 0.7)),
+    faceMark(shape, 0, mouthY, width * 0.4, width * 0.13, mouth),
+    faceMark(shape, -width * 0.1, mouthY, tooth, tooth, EYE, 2),
+    faceMark(shape, width * 0.14, mouthY, tooth, tooth, EYE, 2),
   ];
 }
 
-/** Cruelty: dois chifrinhos pontudos e a sobrancelha emburrada, sem dente nenhum. */
-function horns(horn: string): readonly VoxelBox[] {
+/** Cruelty: vermelho, com uma ponta em cima e outra embaixo e a bocona de quatro dentões. */
+function cruelty(shape: BlobShape, skin: string, mouth: string, teeth: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const mouthY = bodyY(shape, 0.42);
+  const tooth = width * 0.14;
+  const tip = width * 0.14;
+
   return [
-    box(0.14, DOLL_HEAD_TOP + 0.05, 0, 0.1, 0.1, 0.1, horn),
-    box(-0.14, DOLL_HEAD_TOP + 0.05, 0, 0.1, 0.1, 0.1, horn),
-    box(0.16, DOLL_HEAD_TOP + 0.14, 0, 0.05, 0.08, 0.05, horn),
-    box(-0.16, DOLL_HEAD_TOP + 0.14, 0, 0.05, 0.08, 0.05, horn),
-    box(0, 1.44, DOLL_FACE_Z - 0.01, 0.34, 0.04, 0.01, horn),
+    ...blob(shape, skin),
+    box(0, shape.feet + shape.bodyHeight + tip / 2, 0, tip, tip, tip, skin),
+    box(0, shape.feet / 2, 0, tip, shape.feet, tip, skin),
+    ...dotEyes(shape, bodyY(shape, 0.72)),
+    faceMark(shape, 0, mouthY, width * 0.5, width * 0.4, mouth),
+    ...[-1, 1].flatMap((side) => [
+      faceMark(shape, side * width * 0.1, mouthY + tooth * 0.6, tooth, tooth, teeth, 2),
+      faceMark(shape, side * width * 0.1, mouthY - tooth * 0.6, tooth, tooth, teeth, 2),
+    ]),
+  ];
+}
+
+/** Lovity: rosa, com os óculos de coração e o sorriso azul. */
+function lovity(shape: BlobShape, skin: string, glasses: string, smile: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const lensY = bodyY(shape, 0.72);
+  const lens = width * 0.3;
+  const smileY = bodyY(shape, 0.36);
+  const heartLens = (side: number): readonly VoxelBox[] => {
+    const x = side * width * 0.24;
+
+    return [
+      faceMark(shape, x - lens / 4, lensY + lens / 4, lens / 2, lens / 2, glasses),
+      faceMark(shape, x + lens / 4, lensY + lens / 4, lens / 2, lens / 2, glasses),
+      faceMark(shape, x, lensY, lens, lens / 2, glasses),
+      faceMark(shape, x, lensY - lens / 3, lens / 2, lens / 3, glasses),
+    ];
+  };
+
+  return [
+    ...blob(shape, skin),
+    ...heartLens(-1),
+    ...heartLens(1),
+    faceMark(shape, 0, smileY, width * 0.34, width * 0.06, smile),
+    faceMark(shape, -width * 0.18, smileY + width * 0.05, width * 0.06, width * 0.1, smile),
+    faceMark(shape, width * 0.18, smileY + width * 0.05, width * 0.06, width * 0.1, smile),
+  ];
+}
+
+/** Obesity: o boneco redondão e comilão, sorrindo com um hambúrguer na mão. */
+function obesity(shape: BlobShape, skin: string, bun: string, patty: string, lettuce: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const smileY = bodyY(shape, 0.5);
+  const burger = width * 0.24;
+  const handX = width / 2 + burger / 2;
+  const handY = bodyY(shape, 0.45);
+
+  return [
+    ...blob(shape, skin),
+    ...dotEyes(shape, bodyY(shape, 0.7)),
+    faceMark(shape, 0, smileY, width * 0.3, width * 0.05, PUPIL),
+    faceMark(shape, -width * 0.14, smileY + width * 0.03, width * 0.05, width * 0.06, PUPIL),
+    faceMark(shape, width * 0.14, smileY + width * 0.03, width * 0.05, width * 0.06, PUPIL),
+    box(handX, handY - burger * 0.3, 0, burger, burger * 0.3, burger, bun),
+    box(handX, handY, 0, burger * 1.05, burger * 0.25, burger * 1.05, patty),
+    box(handX, handY + burger * 0.18, 0, burger * 1.1, burger * 0.1, burger * 1.1, lettuce),
+    box(handX, handY + burger * 0.4, 0, burger, burger * 0.35, burger, bun),
+  ];
+}
+
+/** Squareity: o boneco quadradão, um cubo inteiro, com olhos quadrados atrás de óculos quadrados. */
+function squareity(shape: BlobShape, skin: string, frame: string, mouth: string): readonly VoxelBox[] {
+  const { width, depth, feet, bodyHeight } = shape;
+  const eyeY = bodyY(shape, 0.66);
+  const lens = width * 0.3;
+  const rim = 0.03;
+  const lensFrame = (side: number): readonly VoxelBox[] => {
+    const x = side * width * 0.2;
+
+    return [
+      faceMark(shape, x, eyeY + lens / 2, lens, rim, frame),
+      faceMark(shape, x, eyeY - lens / 2, lens, rim, frame),
+      faceMark(shape, x - lens / 2, eyeY, rim, lens, frame),
+      faceMark(shape, x + lens / 2, eyeY, rim, lens, frame),
+    ];
+  };
+
+  return [
+    box(width * 0.25, feet / 2, 0, width * 0.2, feet, depth * 0.4, skin),
+    box(-width * 0.25, feet / 2, 0, width * 0.2, feet, depth * 0.4, skin),
+    box(0, feet + bodyHeight / 2, 0, width, bodyHeight, depth, skin),
+    ...dotEyes(shape, eyeY),
+    ...lensFrame(-1),
+    ...lensFrame(1),
+    faceMark(shape, 0, bodyY(shape, 0.36), width * 0.4, width * 0.06, mouth),
+  ];
+}
+
+/** Pointy: coberto de pontas, em cima e nos lados, com a boca brava em zigue-zague. */
+function pointy(shape: BlobShape, skin: string, spikes: string, mouth: string): readonly VoxelBox[] {
+  const { width } = shape;
+  const top = shape.feet + shape.bodyHeight;
+  const spike = width * 0.14;
+  const mouthY = bodyY(shape, 0.42);
+
+  return [
+    ...blob(shape, skin),
+    ...[-0.24, 0, 0.24].map((x) => box(x * width, top + spike / 2, 0, spike, spike, spike, spikes)),
+    ...[-1, 1].flatMap((side) =>
+      [0.35, 0.65].map((fraction) => box(side * (width / 2 + spike / 2), bodyY(shape, fraction), 0, spike, spike, spike, spikes)),
+    ),
+    ...dotEyes(shape, bodyY(shape, 0.7)),
+    ...[-0.15, -0.05, 0.05, 0.15].map((x, index) =>
+      faceMark(shape, x * width, mouthY + (index % 2 === 0 ? 0 : width * 0.05), width * 0.1, width * 0.05, mouth),
+    ),
   ];
 }
 

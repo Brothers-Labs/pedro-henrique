@@ -1,10 +1,13 @@
 import { DEFAULT_LEVEL_HEIGHT } from '../../config/physics.config';
-import type { World } from '../../models/campaign.model';
+import type { CastleLook, World } from '../../models/campaign.model';
 import type { LevelBlueprint } from '../../models/level.model';
 import { LevelBuilder } from '../level-builder';
 
 const SURFACE = 12;
 const WIDTH = 72;
+
+/** O castelo de quem não tem um próprio: pedra cinza. */
+const DEFAULT_CASTLE: CastleLook = { theme: 'castelo', wall: 'stone' };
 
 /** Colunas da arena: o chefão nunca sai delas. */
 export const ARENA_LEFT = 38;
@@ -16,20 +19,22 @@ export const ARENA_RIGHT = 66;
  * Um corredor curto com moedas, um coração e o checkpoint logo antes da
  * porta — perder para o chefão recomeça ali, nunca do início da fase. A
  * arena é plana, com duas plataformas para escapar das investidas. O portal
- * só aparece quando o chefão é derrotado.
+ * só aparece quando o chefão é derrotado. O chefão que tem castelo próprio
+ * (o Rei Cacto) troca o cenário e o paredão.
  */
 export function buildBossArena(world: World): LevelBlueprint {
   const builder = new LevelBuilder(WIDTH, DEFAULT_LEVEL_HEIGHT);
   const floor = SURFACE - 1;
+  const castle = world.castle ?? DEFAULT_CASTLE;
 
   builder.ground(0, WIDTH - 1, SURFACE);
-  builder.fill('stone', ARENA_RIGHT + 1, WIDTH - 1, 0, SURFACE - 1);
+  builder.fill(castle.wall, ARENA_RIGHT + 1, WIDTH - 1, 0, SURFACE - 1);
 
   builder.add('start', 3, floor);
   builder.add('mascot-tip', 4, floor, { text: `O castelo do ${world.boss.name}! Você consegue!` });
   builder.coins(8, SURFACE - 3, 6);
   builder.add('surprise', 17, SURFACE - 4, { contents: 'heart' });
-  builder.fill('stone', 21, 23, SURFACE - 1, SURFACE - 1);
+  builder.fill(castle.wall, 21, 23, SURFACE - 1, SURFACE - 1);
   builder.coinArc(20, SURFACE - 4, 5);
   builder.add('surprise', 27, SURFACE - 4, { contents: 'crystal' });
   builder.add('crystal', 30, SURFACE - 5);
@@ -52,7 +57,7 @@ export function buildBossArena(world: World): LevelBlueprint {
   return builder.build({
     id: `${world.id}-10`,
     name: `Castelo do ${world.boss.name}`,
-    theme: 'castelo',
+    theme: castle.theme,
     targetTimeSeconds: 120,
     boss: world.boss,
   });

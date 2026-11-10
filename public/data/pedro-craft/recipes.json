@@ -14,6 +14,8 @@
     { "id": "fertilizer-from-seeds", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wheat-seeds", "count": 4 }], "output": { "item": "fertilizer", "count": 2 } },
     { "id": "fertilizer-from-bone", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "bone" }], "output": { "item": "fertilizer", "count": 3 } },
     { "id": "beetroot-soup", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "beetroot", "count": 3 }, { "item": "bowl" }], "output": { "item": "beetroot-soup" } },
+    { "id": "hamburger", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "bread" }, { "item": "fried-egg" }, { "item": "carrot" }], "output": { "item": "hamburger" } },
+    { "id": "fries", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "baked-potato" }], "output": { "item": "fries", "count": 2 } },
     { "id": "pumpkin-pie", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "pumpkin" }, { "item": "sugar" }, { "item": "egg" }], "output": { "item": "pumpkin-pie" } },
 
     { "id": "wooden-pickaxe", "type": "shaped", "station": "workbench", "pattern": ["MMM", " S ", " S "], "key": { "M": "oak-planks", "S": "stick" }, "output": { "item": "wooden-pickaxe" } },
