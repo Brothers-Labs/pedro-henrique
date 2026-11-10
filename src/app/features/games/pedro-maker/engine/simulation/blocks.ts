@@ -50,7 +50,8 @@ export interface InteractiveBlock {
 
 /**
  * `shuttle` vai e volta sem parar entre `start` e `end`; `skeleton` espera o
- * herói pisar e então segue até `end`, a parede, onde para de vez.
+ * herói pisar e então segue até `end`, a parede. Lá treme, se desmancha e,
+ * um tempinho depois, volta montada em `start`, esperando de novo.
  */
 export type MovingPlatformKind = 'shuttle' | 'skeleton';
 
@@ -66,6 +67,13 @@ export interface MovingPlatform extends PlatformSurface {
   readonly start: number;
   readonly end: number;
   velocity: number;
+  /** A de esqueleto desmanchada: não segura ninguém nem aparece na tela. */
+  isHidden: boolean;
+  /**
+   * Só a de esqueleto usa: segundos até ela se desmanchar, depois de chegar à
+   * parede, ou até voltar montada, já desmanchada. Zero quando não há nada marcado.
+   */
+  vanishCountdown: number;
 }
 
 export type Hazard = WorldArea;
@@ -79,6 +87,10 @@ const SPIKE_REACH = 2;
 const MOVING_SPEED = 90;
 /** Mais devagar que a de vai e volta: a criança tem tempo de ver aonde a de esqueleto está indo. */
 const SKELETON_SPEED = 70;
+/** Tempo tremendo na parede antes de se desmanchar: dá para descer com calma. */
+export const SKELETON_VANISH_DELAY_SECONDS = 1.2;
+/** Tempo desmanchada antes de voltar montada no começo do caminho. */
+export const SKELETON_RESPAWN_SECONDS = 3;
 /** Uns três blocos de altura: o cogumelo quica bem à vista, mas abaixo do quique do herói. */
 const ENEMY_NOTE_BOUNCE_VELOCITY = 720;
 /** Duas oitavas da escala pentatônica: agudo o bastante sem chegar a apitar. */
@@ -180,18 +192,10 @@ export class BlockSystem {
       platform.previousX = platform.x;
       platform.previousY = platform.y;
 
-      const isHorizontal = platform.axis === 'horizontal';
-      const position = (isHorizontal ? platform.x : platform.y) + platform.velocity * seconds;
-      const clamped = Math.min(platform.end, Math.max(platform.start, position));
+      this.slide(platform, seconds);
 
-      if (clamped !== position) {
-        platform.velocity = platform.kind === 'shuttle' ? -platform.velocity : 0;
-      }
-
-      if (isHorizontal) {
-        platform.x = clamped;
-      } else {
-        platform.y = clamped;
+      if (platform.kind === 'skeleton') {
+        this.countDownVanishing(platform, seconds);
       }
 
       platform.deltaX = platform.x - platform.previousX;
@@ -203,7 +207,7 @@ export class BlockSystem {
   wakePlatform(riding: PlatformSurface | null): void {
     const platform = this.platforms.find((candidate) => candidate === riding);
 
-    if (platform?.kind !== 'skeleton' || platform.velocity !== 0 || platform.x >= platform.end) {
+    if (platform?.kind !== 'skeleton' || platform.isHidden || platform.velocity !== 0 || platform.x >= platform.end) {
       return;
     }
 
@@ -336,6 +340,63 @@ export class BlockSystem {
     }
   }
 
+  /** A de vai e volta inverte no fim do caminho; a de esqueleto para na parede e começa a tremer. */
+  private slide(platform: MovingPlatform, seconds: number): void {
+    const isHorizontal = platform.axis === 'horizontal';
+    const position = (isHorizontal ? platform.x : platform.y) + platform.velocity * seconds;
+    const clamped = Math.min(platform.end, Math.max(platform.start, position));
+
+    if (clamped !== position) {
+      if (platform.kind === 'shuttle') {
+        platform.velocity = -platform.velocity;
+      } else {
+        platform.velocity = 0;
+        platform.vanishCountdown = SKELETON_VANISH_DELAY_SECONDS;
+      }
+    }
+
+    if (isHorizontal) {
+      platform.x = clamped;
+    } else {
+      platform.y = clamped;
+    }
+  }
+
+  /** Na parede, a de esqueleto se desmancha; desmanchada, volta montada no começo, sem ninguém em cima. */
+  private countDownVanishing(platform: MovingPlatform, seconds: number): void {
+    if (platform.vanishCountdown <= 0) {
+      return;
+    }
+
+    platform.vanishCountdown -= seconds;
+
+    if (platform.vanishCountdown > 0) {
+      return;
+    }
+
+    if (platform.isHidden) {
+      this.reassemble(platform);
+    } else {
+      this.fallApart(platform);
+    }
+  }
+
+  private fallApart(platform: MovingPlatform): void {
+    platform.isHidden = true;
+    platform.vanishCountdown = SKELETON_RESPAWN_SECONDS;
+    this.host.playSound('break');
+    this.host.effects.burst('poof', platform.x + platform.width / 2, platform.y, 16);
+  }
+
+  /** Volta de uma vez, sem deslizar: a tela não pode mostrar a ponte atravessando a fase. */
+  private reassemble(platform: MovingPlatform): void {
+    platform.isHidden = false;
+    platform.vanishCountdown = 0;
+    platform.x = platform.start;
+    platform.previousX = platform.start;
+    this.host.effects.burst('sparkle', platform.x + platform.width / 2, platform.y, 10);
+  }
+
   private breakBrick(block: InteractiveBlock): void {
     block.isBroken = true;
     this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
@@ -403,6 +464,8 @@ export class BlockSystem {
       start: isHorizontal ? x : y - range,
       end: isHorizontal ? x + range : y,
       velocity: isHorizontal ? MOVING_SPEED : -MOVING_SPEED,
+      isHidden: false,
+      vanishCountdown: 0,
     });
   }
 
@@ -426,6 +489,8 @@ export class BlockSystem {
       start: x,
       end: Math.max(x, wall * TILE_SIZE - width),
       velocity: 0,
+      isHidden: false,
+      vanishCountdown: 0,
     });
   }
 

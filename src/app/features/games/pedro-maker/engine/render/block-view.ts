@@ -25,6 +25,8 @@ const LAVA_TOP = 0.82;
 const WATER_TOP = 0.86;
 const WATER_OPACITY = 0.62;
 const BLOCK_SIZE = 0.98;
+/** O tremido da ponte de esqueletos antes de se desmanchar, como o da tábua frágil. */
+const SKELETON_SHAKE = 0.05;
 
 /** Faces de um bloco: a de cima pode ter desenho próprio, como a grama. */
 interface BlockTiles {
@@ -124,7 +126,7 @@ export class BlockView {
     this.updateBlocks(this.invisibleGrass, now, (block) => block.isUsed);
     this.updateLava(now);
     this.updateWater(now);
-    this.updatePlatforms(alpha);
+    this.updatePlatforms(now, alpha);
   }
 
   dispose(): void {
@@ -301,26 +303,41 @@ export class BlockView {
     return [{ mesh, platforms }];
   }
 
-  private updatePlatforms(alpha: number): void {
+  private updatePlatforms(now: number, alpha: number): void {
     const halfWidth = this.space.length(MOVING_PLATFORM_WIDTH) / 2;
     const halfHeight = this.space.length(MOVING_PLATFORM_HEIGHT) / 2;
 
     for (const { mesh, platforms } of this.platforms) {
-      this.placePlatforms(mesh, platforms, alpha, halfWidth, halfHeight);
+      this.placePlatforms(mesh, platforms, now, alpha, halfWidth, halfHeight);
     }
   }
 
-  /** Cada pedaço do tamanho de uma plataforma comum é uma cópia: a ponte de esqueletos repete o osso em vez de esticá-lo. */
-  private placePlatforms(mesh: InstancedMesh, platforms: readonly MovingPlatform[], alpha: number, halfWidth: number, halfHeight: number): void {
+  /**
+   * Cada pedaço do tamanho de uma plataforma comum é uma cópia: a ponte de
+   * esqueletos repete o osso em vez de esticá-lo. Prestes a se desmanchar, cada
+   * osso treme no seu tempo; desmanchada, some.
+   */
+  private placePlatforms(
+    mesh: InstancedMesh,
+    platforms: readonly MovingPlatform[],
+    now: number,
+    alpha: number,
+    halfWidth: number,
+    halfHeight: number,
+  ): void {
     let index = 0;
 
     for (const platform of platforms) {
       const x = platform.previousX + (platform.x - platform.previousX) * alpha;
       const y = platform.previousY + (platform.y - platform.previousY) * alpha;
+      const isShaking = !platform.isHidden && platform.vanishCountdown > 0;
+      const size = platform.isHidden ? 0 : 1;
 
       for (let segment = 0; segment < segmentsOf(platform); segment += 1) {
-        this.position.set(this.space.x(x + segment * MOVING_PLATFORM_WIDTH) + halfWidth, this.space.y(y) - halfHeight, 0);
-        this.scale.set(1, 1, 1);
+        const shake = isShaking ? Math.sin(now / 22 + segment * 1.7) * SKELETON_SHAKE : 0;
+
+        this.position.set(this.space.x(x + segment * MOVING_PLATFORM_WIDTH) + halfWidth + shake, this.space.y(y) - halfHeight, 0);
+        this.scale.set(size, size, size);
         this.matrix.compose(this.position, this.rotation, this.scale);
         mesh.setMatrixAt(index, this.matrix);
         index += 1;

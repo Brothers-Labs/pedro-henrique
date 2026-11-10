@@ -120,10 +120,11 @@ export class PropView {
     }
   }
 
-  /** A "árvore" de cada tema: cacto no deserto, coqueiro na praia, árvore seca no Dia das Bruxas. */
+  /** A "árvore" de cada tema: cacto no deserto e no castelo do Rei Cacto, coqueiro na praia, árvore seca no Dia das Bruxas. */
   private treeModel(): readonly VoxelBox[] {
     switch (this.theme) {
       case 'deserto':
+      case 'castelo-rei-cacto':
         return cactus(this.palette);
       case 'praia':
         return palm(this.palette);

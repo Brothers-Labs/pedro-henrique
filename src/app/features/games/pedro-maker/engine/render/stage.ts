@@ -42,6 +42,8 @@ const SUN_COLORS: Readonly<Partial<Record<LevelTheme, string>>> = {
   estrelas: '#c9b8ff',
   castelo: '#d9d4ff',
   'castelo-rei-slime': '#e3ffd6',
+  // Sol baixo de fim de tarde no deserto.
+  'castelo-rei-cacto': '#ffd2a1',
   praia: '#fff1d6',
   classico: '#fffaf0',
   // Luar arroxeado.

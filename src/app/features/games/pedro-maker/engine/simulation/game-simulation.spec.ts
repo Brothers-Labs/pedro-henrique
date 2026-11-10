@@ -18,7 +18,7 @@ import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../
 import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
-import { MOVING_PLATFORM_WIDTH } from './blocks';
+import { MOVING_PLATFORM_WIDTH, SKELETON_RESPAWN_SECONDS, SKELETON_VANISH_DELAY_SECONDS } from './blocks';
 import { GameSimulation, STEP_MS } from './game-simulation';
 import { bottom, centerX, centerY, isAreaClear } from './physics-body';
 
@@ -989,11 +989,51 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(platform?.x).toBeGreaterThan(12 * TILE_SIZE);
 
-      run(harness, 12);
+      run(harness, 3);
 
       expect(platform?.x).toBe(WALL * TILE_SIZE - (platform?.width ?? 0));
       expect(platform?.velocity).toBe(0);
+      expect(platform?.isHidden).toBeFalse();
       expect(centerX(harness.simulation.player.body)).toBeGreaterThan(platform?.x ?? Number.POSITIVE_INFINITY);
+    });
+
+    it('na parede, treme um pouco e se desmancha: quem ficou em cima cai', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', WALL, ROW).build(META));
+      run(harness, 0.2);
+      rideFrom(harness, 12);
+      run(harness, 3.5);
+
+      const platform = skeletonOf(harness);
+
+      expect(platform?.vanishCountdown).toBeGreaterThan(0);
+      expect(platform?.isHidden).toBeFalse();
+
+      run(harness, SKELETON_VANISH_DELAY_SECONDS);
+
+      expect(platform?.isHidden).toBeTrue();
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'break')).toBeTrue();
+
+      run(harness, 1);
+
+      expect(bottom(harness.simulation.player.body)).toBeCloseTo(SURFACE * TILE_SIZE, 0);
+    });
+
+    it('desmanchada, volta montada no começo do caminho e espera o herói de novo', () => {
+      const harness = start(flatLevel().add('skeleton-platform', 12, ROW).add('stone', WALL, ROW).build(META));
+      run(harness, 0.2);
+      rideFrom(harness, 12);
+      run(harness, 3.5 + SKELETON_VANISH_DELAY_SECONDS + SKELETON_RESPAWN_SECONDS + 0.2);
+
+      const platform = skeletonOf(harness);
+
+      expect(platform?.isHidden).toBeFalse();
+      expect(platform?.x).toBe(12 * TILE_SIZE);
+      expect(platform?.velocity).toBe(0);
+
+      rideFrom(harness, 12);
+      run(harness, 0.5);
+
+      expect(platform?.x).toBeGreaterThan(12 * TILE_SIZE);
     });
 
     it('é uma ponte de quatro esqueletos, do tamanho de quatro plataformas móveis', () => {
@@ -1015,7 +1055,7 @@ describe('Simulação do Pedro Maker', () => {
       const harness = start(flatLevel().add('skeleton-platform', 12, ROW).build(META));
       run(harness, 0.2);
       rideFrom(harness, 12);
-      run(harness, 30);
+      run(harness, 14.3);
 
       const platform = skeletonOf(harness);
 
@@ -1374,6 +1414,43 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(Math.abs(centerX(cactus.body) - cactusStart)).toBeGreaterThan(0);
       expect(Math.abs(centerX(cactus.body) - cactusStart)).toBeLessThan(Math.abs(centerX(slime.body) - slimeStart));
+    });
+
+    describe('espinhudos do Rei Cacto', () => {
+      // Duas paredes prendem o Rei Cacto e os filhotes longe do herói, que fica parado no início.
+      const cactusPen = (): LevelBlueprint =>
+        flatLevel().fill('stone', 8, 8, SURFACE - 3, SURFACE - 1).fill('stone', 22, 22, SURFACE - 3, SURFACE - 1).add('king-cactus', 15, SURFACE - 1).build(META);
+      const sproutsOf = (harness: Harness) => harness.simulation.enemies.filter((enemy) => enemy.kind === 'spiky');
+
+      it('pouco depois de acordar, solta um espinhudo pequeno que nasce sem machucar', () => {
+        const harness = start(cactusPen());
+        run(harness, 1);
+
+        expect(sproutsOf(harness).length).toBe(0);
+
+        run(harness, 0.7);
+
+        const [sprout] = sproutsOf(harness);
+
+        expect(sproutsOf(harness).length).toBe(1);
+        expect(sprout.scale).toBeLessThan(1);
+        expect(sprout.harmlessUntil).toBeGreaterThan(harness.simulation.clockMs);
+      });
+
+      it('nunca deixa mais de dois espinhudos soltos ao mesmo tempo', () => {
+        const harness = start(cactusPen());
+        run(harness, 20);
+
+        expect(sproutsOf(harness).length).toBe(2);
+      });
+
+      it('congelado, não solta espinhudo nenhum', () => {
+        const harness = start(cactusPen());
+        harness.simulation.enemies[0].freezeInIce(harness.simulation.clockMs);
+        run(harness, 2);
+
+        expect(sproutsOf(harness).length).toBe(0);
+      });
     });
 
     it('a abóbora viva anda aos pulinhos e cai com um pisão', () => {

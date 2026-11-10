@@ -235,6 +235,9 @@ function drawIcon(
     case 'pipe':
       paintVoxelIcon(context, ICON_SIZE, palette, 'pipe-side', 'pipe-top');
       return;
+    case 'desert-mountain':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'mesa-side', 'mesa-top');
+      return;
     case 'cloud':
       paintVoxelIcon(context, ICON_SIZE, palette, 'cloud');
       return;

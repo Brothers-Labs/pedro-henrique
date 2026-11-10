@@ -102,6 +102,8 @@ export function tileFor(material: TerrainMaterial, face: FaceDirection, isTopExp
       return face === 'bottom' || !isTopExposed ? 'dirt' : 'grass-side';
     case 'pipe':
       return face === 'top' ? 'pipe-top' : 'pipe-side';
+    case 'desert-mountain':
+      return face === 'top' ? 'mesa-top' : 'mesa-side';
     case 'platform':
       return 'platform';
     case 'stone':

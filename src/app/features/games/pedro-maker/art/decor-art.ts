@@ -30,8 +30,9 @@ export const PUMPKIN_HEIGHT = 40;
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na
  * floresta e na neve, cacto no deserto, cristal na caverna, rocha em chamas
- * no vulcão, cogumelo mágico nas estrelas, tocha nos castelos, coqueiro na
- * praia, árvore redonda no clássico e árvore seca no Dia das Bruxas.
+ * no vulcão, cogumelo mágico nas estrelas, tocha nos castelos (cacto no do
+ * Rei Cacto), coqueiro na praia, árvore redonda no clássico e árvore seca no
+ * Dia das Bruxas.
  */
 export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, palette: ThemePalette): void {
   switch (theme) {
@@ -40,6 +41,7 @@ export function paintTree(context: CanvasRenderingContext2D, theme: LevelTheme, 
       paintPine(context, palette, theme === 'gelo');
       return;
     case 'deserto':
+    case 'castelo-rei-cacto':
       paintCactus(context, palette);
       return;
     case 'caverna':
