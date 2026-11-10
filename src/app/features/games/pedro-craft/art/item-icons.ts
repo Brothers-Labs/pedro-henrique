@@ -91,6 +91,23 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
     brush.line(8, 2, 8, 4, HANDLE, 1);
     brush.rect(9, 2, 3, 2, leaf ?? '#4caf50');
   },
+  hamburger: (brush, [bun, patty, lettuce]) => {
+    brush.rect(3, 3, 10, 4, bun ?? '#d9953f');
+    brush.rect(2, 5, 12, 2, bun ?? '#d9953f');
+    for (const x of [5, 8, 11]) {
+      brush.pixel(x, 4, '#fff3d6');
+    }
+    brush.rect(2, 7, 12, 1, lettuce ?? '#4caf50');
+    brush.rect(2, 8, 12, 3, patty ?? '#6b3a1f');
+    brush.rect(3, 11, 10, 2, bun ?? '#d9953f');
+  },
+  fries: (brush, [potato, box]) => {
+    for (const [x, top] of [[4, 3], [6, 2], [8, 3], [10, 2], [11, 4]] as const) {
+      brush.rect(x, top, 1, 6, potato ?? '#ffd23f');
+    }
+    brush.rect(3, 7, 10, 7, box ?? '#e53935');
+    brush.rect(4, 8, 8, 1, lighten(box ?? '#e53935', 0.3));
+  },
   bread: (brush, [crust, top]) => {
     brush.rect(2, 7, 12, 6, crust ?? '#d9953f');
     brush.rect(3, 6, 10, 1, crust ?? '#d9953f');

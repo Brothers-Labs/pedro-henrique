@@ -207,6 +207,32 @@ describe('Conteúdo do PedroCraft', () => {
       ]);
       expect(dolls.every((doll) => doll?.drops === doll?.id && content.lootTables.some((table) => table.id === doll?.drops))).toBeTrue();
     });
+
+    it('Obesity e Squareity são bonecos amigos do dia; Pointy atira flechas à noite', () => {
+      const dolls = ['obesity', 'squareity', 'pointy'].map((id) => content.creatures.find((creature) => creature.id === id));
+
+      expect(dolls.map((doll) => [doll?.name, doll?.temperament, doll?.spawn?.period, doll?.behavior])).toEqual([
+        ['Obesity', 'passive', 'day', 'grazer'],
+        ['Squareity', 'passive', 'day', 'grazer'],
+        ['Pointy', 'hostile', 'night', 'archer'],
+      ]);
+      expect(dolls.every((doll) => doll?.drops === doll?.id && content.lootTables.some((table) => table.id === doll?.drops))).toBeTrue();
+    });
+
+    it('a comida do Obesity é hambúrguer e batata frita: ele deixa os dois e tem filhote com hambúrguer', () => {
+      const obesity = content.creatures.find((creature) => creature.id === 'obesity');
+      const drops = content.lootTables.find((table) => table.id === 'obesity')?.entries.map((entry) => entry.item);
+      const foods = ['hamburger', 'fries'].map((id) => content.items.find((item) => item.id === id));
+
+      expect(obesity?.breedsWith).toBe('hamburger');
+      expect(drops).toEqual(['fries', 'hamburger']);
+      expect(foods.map((food) => [food?.name, food?.kind])).toEqual([
+        ['Hambúrguer', 'food'],
+        ['Batata frita', 'food'],
+      ]);
+      expect(content.recipes.crafting.some((recipe) => recipe.output.item === 'hamburger')).toBeTrue();
+      expect(content.recipes.crafting.some((recipe) => recipe.output.item === 'fries')).toBeTrue();
+    });
   });
 
   describe('validação da forma', () => {

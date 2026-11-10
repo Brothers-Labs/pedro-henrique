@@ -19,6 +19,7 @@ export type LevelTheme =
   | 'estrelas'
   | 'castelo'
   | 'castelo-rei-slime'
+  | 'castelo-rei-cacto'
   | 'praia'
   | 'classico'
   | 'dia-das-bruxas';
@@ -38,7 +39,8 @@ export type LevelTheme =
  * mergulhado e pula para fora num arco alto. Os dois caem com um pisão.
  *
  * Os do Dia das Bruxas: o Rei Cacto, grandão de coroa e espinhos, que não se
- * pisa; a abóbora viva, que anda aos pulinhos; e a bruxa de vassoura.
+ * pisa e solta espinhudos; a abóbora viva, que anda aos pulinhos; e a bruxa
+ * de vassoura.
  */
 export const ENEMY_KINDS = [
   'slime',
@@ -131,9 +133,11 @@ export type PlatformAxis = 'horizontal' | 'vertical';
  * Terreno sólido, montado bloco a bloco como num mundo de cubos.
  *
  * O cano é terreno também: bloqueia por todos os lados e, empilhado, vira o
- * cano verde clássico — a boca aparece sozinha no bloco de cima.
+ * cano verde clássico — a boca aparece sozinha no bloco de cima. A montanha
+ * do deserto é arenito em listras, com areia por cima: empilhada, vira os
+ * paredões vermelhos dos cânions.
  */
-export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe';
+export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' | 'desert-mountain';
 
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
@@ -264,7 +268,8 @@ export type TriggerType = 'hint' | 'mascot-tip';
  * O escorregador fica em pé no chão, com a escada à esquerda: quem pousa na
  * rampa desce sozinho, ganhando velocidade, e sai correndo lá embaixo. A
  * plataforma de esqueleto espera parada: quando o herói pisa, ela segue
- * para a direita até bater numa parede, e ali fica.
+ * para a direita até bater numa parede; ali treme, se desmancha e, um
+ * tempinho depois, volta montada no lugar de onde saiu.
  */
 export type LevelObjectType =
   | TerrainType

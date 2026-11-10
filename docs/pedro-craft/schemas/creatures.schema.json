@@ -26,7 +26,7 @@
         "damage": { "type": "integer", "minimum": 0, "maximum": 10, "default": 0, "description": "Corações por ataque." },
         "attackCooldownMs": { "type": "integer", "minimum": 200, "default": 1000 },
         "behavior": { "enum": ["grazer", "chaser", "hopper", "archer"] },
-        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton", "creeper", "iron-golem", "verity", "lovity", "falsity", "cruelty"] },
+        "model": { "enum": ["chicken", "cow", "sheep", "slime", "king-slime", "scarecrow", "spider", "skeleton", "creeper", "iron-golem", "verity", "lovity", "falsity", "cruelty", "obesity", "squareity", "pointy"] },
         "colors": { "$ref": "common.schema.json#/$defs/colors" },
         "width": { "type": "number", "minimum": 0.2, "maximum": 2 },
         "height": { "type": "number", "minimum": 0.2, "maximum": 2.5 },

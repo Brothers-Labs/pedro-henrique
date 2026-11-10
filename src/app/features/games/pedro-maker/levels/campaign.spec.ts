@@ -39,6 +39,16 @@ describe('Campanha do Pedro Maker', () => {
     expect(campaignLevelById('6-10')?.build().boss?.name).toBe('Rei Abóbora');
   });
 
+  it('leva o chefão do deserto para o castelo do Rei Cacto, de paredões da montanha do deserto', () => {
+    const castle = campaignLevelById('2-10')?.build();
+
+    expect(castle?.name).toBe('Castelo do Rei Cacto');
+    expect(castle?.theme).toBe('castelo-rei-cacto');
+    expect(castle?.objects.some((object) => object.type === 'desert-mountain')).toBeTrue();
+    expect(castle?.objects.some((object) => object.type === 'stone')).toBeFalse();
+    expect(campaignLevelById('1-10')?.build().theme).toBe('castelo');
+  });
+
   it('encadeia a próxima fase atravessando os mundos e pulando a secreta', () => {
     expect(nextCampaignLevel('1-1')?.id).toBe('1-2');
     expect(nextCampaignLevel('1-10')?.id).toBe('2-1');

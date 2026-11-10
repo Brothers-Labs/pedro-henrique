@@ -96,6 +96,9 @@
     { "id": "verity", "entries": [{ "item": "flower-yellow", "min": 1, "max": 2 }, { "item": "gold-ingot", "chance": 0.2 }] },
     { "id": "lovity", "entries": [{ "item": "flower-red", "min": 1, "max": 2 }, { "item": "apple", "chance": 0.5 }] },
     { "id": "falsity", "entries": [{ "item": "lapis", "min": 1, "max": 2 }, { "item": "emerald", "chance": 0.2 }] },
-    { "id": "cruelty", "entries": [{ "item": "coal", "min": 1, "max": 2 }, { "item": "bone", "chance": 0.5 }] }
+    { "id": "cruelty", "entries": [{ "item": "coal", "min": 1, "max": 2 }, { "item": "bone", "chance": 0.5 }] },
+    { "id": "obesity", "entries": [{ "item": "fries", "min": 1, "max": 2 }, { "item": "hamburger", "chance": 0.3 }] },
+    { "id": "squareity", "entries": [{ "item": "stone-bricks", "min": 1, "max": 2 }, { "item": "iron-ingot", "chance": 0.2 }] },
+    { "id": "pointy", "entries": [{ "item": "arrow", "min": 1, "max": 3 }, { "item": "flint", "chance": 0.5 }] }
   ]
 }

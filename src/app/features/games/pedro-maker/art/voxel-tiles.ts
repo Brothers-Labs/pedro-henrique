@@ -32,7 +32,9 @@ export type VoxelTile =
   | 'water'
   | 'lucky'
   | 'note'
-  | 'bone';
+  | 'bone'
+  | 'mesa-top'
+  | 'mesa-side';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -56,6 +58,8 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'lucky',
   'note',
   'bone',
+  'mesa-top',
+  'mesa-side',
 ];
 
 /** Blocos por linha no atlas. */
@@ -80,6 +84,15 @@ interface TilePainterContext {
 }
 
 const QUESTION_MARK = ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'] as const;
+
+/** Listras do arenito da montanha do deserto, de cima para baixo: cada uma com a sua altura em pixels. */
+const MESA_STRATA = [
+  { color: '#e8a25a', height: 3 },
+  { color: '#c4572e', height: 3 },
+  { color: '#f0b872', height: 2 },
+  { color: '#d9773f', height: 4 },
+  { color: '#b9502b', height: 4 },
+] as const;
 
 /** Colcheia: a nota musical do bloco musical. */
 const MUSIC_NOTE = ['...###', '...#.#', '...#.#', '...#..', '...#..', '.###..', '####..', '.##...'] as const;
@@ -201,6 +214,24 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
     }
 
     frame(set, '#8c7e64', 0);
+  },
+  /** Areia por cima do arenito, com pedrinhas vermelhas soltas. */
+  'mesa-top': ({ set, random }) => speckle(set, random, '#efc27a', ['#e3ad62', '#f7d79c', '#c4572e'], 0.35),
+  /** Listras de arenito, como os paredões dos cânions: empilhadas, as listras continuam de um bloco para o outro. */
+  'mesa-side': ({ set, random }) => {
+    let y = 0;
+
+    for (const { color, height } of MESA_STRATA) {
+      for (let row = y; row < y + height; row += 1) {
+        for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+          const roll = random();
+
+          set(x, row, roll < 0.12 ? darken(color, 0.12) : roll < 0.2 ? lighten(color, 0.1) : color);
+        }
+      }
+
+      y += height;
+    }
   },
   lava: ({ set, random }) => {
     speckle(set, random, '#ff6a00', ['#ffd23f', '#ff9a1f', '#c2330a'], 0.45);

@@ -54,4 +54,10 @@ describe('Malha do terreno em cubos', () => {
     expect(tileFor('ground', 'front', false)).toBe('dirt');
     expect(tileFor('pipe', 'top', true)).toBe('pipe-top');
   });
+
+  it('desenha a montanha do deserto com areia em cima e listras de arenito nos lados', () => {
+    expect(tileFor('desert-mountain', 'top', true)).toBe('mesa-top');
+    expect(tileFor('desert-mountain', 'front', true)).toBe('mesa-side');
+    expect(tileFor('desert-mountain', 'front', false)).toBe('mesa-side');
+  });
 });
