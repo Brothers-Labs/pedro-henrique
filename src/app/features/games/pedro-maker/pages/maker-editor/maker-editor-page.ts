@@ -312,6 +312,12 @@ export class MakerEditorPage {
     }
   }
 
+  /** O navegador assumiu o toque para rolar a paleta: nada é colocado e a sombra da peça some. */
+  protected cancelPaletteDrag(): void {
+    this.paletteDrag = null;
+    this.ghost.set(null);
+  }
+
   /* Grade ------------------------------------------------------------------------------ */
 
   protected onCellPointer({ phase, cell }: CellPointerEvent): void {

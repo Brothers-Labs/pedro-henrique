@@ -117,6 +117,7 @@
           (pointerdown)="startPaletteDrag($event, entry.piece)"
           (pointermove)="movePaletteDrag($event)"
           (pointerup)="endPaletteDrag($event)"
+          (pointercancel)="cancelPaletteDrag()"
           (keydown.enter)="choosePiece(entry.piece)"
           (keydown.space)="choosePiece(entry.piece)"
         >
