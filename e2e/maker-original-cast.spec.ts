@@ -1,28 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-interface SavedLevel {
-  readonly id: string;
-  readonly name: string;
-  readonly theme: string;
-  readonly objects: readonly {
-    readonly type: string;
-    readonly properties?: { readonly powerUp?: string; readonly portalLook?: string };
-  }[];
-}
-
-/** Read saved levels after real UI actions, without changing game state through test hooks. */
-async function savedLevels(page: import('@playwright/test').Page): Promise<SavedLevel[]> {
-  return page.evaluate(() => new Promise<SavedLevel[]>((resolve, reject) => {
-    const opening = indexedDB.open('pedro-henrique-site');
-    opening.onerror = () => reject(opening.error);
-    opening.onsuccess = () => {
-      const database = opening.result;
-      const request = database.transaction('maker-levels').objectStore('maker-levels').getAll();
-      request.onsuccess = () => { database.close(); resolve(request.result as SavedLevel[]); };
-      request.onerror = () => { database.close(); reject(request.error); };
-    };
-  }));
-}
+import { savedLevels } from './maker-storage';
 
 test('Maker saves the chained iron ball and plays a level with it', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/criar');

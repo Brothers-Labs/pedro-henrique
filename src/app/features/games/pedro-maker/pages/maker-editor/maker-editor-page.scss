@@ -257,8 +257,18 @@ $side-layout: '(min-width: #{$breakpoint-lg}), #{$short-landscape}';
   border-radius: 0.8rem;
   background: #ffffff;
   color: maker.$ink;
-  touch-action: none;
+  /*
+   * As peças cobrem quase toda a paleta: o dedo precisa rolá-la no tablet.
+   * O navegador rola na direção da lista e entrega o resto do gesto para o
+   * arraste, que segue na direção da grade — acima da fileira no celular em
+   * pé, à direita da coluna lateral.
+   */
+  touch-action: pan-x;
   user-select: none;
+
+  @media #{$side-layout} {
+    touch-action: pan-y;
+  }
 
   &--active {
     background: #d3f7ea;
