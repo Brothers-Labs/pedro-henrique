@@ -1,0 +1,28 @@
+@if (createScene(); as sceneFactory) {
+  @if (finished(); as done) {
+    <app-pedrere-page-frame [heading]="level()?.name ?? ''" emoji="🗺️" backLink="/jogos/pedro-pedrere/aventuras">
+      <app-pedrere-result-panel
+        [heading]="done.result.isVictory ? 'Fase concluída!' : 'Fim de jogo'"
+        [message]="finishMessage(done.result)"
+        [stars]="done.result.isVictory ? done.result.stars : null"
+        [isNewRecord]="done.isNewRecord"
+        backLink="/jogos/pedro-pedrere/aventuras"
+        backLabel="Aventuras"
+        (replay)="replay()"
+      />
+
+      @if (isCustomLevel()) {
+        <a class="button button--secondary" [routerLink]="['/jogos/pedro-pedrere/maker', level()?.id]">
+          <span aria-hidden="true">✏️</span> Editar esta fase
+        </a>
+      }
+    </app-pedrere-page-frame>
+  } @else {
+    <app-pedrere-game-host [createScene]="sceneFactory" (finished)="onFinished($event)" (exited)="exit()" />
+  }
+} @else {
+  <app-pedrere-page-frame heading="Fase não encontrada" emoji="🔍" backLink="/jogos/pedro-pedrere/aventuras">
+    <p>Esta fase não existe neste aparelho. Ela pode ter sido apagada.</p>
+    <a class="button button--primary" routerLink="/jogos/pedro-pedrere/aventuras">Ver as aventuras</a>
+  </app-pedrere-page-frame>
+}

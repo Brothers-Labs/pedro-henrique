@@ -1,0 +1,103 @@
+<app-pedrere-page-frame [heading]="isEditing() ? 'Editar fase' : 'Modo maker'" emoji="🛠️">
+  @if (isMissingLevel()) {
+    <p class="maker__alert" role="alert">Esta fase não existe mais neste aparelho. Você pode criar uma nova aqui.</p>
+  }
+
+  <section class="maker__settings" aria-label="Nome, tamanho e cenário da fase">
+    <label class="field">
+      <span class="field__label">Nome</span>
+      <input
+        class="field__input"
+        type="text"
+        autocomplete="off"
+        [maxLength]="maxNameLength"
+        [value]="name()"
+        (input)="rename($event)"
+      />
+    </label>
+
+    <div class="field" role="group" aria-labelledby="pedrere-tamanho">
+      <span id="pedrere-tamanho" class="field__label">Tamanho</span>
+      <div class="chips">
+        @for (size of sizes; track size.id) {
+          <button
+            type="button"
+            class="chip"
+            [attr.aria-pressed]="columns() === size.width"
+            (click)="chooseSize(size)"
+          >
+            {{ size.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field" role="group" aria-labelledby="pedrere-cenario">
+      <span id="pedrere-cenario" class="field__label">Cenário</span>
+      <div class="chips">
+        @for (option of themes; track option) {
+          <button
+            type="button"
+            class="chip"
+            [attr.aria-pressed]="theme() === option"
+            (click)="chooseTheme(option)"
+          >
+            {{ themeLabels[option] }}
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <div class="maker__palette" role="toolbar" aria-label="Blocos para colocar na fase">
+    @for (option of tools; track option.tile) {
+      <button
+        type="button"
+        class="tool"
+        [attr.aria-pressed]="tool().tile === option.tile"
+        (click)="chooseTool(option)"
+      >
+        <span class="tool__emoji" aria-hidden="true">{{ option.emoji }}</span>
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <div class="maker__board">
+    <canvas
+      #canvas
+      class="maker__canvas"
+      role="img"
+      [attr.aria-label]="'Fase ' + name() + ', com ' + columns() + ' colunas. Toque num quadrado para colocar: ' + tool().label + '.'"
+      [style.width.px]="columns() * cellSize"
+      [style.height.px]="levelHeight * cellSize"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (click)="onTap($event)"
+    ></canvas>
+  </div>
+
+  @if (messages().length > 0) {
+    <ul class="maker__alert" role="alert">
+      @for (message of messages(); track message) {
+        <li>{{ message }}</li>
+      }
+    </ul>
+  }
+
+  @if (notice(); as text) {
+    <p class="maker__notice" role="status">{{ text }}</p>
+  }
+
+  <div class="maker__actions">
+    <button type="button" class="action" data-tone="green" (click)="saveAndPlay()">
+      <span aria-hidden="true">▶</span> Salvar e jogar
+    </button>
+    <button type="button" class="action" data-tone="blue" (click)="save()">
+      <span aria-hidden="true">💾</span> Salvar
+    </button>
+    <button type="button" class="action" data-tone="gray" (click)="startOver()">
+      <span aria-hidden="true">📄</span> Fase nova
+    </button>
+  </div>
+</app-pedrere-page-frame>

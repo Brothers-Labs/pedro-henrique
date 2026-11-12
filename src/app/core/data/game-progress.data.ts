@@ -174,6 +174,17 @@ export const GAME_CATALOG: readonly GameDefinition[] = [
     challengesPerLevel: 3,
     tracksAccuracy: false,
   },
+  {
+    id: 'pedro-pedrere',
+    label: 'Pedro Pedrerê',
+    emoji: '🤸',
+    color: 'yellow',
+    /** Fase vencida, corrida no pódio ou pula-pula acima da meta contam como desafio vencido. */
+    tagline: 'Aventuras, pula-pula, corrida, personagem e modo maker.',
+    unit: 'desafio',
+    challengesPerLevel: 3,
+    tracksAccuracy: false,
+  },
 ];
 
 const CATALOG_BY_ID = new Map(GAME_CATALOG.map((game) => [game.id, game]));

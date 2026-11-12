@@ -19,7 +19,8 @@ export type GameId =
   | 'pedro-kart'
   | 'pedro-flash'
   | 'pedro-craft'
-  | 'pedro-sprunks';
+  | 'pedro-sprunks'
+  | 'pedro-pedrere';
 
 /**
  * Nome da unidade de desafio de cada jogo.

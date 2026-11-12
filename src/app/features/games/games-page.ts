@@ -15,6 +15,7 @@ import { CraftLauncherCard } from './pedro-craft/components/craft-launcher-card/
 import { FlashLauncherCard } from './pedro-flash/components/flash-launcher-card/flash-launcher-card';
 import { KartLauncherCard } from './pedro-kart/components/kart-launcher-card/kart-launcher-card';
 import { MakerLauncherCard } from './pedro-maker/components/maker-launcher-card/maker-launcher-card';
+import { PedrereLauncherCard } from './pedro-pedrere/components/pedrere-launcher-card/pedrere-launcher-card';
 import { SprunksLauncherCard } from './pedro-sprunks/components/sprunks-launcher-card/sprunks-launcher-card';
 import { PetCelebrations } from '../pet/pet-celebrations/pet-celebrations';
 import { PetCompanion } from '../pet/pet-companion/pet-companion';
@@ -61,6 +62,7 @@ const SCORE_FORMAT = new Intl.NumberFormat('pt-BR');
     FlashLauncherCard,
     CraftLauncherCard,
     SprunksLauncherCard,
+    PedrereLauncherCard,
   ],
   templateUrl: './games-page.html',
   styleUrl: './games-page.scss',

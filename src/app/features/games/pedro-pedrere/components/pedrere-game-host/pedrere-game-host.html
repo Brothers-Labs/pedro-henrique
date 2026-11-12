@@ -1,0 +1,61 @@
+<canvas #canvas class="stage" role="img" [attr.aria-label]="description()"></canvas>
+
+<div class="hud">
+  <ul class="hud__list" aria-label="Painel da partida">
+    @for (entry of hud(); track entry.id) {
+      <li class="hud__pill">
+        <span aria-hidden="true">{{ entry.emoji }}</span>
+        <span class="visually-hidden">{{ entry.label }}:</span>
+        {{ entry.value }}
+      </li>
+    }
+  </ul>
+
+  <button type="button" class="hud__pause" aria-label="Pausar" (click)="pause()">⏸</button>
+</div>
+
+@if (banner(); as text) {
+  <p class="banner" aria-live="assertive">{{ text }}</p>
+}
+
+@if (isTouch) {
+  <app-pedrere-touch-controls [state]="controls" [layout]="controlLayout()" />
+} @else {
+  <p class="hint">
+    @switch (controlLayout()) {
+      @case ('corrida') {
+        Espaço ou ↑ para pular · Esc para pausar
+      }
+      @case ('pula-pula') {
+        ← → para escolher o lado · Esc para pausar
+      }
+      @default {
+        ← → para andar · Espaço ou ↑ para pular · Esc para pausar
+      }
+    }
+  </p>
+}
+
+@if (phase() === 'pausado') {
+  <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pedrere-pausa-titulo">
+    <div class="overlay__panel">
+      <h2 id="pedrere-pausa-titulo" class="overlay__title">Pausado</h2>
+      <button type="button" class="overlay__button" data-tone="green" (click)="resume()">
+        <span aria-hidden="true">▶</span> Continuar
+      </button>
+      <button type="button" class="overlay__button" data-tone="orange" (click)="exit()">
+        <span aria-hidden="true">🚪</span> Sair
+      </button>
+    </div>
+  </div>
+}
+
+@if (phase() === 'erro') {
+  <div class="overlay" role="alertdialog" aria-modal="true" aria-labelledby="pedrere-erro-titulo">
+    <div class="overlay__panel">
+      <h2 id="pedrere-erro-titulo" class="overlay__title">Ops!</h2>
+      <p class="overlay__text">Não conseguimos abrir esta partida neste aparelho.</p>
+      <button type="button" class="overlay__button" (click)="exit()">Voltar</button>
+    </div>
+  </div>
+}

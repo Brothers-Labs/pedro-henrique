@@ -1,0 +1,76 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+.wardrobe {
+  display: grid;
+  gap: 1rem;
+
+  @include from($breakpoint-md) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+}
+
+.wardrobe__preview {
+  @include maker.panel(rgb(255 255 255 / 70%));
+
+  display: grid;
+  justify-items: center;
+  padding: 1rem;
+}
+
+.wardrobe__hero {
+  width: min(70%, 16rem);
+}
+
+.wardrobe__options {
+  display: grid;
+  gap: 1rem;
+}
+
+.group {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.group__title {
+  font-size: var(--text-lg);
+  color: maker.$ink;
+}
+
+.group__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.swatch {
+  @include touch-target(3rem);
+  @include maker.pill;
+
+  cursor: pointer;
+
+  &[aria-pressed='true'] {
+    background: #ffcf3f;
+    box-shadow: 0 0 0 3px maker.$ink;
+  }
+
+  &:focus-visible {
+    @include focus-ring(#3fa3f5);
+  }
+}
+
+.swatch__color {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid maker.$ink;
+  border-radius: 50%;
+  background: var(--swatch);
+}
+
+.swatch__emoji {
+  font-size: 1.25rem;
+}

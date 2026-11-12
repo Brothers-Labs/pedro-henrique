@@ -1,0 +1,112 @@
+@use 'mixins' as *;
+@use '../../../pedro-maker/maker' as maker;
+
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: block;
+  overflow: hidden;
+  background: #111122;
+  touch-action: none;
+  user-select: none;
+}
+
+.stage {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: absolute;
+  inset: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) auto max(0.75rem, env(safe-area-inset-left));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.hud__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hud__pill {
+  @include maker.pill;
+
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__pause {
+  @include maker.game-button;
+
+  & {
+    pointer-events: auto;
+    padding-inline: 0.9rem;
+  }
+}
+
+.banner {
+  @include maker.title-text(clamp(4rem, 2.5rem + 8vw, 8rem));
+
+  position: absolute;
+  inset: 35% 0 auto;
+  margin: 0;
+  color: #ffcf3f;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hint {
+  @include maker.pill;
+
+  position: absolute;
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: 0;
+  transform: translateX(-50%);
+  text-align: center;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(17 17 34 / 55%);
+}
+
+.overlay__panel {
+  @include maker.panel;
+
+  display: grid;
+  gap: 0.75rem;
+  width: min(100%, 20rem);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.overlay__title {
+  @include maker.title-text(var(--text-3xl, 2.4rem));
+}
+
+.overlay__text {
+  color: maker.$ink;
+  font-weight: 700;
+}
+
+.overlay__button {
+  @include maker.game-button;
+}

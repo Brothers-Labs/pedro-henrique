@@ -1,0 +1,54 @@
+@use '../../../pedro-maker/maker' as maker;
+
+.result {
+  @include maker.panel;
+
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(100%, 28rem);
+  margin-inline: auto;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.result__title {
+  @include maker.title-text(clamp(2rem, 1.4rem + 2.5vw, 3rem));
+}
+
+.result__stars {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 2.6rem;
+}
+
+.result__star--off {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.result__message {
+  margin: 0;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.result__record {
+  @include maker.pill;
+
+  margin: 0;
+  background: #ffcf3f;
+}
+
+.result__actions {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.result__button {
+  @include maker.game-button;
+}

@@ -1,0 +1,64 @@
+@let current = look();
+
+<app-pedrere-page-frame heading="Personagem" emoji="👕">
+  <div class="wardrobe">
+    <section class="wardrobe__preview" aria-label="Como o Pedro está agora">
+      <app-pedrere-hero-preview class="wardrobe__hero" [look]="current" />
+    </section>
+
+    <div class="wardrobe__options">
+      <section class="group" aria-labelledby="pedrere-camisa">
+        <h2 id="pedrere-camisa" class="group__title">Camisa</h2>
+        <div class="group__choices">
+          @for (option of shirts; track option.id) {
+            <button
+              type="button"
+              class="swatch"
+              [style.--swatch]="option.hex"
+              [attr.aria-pressed]="current.shirt === option.id"
+              (click)="progress.chooseShirt(option.id)"
+            >
+              <span class="swatch__color" aria-hidden="true"></span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="group" aria-labelledby="pedrere-calca">
+        <h2 id="pedrere-calca" class="group__title">Calça</h2>
+        <div class="group__choices">
+          @for (option of pants; track option.id) {
+            <button
+              type="button"
+              class="swatch"
+              [style.--swatch]="option.hex"
+              [attr.aria-pressed]="current.pants === option.id"
+              (click)="progress.choosePants(option.id)"
+            >
+              <span class="swatch__color" aria-hidden="true"></span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="group" aria-labelledby="pedrere-chapeu">
+        <h2 id="pedrere-chapeu" class="group__title">Chapéu</h2>
+        <div class="group__choices">
+          @for (option of hats; track option.id) {
+            <button
+              type="button"
+              class="swatch"
+              [attr.aria-pressed]="current.hat === option.id"
+              (click)="progress.chooseHat(option.id)"
+            >
+              <span class="swatch__emoji" aria-hidden="true">{{ option.emoji }}</span>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</app-pedrere-page-frame>
