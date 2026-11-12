@@ -85,6 +85,7 @@ function level(id: string, updatedAt: string, name = `Fase ${id}`): CustomLevel 
     ],
     completed: false,
     bestStars: 0,
+    secretUnlocked: false,
   };
 }
 

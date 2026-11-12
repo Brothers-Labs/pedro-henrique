@@ -477,6 +477,30 @@ export function paintDoor(context: CanvasRenderingContext2D): void {
   context.fill();
 }
 
+export const COIN_CHEST_SIZE = 48;
+
+/** Baú de moedas: madeira com friso dourado e a tampa aberta transbordando moedas. */
+export function paintCoinChest(context: CanvasRenderingContext2D): void {
+  const wood = '#a8662f';
+  const gold = '#ffc629';
+
+  for (const [x, y] of [[16, 14], [26, 10], [34, 15], [22, 19]] as const) {
+    circle(context, x, y, 6);
+    fillAndOutline(context, gold, 2);
+  }
+
+  roundedRect(context, 4, 18, 40, 10, 4);
+  fillAndOutline(context, darken(wood, 0.1), 3);
+  roundedRect(context, 4, 26, 40, 20, 3);
+  fillAndOutline(context, wood, 3);
+
+  context.fillStyle = gold;
+  context.fillRect(4, 30, 40, 4);
+  roundedRect(context, 20, 28, 8, 10, 2);
+  fillAndOutline(context, gold, 2);
+  shine(context, 12, 38, 3, 4);
+}
+
 /** Porta dourada: tábuas de ouro com um diamante no alto — leva a outra porta e dá moedas. */
 export function paintGoldenDoor(context: CanvasRenderingContext2D): void {
   const gold = '#f2b705';

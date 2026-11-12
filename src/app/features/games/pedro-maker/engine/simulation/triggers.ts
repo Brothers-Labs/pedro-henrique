@@ -7,9 +7,10 @@ export interface TriggerHost {
   onCheckpoint(feetX: number, feetY: number): void;
   onDoor(destinationFeetX: number, destinationFeetY: number): void;
   onGoldenDoorOpened(x: number, y: number): void;
-  onSecretDoor(): void;
+  /** Uma porta destrancou a fase secreta; `secretLevel` é a fase do Pedro escolhida, ou `null` na campanha. */
+  onSecretDoor(secretLevel: string | null): void;
   onPortal(centerX: number, centerY: number): void;
-  onChestOpened(x: number, y: number): void;
+  onChestOpened(chest: Chest, x: number, y: number): void;
   onMascotTip(text: string): void;
 }
 
@@ -20,7 +21,10 @@ export interface Checkpoint {
   isActive: boolean;
 }
 
-/** A de madeira e a dourada levam à porta do mesmo par; a secreta libera a fase secreta. */
+/**
+ * A de madeira e a dourada levam à porta do mesmo par; a secreta libera a
+ * fase secreta. A dourada também libera, quando tem uma fase escolhida.
+ */
 export type DoorKind = 'wooden' | 'golden' | 'secret';
 
 export interface Door {
@@ -28,6 +32,8 @@ export interface Door {
   readonly y: number;
   readonly pair: string | null;
   readonly kind: DoorKind;
+  /** Fase do Pedro que a porta dourada destranca; `null` nas outras portas. */
+  readonly secretLevel: string | null;
   wasUsed: boolean;
 }
 
@@ -68,7 +74,11 @@ export interface Portal {
   openedAt: number | null;
 }
 
+/** O baú do chefão cai do alto e abre o portal; o baú de moedas já fica no chão da fase. */
+export type ChestKind = 'boss' | 'coins';
+
 export interface Chest {
+  readonly kind: ChestKind;
   readonly x: number;
   readonly groundY: number;
   readonly droppedAt: number;
@@ -103,7 +113,7 @@ export class TriggerSystem {
   readonly hints: Hint[] = [];
   readonly signs: Sign[] = [];
   portal: Portal | null = null;
-  chest: Chest | null = null;
+  readonly chests: Chest[] = [];
   /** Porta ao alcance: a tela mostra o aviso do botão de ação em cima dela. */
   nearDoor: Door | null = null;
 
@@ -140,14 +150,14 @@ export class TriggerSystem {
 
   /** Baú de recompensa do chefão, que cai do alto no centro da arena. */
   dropChest(x: number, groundY: number, now: number): void {
-    this.chest = { x, groundY, droppedAt: now, openedAt: null };
+    this.chests.push({ kind: 'boss', x, groundY, droppedAt: now, openedAt: null });
   }
 
   update(now: number, playerX: number, playerY: number, actionPressed: boolean): void {
     this.checkCheckpoints(playerX, playerY);
     this.checkDoors(playerX, playerY, actionPressed);
     this.checkPortal(playerX, playerY);
-    this.checkChest(now, playerX, playerY);
+    this.checkChests(now, playerX, playerY);
     this.updateHints(playerX);
     this.updateSigns(playerX);
     this.checkTips(playerX, playerY);
@@ -164,7 +174,18 @@ export class TriggerSystem {
       case 'door':
       case 'golden-door':
       case 'secret-door':
-        this.doors.push({ x, y, pair: object.properties?.pair ?? null, kind: DOOR_KINDS[object.type], wasUsed: false });
+        this.doors.push({
+          x,
+          y,
+          pair: object.properties?.pair ?? null,
+          kind: DOOR_KINDS[object.type],
+          secretLevel: object.type === 'golden-door' ? (object.properties?.secretLevel ?? null) : null,
+          wasUsed: false,
+        });
+        return;
+      case 'coin-chest':
+        // Já pousado: a queda do alto é só do baú do chefão.
+        this.chests.push({ kind: 'coins', x, groundY: y, droppedAt: -CHEST_DROP_MS, openedAt: null });
         return;
       case 'portal':
         this.portal = { x, y, look: object.properties?.portalLook ?? 'arch', isOpen: true, isLocked: false, openedAt: null };
@@ -212,7 +233,7 @@ export class TriggerSystem {
       if (!door.wasUsed) {
         door.wasUsed = true;
         this.host.effects.burst('sparkle', door.x, door.y - 50, 30);
-        this.host.onSecretDoor();
+        this.host.onSecretDoor(null);
       }
 
       return;
@@ -223,6 +244,10 @@ export class TriggerSystem {
       door.wasUsed = true;
       this.host.effects.burst('sparkle', door.x, door.y - 50, 30);
       this.host.onGoldenDoorOpened(door.x, door.y - 50);
+
+      if (door.secretLevel !== null) {
+        this.host.onSecretDoor(door.secretLevel);
+      }
     }
 
     const destination = this.doors.find((candidate) => candidate !== door && candidate.pair !== null && candidate.pair === door.pair);
@@ -243,17 +268,17 @@ export class TriggerSystem {
     this.host.onPortal(portal.x, portal.y - 64);
   }
 
-  private checkChest(now: number, playerX: number, playerY: number): void {
-    const chest = this.chest;
+  private checkChests(now: number, playerX: number, playerY: number): void {
+    for (const chest of this.chests) {
+      if (chest.openedAt !== null || now < chest.droppedAt + CHEST_DROP_MS) {
+        continue;
+      }
 
-    if (!chest || chest.openedAt !== null || now < chest.droppedAt + CHEST_DROP_MS) {
-      return;
-    }
-
-    if (isNear(playerX, playerY, chest.x, chest.groundY - 30, 50, 60)) {
-      chest.openedAt = now;
-      this.host.effects.burst('coin', chest.x, chest.groundY - 40, 30);
-      this.host.onChestOpened(chest.x, chest.groundY - 40);
+      if (isNear(playerX, playerY, chest.x, chest.groundY - 30, 50, 60)) {
+        chest.openedAt = now;
+        this.host.effects.burst('coin', chest.x, chest.groundY - 40, 30);
+        this.host.onChestOpened(chest, chest.x, chest.groundY - 40);
+      }
     }
   }
 

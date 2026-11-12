@@ -163,7 +163,15 @@ export class MakerPlayPage {
     }
   }
 
-  protected onSecretFound(): void {
+  /** Na campanha, a fase de entrada libera a fase secreta do mundo; nas fases do Pedro, a porta dourada libera a fase escolhida. */
+  protected onSecretFound(secretLevel: string | null): void {
+    if (secretLevel !== null) {
+      void this.customLevels.unlockSecret(secretLevel).catch((error: unknown) =>
+        console.error('Pedro Maker: não foi possível destrancar a fase secreta.', error),
+      );
+      return;
+    }
+
     const level = this.campaignLevel();
 
     if (level && SECRET_ENTRANCES[level.worldId] === level.id) {

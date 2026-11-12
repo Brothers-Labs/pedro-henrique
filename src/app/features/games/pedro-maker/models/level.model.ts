@@ -172,7 +172,8 @@ export type BlockType =
  */
 export const GIANT_COIN_VALUES = [
   5, 25, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
-  5_000_000, 10_000_000, 25_000_000, 50_000_000,
+  2_500_000, 5_000_000, 10_000_000, 25_000_000, 50_000_000, 100_000_000, 250_000_000, 500_000_000,
+  1_000_000_000, 2_500_000_000, 5_000_000_000, 10_000_000_000,
 ] as const;
 
 export type GiantCoinValue = (typeof GIANT_COIN_VALUES)[number];
@@ -214,9 +215,14 @@ export function perGiantCoin<Value>(valueFor: (type: GiantCoinType) => Value): R
 
 /**
  * O valor como a criança lê na moeda e no editor: de 10 mil para cima vira
- * "10k", e de um milhão para cima, "1M". Abaixo disso o número cabe inteiro.
+ * "10k", de um milhão para cima, "1M", e de um bilhão para cima, "1B".
+ * Abaixo disso o número cabe inteiro.
  */
 export function formatCoinValue(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `${value / 1_000_000_000}B`;
+  }
+
   if (value >= 1_000_000) {
     return `${value / 1_000_000}M`;
   }
@@ -241,9 +247,10 @@ export type PortalLook = (typeof PORTAL_LOOKS)[number];
 
 /**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na
- * primeira passagem ainda dá um punhado de moedas.
+ * primeira passagem ainda dá um punhado de moedas e destranca a fase secreta
+ * escolhida para ela. O baú de moedas abre ao encostar e espalha moedas.
  */
-export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'golden-door' | 'secret-door';
+export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'golden-door' | 'secret-door' | 'coin-chest';
 
 export type DecorType =
   | 'tree'
@@ -302,6 +309,8 @@ export interface LevelObjectProperties {
   readonly touchText?: string;
   /** Portas com o mesmo par se ligam uma à outra. */
   readonly pair?: string;
+  /** Porta dourada: id da fase do Pedro que ela destranca na primeira passagem. */
+  readonly secretLevel?: string;
   /** Desenho do portal final; sem ele, o arco de pedra. */
   readonly portalLook?: PortalLook;
 }
@@ -358,4 +367,9 @@ export interface CustomLevel {
   /** Verdadeiro depois que a fase foi terminada pelo menos uma vez. */
   readonly completed: boolean;
   readonly bestStars: number;
+  /**
+   * Fase secreta já destrancada pela porta dourada de outra fase. Só conta
+   * para as fases escolhidas como secretas: as outras abrem sempre.
+   */
+  readonly secretUnlocked: boolean;
 }

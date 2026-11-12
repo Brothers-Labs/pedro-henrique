@@ -32,6 +32,7 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   cannon: '#626d7c',
   slide: '#ff5a5a',
   crystal: '#4fd8ff',
+  'coin-chest': '#ffc629',
   start: '#ffffff',
   portal: '#9a6cf0',
   checkpoint: '#ff4f9a',

@@ -19,6 +19,9 @@ export const LEVEL_LIMITS = {
 
 const KNOWN_TYPES = new Set<string>(Object.keys(OBJECT_BEHAVIOR));
 
+/** Id de fase do Pedro, como `fase-<uuid>`: letras, números e hífens, sem nada que vire caminho ou HTML. */
+const LEVEL_ID_PATTERN = /^[a-z0-9-]{1,80}$/i;
+
 export function isLevelObjectType(value: unknown): value is LevelObjectType {
   return typeof value === 'string' && KNOWN_TYPES.has(value);
 }
@@ -115,6 +118,8 @@ function sanitizeProperties(value: unknown): LevelObjectProperties | null {
   const touchText = typeof source['touchText'] === 'string' ? source['touchText'].slice(0, 80) : undefined;
   const pair = typeof source['pair'] === 'string' ? source['pair'].slice(0, 12) : undefined;
   const portalLook = pickOne(source['portalLook'], PORTAL_LOOKS);
+  const secretLevel =
+    typeof source['secretLevel'] === 'string' && LEVEL_ID_PATTERN.test(source['secretLevel']) ? source['secretLevel'] : undefined;
 
   const properties: LevelObjectProperties = {
     ...(contents ? { contents } : {}),
@@ -125,6 +130,7 @@ function sanitizeProperties(value: unknown): LevelObjectProperties | null {
     ...(touchText !== undefined ? { touchText } : {}),
     ...(pair !== undefined ? { pair } : {}),
     ...(portalLook ? { portalLook } : {}),
+    ...(secretLevel !== undefined ? { secretLevel } : {}),
   };
 
   return Object.keys(properties).length > 0 ? properties : null;

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
-import { PLAN_CAPABILITIES, PLANS } from '../../core/data/plans.data';
+import { findPlan, PLAN_CAPABILITIES, PLANS } from '../../core/data/plans.data';
 import { SITE_SECTIONS } from '../../core/data/site-sections.data';
 import type { Plan, PlanCapabilityId, PlanId } from '../../core/models/plan.model';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { PageIntro } from '../../shared/components/page-intro/page-intro';
 import { PixPaymentDialog } from './components/pix-payment-dialog/pix-payment-dialog';
+import { type PixOrder, planOrder } from './pix-order';
 import { PricePipe } from './price.pipe';
 
 /** Linha da lista de recursos de um cartão. */
@@ -47,11 +48,13 @@ export class PlansPage {
     })),
   }));
 
+  protected readonly planOrders: readonly PixOrder[] = PLANS.map(planOrder);
+
   /** Plano sendo pago; com valor, o modal do Pix fica aberto. */
-  protected readonly checkoutPlanId = signal<PlanId | null>(null);
+  protected readonly checkoutOrder = signal<PixOrder | null>(null);
 
   protected startCheckout(planId: PlanId): void {
-    this.checkoutPlanId.set(planId);
+    this.checkoutOrder.set(planOrder(findPlan(planId)));
     this.analytics.track({ name: 'checkout_started', properties: { planId } });
   }
 }

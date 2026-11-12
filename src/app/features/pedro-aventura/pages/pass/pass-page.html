@@ -16,6 +16,11 @@
           ⬆ Comprar nível · {{ levelPrice() }} 💎
         </button>
       }
+      @if (canRestart()) {
+        <button type="button" class="ghost" (click)="isRestarting.set(true)">
+          <span aria-hidden="true">🔄</span> Recomeçar temporada · Grátis
+        </button>
+      }
     </div>
   </header>
 
@@ -90,4 +95,13 @@
   [confirmLabel]="canAffordLevel() ? 'Comprar' : 'Entendi'"
   (confirmed)="canAffordLevel() ? buyLevel() : isBuyingLevel.set(false)"
   (cancelled)="isBuyingLevel.set(false)"
+/>
+
+<app-confirm-dialog
+  [isOpen]="isRestarting()"
+  heading="Recomeçar a temporada"
+  message="A trilha volta para o nível 1 e os prêmios podem ser ganhos de novo. Moedas, diamantes, roupas e os passes VIP e Luxo continuam com você. É grátis!"
+  confirmLabel="Recomeçar"
+  (confirmed)="restart()"
+  (cancelled)="isRestarting.set(false)"
 />

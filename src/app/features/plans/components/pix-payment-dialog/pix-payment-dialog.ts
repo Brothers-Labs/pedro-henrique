@@ -5,20 +5,21 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
   model,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
-import { findPlan, PLANS } from '../../../../core/data/plans.data';
-import type { PlanId } from '../../../../core/models/plan.model';
 import { ApiError } from '../../../../core/services/api-client.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { describeApiError } from '../../../../core/utils/describe-api-error';
 import { FileSizePipe } from '../../../../shared/pipes/file-size.pipe';
 import { emailAddressValidator, hasVisibleError, MAX_EMAIL_LENGTH } from '../../../auth/auth-form';
+import { isSameOrder, type PixOrder } from '../../pix-order';
 import { PixPaymentService } from '../../pix-payment.service';
 import { RECEIPT_ACCEPT_ATTRIBUTE, validateReceipt } from '../../pix-receipt';
 import { PricePipe } from '../../price.pipe';
@@ -36,21 +37,24 @@ const PAYMENT_MESSAGES_BY_STATUS: Readonly<Record<number, string>> = {
 };
 
 /**
- * Pagamento de uma assinatura por Pix: copiar a chave, pagar no banco e anexar
- * o comprovante para conferência.
+ * Pagamento por Pix (uma assinatura ou um passe da Temporada): copiar a
+ * chave, pagar no banco e anexar o comprovante para conferência.
  *
- * Abre sempre que `planId` recebe um plano e fecha devolvendo `null`. O plano
- * pode ser trocado aqui dentro sem perder o comprovante já anexado.
+ * Abre sempre que `order` recebe um pedido e fecha devolvendo `null`. Com
+ * mais de uma opção em `choices`, o pedido pode ser trocado aqui dentro sem
+ * perder o comprovante já anexado.
  */
 @Component({
   selector: 'app-pix-payment-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, FileSizePipe, PricePipe],
+  imports: [ReactiveFormsModule, RouterLink, FileSizePipe, PricePipe],
   templateUrl: './pix-payment-dialog.html',
   styleUrl: './pix-payment-dialog.scss',
 })
 export class PixPaymentDialog {
-  readonly planId = model<PlanId | null>(null);
+  readonly order = model<PixOrder | null>(null);
+  readonly choices = input<readonly PixOrder[]>([]);
+  readonly choiceLabel = input('Plano escolhido');
 
   private readonly payment = inject(PixPaymentService);
   private readonly auth = inject(AuthService);
@@ -58,18 +62,15 @@ export class PixPaymentDialog {
   private readonly keyInput = viewChild<ElementRef<HTMLInputElement>>('keyInput');
   private copyFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-  protected readonly plans = PLANS;
   protected readonly pix = this.payment.settings;
   protected readonly isApiConfigured = this.payment.isApiConfigured;
   protected readonly receiptAccept = RECEIPT_ACCEPT_ATTRIBUTE;
   protected readonly maxEmailLength = MAX_EMAIL_LENGTH;
   protected readonly hasVisibleError = hasVisibleError;
+  protected readonly isSameOrder = isSameOrder;
 
-  protected readonly selectedPlan = computed(() => {
-    const planId = this.planId();
-
-    return planId ? findPlan(planId) : null;
-  });
+  /** O pedido pede conta e ninguém está conectado: o formulário dá lugar ao convite para entrar. */
+  protected readonly needsAccount = computed(() => this.order()?.requiresAccount === true && this.auth.currentUser() === null);
 
   protected readonly receipt = signal<File | null>(null);
   protected readonly receiptError = signal<string | null>(null);
@@ -87,23 +88,23 @@ export class PixPaymentDialog {
 
   constructor() {
     effect(() => {
-      const shouldBeOpen = this.planId() !== null;
+      const shouldBeOpen = this.order() !== null;
       untracked(() => this.syncDialog(shouldBeOpen));
     });
   }
 
-  protected selectPlan(planId: PlanId): void {
-    this.planId.set(planId);
+  protected selectOrder(order: PixOrder): void {
+    this.order.set(order);
   }
 
   protected close(): void {
-    this.planId.set(null);
+    this.order.set(null);
   }
 
   /** `Esc` e o fechamento nativo também precisam devolver o estado. */
   protected handleNativeClose(): void {
     this.cancelCopyFeedback();
-    this.planId.set(null);
+    this.order.set(null);
   }
 
   protected async copyKey(): Promise<void> {
@@ -153,7 +154,7 @@ export class PixPaymentDialog {
   }
 
   protected async submit(): Promise<void> {
-    const planId = this.planId();
+    const order = this.order();
     const receipt = this.receipt();
 
     this.form.markAllAsTouched();
@@ -162,7 +163,7 @@ export class PixPaymentDialog {
       this.receiptError.set('Anexe o comprovante do Pix para confirmar.');
     }
 
-    if (!planId || !receipt || this.form.invalid || this.isSubmitting()) {
+    if (!order || !receipt || this.needsAccount() || this.form.invalid || this.isSubmitting()) {
       return;
     }
 
@@ -171,7 +172,7 @@ export class PixPaymentDialog {
     this.errorMessage.set(null);
 
     try {
-      await this.payment.submitReceipt({ planId, email, receipt });
+      await this.payment.submitReceipt({ order, email, receipt });
       this.submittedTo.set(email.trim());
     } catch (error) {
       this.errorMessage.set(describeApiError(error, PAYMENT_MESSAGES_BY_STATUS));

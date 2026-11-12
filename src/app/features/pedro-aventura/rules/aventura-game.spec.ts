@@ -4,6 +4,7 @@ import { SEASON } from '../config/season.config';
 import type { AventuraState, RunResult } from '../models/aventura-state.model';
 import { generateLayout } from '../simulation/level-generator';
 import {
+  applyPurchasedPasses,
   applyRunResult,
   buyCosmetic,
   buyLevels,
@@ -12,6 +13,7 @@ import {
   claimSeasonReward,
   createInitialState,
   equip,
+  restartSeason,
   seasonProgressOf,
 } from './aventura-game';
 import { sanitizeState } from './sanitize-state';
@@ -149,6 +151,82 @@ describe('aventura-game', () => {
 
     expect(levels && levelInfo(seasonProgressOf(levels).xp, SEASON.tiers.length).level).toBe(3);
     expect(levels?.wallet.diamonds).toBe(301 - 2 * SEASON.levelPriceInDiamonds);
+  });
+
+  describe('recomeçar a temporada', () => {
+    const atLevel = (state: AventuraState, level: number): AventuraState => ({
+      ...state,
+      seasons: { [SEASON.id]: { ...seasonProgressOf(state), xp: totalXpForLevel(level) } },
+    });
+
+    const MAX = SEASON.tiers.length;
+
+    it('é grátis, mantém os passes e o saldo, e zera a trilha', () => {
+      const vip = buyPass(rich(createInitialState(NOW), 500), 'vip', NOW);
+      const claimed = vip && claimSeasonReward(atLevel(vip, MAX), 2, 'gratuito', NOW);
+      const restarted = claimed && restartSeason(claimed, NOW);
+
+      expect(restarted && seasonProgressOf(restarted)).toEqual({
+        seasonId: SEASON.id,
+        xp: 0,
+        passes: ['vip'],
+        claimedRewards: [],
+        round: 1,
+      });
+      expect(restarted?.wallet).toEqual(claimed?.wallet);
+    });
+
+    it('deixa ganhar de novo o prêmio já resgatado na volta anterior', () => {
+      const first = claimSeasonReward(atLevel(createInitialState(NOW), MAX), 2, 'gratuito', NOW);
+      const restarted = first && restartSeason(first, NOW);
+      const second = restarted && claimSeasonReward(atLevel(restarted, 3), 2, 'gratuito', NOW);
+
+      expect(second?.wallet.diamonds).toBe((first?.wallet.diamonds ?? 0) + 10);
+    });
+
+    it('cobra de novo o nível comprado na volta anterior, e ele sobe de verdade', () => {
+      const bought = buyLevels(rich(createInitialState(NOW), 5000), MAX - 1, NOW);
+      const restarted = bought && restartSeason(bought, NOW);
+      const boughtAgain = restarted && buyLevels(restarted, 2, NOW);
+
+      expect(boughtAgain && levelInfo(seasonProgressOf(boughtAgain).xp, MAX).level).toBe(3);
+      expect(boughtAgain?.wallet.diamonds).toBe(5000 - (MAX - 1 + 2) * SEASON.levelPriceInDiamonds);
+    });
+
+    it('só recomeça com a trilha completa e a temporada valendo', () => {
+      expect(restartSeason(createInitialState(NOW), NOW)).toBeNull();
+      expect(restartSeason(atLevel(createInitialState(NOW), MAX - 1), NOW)).toBeNull();
+      expect(restartSeason(atLevel(createInitialState(NOW), MAX), new Date(SEASON.endsAt))).toBeNull();
+    });
+
+    it('resgatar o nível 1 e recomeçar não dá diamantes de graça', () => {
+      const vip = buyPass(rich(createInitialState(NOW), 500), 'vip', NOW);
+      const claimed = vip && claimSeasonReward(vip, 1, 'vip', NOW);
+
+      expect(claimed?.wallet.diamonds).toBeGreaterThan(vip?.wallet.diamonds ?? 0);
+      expect(claimed && restartSeason(claimed, NOW)).toBeNull();
+    });
+
+    // Cada volta exige chegar ao último nível: comprando tudo, ela sai mais cara do que rende.
+    it('não vira fábrica de diamantes: comprar a trilha inteira custa mais que os diamantes dela, mesmo com o Luxo', () => {
+      const diamondsOf = (reward: (typeof SEASON.tiers)[number]['rewards']['luxo']): number =>
+        reward.kind === 'diamonds' ? reward.amount : reward.kind === 'chest' ? reward.contents.diamonds : 0;
+      const trackDiamonds = SEASON.tiers.reduce(
+        (total, tier) => total + diamondsOf(tier.rewards.gratuito) + diamondsOf(tier.rewards.vip) + diamondsOf(tier.rewards.luxo),
+        0,
+      );
+
+      expect(trackDiamonds).toBeLessThan((SEASON.tiers.length - 1) * SEASON.levelPriceInDiamonds);
+    });
+  });
+
+  it('libera os passes pagos em reais sem tocar na carteira, mesmo com a temporada encerrada', () => {
+    const base = createInitialState(NOW);
+    const paid = applyPurchasedPasses(base, ['luxo']);
+
+    expect(paid && seasonProgressOf(paid).passes).toEqual(['vip', 'luxo']);
+    expect(paid?.wallet).toEqual(base.wallet);
+    expect(paid && applyPurchasedPasses(paid, ['vip', 'luxo'])).toBeNull();
   });
 
   it('compra e veste cosméticos da loja, sem comprar duas vezes', () => {

@@ -14,7 +14,7 @@ import { CollectibleSystem, coinValue } from './collectibles';
 import { GameSimulation } from './game-simulation';
 
 describe('Moedas de alto valor do Pedro Maker', () => {
-  it('escreve os valores grandes abreviados: mil vira k e milhão vira M', () => {
+  it('escreve os valores grandes abreviados: mil vira k, milhão vira M e bilhão vira B', () => {
     expect(formatCoinValue(5)).toBe('5');
     expect(formatCoinValue(5000)).toBe('5000');
     expect(formatCoinValue(10_000)).toBe('10k');
@@ -26,6 +26,11 @@ describe('Moedas de alto valor do Pedro Maker', () => {
     expect(formatCoinValue(10_000_000)).toBe('10M');
     expect(formatCoinValue(25_000_000)).toBe('25M');
     expect(formatCoinValue(50_000_000)).toBe('50M');
+    expect(formatCoinValue(2_500_000)).toBe('2.5M');
+    expect(formatCoinValue(500_000_000)).toBe('500M');
+    expect(formatCoinValue(1_000_000_000)).toBe('1B');
+    expect(formatCoinValue(2_500_000_000)).toBe('2.5B');
+    expect(formatCoinValue(10_000_000_000)).toBe('10B');
   });
 
   it('mostra as moedas no editor da menor para a maior, com o valor abreviado no nome', () => {
@@ -35,8 +40,9 @@ describe('Moedas de alto valor do Pedro Maker', () => {
       'Moeda Gigante 5', 'Moeda Gigante 10', 'Moeda Gigante 25', 'Moeda Gigante 50', 'Moeda Gigante 100',
       'Moeda Gigante 250', 'Moeda Gigante 500', 'Moeda Gigante 1000', 'Moeda Gigante 2500', 'Moeda Gigante 5000',
       'Moeda Gigante 10k', 'Moeda Gigante 25k', 'Moeda Gigante 50k', 'Moeda Gigante 100k', 'Moeda Gigante 250k',
-      'Moeda Gigante 500k', 'Moeda Gigante 1M', 'Moeda Gigante 5M', 'Moeda Gigante 10M', 'Moeda Gigante 25M',
-      'Moeda Gigante 50M',
+      'Moeda Gigante 500k', 'Moeda Gigante 1M', 'Moeda Gigante 2.5M', 'Moeda Gigante 5M', 'Moeda Gigante 10M',
+      'Moeda Gigante 25M', 'Moeda Gigante 50M', 'Moeda Gigante 100M', 'Moeda Gigante 250M', 'Moeda Gigante 500M',
+      'Moeda Gigante 1B', 'Moeda Gigante 2.5B', 'Moeda Gigante 5B', 'Moeda Gigante 10B',
     ]);
   });
 

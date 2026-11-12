@@ -7,7 +7,7 @@ import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-fra
 import { syncStatusLabel } from '../../components/maker-sync-panel/maker-sync-panel';
 import { THEME_LABELS } from '../../config/object-catalog';
 import type { CustomLevel } from '../../models/level.model';
-import { CustomLevelService } from '../../services/custom-level.service';
+import { CustomLevelService, lockedSecretLevelIds } from '../../services/custom-level.service';
 import { LevelSyncService } from '../../sync/level-sync.service';
 
 /**
@@ -30,6 +30,8 @@ export class MakerLevelsPage {
   protected readonly levels = this.customLevels.levels;
   protected readonly status = this.customLevels.status;
   protected readonly isEmpty = this.customLevels.isEmpty;
+  /** Fases secretas que só abrem depois de passar pela porta dourada que as escolheu. */
+  protected readonly lockedIds = computed(() => lockedSecretLevelIds(this.levels()));
   protected readonly busyId = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
 

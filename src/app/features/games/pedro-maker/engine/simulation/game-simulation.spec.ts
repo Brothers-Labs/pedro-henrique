@@ -1631,6 +1631,58 @@ describe('Simulação do Pedro Maker', () => {
     expect(lastHud(harness.events)?.coins).toBe(10);
   });
 
+  it('a porta dourada com fase secreta escolhida destranca a fase uma única vez', () => {
+    const harness = start(flatLevel().add('golden-door', 6, SURFACE - 1, { secretLevel: 'fase-secreta' }).build(META));
+    const player = harness.simulation.player;
+    const secrets = (): readonly GameSessionEvent[] => harness.events.filter((event) => event.type === 'secret-found');
+    run(harness, 0.2);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+      run(harness, 0.1);
+    }
+
+    expect(secrets()).toEqual([{ type: 'secret-found', secretLevel: 'fase-secreta' }]);
+  });
+
+  it('a porta dourada sem fase escolhida só dá as moedas, sem segredo', () => {
+    const harness = start(flatLevel().add('golden-door', 6, SURFACE - 1).build(META));
+    run(harness, 0.2);
+
+    harness.simulation.player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+    run(harness, 0.1);
+
+    expect(lastHud(harness.events)?.coins).toBe(10);
+    expect(harness.events.some((event) => event.type === 'secret-found')).toBeFalse();
+  });
+
+  it('o baú de moedas abre ao encostar e dá 25 moedas uma vez só, sem mexer no portal', () => {
+    const harness = start(flatLevel().add('coin-chest', 8, SURFACE - 1).build(META));
+    const player = harness.simulation.player;
+    run(harness, 0.2);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.2);
+    }
+
+    expect(lastHud(harness.events)?.coins).toBe(25);
+    expect(harness.simulation.triggers.chests.map((chest) => chest.kind)).toEqual(['coins']);
+    expect(harness.events.some((event) => event.type === 'mascot')).toBeFalse();
+  });
+
+  it('o baú do chefão é cheio: 100 moedas, e o portal abre', () => {
+    const harness = start(flatLevel().build(META));
+    run(harness, 0.2);
+
+    harness.simulation.onChestOpened({ kind: 'boss', x: 0, groundY: 0, droppedAt: 0, openedAt: 0 }, 0, 0);
+
+    expect(lastHud(harness.events)?.coins).toBe(100);
+    expect(harness.events).toContain({ type: 'mascot', text: 'Um baú cheio de moedas! O portal abriu!' });
+  });
+
   it('pega as primeiras moedas da fase 1-1 andando para a direita', () => {
     const level = campaignLevelById('1-1');
 
