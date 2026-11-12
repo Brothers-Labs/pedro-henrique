@@ -358,12 +358,18 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     summary: 'Verity, Lovity, Obesity e Squareity passeiam de dia; Falsity, Cruelty e Pointy aparecem à noite.',
     steps: [
       { text: 'Verity: a bolinha amarela do sorrisão. É amiga, passeia na grama de dia e às vezes deixa ouro.', items: ['gold-ingot'] },
+      { text: 'Toque na Verity com o botão de usar: ela pula de alegria e fala com você!', items: ['verity'], control: 'use' },
       { text: 'Lovity: a bolinha rosa dos óculos de coração. É amiga, aparece de dia e deixa flor e, às vezes, maçã.', items: ['apple'] },
       { text: 'Obesity: o redondão comilão. É amigo e deixa batata frita. Dê um hambúrguer a ele e nasce um filhote!', items: ['hamburger', 'fries'], control: 'use' },
       { text: 'Squareity: o quadradão de óculos. É amigo e deixa tijolos de pedra.', items: ['stone-bricks'] },
       { text: 'Falsity: a bolinha azul dos dentinhos. Aparece à noite, pula rápido e vem atrás de você.' },
       { text: 'Cruelty: a bolinha vermelha dos dentões. Aparece à noite e corre atrás de você. Use a espada!', items: ['wooden-sword'], control: 'break' },
       { text: 'Pointy: o cheio de pontas. Aparece à noite e atira flechas de longe. Um escudo ajuda!', items: ['arrow', 'shield'] },
+      {
+        text: 'No modo Criativo, a Verity, a Falsity, o Cruelty e a Lovity estão na mochila. Use no chão e eles chegam mansinhos para brincar.',
+        items: ['verity', 'falsity', 'cruelty', 'lovity'],
+        control: 'use',
+      },
     ],
     tip: 'Com o Modo Paz 🕊️, só os bonecos amigos aparecem.',
   },

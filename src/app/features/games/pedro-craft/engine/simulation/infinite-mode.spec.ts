@@ -42,6 +42,28 @@ describe('Modo infinito e baús grandes', () => {
     expect(slots.some(slot => slot?.item === 'wheat-seeds')).toBeTrue();
   });
 
+  it('o baú do Infinito leva o golem, mas não os bonecos da mochila do Criativo', () => {
+    const [, slots] = [...create().screens.containers][0];
+    const stocked = new Set(slots.map(slot => slot?.item));
+
+    expect(stocked.has('iron-golem')).toBeTrue();
+    for (const doll of ['verity', 'falsity', 'cruelty', 'lovity']) {
+      expect(stocked.has(doll)).withContext(doll).toBeFalse();
+    }
+  });
+
+  it('o boneco manso continua manso depois de salvar e reabrir', () => {
+    const game = create(false);
+    game.creatures.spawn(catalog.creature('falsity'), 8.5, 3, 8.5).isTame = true;
+    const identity = { id: 'criativo', name: 'Criativo', mode: 'adventure' as const, seed: 1, createdAt: '2026-11-11T12:00:00.000Z' };
+    const saved = parseWorldSave(JSON.parse(JSON.stringify(captureWorld(game, identity, identity.createdAt))));
+    const restored = create(false);
+    restoreWorld(restored, saved.state!);
+    const falsity = restored.creatures.list.find(creature => creature.definition.id === 'falsity');
+    expect(falsity?.isTame).toBeTrue();
+    expect(falsity?.isHostile).toBeFalse();
+  });
+
   it('preserva os 27 slots antigos e os 54 slots novos no save', () => {
     const game = create(false);
     game.screens.containers.set(12, Array.from({ length: 27 }, (_, index) =>

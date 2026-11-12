@@ -13,6 +13,9 @@ import type { CraftingStation, CreatureInteraction, ItemAmount, ItemDefinition, 
 const LIST = new Intl.ListFormat('pt-BR', { type: 'conjunction' });
 const ALTERNATIVES = new Intl.ListFormat('pt-BR', { type: 'disjunction' });
 
+/** No Criativo a mochila tem todos os itens: é o caminho de quem não sai de receita, drop nem colheita. */
+const CREATIVE_ONLY_OBTAIN = 'Pegue na mochila do modo Criativo.';
+
 /** Quantos usos de um material a ajuda cita; mais que isso vira "e outras coisas". */
 const MAX_USES_LISTED = 4;
 
@@ -129,7 +132,9 @@ function kindSentence(item: ItemDefinition, catalog: CraftCatalog): string {
   }
 
   if (item.summons) {
-    return 'Use no chão para chamar um amigo que enfrenta os monstros com você.';
+    return catalog.creature(item.summons).temperament === 'guardian'
+      ? 'Use no chão para chamar um amigo que enfrenta os monstros com você.'
+      : `Use no chão no modo Criativo: ${catalog.creature(item.summons).name} chega mansinho para brincar.`;
   }
 
   if (item.plants) {
@@ -276,5 +281,5 @@ function describeObtain(item: ItemDefinition, catalog: CraftCatalog): string {
     ways.push(`usando ${ALTERNATIVES.format(buckets.map((bucket) => bucket.name.toLowerCase()))} na água parada`);
   }
 
-  return ways.length > 0 ? `Consiga ${ALTERNATIVES.format(ways)}.` : '';
+  return ways.length > 0 ? `Consiga ${ALTERNATIVES.format(ways)}.` : CREATIVE_ONLY_OBTAIN;
 }

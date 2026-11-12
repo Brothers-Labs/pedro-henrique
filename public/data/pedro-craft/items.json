@@ -23,6 +23,7 @@
     { "id": "door", "name": "Porta", "kind": "block", "maxStack": 16, "icon": { "type": "block", "block": "door" }, "places": "door" },
     { "id": "iron-ore", "name": "Minério de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-ore" }, "places": "iron-ore" },
     { "id": "gold-ore", "name": "Minério de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-ore" }, "places": "gold-ore" },
+    { "id": "diamond-ore", "name": "Minério de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-ore" }, "places": "diamond-ore" },
     { "id": "gold-block", "name": "Bloco de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-block" }, "places": "gold-block" },
     { "id": "iron-block", "name": "Bloco de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-block" }, "places": "iron-block" },
     { "id": "diamond-block", "name": "Bloco de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-block" }, "places": "diamond-block" },
@@ -87,6 +88,10 @@
     { "id": "water-bucket", "name": "Balde com água", "kind": "bucket", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#2f8fe0"] }, "bucket": { "places": "water", "becomes": "bucket" } },
     { "id": "train", "name": "Trem", "kind": "vehicle", "maxStack": 1, "icon": { "type": "sprite", "shape": "train", "colors": ["#e53935", "#2f8fe0", "#3d3d45"] }, "vehicle": { "speed": 5 } },
     { "id": "iron-golem", "name": "Golem de ferro", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "golem", "colors": ["#d9d4c7", "#5f8f3a", "#c9b8a3"] }, "summons": "iron-golem" },
+    { "id": "verity", "name": "Verity", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "blob", "colors": ["#ffc23a", "#fff23a", "#1f1f1f"] }, "summons": "verity" },
+    { "id": "falsity", "name": "Falsity", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "blob", "colors": ["#3356ff", "#4a3cf0", "#1f1f1f"] }, "summons": "falsity" },
+    { "id": "cruelty", "name": "Cruelty", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "blob", "colors": ["#ff3333", "#1f1f1f", "#ffffff"] }, "summons": "cruelty" },
+    { "id": "lovity", "name": "Lovity", "kind": "summon", "maxStack": 16, "icon": { "type": "sprite", "shape": "blob", "colors": ["#ff3cf5", "#ff3333", "#3356ff"] }, "summons": "lovity" },
     { "id": "milk-bucket", "name": "Balde de leite", "kind": "food", "maxStack": 1, "icon": { "type": "sprite", "shape": "bucket", "colors": ["#e6e9ee", "#ffffff"] }, "heal": 4, "leftover": "bucket" },
 
     { "id": "apple", "name": "Maçã", "kind": "food", "maxStack": 64, "icon": { "type": "sprite", "shape": "apple", "colors": ["#e53935", "#4caf50"] }, "heal": 2 },

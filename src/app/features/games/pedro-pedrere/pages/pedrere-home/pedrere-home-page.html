@@ -1,0 +1,41 @@
+@let stats = progress();
+
+<app-pedrere-page-frame backLink="/jogos" backLabel="Jogos">
+  <div class="home">
+    <section class="home__intro" aria-labelledby="pedro-pedrere-titulo">
+      <h1 id="pedro-pedrere-titulo" class="logo">
+        <span class="logo__top">PEDRO</span>
+        <span class="logo__bottom">PEDRERÊ</span>
+      </h1>
+      <p class="home__tagline">Corra, pule e quique com o Pedro!</p>
+
+      <nav class="menu" aria-label="Menu do Pedro Pedrerê">
+        @for (entry of menu; track entry.route) {
+          <a class="menu__button" [attr.data-tone]="entry.tone" [routerLink]="entry.route">
+            <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
+          </a>
+        }
+      </nav>
+    </section>
+
+    <section class="home__scene" aria-label="O Pedro com a roupa escolhida">
+      <app-pedrere-hero-preview class="home__hero" [look]="look()" />
+      <a class="home__wardrobe" routerLink="personagem">Trocar a roupa</a>
+    </section>
+
+    <section class="cards" aria-label="Suas conquistas">
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">⭐</span> Estrelas</h2>
+        <p class="card__value">{{ totalStars() }}/{{ maxStars }}</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🤸</span> Mais alto</h2>
+        <p class="card__value">{{ stats.bestHeightMeters }} m</p>
+      </article>
+      <article class="card">
+        <h2 class="card__title"><span aria-hidden="true">🥇</span> Vitórias</h2>
+        <p class="card__value">{{ stats.raceWins }}</p>
+      </article>
+    </section>
+  </div>
+</app-pedrere-page-frame>

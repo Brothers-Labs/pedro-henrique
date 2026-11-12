@@ -101,6 +101,15 @@ export const routes: Routes = [
       import('./features/games/pedro-sprunks/pedro-sprunks.routes').then((m) => m.PEDRO_SPRUNKS_ROUTES),
   },
   {
+    path: 'jogos/pedro-pedrere',
+    data: {
+      description:
+        'Pedro Pedrerê: aventuras de plataforma, pula-pula, corrida contra os amigos, roupa do personagem e modo maker para criar fases.',
+    },
+    loadChildren: () =>
+      import('./features/games/pedro-pedrere/pedro-pedrere.routes').then((m) => m.PEDRO_PEDRERE_ROUTES),
+  },
+  {
     path: 'jogos',
     title: 'Jogos',
     data: {

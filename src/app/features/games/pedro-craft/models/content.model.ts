@@ -237,6 +237,7 @@ export const ICON_SHAPES = [
   'flint-and-steel',
   'hamburger',
   'fries',
+  'blob',
 ] as const;
 
 export type IconShape = (typeof ICON_SHAPES)[number];
@@ -303,7 +304,10 @@ export interface ItemDefinition {
   readonly fertilizer: number | null;
   /** O trem: usado num trilho, leva o herói pelos trilhos; `null` para o resto. */
   readonly vehicle: VehicleStats | null;
-  /** Criatura amiga que nasce ao usar o item no chão (o golem de ferro); `null` para o resto. */
+  /**
+   * Criatura que nasce ao usar o item no chão; `null` para o resto. Fora do
+   * Criativo, só um amigo (o golem de ferro) pode ser chamado.
+   */
   readonly summons: string | null;
 }
 
@@ -445,6 +449,8 @@ export interface CreatureDefinition {
   readonly babyGrowMs: number;
   /** Em vez de golpear, chia perto do herói e estoura (o creeper); `null` para quem golpeia. */
   readonly explodes: ExplosionSpec | null;
+  /** O que a criatura fala quando o herói toca nela com o botão de usar (a Verity); `null` para quem não fala. */
+  readonly greeting: string | null;
 }
 
 /* Plantações -------------------------------------------------------------------------- */

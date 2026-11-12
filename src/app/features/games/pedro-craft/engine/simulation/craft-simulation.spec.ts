@@ -534,6 +534,134 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     });
   });
 
+  describe('bonecos: a fala da Verity e a mochila do Criativo', () => {
+    const VERITY_GREETING = 'Olá, eu sou Verity, eu posso falar tudo!';
+    const STEPS_PER_SECOND = 60;
+    const speeches = (): readonly SimulationEvent[] => events.filter((event) => event.type === 'creature-speech');
+    const hinted = (text: string): boolean => events.some((event) => event.type === 'hint' && event.text.includes(text));
+    const ofKind = (id: string): readonly Creature[] => simulation.creatures.list.filter((creature) => creature.definition.id === id);
+
+    const useCreativeMode = (): void => {
+      simulation = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        mode: 'creative',
+      });
+    };
+
+    const placeInSight = (id: string): Creature => {
+      const creature = simulation.creatures.spawn(catalog.creature(id), TARGET.x + 0.5, FLOOR_TOP, TARGET.z + 0.5);
+
+      creature.moodLeftMs = 60_000;
+      simulation.hero.look(0, -0.3);
+
+      return creature;
+    };
+
+    it('tocar na Verity: ela fala, pula de alegria e brilha', () => {
+      const verity = placeInSight('verity');
+
+      // Recém-nascida, ela ainda não pousou: só pula quem está no chão.
+      run(5);
+      run(1, { secondaryPressed: true });
+      run(3);
+
+      expect(speeches()).toEqual([{ type: 'creature-speech', speaker: 'Verity', text: VERITY_GREETING }]);
+      expect(verity.body.y).toBeGreaterThan(FLOOR_TOP);
+      expect(simulation.drainVisualEvents().some((event) => event.type === 'sparkle')).toBeTrue();
+    });
+
+    it('tocar de novo logo em seguida não repete a fala; depois da espera, ela fala outra vez', () => {
+      placeInSight('verity');
+
+      run(1, { secondaryPressed: true });
+      run(1, { secondaryPressed: true });
+
+      expect(speeches().length).toBe(1);
+
+      run(STEPS_PER_SECOND * 5);
+      run(1, { secondaryPressed: true });
+
+      expect(speeches().length).toBe(2);
+    });
+
+    it('com comida na mão, a Verity fala e o herói não come', () => {
+      placeInSight('verity');
+      simulation.health.damage(2);
+      hold('apple');
+      run(1, { secondaryPressed: true });
+
+      expect(speeches().length).toBe(1);
+      expect(simulation.inventory.count('apple')).toBe(1);
+    });
+
+    it('quem não tem fala continua quieto', () => {
+      placeInSight('sheep');
+      run(1, { secondaryPressed: true });
+
+      expect(speeches()).toEqual([]);
+    });
+
+    it('no Criativo, a Falsity vem mansa pela mochila, não ataca e não vai embora', () => {
+      useCreativeMode();
+      put('stone');
+      hold('falsity');
+      run(1, { secondaryPressed: true });
+
+      const [falsity] = ofKind('falsity');
+
+      expect(falsity?.isTame).toBeTrue();
+      expect(falsity?.isHostile).toBeFalse();
+      expect(simulation.inventory.count('falsity')).toBe(1);
+      expect(hinted('chegou para brincar')).toBeTrue();
+
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      run(STEPS_PER_SECOND * 2);
+
+      expect(simulation.creatures.list).toContain(falsity);
+      expect(simulation.health.isFull).toBeTrue();
+    });
+
+    it('a mochila do Criativo tem os quatro bonecos e o minério de diamante', () => {
+      useCreativeMode();
+
+      for (const id of ['verity', 'falsity', 'cruelty', 'lovity', 'diamond-ore']) {
+        simulation.giveCreativeItem(id);
+
+        expect(simulation.inventory.count(id)).withContext(id).toBe(catalog.item(id).maxStack);
+      }
+    });
+
+    it('no Criativo, cabem até 5 de cada boneco', () => {
+      useCreativeMode();
+
+      for (let count = 0; count < 5; count += 1) {
+        simulation.creatures.spawn(catalog.creature('lovity'), 2.5 + count, FLOOR_TOP, 12.5).isTame = true;
+      }
+
+      put('stone');
+      hold('lovity');
+      run(1, { secondaryPressed: true });
+
+      expect(ofKind('lovity').length).toBe(5);
+      expect(hinted('já tem 5')).toBeTrue();
+    });
+
+    it('fora do Criativo, o item do boneco não chama ninguém e fica na mão', () => {
+      put('stone');
+      hold('cruelty');
+      run(1, { secondaryPressed: true });
+
+      expect(ofKind('cruelty')).toEqual([]);
+      expect(simulation.inventory.count('cruelty')).toBe(1);
+      expect(hinted('mochila do modo Criativo')).toBeTrue();
+    });
+  });
+
   describe('água e fazenda', () => {
     const above = (): number => world.get(TARGET.x, TARGET.y + 1, TARGET.z);
 

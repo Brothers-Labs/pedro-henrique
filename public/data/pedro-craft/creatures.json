@@ -187,7 +187,8 @@
       "width": 0.8,
       "height": 1.1,
       "drops": "verity",
-      "spawn": { "period": "day", "on": ["grass"], "groupMin": 1, "groupMax": 1, "weight": 1 }
+      "spawn": { "period": "day", "on": ["grass"], "groupMin": 1, "groupMax": 1, "weight": 3 },
+      "greeting": "Olá, eu sou Verity, eu posso falar tudo!"
     },
     {
       "id": "lovity",
@@ -201,7 +202,7 @@
       "width": 0.8,
       "height": 1.1,
       "drops": "lovity",
-      "spawn": { "period": "day", "on": ["grass", "sand"], "groupMin": 1, "groupMax": 1, "weight": 1 }
+      "spawn": { "period": "day", "on": ["grass", "sand"], "groupMin": 1, "groupMax": 1, "weight": 2 }
     },
     {
       "id": "falsity",
@@ -233,7 +234,7 @@
       "width": 0.8,
       "height": 1.1,
       "drops": "cruelty",
-      "spawn": { "period": "night", "on": ["grass", "dirt", "stone"], "groupMin": 1, "groupMax": 1, "weight": 1.5 }
+      "spawn": { "period": "night", "on": ["grass", "dirt", "stone"], "groupMin": 1, "groupMax": 1, "weight": 2.5 }
     },
     {
       "id": "obesity",

@@ -54,6 +54,7 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
     breedsWith: optionalId(creature, 'breedsWith'),
     babyGrowMs: creature.optionalField('babyGrowMs')?.number({ integer: true, min: 10000 }) ?? DEFAULT_BABY_GROW_MS,
     explodes: explodes ? parseExplosion(explodes) : null,
+    greeting: creature.optionalField('greeting')?.string() ?? null,
   };
 }
 

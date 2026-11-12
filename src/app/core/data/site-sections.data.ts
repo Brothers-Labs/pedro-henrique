@@ -107,6 +107,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'pink',
   },
   {
+    id: 'pedro-pedrere',
+    label: 'Pedro Pedrerê',
+    route: '/jogos/pedro-pedrere',
+    emoji: '🤸',
+    description: 'Meu jogo de pular: aventuras, pula-pula, corrida com os amigos, a minha roupa e as fases que eu crio.',
+    color: 'yellow',
+  },
+  {
     id: 'mascote',
     label: 'Mascote',
     route: '/mascote',
@@ -153,7 +161,7 @@ export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   {
     id: 'brincar',
     label: 'Brincar',
-    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'pedro-craft', 'pedro-sprunks', 'mascote'].map(findSection),
+    sections: ['aventura', 'jogos', 'pedro-maker', 'pedro-kart', 'pedro-flash', 'pedro-craft', 'pedro-sprunks', 'pedro-pedrere', 'mascote'].map(findSection),
   },
   { id: 'memorias', label: 'Memórias', sections: ['galeria', 'historia', 'videos'].map(findSection) },
 ];

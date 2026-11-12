@@ -1,0 +1,71 @@
+<app-pedrere-page-frame heading="Aventuras" emoji="🗺️">
+  <ol class="levels" aria-label="Fases prontas">
+    @for (level of adventureLevels; track level.id; let index = $index) {
+      @let stars = starsOf(level.id);
+      <li class="level" [attr.data-theme]="level.theme">
+        <span class="level__number" aria-hidden="true">{{ index + 1 }}</span>
+        <div class="level__body">
+          <h2 class="level__name">{{ level.name }}</h2>
+          <p class="level__theme">
+            <span aria-hidden="true">{{ themeEmojis[level.theme] }}</span> {{ themeLabels[level.theme] }}
+          </p>
+          <p class="level__stars" [attr.aria-label]="stars + ' de 3 estrelas'">
+            @for (slot of starSlots; track slot) {
+              <span aria-hidden="true" [class.level__star--off]="slot > stars">⭐</span>
+            }
+          </p>
+        </div>
+        <a class="level__play" data-tone="green" [routerLink]="level.id" [attr.aria-label]="'Jogar ' + level.name">
+          <span aria-hidden="true">▶</span> Jogar
+        </a>
+      </li>
+    }
+  </ol>
+
+  <section class="custom" aria-labelledby="pedrere-minhas-fases">
+    <div class="custom__header">
+      <h2 id="pedrere-minhas-fases" class="custom__title">
+        <span aria-hidden="true">🛠️</span> Minhas fases
+      </h2>
+      <a class="custom__create" data-tone="purple" routerLink="/jogos/pedro-pedrere/maker">
+        <span aria-hidden="true">＋</span> Criar fase
+      </a>
+    </div>
+
+    @if (customLevels().length === 0) {
+      <p class="custom__empty">Você ainda não criou nenhuma fase. Que tal criar a primeira no modo maker?</p>
+    } @else {
+      <ul class="custom__list">
+        @for (level of customLevels(); track level.id) {
+          <li class="custom__item">
+            <span class="custom__name">
+              <span aria-hidden="true">{{ themeEmojis[level.theme] }}</span> {{ level.name }}
+            </span>
+            <div class="custom__actions">
+              <a class="custom__button" data-tone="green" [routerLink]="level.id" [attr.aria-label]="'Jogar ' + level.name">
+                ▶ Jogar
+              </a>
+              <a
+                class="custom__button"
+                data-tone="blue"
+                [routerLink]="['/jogos/pedro-pedrere/maker', level.id]"
+                [attr.aria-label]="'Editar ' + level.name"
+              >
+                ✏️ Editar
+              </a>
+              <button
+                type="button"
+                class="custom__button"
+                data-tone="red"
+                [attr.aria-label]="'Apagar ' + level.name"
+                (click)="remove(level)"
+              >
+                🗑️
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</app-pedrere-page-frame>

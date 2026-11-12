@@ -100,14 +100,9 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     block('items', owner, definition.bucket?.collects ?? null);
     item('items', owner, definition.bucket?.becomes ?? null);
     creature('items', owner, definition.summons);
-
-    // Um item que chamasse inimigo furaria o Modo Paz e traria monstro de dia.
-    const summoned = content.creatures.find((candidate) => candidate.id === definition.summons);
-
-    if (summoned && summoned.temperament !== 'guardian') {
-      problems.push({ file: 'items', message: `${owner}: só dá para chamar um amigo (temperament "guardian")` });
-    }
   }
+
+  problems.push(...findObtainableTameSummons(content));
 
   if (content.items.some((definition) => definition.vehicle) && !content.blocks.some((definition) => definition.shape === 'rail')) {
     problems.push({ file: 'items', message: 'existe trem, mas nenhum bloco de trilho (shape "rail") para ele andar' });
@@ -198,6 +193,33 @@ export function assertContentIntegrity(content: CraftContent): void {
   if (problems.length > 0) {
     throw new ContentIntegrityError(problems);
   }
+}
+
+/**
+ * Item que chama quem não é amigo (a Falsity, a Verity) só pode existir na
+ * mochila do Criativo, onde a criatura vem mansa. Se saísse de receita, drop
+ * ou mochila inicial, chegaria ao modo Normal e furaria o Modo Paz.
+ */
+function findObtainableTameSummons(content: CraftContent): readonly IntegrityProblem[] {
+  const guardians = new Set(content.creatures.filter((creature) => creature.temperament === 'guardian').map((creature) => creature.id));
+  const obtainable = new Set<string>([
+    ...content.recipes.crafting.map((recipe) => recipe.output.item),
+    ...content.recipes.smelting.map((recipe) => recipe.output.item),
+    ...content.lootTables.flatMap((table) => table.entries.map((entry) => entry.item)),
+    ...content.world.hero.startingInventory.map((entry) => entry.item),
+    ...content.creatures.flatMap((creature) => [
+      creature.lays?.item ?? null,
+      ...creature.interactions.map((interaction) => interaction.convertsItemTo),
+    ]).filter((id) => id !== null),
+    ...content.items.flatMap((item) => [item.leftover, item.bucket?.becomes ?? null]).filter((id) => id !== null),
+  ]);
+
+  return content.items
+    .filter((item) => item.summons !== null && !guardians.has(item.summons) && obtainable.has(item.id))
+    .map((item): IntegrityProblem => ({
+      file: 'items',
+      message: `item "${item.id}": só um amigo (temperament "guardian") pode ser chamado fora do Criativo; tire o item de receitas, drops e da mochila inicial`,
+    }));
 }
 
 type Checker = (file: ContentFile, owner: string, id: string | null) => void;
