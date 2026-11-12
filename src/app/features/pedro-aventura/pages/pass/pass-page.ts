@@ -9,6 +9,7 @@ import type { PassId, Reward, RewardStatus } from '../../models/economy.model';
 import { PASS_ORDER } from '../../rules/season-pass';
 import { AventuraAudio } from '../../services/aventura-audio.service';
 import { AventuraStore } from '../../services/aventura-store.service';
+import { SeasonPassPurchases } from '../../services/season-pass-purchases.service';
 
 /** Níveis mostrados por página da trilha: cabem no celular sem rolar de lado. */
 const LEVELS_PER_PAGE = 5;
@@ -24,7 +25,7 @@ interface TrackCell {
 
 /**
  * Passe de temporada: a trilha de 20 níveis em três faixas, o resgate dos
- * prêmios, a compra de níveis e os passes VIP e Luxo.
+ * prêmios, a compra de níveis, o recomeçar grátis e os passes VIP e Luxo.
  */
 @Component({
   selector: 'app-pass-page',
@@ -44,9 +45,16 @@ export class PassPage {
   protected readonly countdown = computed(() => formatCountdown(this.store.seasonTimeLeft()));
   protected readonly claimableCount = this.store.claimableRewardCount;
   protected readonly isBuyingLevel = signal(false);
+  protected readonly isRestarting = signal(false);
   protected readonly formatNumber = formatNumber;
   protected readonly levelPrice = computed(() => this.store.levelsPrice(1));
   protected readonly canBuyLevel = computed(() => this.phase() === 'active' && this.levelPrice() > 0);
+  protected readonly canRestart = this.store.canRestartSeason;
+
+  constructor() {
+    // A busca trata as próprias falhas: sem servidor ou sem conta, ela nem sai.
+    void inject(SeasonPassPurchases).sync();
+  }
 
   protected readonly page = signal(Math.floor((this.store.seasonLevel().level - 1) / LEVELS_PER_PAGE));
   protected readonly pageCount = Math.ceil(this.season.tiers.length / LEVELS_PER_PAGE);
@@ -98,6 +106,15 @@ export class PassPage {
     this.isBuyingLevel.set(false);
 
     if (this.store.buyLevels(1)) {
+      this.audio.play('unlock');
+    }
+  }
+
+  protected restart(): void {
+    this.isRestarting.set(false);
+
+    if (this.store.restartSeason()) {
+      this.page.set(0);
       this.audio.play('unlock');
     }
   }

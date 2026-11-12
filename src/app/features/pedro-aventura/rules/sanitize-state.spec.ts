@@ -14,7 +14,7 @@ describe('sanitizeState', () => {
       {
         wallet: { coins: 120.9, diamonds: -4, transactions: [{ id: 'x' }], appliedIds: ['a', 'a'] },
         levels: { '1-1': { bestStars: 9, wins: 2, attempts: 3, bestTimeMs: 'rápido' }, '99-1': { wins: 1 } },
-        seasons: { 'temporada-1': { xp: 500, passes: ['vip', 'ouro'], claimedRewards: ['1:gratuito', '42:vip'] } },
+        seasons: { 'temporada-1': { xp: 500, passes: ['vip', 'ouro'], claimedRewards: ['1:gratuito', '42:vip'], round: 2.7 } },
         missions: { 'diaria-moedas': { period: '2026-10-20', value: 30, isClaimed: 'sim' }, inventada: { period: 'x' } },
         inventory: { owned: ['lambo-gold', 'carro-falso'], equipped: { vehicle: 'lambo-gold', outfit: 'rex' } },
         settings: { quality: 'ultra', musicVolume: 3, effectsVolume: 0.3, touchControls: 'sempre' },
@@ -25,7 +25,7 @@ describe('sanitizeState', () => {
     expect(state.wallet).toEqual(jasmine.objectContaining({ coins: 120, diamonds: 0, transactions: [], appliedIds: ['a'] }));
     expect(Object.keys(state.levels)).toEqual(['1-1']);
     expect(state.levels['1-1']).toEqual({ bestStars: 3, bestTimeMs: null, bestScore: 0, wins: 2, attempts: 3 });
-    expect(state.seasons['temporada-1']).toEqual({ seasonId: 'temporada-1', xp: 500, passes: ['vip'], claimedRewards: ['1:gratuito'] });
+    expect(state.seasons['temporada-1']).toEqual({ seasonId: 'temporada-1', xp: 500, passes: ['vip'], claimedRewards: ['1:gratuito'], round: 2 });
     expect(state.missions).toEqual({ 'diaria-moedas': { period: '2026-10-20', value: 30, isClaimed: false } });
     expect(state.inventory.owned).toContain('lambo-gold');
     expect(state.inventory.owned).not.toContain('carro-falso');

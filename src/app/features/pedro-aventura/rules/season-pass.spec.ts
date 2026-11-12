@@ -6,6 +6,7 @@ import {
   levelInfo,
   markClaimed,
   passPrice,
+  passPriceInCents,
   rewardStatus,
   seasonPhase,
   totalXpForLevel,
@@ -21,6 +22,14 @@ describe('season-pass', () => {
     expect(levelInfo(0, MAX).level).toBe(1);
     expect(levelInfo(xpForLevel(1), MAX)).toEqual(jasmine.objectContaining({ level: 2, xpInLevel: 0 }));
     expect(levelInfo(totalXpForLevel(MAX) * 2, MAX)).toEqual(jasmine.objectContaining({ level: MAX, isMaxLevel: true, percentage: 100 }));
+  });
+
+  it('cobra R$ 1,99 no VIP e R$ 4,99 no Luxo; quem tem o VIP paga só a diferença', () => {
+    const fresh = createSeasonProgress(SEASON.id);
+
+    expect(passPriceInCents(fresh, 'vip')).toBe(199);
+    expect(passPriceInCents(fresh, 'luxo')).toBe(499);
+    expect(passPriceInCents({ ...fresh, passes: ['vip'] }, 'luxo')).toBe(300);
   });
 
   it('sabe quando a temporada começa, vale e acaba', () => {

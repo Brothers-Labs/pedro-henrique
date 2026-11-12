@@ -1,13 +1,11 @@
 import type { ChestContents, PremiumPass, PremiumPassId, Reward, SeasonDefinition, SeasonTier } from '../models/economy.model';
 
-/**
- * Pagamento real desligado de propósito.
- *
- * O site não tem gateway de pagamento e é usado por uma criança: os passes
- * são trocados por diamantes ganhos jogando. Virar esta chave exige gateway,
- * requisitos legais e a aprovação do dono do site.
+/*
+ * Os passes VIP e Luxo saem de dois jeitos: trocando diamantes ganhos jogando
+ * ou pagando em reais por Pix. O pagamento em reais é aprovado pelo dono do
+ * site, fica atrás da conta de um adulto e só funciona com a chave Pix e o
+ * servidor configurados (`docs/payments-api.md`).
  */
-export const IS_REAL_PAYMENT_ENABLED = false;
 
 /** XP que o nível 1 pede para virar o 2; cada nível seguinte pede um pouco mais. */
 export const SEASON_XP = { base: 300, increment: 100 } as const;
@@ -17,14 +15,14 @@ export const PREMIUM_PASSES: readonly PremiumPass[] = [
     id: 'vip',
     name: 'Passe VIP',
     priceInDiamonds: 199,
-    referencePriceInCents: 199,
+    priceInCents: 199,
     perks: ['Prêmios exclusivos em todos os níveis', 'Skins especiais e baús VIP', 'Moto Neon e Rex de Óculos'],
   },
   {
     id: 'luxo',
     name: 'Passe Luxo',
     priceInDiamonds: 490,
-    referencePriceInCents: 490,
+    priceInCents: 499,
     perks: ['Tudo do VIP', 'Skin lendária Pedro Elite', 'Lambo Gold e Rex Gold', 'Baús de luxo'],
   },
 ];

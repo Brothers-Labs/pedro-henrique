@@ -93,13 +93,10 @@ export interface PremiumPass {
   readonly name: string;
   readonly priceInDiamonds: number;
   /**
-   * Preço de referência do conceito original, em centavos de real.
-   *
-   * Fica só como dado: `isRealPaymentEnabled` é falso, e nenhuma tela cobra
-   * dinheiro. Ligar pagamento real exige gateway, requisitos legais e a
-   * aprovação do dono do site.
+   * Preço em dinheiro, em centavos de real, pago por Pix por um adulto com a
+   * conta conectada. O mesmo passe também sai por diamantes.
    */
-  readonly referencePriceInCents: number;
+  readonly priceInCents: number;
   readonly perks: readonly string[];
 }
 
@@ -122,6 +119,11 @@ export interface SeasonProgress {
   readonly passes: readonly PremiumPassId[];
   /** Prêmios já resgatados, no formato `nível:faixa`. */
   readonly claimedRewards: readonly string[];
+  /**
+   * Vezes que a temporada foi recomeçada. Entra nos ids da carteira: o prêmio
+   * do nível 3 da segunda volta é outro lançamento, e não uma repetição.
+   */
+  readonly round: number;
 }
 
 export interface SeasonLevelInfo {

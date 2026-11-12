@@ -35,7 +35,10 @@ import {
   levelInfo,
   markClaimed,
   passPrice,
+  restartSeason as restartSeasonProgress,
   seasonPhase,
+  seasonRoundTag,
+  withPurchasedPasses,
   xpToBuyLevels,
 } from './season-pass';
 import { applyTransactions, createWallet, hasApplied, transaction } from './wallet';
@@ -303,13 +306,14 @@ export function claimSeasonReward(
   season: SeasonDefinition = SEASON,
 ): AventuraState | null {
   const tier = season.tiers.find((candidate) => candidate.level === level);
-  const progress = markClaimed(seasonProgressOf(state, season), season, level, pass, now);
+  const before = seasonProgressOf(state, season);
+  const progress = markClaimed(before, season, level, pass, now);
 
   if (!tier || !progress) {
     return null;
   }
 
-  const delivered = deliverReward(state, tier.rewards[pass], `season:${season.id}:${level}:${pass}`, now);
+  const delivered = deliverReward(state, tier.rewards[pass], `season:${season.id}${seasonRoundTag(before)}:${level}:${pass}`, now);
 
   return delivered ? withSeason(delivered, progress) : null;
 }
@@ -371,6 +375,25 @@ export function buyPass(state: AventuraState, pass: PremiumPassId, now: Date, se
   return wallet ? { ...withSeason(state, after), wallet } : null;
 }
 
+/** Recomeça a temporada de graça, mantendo os passes. Moedas, diamantes e cosméticos já ganhos ficam. */
+export function restartSeason(state: AventuraState, now: Date, season: SeasonDefinition = SEASON): AventuraState | null {
+  const progress = restartSeasonProgress(seasonProgressOf(state, season), season, now);
+
+  return progress ? withSeason(state, progress) : null;
+}
+
+/** Passes pagos em reais e conferidos no servidor. Devolve `null` quando nada muda. */
+export function applyPurchasedPasses(
+  state: AventuraState,
+  purchased: readonly PremiumPassId[],
+  season: SeasonDefinition = SEASON,
+): AventuraState | null {
+  const before = seasonProgressOf(state, season);
+  const after = withPurchasedPasses(before, purchased);
+
+  return after === before ? null : withSeason(state, after);
+}
+
 /** Diamantes pedidos para subir `levels` níveis no passe. */
 export function levelsPrice(state: AventuraState, levels: number, season: SeasonDefinition = SEASON): number {
   const progress = seasonProgressOf(state, season);
@@ -390,7 +413,7 @@ export function buyLevels(state: AventuraState, levels: number, now: Date, seaso
   }
 
   const target = levelInfo(progress.xp, season.tiers.length).level + price / season.levelPriceInDiamonds;
-  const id = `levels:${season.id}:${target}`;
+  const id = `levels:${season.id}${seasonRoundTag(progress)}:${target}`;
 
   if (hasApplied(state.wallet, id)) {
     return null;

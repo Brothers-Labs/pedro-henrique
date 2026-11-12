@@ -1,12 +1,12 @@
 <dialog #dialog class="pix" aria-labelledby="pix-title" (close)="handleNativeClose()">
-  @if (selectedPlan(); as plan) {
-    <div class="pix__panel" [attr.data-color]="plan.color">
+  @if (order(); as current) {
+    <div class="pix__panel" [attr.data-color]="current.color">
       <header class="pix__header">
         <div class="pix__heading">
           <p class="pix__eyebrow">Pagamento via Pix</p>
           <h2 id="pix-title" class="pix__title">
-            <span aria-hidden="true">{{ plan.emoji }}</span>
-            Plano {{ plan.name }}
+            <span aria-hidden="true">{{ current.emoji }}</span>
+            {{ current.title }}
           </h2>
         </div>
 
@@ -21,38 +21,52 @@
             <p class="result__emoji" aria-hidden="true">🎉</p>
             <h3 class="result__title">Comprovante enviado!</h3>
             <p class="result__text">
-              Assim que o Pix de <strong>{{ plan.monthlyPriceInCents | price }}</strong> do plano
-              {{ plan.name }} for conferido, avisamos em <strong>{{ email }}</strong> e o plano é
-              liberado.
+              Assim que o Pix de <strong>{{ current.amountInCents | price }}</strong> do
+              {{ current.title }} for conferido, avisamos em <strong>{{ email }}</strong> e
+              {{ current.releaseNote }}
             </p>
             <button type="button" class="button button--primary" (click)="close()">Fechar</button>
           </div>
+        } @else if (needsAccount()) {
+          <div class="result" role="note">
+            <p class="result__emoji" aria-hidden="true">🔐</p>
+            <h3 class="result__title">Chame um adulto</h3>
+            <p class="result__text">
+              Este pagamento é com dinheiro de verdade. Um adulto precisa entrar na conta para
+              pagar <strong>{{ current.amountInCents | price }}</strong> pelo {{ current.title }}.
+            </p>
+            <a class="button button--primary" routerLink="/entrar" (click)="close()">Entrar na conta</a>
+          </div>
         } @else {
           <form class="pix__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <fieldset class="plans-picker" [disabled]="isSubmitting()">
-              <legend class="pix__label">Plano escolhido</legend>
+            @if (choices().length > 1) {
+              <fieldset class="plans-picker" [disabled]="isSubmitting()">
+                <legend class="pix__label">{{ choiceLabel() }}</legend>
 
-              <div class="plans-picker__options">
-                @for (option of plans; track option.id) {
-                  <label class="plans-picker__option" [attr.data-color]="option.color">
-                    <input
-                      type="radio"
-                      name="pix-plan"
-                      [value]="option.id"
-                      [checked]="option.id === plan.id"
-                      (change)="selectPlan(option.id)"
-                    />
-                    <span class="plans-picker__name">{{ option.name }}</span>
-                    <span class="plans-picker__price">{{ option.monthlyPriceInCents | price }}</span>
-                  </label>
-                }
-              </div>
-            </fieldset>
+                <div class="plans-picker__options">
+                  @for (option of choices(); track option.product.id) {
+                    <label class="plans-picker__option" [attr.data-color]="option.color">
+                      <input
+                        type="radio"
+                        name="pix-order"
+                        [value]="option.product.id"
+                        [checked]="isSameOrder(option, current)"
+                        (change)="selectOrder(option)"
+                      />
+                      <span class="plans-picker__name">{{ option.title }}</span>
+                      <span class="plans-picker__price">{{ option.amountInCents | price }}</span>
+                    </label>
+                  }
+                </div>
+              </fieldset>
+            }
 
             <div class="pix__amount">
               <span class="pix__amount-label">Valor a pagar</span>
-              <strong class="pix__amount-value">{{ plan.monthlyPriceInCents | price }}</strong>
-              <span class="pix__amount-period">por mês</span>
+              <strong class="pix__amount-value">{{ current.amountInCents | price }}</strong>
+              @if (current.period; as period) {
+                <span class="pix__amount-period">{{ period }}</span>
+              }
             </div>
 
             <ol class="steps">
@@ -101,7 +115,7 @@
                 <h3 class="steps__title">Pague no app do seu banco</h3>
                 <p class="steps__hint">
                   Escolha Pix → "Pagar com chave", cole a chave e pague exatamente
-                  <strong>{{ plan.monthlyPriceInCents | price }}</strong>.
+                  <strong>{{ current.amountInCents | price }}</strong>.
                 </p>
               </li>
 
@@ -180,7 +194,7 @@
                     @if (hasVisibleError(form.controls.email)) {
                       <p id="pix-email-error" class="field__error">
                         @if (form.controls.email.hasError('required')) {
-                          Digite o e-mail para avisarmos quando o plano for liberado.
+                          Digite o e-mail para avisarmos quando o pagamento for conferido.
                         } @else {
                           Este e-mail parece incompleto. Confira se tem o &#64; e o domínio.
                         }

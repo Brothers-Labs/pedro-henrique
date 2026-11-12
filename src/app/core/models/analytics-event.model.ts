@@ -51,7 +51,10 @@ export type AnalyticsEvent =
       };
     }
   | { readonly name: 'checkout_started'; readonly properties: { readonly planId: PlanId } }
-  | { readonly name: 'pix_receipt_sent'; readonly properties: { readonly planId: PlanId } }
+  | {
+      readonly name: 'pix_receipt_sent';
+      readonly properties: { readonly productType: 'plan' | 'season-pass'; readonly productId: string };
+    }
   | { readonly name: 'sign_up_completed' }
   | { readonly name: 'login_completed' }
   | { readonly name: 'guestbook_message_posted' }

@@ -24,7 +24,37 @@ export function seasonPhase(season: SeasonDefinition, now: Date): SeasonPhase {
 }
 
 export function createSeasonProgress(seasonId: string): SeasonProgress {
-  return { seasonId, xp: 0, passes: [], claimedRewards: [] };
+  return { seasonId, xp: 0, passes: [], claimedRewards: [], round: 0 };
+}
+
+/**
+ * Parte do id de carteira que separa as voltas da temporada. A primeira volta
+ * não tem marca: os lançamentos salvos antes do "recomeçar" continuam valendo.
+ */
+export function seasonRoundTag(progress: SeasonProgress): string {
+  return progress.round === 0 ? '' : `:volta-${progress.round}`;
+}
+
+/**
+ * Dá para recomeçar com a temporada valendo e a trilha completa. Antes do
+ * último nível não: os prêmios do nível 1 saem sem custo, e recomeçar a
+ * qualquer hora viraria uma fonte infinita de diamantes.
+ */
+export function canRestartSeason(progress: SeasonProgress, season: SeasonDefinition, now: Date): boolean {
+  return seasonPhase(season, now) === 'active' && levelInfo(progress.xp, season.tiers.length).isMaxLevel;
+}
+
+/**
+ * Recomeça a temporada de graça: XP e prêmios resgatados voltam ao início, e
+ * os passes VIP e Luxo continuam (foram pagos). Devolve `null` quando não dá
+ * para recomeçar.
+ */
+export function restartSeason(progress: SeasonProgress, season: SeasonDefinition, now: Date): SeasonProgress | null {
+  if (!canRestartSeason(progress, season, now)) {
+    return null;
+  }
+
+  return { ...progress, xp: 0, claimedRewards: [], round: progress.round + 1 };
 }
 
 /** XP que um nível pede para virar o seguinte. */
@@ -133,6 +163,24 @@ export function passPrice(progress: SeasonProgress, pass: PremiumPassId): number
   const price = premiumPass(pass).priceInDiamonds;
 
   return pass === 'luxo' && progress.passes.includes('vip') ? price - premiumPass('vip').priceInDiamonds : price;
+}
+
+/** Centavos pedidos por um passe pago no Pix. Como nos diamantes, quem tem o VIP paga só a diferença para o Luxo. */
+export function passPriceInCents(progress: SeasonProgress, pass: PremiumPassId): number {
+  const price = premiumPass(pass).priceInCents;
+
+  return pass === 'luxo' && progress.passes.includes('vip') ? price - premiumPass('vip').priceInCents : price;
+}
+
+/**
+ * Junta os passes pagos em reais e já conferidos. Diferente da troca por
+ * diamantes, vale mesmo com a temporada encerrada: foi pago, é de quem pagou.
+ */
+export function withPurchasedPasses(progress: SeasonProgress, purchased: readonly PremiumPassId[]): SeasonProgress {
+  const granted = purchased.flatMap((pass): readonly PremiumPassId[] => (pass === 'luxo' ? ['vip', 'luxo'] : ['vip']));
+  const passes = [...new Set([...progress.passes, ...granted])];
+
+  return passes.length === progress.passes.length ? progress : { ...progress, passes };
 }
 
 /** Libera o passe (o Luxo traz o VIP junto). Devolve `null` quando já o tem ou a temporada não está valendo. */

@@ -9,6 +9,7 @@ import type { AventuraSettings, AventuraState, RunResult } from '../models/avent
 import type { LevelDefinition, PlayerLevelProgress, RegionDefinition, RegionStatus } from '../models/campaign.model';
 import type { Cosmetic, CosmeticSlot, MissionStatus, PassId, PremiumPassId, RewardStatus } from '../models/economy.model';
 import {
+  applyPurchasedPasses,
   applyRunResult,
   buyCosmetic,
   buyLevels,
@@ -19,6 +20,7 @@ import {
   createInitialState,
   equip,
   levelsPrice,
+  restartSeason,
   type RunSummary,
   seasonProgressOf,
   updateSettings,
@@ -33,7 +35,15 @@ import {
   unlockHint,
 } from '../rules/campaign';
 import { missionStatus } from '../rules/missions';
-import { claimableRewards, levelInfo, passPrice, rewardStatus, seasonPhase } from '../rules/season-pass';
+import {
+  canRestartSeason,
+  claimableRewards,
+  levelInfo,
+  passPrice,
+  passPriceInCents,
+  rewardStatus,
+  seasonPhase,
+} from '../rules/season-pass';
 import { AVENTURA_REPOSITORY } from './aventura-repository';
 
 /** O relógio das telas anda de minuto em minuto: é a menor unidade das contagens regressivas. */
@@ -79,6 +89,7 @@ export class AventuraStore {
   readonly seasonTimeLeft = computed(() => timeUntil(SEASON.endsAt, this.clock()));
   readonly seasonProgress = computed(() => seasonProgressOf(this.state()));
   readonly seasonLevel = computed(() => levelInfo(this.seasonProgress().xp, SEASON.tiers.length));
+  readonly canRestartSeason = computed(() => canRestartSeason(this.seasonProgress(), SEASON, this.clock()));
   readonly claimableRewardCount = computed(() => claimableRewards(this.seasonProgress(), SEASON).length);
 
   readonly coins = computed(() => this.state().wallet.coins);
@@ -150,6 +161,10 @@ export class AventuraStore {
     return passPrice(this.seasonProgress(), pass);
   }
 
+  passPriceInCents(pass: PremiumPassId): number {
+    return passPriceInCents(this.seasonProgress(), pass);
+  }
+
   levelsPrice(levels: number): number {
     return levelsPrice(this.state(), levels);
   }
@@ -193,6 +208,14 @@ export class AventuraStore {
 
   buyLevels(levels: number): boolean {
     return this.attempt((state, now) => buyLevels(state, levels, now));
+  }
+
+  restartSeason(): boolean {
+    return this.attempt((state, now) => restartSeason(state, now));
+  }
+
+  applyPurchasedPasses(purchased: readonly PremiumPassId[]): boolean {
+    return this.attempt((state) => applyPurchasedPasses(state, purchased));
   }
 
   buyCosmetic(cosmeticId: string): boolean {

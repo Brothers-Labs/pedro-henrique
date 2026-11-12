@@ -2,11 +2,10 @@ import { inject, Injectable, InjectionToken } from '@angular/core';
 
 import { environment } from '../../../environments/environment';
 import type { PixSettings } from '../../../environments/environment.model';
-import { findPlan } from '../../core/data/plans.data';
-import type { PlanId } from '../../core/models/plan.model';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { ApiClient } from '../../core/services/api-client.service';
 import { AuthService } from '../../core/services/auth.service';
+import type { PixOrder } from './pix-order';
 
 /** Dados de recebimento já limpos: texto em branco conta como "não configurado". */
 export const PIX_SETTINGS = new InjectionToken<PixSettings>('PIX_SETTINGS', {
@@ -18,7 +17,7 @@ export const PIX_SETTINGS = new InjectionToken<PixSettings>('PIX_SETTINGS', {
 });
 
 export interface PixReceiptSubmission {
-  readonly planId: PlanId;
+  readonly order: PixOrder;
 
   /** Para onde avisar quando o pagamento for conferido. */
   readonly email: string;
@@ -26,11 +25,12 @@ export interface PixReceiptSubmission {
 }
 
 /**
- * Pagamento das assinaturas por Pix, com conferência manual do comprovante.
+ * Pagamento por Pix (assinaturas e passes da Temporada), com conferência
+ * manual do comprovante.
  *
- * O valor enviado sai da tabela de planos, e não da tela: o que o visitante
- * escolhe é o plano. O servidor deve conferir o valor pelo plano de novo —
- * o contrato está em `docs/payments-api.md`.
+ * O valor enviado sai das tabelas do código (planos, passes), e não da tela:
+ * o que o visitante escolhe é o produto. O servidor deve conferir o valor
+ * pelo produto de novo — o contrato está em `docs/payments-api.md`.
  */
 @Injectable({ providedIn: 'root' })
 export class PixPaymentService {
@@ -41,12 +41,27 @@ export class PixPaymentService {
   readonly settings = inject(PIX_SETTINGS);
   readonly isApiConfigured = this.api.isConfigured;
 
-  async submitReceipt({ planId, email, receipt }: PixReceiptSubmission): Promise<void> {
-    const plan = findPlan(planId);
+  async submitReceipt({ order, email, receipt }: PixReceiptSubmission): Promise<void> {
+    const { product } = order;
+    const accessToken = this.auth.session()?.accessToken;
+
+    if (order.requiresAccount && !accessToken) {
+      throw new Error(`Pagamento Pix: ${product.type} "${product.id}" só pode ser pago com uma conta conectada.`);
+    }
+
     const form = new FormData();
 
-    form.append('planId', plan.id);
-    form.append('amountInCents', String(plan.monthlyPriceInCents));
+    form.append('productType', product.type);
+    form.append('productId', product.id);
+
+    // O contrato antigo dos planos só conhecia `planId`: ele continua indo junto.
+    if (product.type === 'plan') {
+      form.append('planId', product.id);
+    } else {
+      form.append('seasonId', product.seasonId);
+    }
+
+    form.append('amountInCents', String(order.amountInCents));
     form.append('email', email.trim().toLowerCase());
     form.append('receipt', receipt, receipt.name);
 
@@ -56,10 +71,10 @@ export class PixPaymentService {
       body: form,
 
       // Quem já tem conta tem o pagamento ligado a ela; quem não tem é achado pelo e-mail.
-      accessToken: this.auth.session()?.accessToken,
+      accessToken,
     });
 
-    this.analytics.track({ name: 'pix_receipt_sent', properties: { planId: plan.id } });
+    this.analytics.track({ name: 'pix_receipt_sent', properties: { productType: product.type, productId: product.id } });
   }
 }
 

@@ -22,6 +22,9 @@
         <button type="button" class="pass__buy" (click)="ask(card)">
           Liberar por {{ formatNumber(card.price) }} <span aria-hidden="true">💎</span>
         </button>
+        <button type="button" class="pass__buy pass__buy--reais" (click)="payInReais(card)">
+          Pagar {{ card.priceInReais }} <span aria-hidden="true">💳</span>
+        </button>
       } @else {
         <span class="pass__closed">Temporada encerrada</span>
       }
@@ -43,3 +46,10 @@
     (cancelled)="pending.set(null)"
   />
 }
+
+<app-pix-payment-dialog [(order)]="checkoutOrder" />
+<p class="passes__note">
+  <span aria-hidden="true">💡</span>
+  Pagar em reais é com dinheiro de verdade: só um adulto, com a conta conectada. Os diamantes são
+  ganhos jogando.
+</p>

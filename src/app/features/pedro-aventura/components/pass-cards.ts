@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
+import { PixPaymentDialog } from '../../plans/components/pix-payment-dialog/pix-payment-dialog';
+import type { PixOrder } from '../../plans/pix-order';
+import { formatPriceInCents } from '../../plans/price.pipe';
 import { PREMIUM_PASSES } from '../config/season.config';
 import type { PremiumPass } from '../models/economy.model';
 import { AventuraAudio } from '../services/aventura-audio.service';
 import { AventuraStore } from '../services/aventura-store.service';
+import { SeasonPassPurchases } from '../services/season-pass-purchases.service';
 import { ConfirmDialog } from './confirm-dialog';
 import { formatNumber } from './format';
 
@@ -11,27 +15,31 @@ interface PassCardView {
   readonly pass: PremiumPass;
   readonly isOwned: boolean;
   readonly price: number;
+  readonly priceInReais: string;
   readonly canAfford: boolean;
 }
 
 /**
  * Os três passes lado a lado: Gratuito (sempre ativo), VIP e Luxo.
  *
- * VIP e Luxo são trocados por diamantes do jogo, com confirmação. Nada é
- * cobrado em dinheiro.
+ * VIP e Luxo saem de dois jeitos: trocando diamantes do jogo, com
+ * confirmação, ou pagando em reais por Pix, com a conta de um adulto.
  */
 @Component({
   selector: 'app-pass-cards',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialog],
+  imports: [ConfirmDialog, PixPaymentDialog],
   templateUrl: './pass-cards.html',
   styleUrl: './pass-cards.scss',
 })
 export class PassCards {
   private readonly store = inject(AventuraStore);
   private readonly audio = inject(AventuraAudio);
+  private readonly purchases = inject(SeasonPassPurchases);
 
   protected readonly pending = signal<PassCardView | null>(null);
+  /** Passe sendo pago em reais; com valor, o diálogo do Pix fica aberto. */
+  protected readonly checkoutOrder = signal<PixOrder | null>(null);
   protected readonly isSeasonActive = computed(() => this.store.seasonPhase() === 'active');
   protected readonly formatNumber = formatNumber;
 
@@ -41,9 +49,19 @@ export class PassCards {
     return PREMIUM_PASSES.map((pass) => {
       const price = this.store.passPrice(pass.id);
 
-      return { pass, isOwned: this.store.hasPass(pass.id), price, canAfford: diamonds >= price };
+      return {
+        pass,
+        isOwned: this.store.hasPass(pass.id),
+        price,
+        priceInReais: formatPriceInCents(this.store.passPriceInCents(pass.id)),
+        canAfford: diamonds >= price,
+      };
     });
   });
+
+  protected payInReais(card: PassCardView): void {
+    this.checkoutOrder.set(this.purchases.order(card.pass.id));
+  }
 
   protected readonly missing = computed(() => {
     const card = this.pending();

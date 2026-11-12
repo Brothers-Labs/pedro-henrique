@@ -124,6 +124,7 @@ function sanitizeSeasons(value: unknown): Record<string, SeasonProgress> {
       xp: count(entry['xp']),
       passes: unique(stringList(entry['passes']).filter((pass): pass is PremiumPassId => PREMIUM_PASSES.has(pass))),
       claimedRewards: unique(stringList(entry['claimedRewards']).filter((key) => !isCurrent || validRewards.has(key))),
+      round: count(entry['round']),
     };
   }
 

@@ -74,8 +74,19 @@
     @include av.blue-button(var(--text-md));
   }
 
+  // Depois da regra do VIP e com a mesma força: o pagamento em reais é sempre o botão discreto.
+  & &__buy--reais {
+    @include av.ghost-button;
+  }
+
   &__closed {
     color: var(--av-text-soft);
     font-weight: 700;
   }
+}
+
+.passes__note {
+  margin-top: 0.75rem;
+  color: var(--av-text-soft);
+  font-size: var(--text-sm);
 }
