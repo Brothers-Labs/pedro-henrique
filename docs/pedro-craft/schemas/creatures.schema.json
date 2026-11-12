@@ -78,6 +78,7 @@
         },
         "breedsWith": { "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/id" }], "description": "Comida que faz dois animais iguais terem um filhote." },
         "babyGrowMs": { "type": "integer", "minimum": 10000, "default": 300000, "description": "Quanto o filhote leva para crescer." },
+        "greeting": { "type": "string", "minLength": 1, "description": "O que a criatura fala (na tela e em voz alta) quando o herói toca nela com o botão de usar." },
         "explodes": {
           "type": ["object", "null"],
           "description": "Em vez de golpear, chia perto do herói e estoura (o creeper). Só para inimigos.",

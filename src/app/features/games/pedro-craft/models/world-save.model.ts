@@ -100,6 +100,8 @@ export interface SavedCreature {
   readonly growLeftMs?: number;
   /** Descanso depois de ter um filhote. */
   readonly breedRestMs?: number;
+  /** Chamada pela mochila do Criativo: passeia mansa, mesmo sendo um bicho bravo. Ausente (ou `false`) no resto. */
+  readonly tame?: boolean;
 }
 
 /** Missões: as cumpridas, pelo id, e quanto já foi feito da missão da vez. */

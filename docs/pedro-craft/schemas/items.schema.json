@@ -38,7 +38,7 @@
               "properties": {
                 "type": { "const": "sprite" },
                 "shape": {
-                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown", "gem", "train", "golem", "flint", "flint-and-steel", "hamburger", "fries"]
+                  "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "bow", "arrow", "bucket", "shears", "apple", "bread", "carrot", "wheat", "seeds", "stick", "lump", "ingot", "egg", "fried-egg", "feather", "string", "potato", "beetroot", "bowl", "pumpkin", "pie", "melon-slice", "cake", "bone", "powder", "cane", "armor", "shield", "crown", "gem", "train", "golem", "flint", "flint-and-steel", "hamburger", "fries", "blob"]
                 },
                 "colors": { "$ref": "common.schema.json#/$defs/colors" }
               }
@@ -94,7 +94,7 @@
         },
         "summons": {
           "$ref": "common.schema.json#/$defs/id",
-          "description": "Só nos itens do tipo summon: id em creatures.json de um amigo (temperament guardian) que nasce ao usar o item no chão."
+          "description": "Só nos itens do tipo summon: id em creatures.json da criatura que nasce ao usar o item no chão. Um amigo (temperament guardian) pode sair de receita; qualquer outra criatura só vale na mochila do Criativo (vem mansa) e não pode sair de receita, drop nem mochila inicial."
         }
       }
     }

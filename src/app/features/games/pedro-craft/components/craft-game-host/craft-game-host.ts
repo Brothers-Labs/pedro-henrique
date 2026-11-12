@@ -395,6 +395,9 @@ export class CraftGameHost {
       case 'hint':
         this.announce(event.text);
         return;
+      case 'creature-speech':
+        this.relayCreatureSpeech(event.speaker, event.text);
+        return;
       case 'pickup':
         this.notifyPickup(event.item, event.count);
         return;
@@ -452,6 +455,15 @@ export class CraftGameHost {
     if (this.settingsService.settings().readAloud) {
       this.speak(text);
     }
+  }
+
+  /**
+   * A fala de uma criatura é sempre dita em voz alta, mesmo com a leitura
+   * desligada: a criança tocou nela justamente para ouvir o que ela fala.
+   */
+  private relayCreatureSpeech(speaker: string, text: string): void {
+    this.showToast(`💬 ${speaker}: ${text}`);
+    this.speak(text);
   }
 
   /** Missão nova (ou a primeira ao abrir o mundo): com a leitura ligada, ela é lida. */

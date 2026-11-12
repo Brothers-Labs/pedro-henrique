@@ -123,6 +123,8 @@ export type CraftSessionEvent =
   | { readonly type: 'sound'; readonly cue: MakerSoundCue }
   | { readonly type: 'hud'; readonly hud: CraftHudState }
   | { readonly type: 'hint'; readonly text: string }
+  /** Uma criatura falou com o herói: sempre mostrada e lida em voz alta. */
+  | { readonly type: 'creature-speech'; readonly speaker: string; readonly text: string }
   | { readonly type: 'pickup'; readonly item: string; readonly count: number }
   | { readonly type: 'tool-broke'; readonly item: string }
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }

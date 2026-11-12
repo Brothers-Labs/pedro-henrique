@@ -20,7 +20,10 @@ export function infiniteSupplies(catalog: CraftCatalog): SlotContent[] {
     .sort((a, b) => Number(isDecorative(a)) - Number(isDecorative(b)));
   const armor = [...catalog.items.filter(item => item.kind === 'armor')]
     .sort((a, b) => (b.durability ?? 0) - (a.durability ?? 0)).slice(0, 1);
-  const equipment = catalog.items.filter(item => !item.tool && ['shield', 'ammo', 'bucket', 'weapon', 'vehicle', 'summon'].includes(item.kind));
+  // Only a guardian may be summoned outside Creative: the other summon items stay in the Creative backpack.
+  const isGuardianSummon = (item: ItemDefinition): boolean =>
+    item.summons !== null && catalog.creature(item.summons).temperament === 'guardian';
+  const equipment = catalog.items.filter(item => !item.tool && (['shield', 'ammo', 'bucket', 'weapon', 'vehicle'].includes(item.kind) || isGuardianSummon(item)));
   const seeds = catalog.items.filter(item => item.kind === 'seed');
   const foods = [...catalog.items.filter(item => item.heal !== null)].sort((a, b) => (b.heal ?? 0) - (a.heal ?? 0));
   const items = [...tools, ...armor, ...equipment, ...seeds, ...foods.slice(0, 1), ...resources];

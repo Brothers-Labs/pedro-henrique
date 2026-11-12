@@ -266,6 +266,7 @@ function readCreature(creature: JsonObjectReader): SavedCreature {
     layLeftMs: creature.optionalField('layLeftMs')?.number({ min: 0 }) ?? null,
     growLeftMs: creature.optionalField('growLeftMs')?.number({ min: 0 }) ?? 0,
     breedRestMs: creature.optionalField('breedRestMs')?.number({ min: 0 }) ?? 0,
+    tame: creature.optionalField('tame')?.boolean() ?? false,
     cooldowns: creature
       .field('cooldowns')
       .array()

@@ -1,7 +1,7 @@
 import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
-import type { BucketStats, ItemDefinition, VehicleStats } from '../../models/content.model';
+import type { BucketStats, CreatureDefinition, ItemDefinition, VehicleStats } from '../../models/content.model';
 import type { CraftDifficulty } from '../../models/craft-settings.model';
 import type { GameMode } from '../../models/world-save.model';
 import type { SpawnPoint } from '../../world/world-generator';
@@ -14,7 +14,7 @@ import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
 import { Calendar } from './calendar';
 import { Combat } from './combat';
-import { type Creature, type CreatureDifficulty, Creatures, GUARDIAN_CAP, yawTowards } from './creatures';
+import { type Creature, type CreatureDifficulty, Creatures, GUARDIAN_CAP, TAME_CAP, yawTowards } from './creatures';
 import { DayClock } from './day-clock';
 import { Explosions } from './explosions';
 import { Farm } from './farm';
@@ -70,6 +70,12 @@ const DIFFICULTIES: Readonly<Record<CraftDifficulty, CreatureDifficulty>> = {
 };
 const FERTILIZER_COLOR = '#b6f56b';
 const LOVE_COLOR = '#ff7aa8';
+
+/** Espera até a criatura falar de novo: tempo de a frase inteira ser lida em voz alta. */
+const GREETING_COOLDOWN_MS = 4000;
+
+/** O pulinho de alegria de quem fala: baixo, só para mostrar que gostou. */
+const HAPPY_HOP_SPEED = 5;
 const GUARDIAN_COLOR = '#f2f4f7';
 
 export interface CraftSimulationOptions {
@@ -953,7 +959,10 @@ export class CraftSimulation {
     const interaction = held ? creature.definition.interactions.find((entry) => entry.item === held.id) : undefined;
 
     if (!held || !interaction) {
-      if (held?.heal) {
+      // Quem fala responde ao toque antes de o herói comer o que tem na mão: tocar na Verity é para ouvir a Verity.
+      if (creature.definition.greeting) {
+        this.greet(creature, creature.definition.greeting);
+      } else if (held?.heal) {
         this.eat(held, held.heal);
       }
       return;
@@ -979,6 +988,27 @@ export class CraftSimulation {
     }
 
     this.confirmUse();
+  }
+
+  /** A criatura olha para o herói, dá um pulinho de alegria, brilha e fala. Tocar de novo antes da espera não repete. */
+  private greet(creature: Creature, greeting: string): void {
+    if (creature.greetLeftMs > 0) {
+      return;
+    }
+
+    const { body, definition } = creature;
+
+    creature.greetLeftMs = GREETING_COOLDOWN_MS;
+    creature.yaw = yawTowards(body, this.hero.body);
+
+    if (body.isOnGround) {
+      body.velocityY = HAPPY_HOP_SPEED;
+    }
+
+    this.visualEvents.push({ type: 'sparkle', x: body.x, y: body.y + body.height, z: body.z, color: definition.colors[0] ?? LOVE_COLOR });
+    this.events.push({ type: 'sound', cue: 'coin' });
+    this.events.push({ type: 'creature-speech', speaker: definition.name, text: greeting });
+    this.version += 1;
   }
 
   /** A comida do animal: ele fica apaixonado e, com outro igual por perto, nasce um filhote. */
@@ -1137,7 +1167,7 @@ export class CraftSimulation {
     }
 
     if (held.summons) {
-      this.summonGuardian(held.summons, target);
+      this.summonCreature(held.summons, target);
       return;
     }
 
@@ -1186,14 +1216,18 @@ export class CraftSimulation {
   }
 
   /**
-   * O item do golem usado na face mirada: o golem nasce ali, de frente para o
-   * herói, se couber. O item é gasto, menos no Criativo.
+   * O item que chama uma criatura, usado na face mirada: ela nasce ali, de
+   * frente para o herói, se couber. O golem vem como amigo que protege; as
+   * outras (só pela mochila do Criativo) vêm mansas, para brincar. O item é
+   * gasto, menos no Criativo.
    */
-  private summonGuardian(creatureId: string, target: RayHit): void {
+  private summonCreature(creatureId: string, target: RayHit): void {
     const definition = this.catalog.creature(creatureId);
+    const isGuardian = definition.temperament === 'guardian';
+    const refusal = this.summonRefusal(definition, isGuardian);
 
-    if (!this.creatures.hasRoomForGuardian) {
-      this.events.push({ type: 'hint', text: `${definition.name}: você já tem ${GUARDIAN_CAP}, e eles já protegem você!` });
+    if (refusal) {
+      this.events.push({ type: 'hint', text: refusal });
       return;
     }
 
@@ -1203,18 +1237,38 @@ export class CraftSimulation {
     const probe = new PhysicsBody(x, y, z, definition.width / 2, definition.height);
 
     if (target.normalY < 0 || probe.collidesAt(this.terrain, 0, 0, 0)) {
-      this.events.push({ type: 'hint', text: GUARDIAN_NEEDS_ROOM_HINT });
+      this.events.push({ type: 'hint', text: isGuardian ? GUARDIAN_NEEDS_ROOM_HINT : `${definition.name} precisa de um chão com espaço livre em cima.` });
       return;
     }
 
-    const guardian = this.creatures.spawn(definition, x, y, z);
+    const creature = this.creatures.spawn(definition, x, y, z);
 
-    guardian.yaw = yawTowards(guardian.body, this.hero.body);
+    creature.yaw = yawTowards(creature.body, this.hero.body);
+    creature.isTame = !isGuardian;
     this.useUpSelected();
-    this.visualEvents.push({ type: 'sparkle', x, y: y + definition.height, z, color: GUARDIAN_COLOR });
+    this.visualEvents.push({ type: 'sparkle', x, y: y + definition.height, z, color: isGuardian ? GUARDIAN_COLOR : (definition.colors[0] ?? GUARDIAN_COLOR) });
     this.events.push({ type: 'sound', cue: 'powerup' });
-    this.events.push({ type: 'hint', text: `🛡️ ${definition.name} chegou! Agora você tem um amigo contra os monstros.` });
+    this.events.push({
+      type: 'hint',
+      text: isGuardian
+        ? `🛡️ ${definition.name} chegou! Agora você tem um amigo contra os monstros.`
+        : `✨ ${definition.name} chegou para brincar com você!`,
+    });
     this.confirmUse();
+  }
+
+  /** Por que a criatura não pode vir agora; `null` quando pode. */
+  private summonRefusal(definition: CreatureDefinition, isGuardian: boolean): string | null {
+    if (isGuardian) {
+      return this.creatures.hasRoomForGuardian ? null : `${definition.name}: você já tem ${GUARDIAN_CAP}, e eles já protegem você!`;
+    }
+
+    // O conteúdo só deixa esse item existir na mochila do Criativo; a trava aqui é a segunda linha de defesa.
+    if (this.mode !== 'creative') {
+      return `${definition.name} só vem pela mochila do modo Criativo.`;
+    }
+
+    return this.creatures.hasRoomForTame(definition) ? null : `${definition.name}: já tem ${TAME_CAP} por aqui. Brinque com eles!`;
   }
 
   /** O balde vazio pega a nascente mirada; o cheio despeja na face mirada. */

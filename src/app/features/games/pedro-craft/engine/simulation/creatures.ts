@@ -55,6 +55,9 @@ const FOLLOW_STOP_RANGE = 3;
 /** Amigos chamados de uma vez: golem demais lotaria a casa e esconderia os inimigos. */
 export const GUARDIAN_CAP = 3;
 
+/** Bichos mansos de cada tipo chamados pela mochila do Criativo: no Criativo o item não acaba, e o mundo não pode lotar. */
+export const TAME_CAP = 5;
+
 /** Quanto da velocidade desejada é alcançada por passo: o bicho acelera e freia macio. */
 const GRIP = 0.3;
 
@@ -113,6 +116,13 @@ export class Creature {
   fuseTotalMs = 0;
   /** O inimigo que o golem está enfrentando; `null` sem nenhum por perto. */
   foe: Creature | null = null;
+  /**
+   * Chamada pela mochila do Criativo: mesmo a Falsity e o Cruelty passeiam
+   * como amigos, sem ir atrás do herói nem voltar para casa com o sol.
+   */
+  isTame = false;
+  /** Tempo até a criatura poder falar de novo: tocar sem parar não vira um coro. */
+  greetLeftMs = 0;
 
   /** Espera de cada interação, pelo item usado (a lã crescendo de volta). */
   private readonly cooldowns = new Map<string, number>();
@@ -135,7 +145,7 @@ export class Creature {
   }
 
   get isHostile(): boolean {
-    return this.definition.temperament === 'hostile';
+    return this.definition.temperament === 'hostile' && !this.isTame;
   }
 
   /** O amigo chamado pela criança: protege o herói e não leva golpe dele. */
@@ -188,6 +198,7 @@ export class Creature {
     this.growLeftMs = Math.max(0, this.growLeftMs - elapsedMs);
     this.loveLeftMs = Math.max(0, this.loveLeftMs - elapsedMs);
     this.breedRestMs = Math.max(0, this.breedRestMs - elapsedMs);
+    this.greetLeftMs = Math.max(0, this.greetLeftMs - elapsedMs);
 
     for (const [item, leftMs] of this.cooldowns) {
       if (leftMs <= elapsedMs) {
@@ -276,6 +287,11 @@ export class Creatures {
   /** Ainda cabe mais um golem? */
   get hasRoomForGuardian(): boolean {
     return this.creatures.filter((creature) => creature.isGuardian).length < GUARDIAN_CAP;
+  }
+
+  /** Ainda cabe mais um bicho manso deste tipo? */
+  hasRoomForTame(definition: CreatureDefinition): boolean {
+    return this.creatures.filter((creature) => creature.isTame && creature.definition.id === definition.id).length < TAME_CAP;
   }
 
   spawn(definition: CreatureDefinition, x: number, y: number, z: number): Creature {

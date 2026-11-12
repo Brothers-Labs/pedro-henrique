@@ -11,6 +11,8 @@ import type { CraftScreen } from './screens';
 export type SimulationEvent =
   | { readonly type: 'sound'; readonly cue: MakerSoundCue }
   | { readonly type: 'hint'; readonly text: string }
+  /** Uma criatura falou com o herói (a Verity): a tela mostra e lê em voz alta. */
+  | { readonly type: 'creature-speech'; readonly speaker: string; readonly text: string }
   | { readonly type: 'pickup'; readonly item: string; readonly count: number }
   | { readonly type: 'tool-broke'; readonly item: string }
   | { readonly type: 'goal-completed'; readonly goal: GoalDefinition }

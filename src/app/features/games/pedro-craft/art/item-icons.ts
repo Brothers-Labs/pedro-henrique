@@ -108,6 +108,22 @@ const SPRITES: Readonly<Record<IconShape, (brush: SpriteBrush, colors: readonly 
     brush.rect(3, 7, 10, 7, box ?? '#e53935');
     brush.rect(4, 8, 8, 1, lighten(box ?? '#e53935', 0.3));
   },
+  /** A bolinha das criaturas (Verity, Falsity, Cruelty, Lovity): corpo, bochecha e boca nas cores dela. */
+  blob: (brush, [skin, cheek, mouth]) => {
+    const body = skin ?? '#ffc23a';
+
+    brush.disc(8, 9, 6, body);
+    brush.rect(4, 13, 8, 2, darken(body, 0.15));
+    brush.rect(5, 6, 2, 2, '#1f1f1f');
+    brush.rect(9, 6, 2, 2, '#1f1f1f');
+    brush.pixel(5, 6, '#ffffff');
+    brush.pixel(9, 6, '#ffffff');
+    brush.rect(3, 9, 2, 1, cheek ?? lighten(body, 0.3));
+    brush.rect(11, 9, 2, 1, cheek ?? lighten(body, 0.3));
+    brush.rect(6, 10, 4, 1, mouth ?? '#1f1f1f');
+    brush.pixel(5, 9, mouth ?? '#1f1f1f');
+    brush.pixel(10, 9, mouth ?? '#1f1f1f');
+  },
   bread: (brush, [crust, top]) => {
     brush.rect(2, 7, 12, 6, crust ?? '#d9953f');
     brush.rect(3, 6, 10, 1, crust ?? '#d9953f');

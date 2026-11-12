@@ -196,6 +196,37 @@ describe('Conteúdo do PedroCraft', () => {
       expect(golem?.spawn).toBeNull();
     });
 
+    it('a Verity fala, e só ela', () => {
+      const speakers = content.creatures.filter((creature) => creature.greeting !== null);
+
+      expect(speakers.map((creature) => [creature.id, creature.greeting])).toEqual([
+        ['verity', 'Olá, eu sou Verity, eu posso falar tudo!'],
+      ]);
+    });
+
+    it('Verity, Falsity, Cruelty e Lovity têm item na mochila do Criativo, que não sai de receita nem de drop', () => {
+      const dolls = ['verity', 'falsity', 'cruelty', 'lovity'];
+      const obtainable = new Set([
+        ...content.recipes.crafting.map((recipe) => recipe.output.item),
+        ...content.lootTables.flatMap((table) => table.entries.map((entry) => entry.item)),
+      ]);
+
+      for (const id of dolls) {
+        const item = content.items.find((candidate) => candidate.id === id);
+
+        expect(item?.kind).withContext(id).toBe('summon');
+        expect(item?.summons).withContext(id).toBe(id);
+        expect(item?.icon).withContext(id).toEqual(jasmine.objectContaining({ type: 'sprite', shape: 'blob' }));
+        expect(obtainable.has(id)).withContext(id).toBeFalse();
+      }
+    });
+
+    it('o minério de ferro e o de diamante viram blocos para colocar', () => {
+      for (const ore of ['iron-ore', 'diamond-ore']) {
+        expect(content.items.find((item) => item.id === ore)?.places).withContext(ore).toBe(ore);
+      }
+    });
+
     it('Verity e Lovity são bonecos amigos do dia; Falsity e Cruelty, inimigos da noite', () => {
       const dolls = ['verity', 'lovity', 'falsity', 'cruelty'].map((id) => content.creatures.find((creature) => creature.id === id));
 
@@ -401,10 +432,18 @@ describe('Conteúdo do PedroCraft', () => {
       expect(errorOf(() => parseCraftContent(files)).message).toContain('criatura "creeper": só um inimigo pode estourar');
     });
 
-    it('não aceita item que chama inimigo: furaria o Modo Paz', () => {
+    it('não aceita que um item de receita chame inimigo: furaria o Modo Paz', () => {
       entry(files, 'items', 'items', 'iron-golem')['summons'] = 'creeper';
 
-      expect(errorOf(() => parseCraftContent(files)).message).toContain('item "iron-golem": só dá para chamar um amigo');
+      expect(errorOf(() => parseCraftContent(files)).message).toContain(
+        'item "iron-golem": só um amigo (temperament "guardian") pode ser chamado fora do Criativo',
+      );
+    });
+
+    it('não aceita que um boneco da mochila do Criativo saia de drop', () => {
+      list(entry(files, 'loot-tables', 'lootTables', 'verity')['entries']).push({ item: 'falsity', chance: 0.5 });
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('item "falsity": só um amigo');
     });
 
     it('aponta a criatura chamada quando ela não existe', () => {
