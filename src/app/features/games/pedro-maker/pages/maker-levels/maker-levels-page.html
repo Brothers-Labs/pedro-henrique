@@ -40,6 +40,11 @@
 
               <div class="level__info">
                 <h2 class="level__name">{{ level.name }}</h2>
+                @if (lockedIds().has(level.id)) {
+                  <p class="level__secret">
+                    <span aria-hidden="true">🔐</span> Fase secreta: passe pela porta dourada para abrir
+                  </p>
+                }
                 <p class="level__meta">
                   {{ themeOf(level) }} · {{ level.width }} colunas · {{ level.updatedAt | date: 'dd/MM/yyyy' }}
                 </p>
@@ -54,9 +59,15 @@
               </div>
 
               <div class="level__actions">
-                <a class="action" data-tone="green" [routerLink]="['jogar', level.id]">
-                  <span aria-hidden="true">▶</span> Jogar
-                </a>
+                @if (lockedIds().has(level.id)) {
+                  <span class="action action--locked" data-tone="green" aria-disabled="true">
+                    <span aria-hidden="true">🔐</span> Trancada
+                  </span>
+                } @else {
+                  <a class="action" data-tone="green" [routerLink]="['jogar', level.id]">
+                    <span aria-hidden="true">▶</span> Jogar
+                  </a>
+                }
                 <a class="action" data-tone="orange" [routerLink]="['../criar', level.id]">
                   <span aria-hidden="true">✏️</span> Editar
                 </a>

@@ -72,7 +72,8 @@ export class PropView {
   private readonly signTextures: CanvasTexture[] = [];
   private readonly portal: Group | null = null;
   private readonly swirl: Mesh | null = null;
-  private chest: { readonly root: Group; readonly lid: Group } | null = null;
+  /** Um modelo por baú, na ordem da lista do jogo: o do chefão entra quando cai. */
+  private readonly chests: { readonly root: Group; readonly lid: Group }[] = [];
 
   constructor(
     objects: readonly LevelObject[],
@@ -106,7 +107,7 @@ export class PropView {
   update(now: number): void {
     this.updateCheckpoints(now);
     this.updatePortal(now);
-    this.updateChest(now);
+    this.updateChests(now);
   }
 
   dispose(): void {
@@ -263,22 +264,18 @@ export class PropView {
     this.portal.scale.setScalar(backOut(opening));
   }
 
-  private updateChest(now: number): void {
-    const chest = this.triggers.chest;
+  private updateChests(now: number): void {
+    this.triggers.chests.forEach((chest, index) => {
+      const view = this.chests[index] ?? this.buildChest();
 
-    if (!chest) {
-      return;
-    }
+      this.chests[index] = view;
 
-    if (!this.chest) {
-      this.chest = this.buildChest();
-    }
+      const drop = Math.min(1, (now - chest.droppedAt) / CHEST_DROP_MS);
+      const opened = chest.openedAt === null ? 0 : Math.min(1, (now - chest.openedAt) / LID_OPEN_MS);
 
-    const drop = Math.min(1, (now - chest.droppedAt) / CHEST_DROP_MS);
-    const opened = chest.openedAt === null ? 0 : Math.min(1, (now - chest.openedAt) / LID_OPEN_MS);
-
-    this.chest.root.position.set(this.space.x(chest.x), this.space.y(chest.groundY) + (1 - bounceOut(drop)) * CHEST_DROP_HEIGHT, 0);
-    this.chest.lid.rotation.x = -opened * 1.9;
+      view.root.position.set(this.space.x(chest.x), this.space.y(chest.groundY) + (1 - bounceOut(drop)) * CHEST_DROP_HEIGHT, 0);
+      view.lid.rotation.x = -opened * 1.9;
+    });
   }
 
   private buildChest(): { readonly root: Group; readonly lid: Group } {

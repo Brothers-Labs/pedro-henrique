@@ -79,7 +79,8 @@ export class MakerGameHost {
 
   readonly completed = output<LevelRunResult>();
   readonly exited = output<void>();
-  readonly secretFound = output<void>();
+  /** A fase secreta foi achada: a fase do Pedro escolhida na porta dourada, ou `null` na campanha. */
+  readonly secretFound = output<string | null>();
 
   private readonly zone = inject(NgZone);
   private readonly audio = inject(MakerAudioService);
@@ -319,7 +320,7 @@ export class MakerGameHost {
         return;
       case 'secret-found':
         this.showToast('🌟 FASE SECRETA LIBERADA!');
-        this.secretFound.emit();
+        this.secretFound.emit(event.secretLevel);
         return;
       case 'pause-requested':
         this.pause();

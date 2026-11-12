@@ -60,7 +60,8 @@ export type GameSessionEvent =
   | { readonly type: 'power-up-ended'; readonly kind: PowerUpKind }
   | { readonly type: 'mascot'; readonly text: string }
   | { readonly type: 'boss'; readonly boss: BossHudState | null }
-  | { readonly type: 'secret-found' }
+  /** Uma porta liberou a fase secreta; `secretLevel` é a fase do Pedro escolhida na porta dourada, ou `null` na campanha. */
+  | { readonly type: 'secret-found'; readonly secretLevel: string | null }
   | { readonly type: 'pause-requested' }
   | { readonly type: 'defeated' }
   | { readonly type: 'completed'; readonly result: LevelRunResult }

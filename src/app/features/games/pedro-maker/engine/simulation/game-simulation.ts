@@ -42,7 +42,7 @@ import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
 import { cellOf, TileGrid } from './tile-grid';
-import { TriggerSystem, type TriggerHost } from './triggers';
+import { type Chest, TriggerSystem, type TriggerHost } from './triggers';
 import { VisualEventQueue } from './visual-events';
 
 /** Um passo fixo de física: 60 por segundo em qualquer tela, de 60 ou 120 Hz. */
@@ -71,7 +71,10 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
 
 const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
-const CHEST_COINS = 10;
+/** O baú do chefão é o tesouro da fase: chove moeda. */
+const BOSS_CHEST_COINS = 100;
+/** Baú de moedas colocado no editor. */
+const COIN_CHEST_COINS = 25;
 /** Moedas que a porta dourada dá na primeira passagem. */
 const GOLDEN_DOOR_COINS = 10;
 /** Tempo em que os slimes do Rei Slime não machucam: nascem colados no herói que pisou. */
@@ -817,12 +820,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.addCoins(GOLDEN_DOOR_COINS, x, y);
   }
 
-  onSecretDoor(): void {
+  onSecretDoor(secretLevel: string | null): void {
     const body = this.player.body;
 
     this.playSound('secret');
     this.effects.floatingText(centerX(body), body.y - 40, '🌟 SEGREDO!', '#ffe066');
-    this.emit({ type: 'secret-found' });
+    this.emit({ type: 'secret-found', secretLevel });
   }
 
   onPortal(portalX: number, portalY: number): void {
@@ -836,11 +839,18 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.scheduler.after(this.clockMs, VICTORY_DELAY_MS, () => this.emit({ type: 'completed', result }));
   }
 
-  onChestOpened(x: number, y: number): void {
-    this.addCoins(CHEST_COINS, x, y);
+  onChestOpened(chest: Chest, x: number, y: number): void {
+    if (chest.kind === 'coins') {
+      this.effects.burst('coin', x, y, 20);
+      this.addCoins(COIN_CHEST_COINS, x, y);
+      return;
+    }
+
+    this.effects.burst('coin', x, y, 40);
+    this.addCoins(BOSS_CHEST_COINS, x, y);
     this.playSound('victory');
     this.triggers.openPortal(this.clockMs);
-    this.emit({ type: 'mascot', text: 'Um baú de tesouro! O portal abriu!' });
+    this.emit({ type: 'mascot', text: 'Um baú cheio de moedas! O portal abriu!' });
   }
 
   onMascotTip(text: string): void {

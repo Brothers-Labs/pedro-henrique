@@ -16,6 +16,7 @@ import {
   paintCheckpoint,
   paintCrumble,
   paintDoor,
+  paintCoinChest,
   paintGoldenDoor,
   paintLava,
   paintCeilingSpring,
@@ -37,6 +38,7 @@ import {
   PORTAL_HEIGHT,
   PORTAL_SWIRL_SIZE,
   PORTAL_WIDTH,
+  COIN_CHEST_SIZE,
   TALL_SPRITE_HEIGHT,
   TALL_SPRITE_WIDTH,
 } from './block-art';
@@ -356,6 +358,9 @@ function drawIcon(
       return;
     case 'secret-door':
       fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintSecretDoor);
+      return;
+    case 'coin-chest':
+      fit(COIN_CHEST_SIZE, COIN_CHEST_SIZE, paintCoinChest);
       return;
     case 'tree':
       fit(TREE_WIDTH, TREE_HEIGHT, (inner) => paintTree(inner, theme, palette));

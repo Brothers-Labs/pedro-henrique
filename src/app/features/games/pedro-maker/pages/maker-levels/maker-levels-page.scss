@@ -127,6 +127,13 @@
   color: #726c92;
 }
 
+.level__secret {
+  margin: 0.2rem 0 0;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: #8a6510;
+}
+
 .level__actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -139,5 +146,12 @@
   & {
     padding: 0.4rem 0.6rem;
     font-size: var(--text-sm);
+  }
+
+  // Trancada não é botão quebrado: fica visível, mas sem convite ao toque.
+  &--locked {
+    cursor: default;
+    filter: grayscale(0.6);
+    opacity: 0.75;
   }
 }

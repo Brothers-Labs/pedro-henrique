@@ -135,6 +135,19 @@
         </div>
 
         @switch (object.type) {
+          @case ('golden-door') {
+            <label class="selection__field">
+              Fase secreta que ela abre
+              <select class="toolbar__input" (change)="setSecretLevel($event)">
+                <option value="" [selected]="!object.properties?.secretLevel">Nenhuma</option>
+                @for (choice of secretLevelChoices(); track choice.id) {
+                  <option [value]="choice.id" [selected]="object.properties?.secretLevel === choice.id">
+                    {{ choice.name }}
+                  </option>
+                }
+              </select>
+            </label>
+          }
           @case ('sign') {
             <label class="selection__field">
               Texto da placa

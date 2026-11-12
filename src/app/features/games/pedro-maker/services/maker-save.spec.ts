@@ -1,6 +1,6 @@
 import { DEFAULT_LOOK } from '../config/character.config';
-import type { LevelObject } from '../models/level.model';
-import { sanitizeCustomLevel } from './custom-level.service';
+import type { CustomLevel, LevelObject } from '../models/level.model';
+import { lockedSecretLevelIds, sanitizeCustomLevel } from './custom-level.service';
 import { reconcile } from './maker-progress.service';
 
 describe('Leitura segura dos saves do Pedro Maker', () => {
@@ -103,6 +103,26 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
       ]);
     });
 
+    it('guarda a fase secreta da porta dourada e o baú de moedas, e descarta id de fase estranho', () => {
+      const level = sanitizeCustomLevel({
+        ...valid,
+        secretUnlocked: 'sim',
+        objects: [
+          { id: 'porta', type: 'golden-door', x: 6, y: 13, properties: { pair: 'C', secretLevel: 'fase-1234-abcd' } },
+          { id: 'porta-estranha', type: 'golden-door', x: 9, y: 13, properties: { secretLevel: '../<script>' } },
+          { id: 'bau', type: 'coin-chest', x: 12, y: 13 },
+        ],
+      });
+
+      expect(level?.secretUnlocked).toBeFalse();
+      expect(level?.objects).toEqual([
+        { id: 'porta', type: 'golden-door', x: 6, y: 13, properties: { pair: 'C', secretLevel: 'fase-1234-abcd' } },
+        { id: 'porta-estranha', type: 'golden-door', x: 9, y: 13 },
+        { id: 'bau', type: 'coin-chest', x: 12, y: 13 },
+      ]);
+      expect(sanitizeCustomLevel({ ...valid, secretUnlocked: true })?.secretUnlocked).toBeTrue();
+    });
+
     it('guarda a plataforma de esqueleto e a mola de cabeça pra baixo', () => {
       const objects: readonly LevelObject[] = [
         { id: 'ossos', type: 'skeleton-platform', x: 8, y: 11 },
@@ -110,6 +130,34 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
       ];
 
       expect(sanitizeCustomLevel({ ...valid, objects })?.objects).toEqual(objects);
+    });
+  });
+
+  describe('fases secretas do Pedro', () => {
+    const levelWith = (id: string, objects: readonly LevelObject[], secretUnlocked = false): CustomLevel => ({
+      id,
+      name: id,
+      theme: 'vale',
+      createdAt: '2026-11-12T10:00:00.000Z',
+      updatedAt: '2026-11-12T10:00:00.000Z',
+      width: 40,
+      height: 15,
+      objects,
+      completed: false,
+      bestStars: 0,
+      secretUnlocked,
+    });
+    const doorTo = (target: string): LevelObject => ({ id: 'porta', type: 'golden-door', x: 6, y: 13, properties: { secretLevel: target } });
+
+    it('tranca só a fase escolhida pela porta dourada de outra fase, até ser destrancada', () => {
+      const levels = [levelWith('entrada', [doorTo('tesouro')]), levelWith('tesouro', []), levelWith('livre', [])];
+
+      expect([...lockedSecretLevelIds(levels)]).toEqual(['tesouro']);
+      expect(lockedSecretLevelIds([levels[0], levelWith('tesouro', [], true)]).size).toBe(0);
+    });
+
+    it('a porta que aponta para a própria fase não tranca ninguém', () => {
+      expect(lockedSecretLevelIds([levelWith('sozinha', [doorTo('sozinha')])]).size).toBe(0);
     });
   });
 });

@@ -72,6 +72,8 @@ export class CustomLevelService {
       // Mudar a fase exige vencê-la de novo para valer como concluída.
       completed: false,
       bestStars: 0,
+      // Editar uma fase secreta já achada não a tranca de novo.
+      secretUnlocked: existing?.secretUnlocked ?? false,
     };
 
     await this.database.put(MAKER_LEVEL_STORE, level);
@@ -116,6 +118,26 @@ export class CustomLevelService {
     await this.database.put(MAKER_LEVEL_STORE, updated);
     this.upsert(updated);
     this.outbox.enqueue({ kind: 'upsert', id, at: updated.updatedAt });
+  }
+
+  /**
+   * Destranca a fase secreta: a porta dourada de outra fase levou até ela.
+   * Devolve `true` só na primeira vez, para a tela comemorar uma vez.
+   */
+  async unlockSecret(id: string): Promise<boolean> {
+    const level = await this.find(id);
+
+    if (!level || level.secretUnlocked) {
+      return false;
+    }
+
+    const updated: CustomLevel = { ...level, secretUnlocked: true, updatedAt: new Date().toISOString() };
+
+    await this.database.put(MAKER_LEVEL_STORE, updated);
+    this.upsert(updated);
+    this.outbox.enqueue({ kind: 'upsert', id, at: updated.updatedAt });
+
+    return true;
   }
 
   /**
@@ -192,6 +214,23 @@ export function customLevelBlueprint(level: CustomLevel): LevelBlueprint {
 }
 
 /**
+ * Fases secretas ainda trancadas: as escolhidas pela porta dourada de outra
+ * fase e que o Pedro ainda não destrancou passando por ela.
+ */
+export function lockedSecretLevelIds(levels: readonly CustomLevel[]): ReadonlySet<string> {
+  const targets = new Set(
+    levels.flatMap((level) =>
+      level.objects
+        .filter((object) => object.type === 'golden-door' && object.properties?.secretLevel !== undefined)
+        .map((object) => object.properties?.secretLevel)
+        .filter((target): target is string => target !== undefined && target !== level.id),
+    ),
+  );
+
+  return new Set(levels.filter((level) => targets.has(level.id) && !level.secretUnlocked).map((level) => level.id));
+}
+
+/**
  * Normaliza uma fase vinda do banco.
  *
  * Fase com tamanho impossível é descartada inteira; objeto estranho some sem
@@ -239,6 +278,7 @@ export function sanitizeCustomLevel(value: unknown): CustomLevel | null {
     completed: stored.completed === true,
     bestStars:
       typeof stored.bestStars === 'number' ? Math.min(3, Math.max(0, Math.trunc(stored.bestStars))) : 0,
+    secretUnlocked: stored.secretUnlocked === true,
   };
 }
 

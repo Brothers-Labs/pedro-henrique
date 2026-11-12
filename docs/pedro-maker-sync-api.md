@@ -57,7 +57,8 @@ tudo como conteúdo de uma criança: sem rastreamento e sem compartilhar com ter
     { "id": "peca-4", "type": "portal", "x": 56, "y": 11 }
   ],
   "completed": true,
-  "bestStars": 2
+  "bestStars": 2,
+  "secretUnlocked": false
 }
 ```
 
@@ -70,6 +71,7 @@ tudo como conteúdo de uma criança: sem rastreamento e sem compartilhar com ter
 | `height` | Inteiro de 15 a 40. |
 | `objects` | Até 12 000 peças. `x`/`y` inteiros dentro da fase. Tipos em `models/level.model.ts`. |
 | `bestStars` | Inteiro de 0 a 3. |
+| `secretUnlocked` | Booleano. A fase secreta já foi destrancada pela porta dourada de outra fase (propriedade `secretLevel` da peça `golden-door`, com o id desta fase). Ausente vale `false`. |
 
 O cliente limpa tudo o que recebe (peça desconhecida some, fase com tamanho impossível é
 descartada), mas o servidor também deve validar antes de gravar e recusar com `400` o que não

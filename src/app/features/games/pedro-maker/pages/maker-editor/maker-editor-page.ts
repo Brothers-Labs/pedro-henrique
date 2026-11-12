@@ -198,6 +198,9 @@ export class MakerEditorPage {
     return cell ? (objectAt(this.level(), cell.x, cell.y) ?? null) : null;
   });
 
+  /** As outras fases do Pedro: qualquer uma pode virar a fase secreta de uma porta dourada. */
+  protected readonly secretLevelChoices = computed(() => this.customLevels.levels().filter((level) => level.id !== this.currentId()));
+
   /** Porta de madeira ou dourada: as duas escolhem a qual porta levam. */
   protected readonly isSelectedDoor = computed(() => {
     const type = this.selectedObject()?.type;
@@ -220,6 +223,11 @@ export class MakerEditorPage {
   constructor() {
     // Com a sincronização ligada, a fase salva aqui sobe para os outros aparelhos em seguida.
     inject(LevelSyncService);
+
+    // A lista das fases alimenta a escolha da fase secreta da porta dourada.
+    void this.customLevels.load().catch((error: unknown) =>
+      console.error('Pedro Maker: não foi possível listar as fases para a porta dourada.', error),
+    );
 
     const customId = this.route.snapshot.paramMap.get('customId');
 
@@ -509,6 +517,12 @@ export class MakerEditorPage {
 
   protected setPair(pair: string): void {
     this.updateSelected({ pair });
+  }
+
+  protected setSecretLevel(event: Event): void {
+    const secretLevel = (event.target as HTMLSelectElement).value;
+
+    this.updateSelected({ secretLevel: secretLevel === '' ? undefined : secretLevel });
   }
 
   /* Histórico, tamanho e aparência ------------------------------------------------------- */

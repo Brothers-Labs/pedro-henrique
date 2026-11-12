@@ -86,6 +86,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   door: { surface: 'none', isUnique: false },
   'golden-door': { surface: 'none', isUnique: false },
   'secret-door': { surface: 'none', isUnique: false },
+  'coin-chest': { surface: 'none', isUnique: false },
   tree: { surface: 'none', isUnique: false },
   bush: { surface: 'none', isUnique: false },
   flower: { surface: 'none', isUnique: false },
@@ -227,6 +228,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   ...GIANT_COIN_PIECES,
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
+  { id: 'coin-chest', category: 'itens', type: 'coin-chest', label: 'Baú de Moedas' },
 
   { id: 'platform', category: 'plataformas', type: 'platform', label: 'Plataforma' },
   { id: 'cloud', category: 'plataformas', type: 'cloud', label: 'Nuvem' },
