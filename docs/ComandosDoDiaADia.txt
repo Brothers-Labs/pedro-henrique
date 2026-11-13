@@ -77,7 +77,7 @@ ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
 
 Regras
 1. aparecer novidades todos os dias
-2. nao ter o erro, ano que vem vai.
+2. nao ter o erro
 3. nao marcar mensagem ruim. tem que fazer o bom todoa os dias
 
 pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
