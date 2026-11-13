@@ -256,7 +256,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'bush', category: 'decoracao', type: 'bush', label: 'Arbusto' },
   { id: 'flower', category: 'decoracao', type: 'flower', label: 'Flor' },
   { id: 'rock', category: 'decoracao', type: 'rock', label: 'Pedrinha' },
-  { id: 'sign', category: 'decoracao', type: 'sign', label: 'Placa', properties: { text: 'Fase do Pedro!' } },
+  { id: 'sign', category: 'decoracao', type: 'sign', label: 'Placa', properties: { text: 'Fase Secreta!' } },
   { id: 'fence', category: 'decoracao', type: 'fence', label: 'Cerca' },
   { id: 'snowman', category: 'decoracao', type: 'snowman', label: 'Boneco de Neve' },
   { id: 'toadstool', category: 'decoracao', type: 'toadstool', label: 'Cogumelinho' },
@@ -288,6 +288,13 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
     type: 'power-up',
     label: 'Cogumelo Turbo',
     properties: { powerUp: 'turbo-mushroom' },
+  },
+  {
+    id: 'power-swap-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo Troca-Personagem',
+    properties: { powerUp: 'swap-mushroom' },
   },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
   {
@@ -347,6 +354,7 @@ export const POWER_UP_LABELS = {
   'raccoon-leaf': { label: 'Folha do Guaxinim', emoji: '🦝' },
   'giga-mushroom': { label: 'Giga Cogumelo', emoji: '💪' },
   'turbo-mushroom': { label: 'Cogumelo Turbo', emoji: '💨' },
+  'swap-mushroom': { label: 'Cogumelo Troca-Personagem', emoji: '🔄' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {

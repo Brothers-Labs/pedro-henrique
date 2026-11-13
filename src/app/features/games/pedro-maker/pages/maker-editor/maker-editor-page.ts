@@ -13,7 +13,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { createId } from '../../../../../core/utils/format';
-import { paintObjectIcon } from '../../art/texture-catalog';
+import { paintObjectIcon, SHARP_ICON_SCALE } from '../../art/texture-catalog';
 import { MakerAchievementToast } from '../../components/maker-achievement-toast/maker-achievement-toast';
 import { MakerGameHost } from '../../components/maker-game-host/maker-game-host';
 import {
@@ -98,7 +98,10 @@ const SURPRISE_OPTIONS: readonly { readonly id: SurpriseContent; readonly label:
 ];
 
 const POWER_UP_OPTIONS = (Object.keys(POWER_UP_LABELS) as PowerUpKind[]).map((id) => ({ id, ...POWER_UP_LABELS[id] }));
-const DOOR_PAIRS = ['A', 'B', 'C', 'D'] as const;
+const DOOR_PAIRS = ['A', 'B', 'C', 'D', 'E'] as const;
+
+/** No Testar, dois corações a mais: dá para conferir a fase toda sem recomeçar a cada tropeço. */
+const TEST_BONUS_HEARTS = 2;
 const RANGE_LIMITS = { min: 1, max: 12 } as const;
 
 const ZOOM_STEP = 0.25;
@@ -155,6 +158,7 @@ export class MakerEditorPage {
   protected readonly surpriseOptions = SURPRISE_OPTIONS;
   protected readonly powerUpOptions = POWER_UP_OPTIONS;
   protected readonly doorPairs = DOOR_PAIRS;
+  protected readonly testBonusHearts = TEST_BONUS_HEARTS;
   protected readonly rangeLimits = RANGE_LIMITS;
 
   protected readonly history = signal<EditorHistory>(createHistory(this.newLevel()));
@@ -188,7 +192,7 @@ export class MakerEditorPage {
 
     return EDITOR_PIECES.filter((piece) => piece.category === this.category()).map((piece) => ({
       piece,
-      icon: paintObjectIcon(piece, theme).toDataURL(),
+      icon: paintObjectIcon(piece, theme, SHARP_ICON_SCALE).toDataURL(),
     }));
   });
 

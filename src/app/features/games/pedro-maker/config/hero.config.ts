@@ -1,5 +1,6 @@
 import type { HeroId } from '../models/progress.model';
 import type { CharacterPalette } from './character.config';
+import { CORAL_PRINCESS, CROWN_GOLD, ESTRELA_PRINCESS, JADE_PRINCESS } from './princess.config';
 import { WARIO_COLORS } from './wario.config';
 
 /** Jeito de se mexer de um herói, em proporção à física padrão do jogo. */
@@ -36,6 +37,9 @@ export interface HeroDefinition {
  * heróis originais do Pedro Maker. Nenhum pula menos que o Pedro — senão uma
  * fase validada poderia ficar impossível —, e o que muda entre eles é a altura
  * extra do pulo e o jeito de frear.
+ *
+ * As princesas Estrela, Jade e Coral também são originais: de vestido rodado e
+ * coroa, seguem a mesma regra de nunca pular menos que o Pedro.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -214,6 +218,39 @@ export const HEROES: readonly HeroDefinition[] = [
     abilities: { jumpMultiplier: 1, brakingMultiplier: 1.15 },
     outfit: { cap: '#1f6b3a', shirt: '#ffd23f', backpack: '#cccccc', backpackStyle: 'none' },
   },
+  {
+    id: 'estrela',
+    name: 'Princesa Estrela',
+    description: 'A princesa que conta as estrelas: vestido lilás e coroa com pedra azul.',
+    traits: [
+      { emoji: '⭐', label: 'Pula um pouco mais alto' },
+      { emoji: '🎯', label: 'Freia quase sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.15), brakingMultiplier: 0.9 },
+    outfit: { cap: CROWN_GOLD, shirt: ESTRELA_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'jade',
+    name: 'Princesa Jade',
+    description: 'A princesa do jardim: vestido verde-jade, cabelo preto e pedra vermelha.',
+    traits: [
+      { emoji: '🌿', label: 'Pula igual ao Pedro' },
+      { emoji: '🧱', label: 'Para firme, sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: 1, brakingMultiplier: 1.2 },
+    outfit: { cap: CROWN_GOLD, shirt: JADE_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'coral',
+    name: 'Princesa Coral',
+    description: 'A princesa do mar: vestido coral com barra turquesa e cabelo ruivo.',
+    traits: [
+      { emoji: '🌊', label: 'Pula bem alto, como uma onda' },
+      { emoji: '🛼', label: 'Escorrega um pouco ao frear' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.25), brakingMultiplier: 0.6 },
+    outfit: { cap: CROWN_GOLD, shirt: CORAL_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
 ];
 
 export const DEFAULT_HERO: HeroId = 'pedro';
@@ -222,6 +259,17 @@ const HEROES_BY_ID = new Map<HeroId, HeroDefinition>(HEROES.map((hero) => [hero.
 
 export function isHeroId(value: unknown): value is HeroId {
   return typeof value === 'string' && HEROES_BY_ID.has(value as HeroId);
+}
+
+/**
+ * Quem o Cogumelo Troca-Personagem traz: o herói seguinte da turma, na ordem
+ * da tela de personagens, voltando ao começo depois do último. Em ordem, e não
+ * sorteado, para a criança ver a turma inteira pegando cogumelo atrás de cogumelo.
+ */
+export function nextHero(id: HeroId): HeroId {
+  const index = HEROES.findIndex((hero) => hero.id === id);
+
+  return HEROES[(index + 1) % HEROES.length].id;
 }
 
 export function heroDefinition(id: HeroId): HeroDefinition {

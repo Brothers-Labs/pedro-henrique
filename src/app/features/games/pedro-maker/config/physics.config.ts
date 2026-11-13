@@ -79,6 +79,8 @@ export const POWER_UP_DURATION_MS = {
   'raccoon-leaf': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
+  /** O troca-personagem também age na hora: o herói vira outro. */
+  'swap-mushroom': 0,
 } as const;
 
 /**

@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 
 import { THEME_PALETTES } from '../../art/palettes';
-import { paintObjectIcon } from '../../art/texture-catalog';
+import { paintObjectIcon, SHARP_ICON_SCALE } from '../../art/texture-catalog';
 import { OBJECT_BEHAVIOR } from '../../config/object-catalog';
 import { SKELETON_PLATFORM_CELLS, SKELETON_PLATFORM_SEGMENTS, SKELETON_SEGMENT_CELLS, skeletonWallColumn } from '../../levels/skeleton-platform';
 import type { LevelObject } from '../../models/level.model';
@@ -360,7 +360,8 @@ export class EditorCanvas {
 
     this.keepZoomFocus(viewport);
 
-    const ratio = Math.min(2, window.devicePixelRatio || 1);
+    // Até 3x: telas 4K e celulares de alta densidade desenham a grade sem borrar.
+    const ratio = Math.min(3, window.devicePixelRatio || 1);
     const width = viewport.clientWidth;
     const height = viewport.clientHeight;
 
@@ -567,7 +568,7 @@ export class EditorCanvas {
       return cached;
     }
 
-    const icon = paintObjectIcon(object, level.theme);
+    const icon = paintObjectIcon(object, level.theme, SHARP_ICON_SCALE);
     this.icons.set(key, icon);
 
     return icon;

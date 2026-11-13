@@ -1,4 +1,4 @@
-import { heroDefinition } from '../../config/hero.config';
+import { heroDefinition, nextHero } from '../../config/hero.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import {
   BIG_COIN_VALUE,
@@ -815,6 +815,51 @@ describe('Simulação do Pedro Maker', () => {
 
     expect(lastHud(harness.events)?.hearts).toBe(3);
     expect(harness.simulation.player.hasPowerUp('one-up')).toBeFalse();
+  });
+
+  it('o Cogumelo Troca-Personagem transforma o Pedro no próximo herói, com o pulo dele', () => {
+    const harness = start(flatLevel().add('power-up', 8, SURFACE - 1, { powerUp: 'swap-mushroom' }).build(META));
+    const pedroApex = jumpApex(start(flatLevel().build(META)));
+    run(harness, 0.2);
+
+    harness.simulation.player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(harness.simulation.hero).toBe(nextHero('pedro'));
+    expect(harness.simulation.player.hasPowerUp('swap-mushroom')).toBeFalse();
+    expect(harness.events).toContain({ type: 'mascot', text: `Agora você é ${heroDefinition(nextHero('pedro')).name}!` });
+    expect(harness.events.some((event) => event.type === 'power-up')).toBeFalse();
+
+    const swappedApex = jumpApex(harness);
+    expect(swappedApex / pedroApex).toBeCloseTo(heroDefinition(nextHero('pedro')).abilities.jumpMultiplier ** 2, 1);
+  });
+
+  it('dois Cogumelos Troca-Personagem seguem a turma em ordem', () => {
+    const harness = start(
+      flatLevel()
+        .add('power-up', 8, SURFACE - 1, { powerUp: 'swap-mushroom' })
+        .add('power-up', 14, SURFACE - 1, { powerUp: 'swap-mushroom' })
+        .build(META),
+      'duda',
+    );
+    run(harness, 0.2);
+
+    for (const x of [8, 14]) {
+      harness.simulation.player.placeFeetAt((x + 0.5) * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.1);
+    }
+
+    expect(harness.simulation.hero).toBe(nextHero(nextHero('duda')));
+  });
+
+  it('a dificuldade com corações a mais, como no Testar do editor, começa e enche com eles', () => {
+    const rules = { ...DIFFICULTY_RULES.aventura, hearts: DIFFICULTY_RULES.aventura.hearts + 2 };
+    const events: GameSessionEvent[] = [];
+    const simulation = new GameSimulation({ blueprint: flatLevel().build(META), hero: 'pedro', rules, isTouch: false, listener: (event) => events.push(event) });
+
+    simulation.announceReady();
+
+    expect(lastHud(events)).toEqual(jasmine.objectContaining({ hearts: 5, maxHearts: 5 }));
   });
 
   it('lança bolas de fogo com a Flor de Fogo e derruba o slime', () => {

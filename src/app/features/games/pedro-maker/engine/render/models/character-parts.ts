@@ -18,6 +18,7 @@ import {
   ZECA_BUILD,
 } from './overalls-parts';
 import { pedroParts } from './pedro-parts';
+import { CORAL_BUILD, ESTRELA_BUILD, JADE_BUILD, princessParts } from './princess-parts';
 import { warioParts } from './wario-parts';
 
 /**
@@ -71,5 +72,11 @@ export function characterParts(palette: CharacterPalette): CharacterParts {
       return overallsParts(palette, RAFA_BUILD);
     case 'duda':
       return overallsParts(palette, DUDA_BUILD);
+    case 'estrela':
+      return princessParts(ESTRELA_BUILD);
+    case 'jade':
+      return princessParts(JADE_BUILD);
+    case 'coral':
+      return princessParts(CORAL_BUILD);
   }
 }
