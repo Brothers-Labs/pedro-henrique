@@ -31,8 +31,8 @@ export class PedroFigure {
   /** Texto alternativo; vazio quando a figura é só decoração ao lado do nome. */
   readonly label = input<string>();
 
-  protected readonly alt = computed(() => this.label() ?? `O ${heroDefinition(this.character().hero).name}, personagem do jogo`);
+  protected readonly alt = computed(() => this.label() ?? `${heroDefinition(this.character().hero).name}, personagem do jogo`);
 
-  /** Pintado em 3x: a vitrine do menu mostra o herói bem maior que no jogo. */
-  protected readonly source = computed(() => paintCharacterIcon(this.character(), 3).toDataURL());
+  /** Pintado em 4x: a vitrine do menu mostra o herói bem maior que no jogo, nítido até em tela 4K. */
+  protected readonly source = computed(() => paintCharacterIcon(this.character(), 4).toDataURL());
 }

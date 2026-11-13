@@ -127,7 +127,7 @@ test('Maker saves the skeleton platform and the upside-down spring', async ({ pa
 
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
-  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo']) {
+  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo', 'Princesa Estrela', 'Princesa Jade', 'Princesa Coral']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${name}\\b`) })).toBeVisible();
   }
   const giuseppe = page.getByRole('button', { name: /^Giuseppe\b/ });

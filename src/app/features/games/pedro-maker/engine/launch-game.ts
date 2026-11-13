@@ -5,6 +5,7 @@ import { PlayerInput } from './input/player-input';
 import { LevelView } from './render/level-view';
 import { FrameBudgetMonitor, initialQualityTier, QUALITY } from './render/quality';
 import { Stage } from './render/stage';
+import { startsInUltra } from './render/ultra-resolution';
 import { GameSimulation, STEP_MS } from './simulation/game-simulation';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
@@ -20,7 +21,7 @@ const BUILD_FAILED_MESSAGE = 'Não foi possível montar esta fase.';
 export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
   const { blueprint, listener } = options;
   const tier = initialQualityTier();
-  const monitor = new FrameBudgetMonitor(tier);
+  let monitor = new FrameBudgetMonitor(tier);
   const input = new PlayerInput(options.input, window);
 
   let stage: Stage | null = null;
@@ -45,10 +46,19 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
 
     const lower = monitor.sample(frameMs);
 
-    if (lower && stage) {
-      stage.applyQuality(lower);
-      view.applyQuality(QUALITY[lower]);
+    if (!lower || !stage) {
+      return;
     }
+
+    // O 4K é o primeiro a sair: a qualidade só baixa se o jogo continuar engasgando sem ele.
+    if (stage.isUltraResolution) {
+      stage.leaveUltraResolution();
+      monitor = new FrameBudgetMonitor(tier);
+      return;
+    }
+
+    stage.applyQuality(lower);
+    view.applyQuality(QUALITY[lower]);
   }, STEP_MS);
 
   const fail = (message: string, error: unknown): void => {
@@ -111,7 +121,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
   };
 
   try {
-    stage = new Stage(options.parent, blueprint.theme, THEME_PALETTES[blueprint.theme], tier);
+    stage = new Stage(options.parent, blueprint.theme, THEME_PALETTES[blueprint.theme], tier, startsInUltra(tier));
     rebuild();
   } catch (error) {
     // Sem WebGL não há jogo; o aviso sai depois do retorno, quando a tela já escuta.

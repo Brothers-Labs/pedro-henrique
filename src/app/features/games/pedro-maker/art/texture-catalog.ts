@@ -115,6 +115,7 @@ import {
   VAVA_PORTRAIT,
   ZECA_PORTRAIT,
 } from './overalls-art';
+import { CORAL_PORTRAIT, ESTRELA_PORTRAIT, JADE_PORTRAIT, paintPrincessPortrait } from './princess-art';
 import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
@@ -125,16 +126,25 @@ import { paintVoxelIcon } from './voxel-tiles';
 const ICON_SIZE = TILE_SIZE;
 
 /**
+ * Ícones do editor são pintados com três vezes os pixels da célula: na grade
+ * ampliada e em telas 4K ficam nítidos, sem borrar ao esticar.
+ */
+export const SHARP_ICON_SCALE = 3;
+
+/**
  * Ícone de uma peça na grade do editor, pintado em 2D a partir do mesmo
  * catálogo de peças que o jogo monta em 3D.
  *
  * Peças maiores que uma célula (árvore, portal, bandeira) são reduzidas para
  * caber nela — no editor o que importa é reconhecer a peça.
  */
-export function paintObjectIcon(object: Pick<LevelObject, 'type' | 'properties'>, theme: LevelTheme): HTMLCanvasElement {
+export function paintObjectIcon(object: Pick<LevelObject, 'type' | 'properties'>, theme: LevelTheme, scale = 1): HTMLCanvasElement {
   const palette = THEME_PALETTES[theme];
 
-  return paint(ICON_SIZE, ICON_SIZE, (context) => drawIcon(context, object, theme, palette));
+  return paint(ICON_SIZE * scale, ICON_SIZE * scale, (context) => {
+    context.scale(scale, scale);
+    drawIcon(context, object, theme, palette);
+  });
 }
 
 /** O herói parado, pintado em `scale` vezes o tamanho base para ficar nítido ampliado. */
@@ -195,6 +205,15 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       return;
     case 'duda':
       paintOverallsPortrait(context, character, DUDA_PORTRAIT);
+      return;
+    case 'estrela':
+      paintPrincessPortrait(context, character, ESTRELA_PORTRAIT);
+      return;
+    case 'jade':
+      paintPrincessPortrait(context, character, JADE_PORTRAIT);
+      return;
+    case 'coral':
+      paintPrincessPortrait(context, character, CORAL_PORTRAIT);
       return;
   }
 }

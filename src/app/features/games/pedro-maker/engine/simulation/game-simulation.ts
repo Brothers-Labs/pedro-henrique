@@ -1,4 +1,4 @@
-import { heroDefinition } from '../../config/hero.config';
+import { heroDefinition, nextHero } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import {
   GIGA_PHYSICS,
@@ -128,6 +128,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   private readonly random: SeededRandom;
   private runTimeMs = 0;
   private hearts: number;
+  private currentHero: HeroId;
   private coins = 0;
   private readonly coinsTotal: number;
   private readonly crystalsFound: boolean[];
@@ -143,7 +144,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   constructor(private readonly options: SimulationOptions) {
     const { blueprint } = options;
-    const crystalIndexOf = indexCrystals(blueprint.objects);
+
+    this.currentHero = options.hero;    const crystalIndexOf = indexCrystals(blueprint.objects);
 
     this.random = new SeededRandom(seedFromText(blueprint.id));
     this.hearts = options.rules.hearts;
@@ -163,6 +165,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   get blueprint(): LevelBlueprint {
     return this.options.blueprint;
+  }
+
+  /** Herói em cena: começa o escolhido e muda a cada Cogumelo Troca-Personagem. */
+  get hero(): HeroId {
+    return this.currentHero;
   }
 
   /** Avisa a tela de que a fase está de pé, com o placar inicial. */
@@ -245,7 +252,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.respawnX = (start.x + 0.5) * TILE_SIZE;
     this.respawnY = (start.y + 1) * TILE_SIZE;
 
-    return new Player(this.respawnX, this.respawnY, this, heroDefinition(this.options.hero).abilities);
+    return new Player(this.respawnX, this.respawnY, this, heroDefinition(this.currentHero).abilities);
   }
 
   private createEnemies(objects: readonly LevelObject[]): void {
@@ -906,6 +913,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return;
     }
 
+    if (kind === 'swap-mushroom') {
+      this.swapHero(x, y);
+      return;
+    }
+
     this.player.grantPowerUp(kind, this.clockMs);
 
     const { emoji, label } = POWER_UP_LABELS[kind];
@@ -924,6 +936,17 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (movementTip) {
       this.emit({ type: 'mascot', text: movementTip });
     }
+  }
+
+  /** O troca-personagem não fica com o herói: na hora ele vira o próximo da turma, com os poderes que já tinha. */
+  private swapHero(x: number, y: number): void {
+    const hero = heroDefinition(nextHero(this.currentHero));
+
+    this.currentHero = hero.id;
+    this.player.changeAbilities(hero.abilities);
+    this.effects.burst('sparkle', x, y, 24);
+    this.effects.floatingText(x, y - 30, `🔄 VIROU ${hero.name.toUpperCase()}!`, '#e2c6ff');
+    this.emit({ type: 'mascot', text: `Agora você é ${hero.name}!` });
   }
 
   private result(): LevelRunResult {

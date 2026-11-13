@@ -108,6 +108,19 @@ export interface CharacterPalette {
   readonly backpackStyle: BackpackStyle;
 }
 
+/**
+ * Cores de quem o Cogumelo Troca-Personagem trouxe. Herói de roupa fixa veste a
+ * dele; o Pedro volta com o visual escolhido se começou a fase como Pedro, e
+ * com o visual padrão se a fase começou com outro herói.
+ */
+export function swappedPalette(original: CharacterPalette, hero: HeroId): CharacterPalette {
+  if (hero === original.hero) {
+    return original;
+  }
+
+  return paletteFor(DEFAULT_LOOK, hero);
+}
+
 /** Heróis de roupa fixa ignoram o visual escolhido: o Gui é sempre o Gui de boné verde. */
 export function paletteFor(look: CharacterLook, hero: HeroId): CharacterPalette {
   const outfit = heroDefinition(hero).outfit;

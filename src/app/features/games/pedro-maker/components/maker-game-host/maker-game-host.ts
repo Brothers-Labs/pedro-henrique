@@ -76,6 +76,8 @@ export class MakerGameHost {
   readonly blueprint = input.required<LevelBlueprint>();
   readonly label = input.required<string>();
   readonly exitLabel = input('Voltar ao mapa');
+  /** Corações a mais que a dificuldade dá, como no Testar do editor. */
+  readonly bonusHearts = input(0);
 
   readonly completed = output<LevelRunResult>();
   readonly exited = output<void>();
@@ -240,12 +242,13 @@ export class MakerGameHost {
       const { launchMakerGame } = await import('../../engine/launch-game');
       const settings = this.settingsService.settings();
       const pet = this.mascot();
+      const rules = this.settingsService.difficultyRules();
 
       this.session = this.zone.runOutsideAngular(() =>
         launchMakerGame({
           parent: this.stage().nativeElement,
           blueprint: this.blueprint(),
-          rules: this.settingsService.difficultyRules(),
+          rules: { ...rules, hearts: rules.hearts + Math.max(0, Math.trunc(this.bonusHearts())) },
           character: this.progress.character(),
           // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.
           effectsEnabled: settings.effects && this.motion.isAllowed(),

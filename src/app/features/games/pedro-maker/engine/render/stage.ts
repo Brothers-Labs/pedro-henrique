@@ -20,6 +20,7 @@ import { context2d, createCanvas } from '../../art/canvas';
 import type { ThemePalette } from '../../art/palettes';
 import type { LevelTheme } from '../../models/level.model';
 import { QUALITY, type QualitySettings, type QualityTier } from './quality';
+import { isSoftwareRenderer, renderPixelRatio, rendererName, ULTRA_SHADOW_MAP_SIZE } from './ultra-resolution';
 
 /**
  * Onde o sol fica em relação ao ponto que a câmera olha: alto, um pouco à
@@ -68,6 +69,8 @@ export class Stage {
   private readonly skyTexture: CanvasTexture;
   private readonly resizeObserver: ResizeObserver;
   private quality: QualitySettings;
+  /** Quadro em 4K por cima da qualidade alta; sai na primeira vez que o jogo engasga. */
+  private isUltra: boolean;
   private width = 1;
   private height = 1;
 
@@ -76,6 +79,7 @@ export class Stage {
     theme: LevelTheme,
     palette: ThemePalette,
     tier: QualityTier,
+    isUltra: boolean,
   ) {
     this.quality = QUALITY[tier];
     this.renderer = new WebGLRenderer({
@@ -83,6 +87,7 @@ export class Stage {
       powerPreference: 'high-performance',
       alpha: false,
     });
+    this.isUltra = isUltra && !isSoftwareRenderer(rendererName(this.renderer.getContext()));
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -138,24 +143,34 @@ export class Stage {
     return this.quality;
   }
 
+  get isUltraResolution(): boolean {
+    return this.isUltra;
+  }
+
   applyQuality(tier: QualityTier): void {
     const quality = QUALITY[tier];
     const shadowsChanged = quality.shadows !== this.renderer.shadowMap.enabled;
 
     this.quality = quality;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
     this.renderer.shadowMap.enabled = quality.shadows;
     this.sun.castShadow = quality.shadows;
-    this.sun.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
-    this.sun.shadow.map?.dispose();
-    this.sun.shadow.map = null;
 
     if (shadowsChanged) {
       // Ligar ou desligar sombra muda o programa dos materiais: eles precisam recompilar.
       this.scene.traverse((object) => markMaterialsForUpdate(object));
     }
 
-    this.resize();
+    this.applyResolution();
+  }
+
+  /** Volta do 4K para a densidade da tela, mantendo a qualidade atual. */
+  leaveUltraResolution(): void {
+    if (!this.isUltra) {
+      return;
+    }
+
+    this.isUltra = false;
+    this.applyResolution();
   }
 
   /** O sol e a lanterna seguem o ponto que a câmera olha, para a sombra ficar sempre nítida. */
@@ -177,12 +192,24 @@ export class Stage {
     this.renderer.domElement.remove();
   }
 
+  /** Sombra e densidade do quadro dependem do 4K; a sombra velha é descartada para nascer no tamanho novo. */
+  private applyResolution(): void {
+    const shadowMapSize = this.isUltra ? ULTRA_SHADOW_MAP_SIZE : this.quality.shadowMapSize;
+
+    this.sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+    this.sun.shadow.map?.dispose();
+    this.sun.shadow.map = null;
+    this.resize();
+  }
+
   private resize(): void {
     const width = Math.max(1, this.parent.clientWidth);
     const height = Math.max(1, this.parent.clientHeight);
 
     this.width = width;
     this.height = height;
+    // A densidade do 4K depende da largura: recalcula a cada mudança de tamanho.
+    this.renderer.setPixelRatio(renderPixelRatio(this.quality, this.isUltra, window.devicePixelRatio, width));
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();

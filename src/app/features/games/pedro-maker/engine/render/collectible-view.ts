@@ -53,6 +53,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'raccoon-leaf': '#e8892b',
   'giga-mushroom': '#d6336c',
   'turbo-mushroom': '#1fa2ff',
+  'swap-mushroom': '#9b5de5',
 };
 
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
@@ -463,6 +464,8 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return scaleParts(mushroomParts(POWER_UP_COLORS['giga-mushroom']), GIGA_ITEM_SCALE);
     case 'turbo-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['turbo-mushroom']), ...speedStreakParts()];
+    case 'swap-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['swap-mushroom']), ...swapArrowParts()];
     default:
       return null;
   }
@@ -512,6 +515,18 @@ function speedStreakParts(): readonly VoxelBox[] {
     box(-0.42, 0.12, -0.05, 0.22, 0.05, 0.05, streak),
     box(-0.46, 0, -0.05, 0.3, 0.05, 0.05, streak),
     box(-0.42, -0.12, -0.05, 0.22, 0.05, 0.05, streak),
+  ];
+}
+
+/** Duas setinhas douradas, uma de cada lado do chapéu, apontando em sentidos opostos: troca. */
+function swapArrowParts(): readonly VoxelBox[] {
+  const arrow = '#ffd23f';
+
+  return [
+    box(-0.4, 0.22, 0, 0.16, 0.05, 0.05, arrow),
+    box(-0.34, 0.27, 0, 0.05, 0.1, 0.05, arrow),
+    box(0.4, -0.06, 0, 0.16, 0.05, 0.05, arrow),
+    box(0.34, -0.11, 0, 0.05, 0.1, 0.05, arrow),
   ];
 }
 

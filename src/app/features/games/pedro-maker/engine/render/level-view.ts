@@ -1,6 +1,7 @@
 import { THEME_PALETTES } from '../../art/palettes';
-import type { CharacterPalette } from '../../config/character.config';
+import { type CharacterPalette, swappedPalette } from '../../config/character.config';
 import { seedFromText } from '../../levels/seeded-random';
+import type { HeroId } from '../../models/progress.model';
 import type { Boss } from '../simulation/boss';
 import type { Enemy } from '../simulation/enemy';
 import { STEP_MS, type GameSimulation } from '../simulation/game-simulation';
@@ -66,6 +67,8 @@ export class LevelView {
   private fireballs: FireballView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
+  /** Herói que o modelo em cena mostra; muda quando o Cogumelo Troca-Personagem age. */
+  private pedroHero: HeroId;
   private particles: ParticleSystem | null = null;
   private bossModel: BossModel | null = null;
   private promptLabel: WorldLabel | null = null;
@@ -80,6 +83,7 @@ export class LevelView {
   ) {
     const { grid } = simulation;
 
+    this.pedroHero = options.character.hero;
     this.space = new WorldSpace(grid.heightPx);
     this.atlas = new VoxelAtlasTexture(THEME_PALETTES[simulation.blueprint.theme]);
     this.terrain = new TerrainView(grid, this.atlas, stage.qualitySettings.terrainShadows);
@@ -153,6 +157,8 @@ export class LevelView {
 
   /** Desenha um quadro. `alpha` é quanto já se passou do próximo passo da física (0 a 1). */
   render(alpha: number, frameMs: number): void {
+    this.followHeroSwap();
+
     const pedro = this.pedro;
 
     if (!pedro) {
@@ -262,6 +268,24 @@ export class LevelView {
     this.atlas.dispose();
     this.labels.dispose();
     this.flash.remove();
+  }
+
+  /** O herói da simulação mudou: o modelo do novo entra no lugar do antigo, na mesma cena. */
+  private followHeroSwap(): void {
+    const current = this.pedro;
+    const hero = this.simulation.hero;
+
+    if (!current || hero === this.pedroHero) {
+      return;
+    }
+
+    const next = new PedroModel(swappedPalette(this.options.character, hero));
+
+    current.root.removeFromParent();
+    current.dispose();
+    this.stage.scene.add(next.root);
+    this.pedro = next;
+    this.pedroHero = hero;
   }
 
   private playEffects(events: readonly VisualEvent[], now: number): void {

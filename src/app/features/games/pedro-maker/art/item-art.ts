@@ -113,6 +113,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'raccoon-leaf': '#e8892b',
   'giga-mushroom': '#d6336c',
   'turbo-mushroom': '#1fa2ff',
+  'swap-mushroom': '#9b5de5',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -167,6 +168,9 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'turbo-mushroom':
       paintTurboMushroom(context, color);
+      break;
+    case 'swap-mushroom':
+      paintSwapMushroom(context, color);
       break;
   }
 
@@ -367,6 +371,30 @@ function paintTurboMushroom(context: CanvasRenderingContext2D, color: string): v
   context.lineTo(21, 12);
   context.closePath();
   fillAndOutline(context, '#ffd23f', 1.5);
+}
+
+/** Cogumelo roxo com duas setas girando em volta: o herói vira outro da turma. */
+function paintSwapMushroom(context: CanvasRenderingContext2D, color: string): void {
+  paintMushroom(context, color);
+
+  context.strokeStyle = '#ffd23f';
+  context.lineWidth = 2.5;
+  context.lineCap = 'round';
+
+  for (const [startAngle, tipX, tipY, direction] of [
+    [Math.PI * 1.1, 32, 8, 1],
+    [Math.PI * 0.1, 8, 32, -1],
+  ] as const) {
+    context.beginPath();
+    context.arc(20, 20, 15, startAngle, startAngle + Math.PI * 0.6);
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(tipX - 4 * direction, tipY);
+    context.lineTo(tipX, tipY);
+    context.lineTo(tipX, tipY + 4 * direction);
+    context.stroke();
+  }
 }
 
 /** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */

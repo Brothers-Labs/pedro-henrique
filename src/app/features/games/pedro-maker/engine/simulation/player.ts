@@ -145,9 +145,14 @@ export class Player {
     feetX: number,
     feetY: number,
     private readonly host: PlayerHost,
-    private readonly abilities: HeroAbilities,
+    private abilities: HeroAbilities,
   ) {
     placeFeet(this.body, feetX, feetY);
+  }
+
+  /** O Cogumelo Troca-Personagem trouxe outro herói: pulo e freio passam a ser os dele. */
+  changeAbilities(abilities: HeroAbilities): void {
+    this.abilities = abilities;
   }
 
   get isGrounded(): boolean {
