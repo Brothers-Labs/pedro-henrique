@@ -1,3 +1,4 @@
+import { DEFAULT_SCREEN } from './screen.config';
 import type { MakerAchievement } from '../models/progress.model';
 import type { DifficultyRules, MakerDifficulty, MakerSettings } from '../models/settings.model';
 
@@ -81,6 +82,7 @@ export const DEFAULT_SETTINGS: MakerSettings = {
   effects: true,
   touchControls: 'automatico',
   difficulty: 'aventura',
+  screen: DEFAULT_SCREEN,
 };
 
 export const MAKER_ACHIEVEMENTS: readonly MakerAchievement[] = [

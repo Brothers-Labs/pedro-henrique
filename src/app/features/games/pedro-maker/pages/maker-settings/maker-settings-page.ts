@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
 import { MakerSyncPanel } from '../../components/maker-sync-panel/maker-sync-panel';
 import { DIFFICULTY_ORDER, DIFFICULTY_RULES } from '../../config/rules.config';
+import { SCREEN_LOOKS, SCREEN_MODES, type ScreenMode } from '../../config/screen.config';
 import type { MakerDifficulty, TouchControlsMode } from '../../models/settings.model';
 import { MakerAudioService } from '../../services/maker-audio.service';
 import { MakerProgressService } from '../../services/maker-progress.service';
@@ -54,6 +55,7 @@ export class MakerSettingsPage {
   protected readonly toggles = TOGGLES;
   protected readonly touchModes = TOUCH_MODES;
   protected readonly keyboard = KEYBOARD;
+  protected readonly screens = SCREEN_MODES.map((id) => ({ id, ...SCREEN_LOOKS[id] }));
   protected readonly difficulties = DIFFICULTY_ORDER.map((id) => ({ id, ...DIFFICULTY_RULES[id] }));
 
   protected toggle(id: Toggle): void {
@@ -63,6 +65,11 @@ export class MakerSettingsPage {
 
   protected chooseTouchMode(mode: TouchControlsMode): void {
     this.settingsService.update({ touchControls: mode });
+    this.audio.play('button');
+  }
+
+  protected chooseScreen(screen: ScreenMode): void {
+    this.settingsService.update({ screen });
     this.audio.play('button');
   }
 

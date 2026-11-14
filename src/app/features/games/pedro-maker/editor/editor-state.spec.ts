@@ -1,6 +1,14 @@
 import { analyzeReachability } from '../levels/level-reachability';
 import { findStructuralProblems } from '../levels/level-validation';
-import { findEditorPiece } from '../config/object-catalog';
+import {
+  DOOR_PAIR_COLORS,
+  DOOR_PAIRS,
+  doorPairColor,
+  EDITOR_CATEGORIES,
+  EDITOR_PIECES,
+  EDITOR_POWER_UPS,
+  findEditorPiece,
+} from '../config/object-catalog';
 import {
   cellsInRect,
   cellsOnLine,
@@ -155,6 +163,41 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'witch' })?.id).toBe('witch');
     expect(findEditorPiece({ type: 'pumpkin' })?.id).toBe('pumpkin');
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'turbo-mushroom' } })?.id).toBe('power-turbo-mushroom');
+  });
+
+  it('tem as portas de madeira de A a F e a dourada num par só dela', () => {
+    for (const pair of ['A', 'B', 'C', 'D', 'E', 'F']) {
+      const piece = findEditorPiece({ type: 'door', properties: { pair } });
+
+      expect(piece?.id).withContext(pair).toBe(`door-${pair.toLowerCase()}`);
+      expect(piece?.label).toBe(`Porta ${pair}`);
+    }
+
+    const golden = EDITOR_PIECES.find((piece) => piece.id === 'door-golden');
+    const woodenPairs = EDITOR_PIECES.filter((piece) => piece.type === 'door').map((piece) => piece.properties?.pair);
+
+    expect(golden?.properties?.pair).toBe('G');
+    expect(woodenPairs).not.toContain('G');
+    expect(DOOR_PAIRS).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+  });
+
+  it('dá uma cor diferente a cada letra de porta', () => {
+    const colors = DOOR_PAIRS.map((pair) => DOOR_PAIR_COLORS[pair]);
+
+    expect(new Set(colors).size).toBe(DOOR_PAIRS.length);
+    expect(doorPairColor('C')).toBe(DOOR_PAIR_COLORS.C);
+    expect(doorPairColor('oasis')).toBe('#2a2350');
+  });
+
+  it('não tem mais a categoria Power-ups, mas guarda os cogumelos', () => {
+    expect(EDITOR_CATEGORIES.map((category) => category.label)).not.toContain('Power-ups');
+    expect(EDITOR_PIECES.some((piece) => piece.properties?.powerUp === 'super-jump')).toBeFalse();
+    expect(EDITOR_POWER_UPS).not.toContain('super-jump');
+    expect(EDITOR_POWER_UPS).not.toContain('shield');
+    expect(EDITOR_POWER_UPS).toContain('mushroom');
+    expect(EDITOR_POWER_UPS).toContain('swap-mushroom');
+    // Toda categoria que sobrou tem peça.
+    expect(EDITOR_CATEGORIES.every((category) => EDITOR_PIECES.some((piece) => piece.category === category.id))).toBeTrue();
   });
 
   it('corta o que sobra ao diminuir a fase e respeita os limites de largura', () => {

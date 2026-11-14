@@ -37,6 +37,21 @@
         <button type="button" class="pause__toggle" [attr.aria-pressed]="isFullscreen()" (click)="fullscreenToggled.emit()">
           <span aria-hidden="true">⛶</span> Tela cheia: {{ isFullscreen() ? 'ligada' : 'desligada' }}
         </button>
+        <p class="pause__label" id="pausa-tela">Tela:</p>
+        <div class="pause__screens" role="radiogroup" aria-labelledby="pausa-tela">
+          @for (option of screens; track option.id) {
+            <button
+              type="button"
+              class="pause__screen"
+              role="radio"
+              [attr.aria-checked]="current.screen === option.id"
+              [attr.title]="option.description"
+              (click)="chooseScreen(option.id)"
+            >
+              <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+            </button>
+          }
+        </div>
       </div>
     }
 

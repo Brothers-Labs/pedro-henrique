@@ -1,5 +1,6 @@
 import { DEFAULT_LOOK, paletteFor } from '../config/character.config';
 import { DIFFICULTY_RULES } from '../config/rules.config';
+import type { ScreenMode } from '../config/screen.config';
 import { campaignLevelById } from '../levels/campaign';
 import type { LevelBlueprint } from '../models/level.model';
 import type { GameSessionEvent, HudState, MakerGameSession, VirtualInputState } from '../models/session.model';
@@ -24,7 +25,7 @@ function blueprintOf(id: string): LevelBlueprint {
   return level.build();
 }
 
-function start(blueprint: LevelBlueprint): RunningGame {
+function start(blueprint: LevelBlueprint, screen: ScreenMode = '3d'): RunningGame {
   const parent = document.createElement('div');
   parent.style.cssText = 'position:fixed;left:0;top:0;width:640px;height:360px;';
   document.body.appendChild(parent);
@@ -37,6 +38,7 @@ function start(blueprint: LevelBlueprint): RunningGame {
     rules: DIFFICULTY_RULES.aventura,
     character: paletteFor(DEFAULT_LOOK, 'pedro'),
     effectsEnabled: true,
+    screen,
     isTouch: false,
     petEmoji: '🐶',
     input,
@@ -123,6 +125,43 @@ describe('Motor 3D do Pedro Maker (WebGL de verdade)', () => {
       // Destruir leva junto o canvas e a camada de textos por cima dele.
       expect(game.parent.querySelector('canvas')).toBeNull();
       expect(game.parent.childElementCount).toBe(0);
+    },
+    BOOT_TIMEOUT_MS * 3,
+  );
+
+  it(
+    'troca entre as telas NES, Nintendo 64 e 3D com a fase rodando, sem erro de shader',
+    async () => {
+      const shaderErrors = spyOn(console, 'error').and.callThrough();
+      const game = start(blueprintOf('1-1'), 'nes');
+
+      try {
+        await waitFor(() => game.events.some((event) => event.type === 'ready'));
+        await delay(300);
+
+        const canvas = game.parent.querySelector('canvas');
+
+        expect(canvas).not.toBeNull();
+        // O NES desenha só 192 linhas (a conta em ponto flutuante pode perder uma), esticadas sem suavizar.
+        expect(canvas?.height).toBeGreaterThanOrEqual(191);
+        expect(canvas?.height).toBeLessThanOrEqual(192);
+        expect(canvas?.style.imageRendering).toBe('pixelated');
+
+        game.session.setScreen('n64');
+        await delay(200);
+
+        expect(canvas?.height).toBe(360);
+        expect(canvas?.style.imageRendering).not.toBe('pixelated');
+
+        game.session.pause();
+        game.session.setScreen('3d');
+
+        expect(canvas?.height).toBeGreaterThanOrEqual(360);
+        expect(game.events.some((event) => event.type === 'error')).toBeFalse();
+        expect(shaderErrors.calls.allArgs().some((args) => String(args[0]).includes('THREE'))).toBeFalse();
+      } finally {
+        stop(game);
+      }
     },
     BOOT_TIMEOUT_MS * 3,
   );

@@ -18,9 +18,11 @@ import {
 
 import { context2d, createCanvas } from '../../art/canvas';
 import type { ThemePalette } from '../../art/palettes';
+import { SCREEN_LOOKS, type ScreenLook, type ScreenMode } from '../../config/screen.config';
 import type { LevelTheme } from '../../models/level.model';
 import { QUALITY, type QualitySettings, type QualityTier } from './quality';
-import { isSoftwareRenderer, renderPixelRatio, rendererName, ULTRA_SHADOW_MAP_SIZE } from './ultra-resolution';
+import { RetroPass } from './retro-pass';
+import { isSoftwareRenderer, rendererName, screenPixelRatio, ULTRA_SHADOW_MAP_SIZE, ULTRA_RENDER_WIDTH } from './ultra-resolution';
 
 /**
  * Onde o sol fica em relação ao ponto que a câmera olha: alto, um pouco à
@@ -69,8 +71,11 @@ export class Stage {
   private readonly skyTexture: CanvasTexture;
   private readonly resizeObserver: ResizeObserver;
   private quality: QualitySettings;
-  /** Quadro em 4K por cima da qualidade alta; sai na primeira vez que o jogo engasga. */
-  private isUltra: boolean;
+  /** HD e 4K por cima da qualidade alta; o supersampling sai na primeira vez que o jogo engasga. */
+  private canSupersample: boolean;
+  private screen: ScreenLook;
+  /** Corte de cores das telas retrô; `null` nas outras. */
+  private retroPass: RetroPass | null = null;
   private width = 1;
   private height = 1;
 
@@ -79,7 +84,8 @@ export class Stage {
     theme: LevelTheme,
     palette: ThemePalette,
     tier: QualityTier,
-    isUltra: boolean,
+    canSupersample: boolean,
+    screen: ScreenMode,
   ) {
     this.quality = QUALITY[tier];
     this.renderer = new WebGLRenderer({
@@ -87,7 +93,8 @@ export class Stage {
       powerPreference: 'high-performance',
       alpha: false,
     });
-    this.isUltra = isUltra && !isSoftwareRenderer(rendererName(this.renderer.getContext()));
+    this.canSupersample = canSupersample && !isSoftwareRenderer(rendererName(this.renderer.getContext()));
+    this.screen = SCREEN_LOOKS[screen];
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -97,6 +104,7 @@ export class Stage {
     canvas.style.cssText = 'display:block;width:100%;height:100%;touch-action:none;';
     canvas.setAttribute('aria-hidden', 'true');
     parent.appendChild(canvas);
+    this.applyScreenLook();
 
     this.skyTexture = paintSky(palette);
     this.scene.background = this.skyTexture;
@@ -143,8 +151,22 @@ export class Stage {
     return this.quality;
   }
 
+  /** O quadro está maior que a tela (HD ou 4K): é o primeiro luxo a sair se o jogo engasgar. */
   get isUltraResolution(): boolean {
-    return this.isUltra;
+    return this.canSupersample && this.screen.targetWidth !== null;
+  }
+
+  /** Troca a tela na hora, com o jogo rodando. */
+  setScreenMode(screen: ScreenMode): void {
+    const look = SCREEN_LOOKS[screen];
+
+    if (look === this.screen) {
+      return;
+    }
+
+    this.screen = look;
+    this.applyScreenLook();
+    this.applyResolution();
   }
 
   applyQuality(tier: QualityTier): void {
@@ -165,11 +187,11 @@ export class Stage {
 
   /** Volta do 4K para a densidade da tela, mantendo a qualidade atual. */
   leaveUltraResolution(): void {
-    if (!this.isUltra) {
+    if (!this.canSupersample) {
       return;
     }
 
-    this.isUltra = false;
+    this.canSupersample = false;
     this.applyResolution();
   }
 
@@ -180,6 +202,11 @@ export class Stage {
   }
 
   render(): void {
+    if (this.retroPass) {
+      this.retroPass.render(this.renderer, this.scene, this.camera);
+      return;
+    }
+
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -187,14 +214,36 @@ export class Stage {
     this.resizeObserver.disconnect();
     this.skyTexture.dispose();
     this.sun.shadow.map?.dispose();
+    this.retroPass?.dispose();
+    this.retroPass = null;
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.domElement.remove();
   }
 
-  /** Sombra e densidade do quadro dependem do 4K; a sombra velha é descartada para nascer no tamanho novo. */
+  /** Pixel quadradinho no NES e no SNES, e o corte de cores das três retrô. */
+  private applyScreenLook(): void {
+    const { colorLevels, isPixelated } = this.screen;
+
+    this.renderer.domElement.style.imageRendering = isPixelated ? 'pixelated' : 'auto';
+
+    if (colorLevels === null) {
+      this.retroPass?.dispose();
+      this.retroPass = null;
+      return;
+    }
+
+    if (this.retroPass) {
+      this.retroPass.levels = colorLevels;
+    } else {
+      this.retroPass = new RetroPass(colorLevels);
+    }
+  }
+
+  /** Sombra e densidade do quadro dependem da tela; a sombra velha é descartada para nascer no tamanho novo. */
   private applyResolution(): void {
-    const shadowMapSize = this.isUltra ? ULTRA_SHADOW_MAP_SIZE : this.quality.shadowMapSize;
+    const isUltra = this.isUltraResolution && (this.screen.targetWidth ?? 0) >= ULTRA_RENDER_WIDTH;
+    const shadowMapSize = isUltra ? ULTRA_SHADOW_MAP_SIZE : this.quality.shadowMapSize;
 
     this.sun.shadow.mapSize.set(shadowMapSize, shadowMapSize);
     this.sun.shadow.map?.dispose();
@@ -208,8 +257,10 @@ export class Stage {
 
     this.width = width;
     this.height = height;
-    // A densidade do 4K depende da largura: recalcula a cada mudança de tamanho.
-    this.renderer.setPixelRatio(renderPixelRatio(this.quality, this.isUltra, window.devicePixelRatio, width));
+    // A densidade do HD, do 4K e das retrô depende do tamanho: recalcula a cada mudança.
+    this.renderer.setPixelRatio(
+      screenPixelRatio(this.screen, this.quality, this.canSupersample, window.devicePixelRatio, width, height),
+    );
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();

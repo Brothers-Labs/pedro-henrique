@@ -17,8 +17,11 @@ import { paintObjectIcon, SHARP_ICON_SCALE } from '../../art/texture-catalog';
 import { MakerAchievementToast } from '../../components/maker-achievement-toast/maker-achievement-toast';
 import { MakerGameHost } from '../../components/maker-game-host/maker-game-host';
 import {
+  DOOR_PAIRS,
+  doorPairColor,
   EDITOR_CATEGORIES,
   EDITOR_PIECES,
+  EDITOR_POWER_UPS,
   EDITOR_THEMES,
   type EditorCategoryId,
   type EditorPiece,
@@ -98,7 +101,7 @@ const SURPRISE_OPTIONS: readonly { readonly id: SurpriseContent; readonly label:
 ];
 
 const POWER_UP_OPTIONS = (Object.keys(POWER_UP_LABELS) as PowerUpKind[]).map((id) => ({ id, ...POWER_UP_LABELS[id] }));
-const DOOR_PAIRS = ['A', 'B', 'C', 'D', 'E'] as const;
+const EDITOR_POWER_UP_OPTIONS = POWER_UP_OPTIONS.filter((option) => EDITOR_POWER_UPS.includes(option.id));
 
 /** No Testar, dois corações a mais: dá para conferir a fase toda sem recomeçar a cada tropeço. */
 const TEST_BONUS_HEARTS = 2;
@@ -156,7 +159,7 @@ export class MakerEditorPage {
   protected readonly categories = EDITOR_CATEGORIES;
   protected readonly themes = EDITOR_THEMES.map((theme) => ({ id: theme, ...THEME_LABELS[theme] }));
   protected readonly surpriseOptions = SURPRISE_OPTIONS;
-  protected readonly powerUpOptions = POWER_UP_OPTIONS;
+  protected readonly doorPairColor = doorPairColor;
   protected readonly doorPairs = DOOR_PAIRS;
   protected readonly testBonusHearts = TEST_BONUS_HEARTS;
   protected readonly rangeLimits = RANGE_LIMITS;
@@ -507,8 +510,18 @@ export class MakerEditorPage {
 
     if (contents) {
       // Só a surpresa de poder guarda qual é o poder.
-      this.updateSelected({ contents, powerUp: contents === 'power-up' ? 'super-jump' : undefined });
+      this.updateSelected({ contents, powerUp: contents === 'power-up' ? 'mushroom' : undefined });
     }
+  }
+
+  /**
+   * Poderes da lista do inspetor: os do editor e, numa fase antiga, também o
+   * poder que a peça já tem, para a lista não mentir sobre ela.
+   */
+  protected powerUpChoices(current: PowerUpKind | undefined): readonly (typeof POWER_UP_OPTIONS)[number][] {
+    const legacy = POWER_UP_OPTIONS.find((option) => option.id === current && !EDITOR_POWER_UPS.includes(option.id));
+
+    return legacy ? [legacy, ...EDITOR_POWER_UP_OPTIONS] : EDITOR_POWER_UP_OPTIONS;
   }
 
   protected setPowerUp(event: Event): void {

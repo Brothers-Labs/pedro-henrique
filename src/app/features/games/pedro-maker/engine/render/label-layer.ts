@@ -1,6 +1,6 @@
 import { type PerspectiveCamera, Vector3 } from 'three';
 
-export type LabelStyle = 'bubble' | 'hint' | 'prompt' | 'pet' | 'floating';
+export type LabelStyle = 'bubble' | 'hint' | 'prompt' | 'pet' | 'floating' | 'door';
 
 /** Texto preso a um ponto do mundo 3D. A tela move e mostra; quem cria decide o resto. */
 export interface WorldLabel {
@@ -37,6 +37,9 @@ const STYLES: Readonly<Record<LabelStyle, string>> = {
     'font-size:clamp(0.85rem,1.8vw,1.15rem);',
   pet: 'font-size:clamp(1.4rem,3.6vw,2.2rem);',
   floating: 'font-size:clamp(1rem,2.4vw,1.75rem);-webkit-text-stroke:0.35rem #2a2350;paint-order:stroke fill;',
+  door:
+    'min-width:1.7em;padding:0.05rem 0.4rem;border:3px solid #2a2350;border-radius:999px;color:#ffffff;' +
+    'font-size:clamp(0.8rem,1.6vw,1.05rem);text-align:center;',
 };
 
 /**
@@ -59,10 +62,16 @@ export class LabelLayer {
     parent.appendChild(this.element);
   }
 
-  create(style: LabelStyle, text: string, anchorBottom = false): WorldLabel {
+  /** `background` pinta o fundo da etiqueta, como a cor do par na plaquinha da porta. */
+  create(style: LabelStyle, text: string, anchorBottom = false, background?: string): WorldLabel {
     const label: WorldLabel = { position: new Vector3(), visible: false, opacity: 1, text };
+    const entry = this.entryFor(label, style, anchorBottom);
 
-    this.labels.push(this.entryFor(label, style, anchorBottom));
+    if (background) {
+      entry.element.style.background = background;
+    }
+
+    this.labels.push(entry);
 
     return label;
   }

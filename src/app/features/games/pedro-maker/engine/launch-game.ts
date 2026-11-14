@@ -50,7 +50,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       return;
     }
 
-    // O 4K é o primeiro a sair: a qualidade só baixa se o jogo continuar engasgando sem ele.
+    // O HD e o 4K são os primeiros a sair: a qualidade só baixa se o jogo continuar engasgando sem ele.
     if (stage.isUltraResolution) {
       stage.leaveUltraResolution();
       monitor = new FrameBudgetMonitor(tier);
@@ -121,7 +121,14 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
   };
 
   try {
-    stage = new Stage(options.parent, blueprint.theme, THEME_PALETTES[blueprint.theme], tier, startsInUltra(tier));
+    stage = new Stage(
+      options.parent,
+      blueprint.theme,
+      THEME_PALETTES[blueprint.theme],
+      tier,
+      startsInUltra(tier),
+      options.screen,
+    );
     rebuild();
   } catch (error) {
     // Sem WebGL não há jogo; o aviso sai depois do retorno, quando a tela já escuta.
@@ -158,6 +165,16 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       if (!isDestroyed) {
         rebuild();
       }
+    },
+    setScreen: (screen) => {
+      if (isDestroyed || !stage) {
+        return;
+      }
+
+      stage.setScreenMode(screen);
+      // Mudar o tamanho do quadro apaga a imagem: com o jogo pausado, redesenha atrás do menu.
+      stage.render();
+      monitor.reset();
     },
     destroy: () => {
       if (isDestroyed) {
