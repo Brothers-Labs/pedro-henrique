@@ -69,6 +69,8 @@ export const POWER_UP_DURATION_MS = {
   star: 10000,
   'giga-mushroom': 10000,
   'turbo-mushroom': 10000,
+  'magnet-mushroom': 15000,
+  'tall-mushroom': 12000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
@@ -131,7 +133,7 @@ export const RACCOON_SUIT_PHYSICS = {
   tailReach: 40,
 } as const;
 
-/** Nos últimos segundos do Giga e do Cogumelo Turbo o herói pisca, avisando que o efeito vai acabar. */
+/** Nos últimos segundos do Giga e dos cogumelos com tempo o herói pisca, avisando que o efeito vai acabar. */
 export const POWER_UP_WARNING_MS = 2500;
 
 /**
@@ -156,6 +158,19 @@ export const TURBO_MUSHROOM_PHYSICS = {
   trailIntervalMs: 70,
   /** Abaixo desta velocidade o herói está quase parado e não deixa rastro. */
   trailMinSpeed: 120,
+} as const;
+
+/**
+ * Cogumelo Alto: o herói fica comprido e magrelo, com a cabeça lá em cima — mas
+ * o músculo é fraco, e ele pula mais baixo e anda mais devagar. A caixa de
+ * colisão só cresce para cima e continua abaixo de dois blocos (96 pixels),
+ * então passa em todo lugar em que o herói normal passa.
+ */
+export const TALL_MUSHROOM_PHYSICS = {
+  heightScale: 1.8,
+  /** Músculo fraco: o pulo tem esta fração da velocidade normal. */
+  jumpMultiplier: 0.85,
+  speedMultiplier: 0.85,
 } as const;
 
 /** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */
@@ -196,8 +211,15 @@ export const BIG_PEDRO_SCALE = 1.35;
 /** Tamanho do Pedro gigante no desenho: o dobro do grande, como a caixa de colisão. */
 export const GIGA_PEDRO_SCALE = BIG_PEDRO_SCALE * GIGA_PHYSICS.bodyScale;
 
+/** No desenho, o Pedro do Cogumelo Alto estica na altura e afina nos lados. */
+export const TALL_PEDRO_STRETCH = TALL_MUSHROOM_PHYSICS.heightScale;
+export const TALL_PEDRO_THINNING = 0.8;
+
 /** Raio de atração do ímã, em pixels. */
 export const MAGNET_RADIUS = 190;
+
+/** O Cogumelo Ímã puxa de mais longe que o ímã antigo: quase meia tela. */
+export const MAGNET_MUSHROOM_RADIUS = 320;
 
 /** Moedas que um bloco surpresa de moedas solta. */
 export const SURPRISE_COIN_COUNT = 5;

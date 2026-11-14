@@ -114,6 +114,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'giga-mushroom': '#d6336c',
   'turbo-mushroom': '#1fa2ff',
   'swap-mushroom': '#9b5de5',
+  'magnet-mushroom': '#e63946',
+  'tall-mushroom': '#9d4edd',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -171,6 +173,12 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'swap-mushroom':
       paintSwapMushroom(context, color);
+      break;
+    case 'magnet-mushroom':
+      paintMagnetMushroom(context, color);
+      break;
+    case 'tall-mushroom':
+      paintTallMushroom(context, color);
       break;
   }
 
@@ -345,6 +353,62 @@ function paintGigaMushroom(context: CanvasRenderingContext2D, color: string): vo
     context.closePath();
     fillAndOutline(context, '#ffffff', 1.5);
   }
+}
+
+/** Cogumelo vermelho com um ímã de ferradura no chapéu e moedinhas voando para ele. */
+function paintMagnetMushroom(context: CanvasRenderingContext2D, color: string): void {
+  paintMushroom(context, color);
+
+  context.lineCap = 'butt';
+  context.beginPath();
+  context.arc(20, 12, 5, Math.PI, 0);
+  context.lineTo(25, 17);
+  context.moveTo(15, 12);
+  context.lineTo(15, 17);
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 5.5;
+  context.stroke();
+  context.strokeStyle = '#3f8cff';
+  context.lineWidth = 3;
+  context.stroke();
+
+  for (const [x, y] of [[5, 9], [35, 9]] as const) {
+    circle(context, x, y, 3);
+    fillAndOutline(context, '#ffd23f', 1.5);
+  }
+}
+
+/** Cogumelo de pé comprido e chapéu pequeno, com uma régua ao lado: é o que deixa alto. */
+function paintTallMushroom(context: CanvasRenderingContext2D, color: string): void {
+  roundedRect(context, 16, 14, 8, 21, 3);
+  fillAndOutline(context, '#fff1d6', 2.5);
+  context.fillStyle = OUTLINE;
+  context.fillRect(18, 20, 1.5, 3.5);
+  context.fillRect(20.5, 20, 1.5, 3.5);
+
+  context.beginPath();
+  context.moveTo(10, 15);
+  context.quadraticCurveTo(10, 4, 20, 4);
+  context.quadraticCurveTo(30, 4, 30, 15);
+  context.closePath();
+  fillAndOutline(context, color, 2.5);
+  context.fillStyle = '#ffffff';
+  circle(context, 20, 9, 2.5);
+  context.fill();
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2;
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(33, 6);
+  context.lineTo(33, 34);
+
+  for (const y of [10, 16, 22, 28] as const) {
+    context.moveTo(33, y);
+    context.lineTo(36, y);
+  }
+
+  context.stroke();
 }
 
 /** Cogumelo azul com riscos de velocidade atrás e um raio no chapéu: é o que deixa ligeiro. */

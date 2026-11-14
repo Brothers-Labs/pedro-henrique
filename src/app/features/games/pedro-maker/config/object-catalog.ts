@@ -281,6 +281,20 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
     label: 'Cogumelo Troca-Personagem',
     properties: { powerUp: 'swap-mushroom' },
   },
+  {
+    id: 'power-magnet-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo Ímã',
+    properties: { powerUp: 'magnet-mushroom' },
+  },
+  {
+    id: 'power-tall-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo Alto',
+    properties: { powerUp: 'tall-mushroom' },
+  },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
   {
     id: 'surprise-mushroom',
@@ -379,6 +393,8 @@ export const POWER_UP_LABELS = {
   'giga-mushroom': { label: 'Giga Cogumelo', emoji: '💪' },
   'turbo-mushroom': { label: 'Cogumelo Turbo', emoji: '💨' },
   'swap-mushroom': { label: 'Cogumelo Troca-Personagem', emoji: '🔄' },
+  'magnet-mushroom': { label: 'Cogumelo Ímã', emoji: '🧲' },
+  'tall-mushroom': { label: 'Cogumelo Alto', emoji: '🦒' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {

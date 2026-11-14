@@ -9,6 +9,7 @@ import {
   RACCOON_SUIT_PHYSICS,
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
+  TALL_MUSHROOM_PHYSICS,
   TURBO_MUSHROOM_PHYSICS,
 } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
@@ -69,6 +70,16 @@ const FLOWER_ELEMENTS = [
   ['ice-flower', 'ice'],
 ] as const satisfies readonly (readonly [PowerUpKind, BallElement])[];
 
+/** Tamanho da caixa de colisão em relação à normal, na largura e na altura. */
+interface BodyScale {
+  readonly width: number;
+  readonly height: number;
+}
+
+const NORMAL_SCALE: BodyScale = { width: 1, height: 1 };
+const GIGA_SCALE: BodyScale = { width: GIGA_PHYSICS.bodyScale, height: GIGA_PHYSICS.bodyScale };
+const TALL_SCALE: BodyScale = { width: 1, height: TALL_MUSHROOM_PHYSICS.heightScale };
+
 /** Descida em andamento num escorregador. */
 interface SlideRide {
   readonly ramp: SlideRamp;
@@ -102,7 +113,7 @@ const RUN_DUST_SPEED = 200;
  * pulo curto ao soltar o botão, pulo duplo com a Asa, escalada e pulo de
  * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, voo curto e
  * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
- * a disparada do Cogumelo Turbo, braçadas na água, a descida no escorregador
+ * a disparada do Cogumelo Turbo, o corpo comprido do Cogumelo Alto, braçadas na água, a descida no escorregador
  * e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
@@ -110,7 +121,7 @@ const RUN_DUST_SPEED = 200;
  *
  * Cada herói ajusta pulo e freio pelas próprias habilidades; a caixa de
  * colisão é a mesma para todos, e por isso toda fase serve para qualquer um.
- * Só o Giga Cogumelo a aumenta, e por pouco tempo.
+ * Só o Giga Cogumelo e o Cogumelo Alto a aumentam, e por pouco tempo.
  */
 export class Player {
   readonly body: PhysicsBody = createBody(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight, true, PLAYER_PHYSICS.maxFallSpeed);
@@ -193,7 +204,12 @@ export class Player {
 
   /** Com o corpo dobrado do Giga Cogumelo. */
   get isGiant(): boolean {
-    return this.body.height > PLAYER_PHYSICS.bodyHeight;
+    return this.body.width > PLAYER_PHYSICS.bodyWidth;
+  }
+
+  /** Com o corpo comprido do Cogumelo Alto: mais alto, mas da largura de sempre. */
+  get isTall(): boolean {
+    return !this.isGiant && this.body.height > PLAYER_PHYSICS.bodyHeight;
   }
 
   /** Super Estrela ou Giga Cogumelo: encostar derruba o inimigo, e nada machuca. */
@@ -210,7 +226,7 @@ export class Player {
     return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
   }
 
-  /** Nos últimos segundos de um poder com tempo (o Giga ou o Turbo) o herói pisca, para avisar que vai acabar. */
+  /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã ou o Alto) o herói pisca, para avisar que vai acabar. */
   isPowerUpEnding(kind: PowerUpKind, now: number): boolean {
     const expiresAt = this.timedPowerUps.get(kind);
 
@@ -249,7 +265,7 @@ export class Player {
       return;
     }
 
-    this.fitGigaSize();
+    this.fitBodySize();
 
     const grounded = this.isGrounded;
 
@@ -525,37 +541,51 @@ export class Player {
   }
 
   /**
-   * Giga Cogumelo: a caixa de colisão dobra, com os pés no mesmo lugar, mas só
-   * onde o corpo gigante cabe — crescer dentro de um túnel prenderia o herói
-   * na parede. Encolher é sempre seguro: a caixa menor fica dentro da maior,
-   * que já estava livre. Se uma porta ou o checkpoint levar o gigante para um
-   * lugar apertado, ele volta ao tamanho normal até ter espaço de novo.
+   * Giga Cogumelo e Cogumelo Alto: a caixa de colisão cresce, com os pés no
+   * mesmo lugar, mas só onde o corpo novo cabe — crescer dentro de um túnel
+   * prenderia o herói na parede. Encolher é sempre seguro: a caixa menor fica
+   * dentro da maior, que já estava livre. Se uma porta ou o checkpoint levar o
+   * herói crescido para um lugar apertado, ele volta ao tamanho normal até ter
+   * espaço de novo. Com os dois cogumelos, vale o gigante.
    */
-  private fitGigaSize(): void {
-    const isGigaActive = this.timedPowerUps.has('giga-mushroom');
+  private fitBodySize(): void {
+    const wanted = this.wantedBodyScale();
+    const isNormalSize = !this.isGiant && !this.isTall;
 
-    if (this.isGiant) {
-      if (!isGigaActive || !this.host.hasRoomFor(this.body)) {
-        this.resizeBody(1);
-      }
-
-      return;
+    if (!isNormalSize && (!this.hasBodyScale(wanted) || !this.host.hasRoomFor(this.body))) {
+      this.resizeBody(NORMAL_SCALE);
     }
 
-    if (isGigaActive && this.host.hasRoomFor(this.areaWithScale(GIGA_PHYSICS.bodyScale))) {
-      this.resizeBody(GIGA_PHYSICS.bodyScale);
+    const canGrow = wanted !== NORMAL_SCALE && !this.hasBodyScale(wanted);
+
+    if (canGrow && this.host.hasRoomFor(this.areaWithScale(wanted))) {
+      this.resizeBody(wanted);
     }
   }
 
+  private wantedBodyScale(): BodyScale {
+    if (this.timedPowerUps.has('giga-mushroom')) {
+      return GIGA_SCALE;
+    }
+
+    return this.timedPowerUps.has('tall-mushroom') ? TALL_SCALE : NORMAL_SCALE;
+  }
+
+  private hasBodyScale(scale: BodyScale): boolean {
+    const area = this.areaWithScale(scale);
+
+    return this.body.width === area.width && this.body.height === area.height;
+  }
+
   /** A caixa de colisão numa escala da normal, com os pés no mesmo ponto de agora. */
-  private areaWithScale(scale: number): WorldArea {
-    const width = PLAYER_PHYSICS.bodyWidth * scale;
-    const height = PLAYER_PHYSICS.bodyHeight * scale;
+  private areaWithScale(scale: BodyScale): WorldArea {
+    const width = PLAYER_PHYSICS.bodyWidth * scale.width;
+    const height = PLAYER_PHYSICS.bodyHeight * scale.height;
 
     return { x: centerX(this.body) - width / 2, y: bottom(this.body) - height, width, height };
   }
 
-  private resizeBody(scale: number): void {
+  private resizeBody(scale: BodyScale): void {
     const body = this.body;
     const area = this.areaWithScale(scale);
 
@@ -596,7 +626,8 @@ export class Player {
     const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     const hasTurboMushroom = this.timedPowerUps.has('turbo-mushroom');
     const swim = this.isInWater ? SWIM_PHYSICS.speedMultiplier : 1;
-    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * this.speedMultiplier() * swim;
+    const weakLegs = this.isTall ? TALL_MUSHROOM_PHYSICS.speedMultiplier : 1;
+    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * this.speedMultiplier() * swim * weakLegs;
 
     let rate: number;
 
@@ -670,8 +701,9 @@ export class Player {
 
   private jumpVelocity(): number {
     const boost = this.timedPowerUps.has('super-jump') ? PLAYER_PHYSICS.superJumpMultiplier : 1;
+    const weakMuscle = this.isTall ? TALL_MUSHROOM_PHYSICS.jumpMultiplier : 1;
 
-    return PLAYER_PHYSICS.jumpVelocity * boost * this.abilities.jumpMultiplier;
+    return PLAYER_PHYSICS.jumpVelocity * boost * weakMuscle * this.abilities.jumpMultiplier;
   }
 
   private handleLanding(grounded: boolean): void {

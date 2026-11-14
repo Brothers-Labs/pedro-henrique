@@ -25,7 +25,7 @@ describe('Novos recursos do Pedro Maker', () => {
       const system = new CollectibleSystem(object ? [object] : [], new Map(), { onCollected });
       expect(system.coinCount).toBe(value);
       expect(coinValue(type)).toBe(value);
-      system.update(16, 3.5 * TILE_SIZE, 4.5 * TILE_SIZE, false);
+      system.update(16, 3.5 * TILE_SIZE, 4.5 * TILE_SIZE, 0);
       expect(onCollected).toHaveBeenCalledTimes(1);
       expect(system.items.length).toBe(0);
     });

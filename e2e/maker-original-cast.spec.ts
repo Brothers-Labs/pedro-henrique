@@ -218,3 +218,27 @@ test('Maker places doors C to F without a Power-ups tab and switches the game sc
   await expect(page.locator('app-maker-game-host canvas')).toHaveCSS('image-rendering', 'pixelated');
   await page.screenshot({ path: test.info().outputPath('nes-screen-paused.png') });
 });
+
+test('Maker saves the magnet and tall mushrooms and plays a level with them', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase dos Cogumelos Novos');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Cogumelos', exact: true }).click();
+  for (const [index, label] of ['Cogumelo Ímã', 'Cogumelo Alto'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 32, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase dos Cogumelos Novos')?.objects
+    .flatMap((object) => (object.properties?.powerUp ? [object.properties.powerUp] : [])).sort())
+    .toEqual(['magnet-mushroom', 'tall-mushroom']);
+  await page.screenshot({ path: test.info().outputPath('new-mushrooms-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('new-mushrooms-playing.png') });
+});

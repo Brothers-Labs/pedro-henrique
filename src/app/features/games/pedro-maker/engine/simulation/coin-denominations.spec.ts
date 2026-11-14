@@ -1,6 +1,6 @@
 import { paintObjectIcon } from '../../art/texture-catalog';
 import { EDITOR_PIECES, findEditorPiece } from '../../config/object-catalog';
-import { TILE_SIZE } from '../../config/physics.config';
+import { MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import { LevelBuilder } from '../../levels/level-builder';
 import { analyzeReachability } from '../../levels/level-reachability';
@@ -80,8 +80,8 @@ describe('Moedas de alto valor do Pedro Maker', () => {
       const onCollected = jasmine.createSpy('onCollected');
       const system = new CollectibleSystem([{ id: 'moeda', type, x: 5, y: 5 }], new Map(), { onCollected });
       expect(system.items.length).toBe(1);
-      system.update(100, 5.5 * TILE_SIZE - 60, 5.5 * TILE_SIZE, true);
-      system.update(100, 5.5 * TILE_SIZE - 60, 5.5 * TILE_SIZE, true);
+      system.update(100, 5.5 * TILE_SIZE - 60, 5.5 * TILE_SIZE, MAGNET_RADIUS);
+      system.update(100, 5.5 * TILE_SIZE - 60, 5.5 * TILE_SIZE, MAGNET_RADIUS);
       expect(onCollected).toHaveBeenCalledTimes(1);
       expect(system.coinCount).toBe(0);
     });

@@ -8,7 +8,10 @@ import {
   MULTI_COIN_BLOCK_COUNT,
   PLAYER_PHYSICS,
   SLIDE_PHYSICS,
+  MAGNET_MUSHROOM_RADIUS,
+  MAGNET_RADIUS,
   SWIM_PHYSICS,
+  TALL_MUSHROOM_PHYSICS,
   TILE_SIZE,
   TURBO_MUSHROOM_PHYSICS,
 } from '../../config/physics.config';
@@ -89,6 +92,18 @@ function brakingDistance(harness: Harness): number {
   run(harness, 1);
 
   return centerX(harness.simulation.player.body) - releasedAt;
+}
+
+/** Anda como `run`, contando se a caixa do herói ficou livre do cenário em todos os passos. */
+function runStayingClear(harness: Harness, seconds: number, input: Partial<InputSnapshot> = {}): boolean {
+  let isAlwaysClear = true;
+
+  for (let step = 0; step < Math.round((seconds * 1000) / STEP_MS); step += 1) {
+    harness.simulation.step({ ...IDLE_INPUT, ...input });
+    isAlwaysClear &&= isAreaClear(harness.simulation.grid, harness.simulation.player.body);
+  }
+
+  return isAlwaysClear;
 }
 
 function lastHud(events: readonly GameSessionEvent[]): HudState | undefined {
@@ -547,17 +562,6 @@ describe('Simulação do Pedro Maker', () => {
 
   describe('Giga Cogumelo', () => {
     /** Anda o tempo pedido conferindo, passo a passo, que o corpo nunca entra no cenário. */
-    const runStayingClear = (harness: Harness, seconds: number, input: Partial<InputSnapshot> = {}): boolean => {
-      let isAlwaysClear = true;
-
-      for (let step = 0; step < Math.round((seconds * 1000) / STEP_MS); step += 1) {
-        harness.simulation.step({ ...IDLE_INPUT, ...input });
-        isAlwaysClear &&= isAreaClear(harness.simulation.grid, harness.simulation.player.body);
-      }
-
-      return isAlwaysClear;
-    };
-
     it('fica gigante e invencível, e derruba o inimigo só de encostar', () => {
       const harness = start(levelWithPowerUp('giga-mushroom').add('spiky', 14, SURFACE - 1).build(META));
       const player = harness.simulation.player;
@@ -694,6 +698,139 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(player.hasPowerUp('turbo-mushroom')).toBeFalse();
       expect(harness.events).toContain({ type: 'power-up-ended', kind: 'turbo-mushroom' });
+    });
+  });
+
+  describe('Cogumelo Ímã', () => {
+    /** Moeda a umas seis casas do herói parado: longe para o ímã antigo, perto para o cogumelo. */
+    const farCoinLevel = (): LevelBlueprint => flatLevel().add('coin', 8, SURFACE - 2).build(META);
+
+    it('puxa moedas de mais longe que o ímã antigo', () => {
+      expect(MAGNET_MUSHROOM_RADIUS).toBeGreaterThan(MAGNET_RADIUS);
+
+      const withMushroom = start(farCoinLevel());
+      const withOldMagnet = start(farCoinLevel());
+      run(withMushroom, 0.2);
+      run(withOldMagnet, 0.2);
+      withMushroom.simulation.player.grantPowerUp('magnet-mushroom', withMushroom.simulation.clockMs);
+      withOldMagnet.simulation.player.grantPowerUp('magnet', withOldMagnet.simulation.clockMs);
+
+      run(withMushroom, 1.5);
+      run(withOldMagnet, 1.5);
+
+      expect(lastHud(withMushroom.events)?.coins).withContext('o cogumelo alcança').toBe(1);
+      expect(lastHud(withOldMagnet.events)?.coins ?? 0).withContext('o ímã antigo não alcança').toBe(0);
+    });
+
+    it('fala com o mascote, brilha, pisca no fim e avisa quando acaba', () => {
+      const harness = start(levelWithPowerUp('magnet-mushroom').build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.5, { right: true });
+
+      expect(player.hasPowerUp('magnet-mushroom')).toBeTrue();
+      expect(harness.events).toContain(jasmine.objectContaining({ type: 'mascot', text: jasmine.stringContaining('Ímã ligado') }));
+
+      run(harness, 13);
+
+      expect(player.isPowerUpEnding('magnet-mushroom', harness.simulation.clockMs)).toBeTrue();
+
+      run(harness, 2);
+
+      expect(player.hasPowerUp('magnet-mushroom')).toBeFalse();
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'magnet-mushroom' });
+    });
+  });
+
+  describe('Cogumelo Alto', () => {
+    /** Maior altura que os pés sobem num pulo segurando o botão, em pixels. */
+    const jumpHeight = (harness: Harness): number => {
+      const player = harness.simulation.player;
+      const floor = bottom(player.body);
+      let highest = floor;
+
+      for (let step = 0; step < 90; step += 1) {
+        harness.simulation.step({ ...IDLE_INPUT, jumpPressed: step === 0, jumpHeld: true });
+        highest = Math.min(highest, bottom(player.body));
+      }
+
+      return floor - highest;
+    };
+
+    const tallHarness = (): Harness => {
+      const harness = start(flatLevel().build(META));
+      run(harness, 0.3);
+      harness.simulation.player.grantPowerUp('tall-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      return harness;
+    };
+
+    it('estica o corpo para cima, com os pés e a largura de sempre', () => {
+      const harness = start(flatLevel().build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.3);
+      const feet = bottom(player.body);
+      const middle = centerX(player.body);
+      player.grantPowerUp('tall-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      expect(player.isTall).toBeTrue();
+      expect(player.isGiant).toBeFalse();
+      expect(player.body.height).toBeCloseTo(PLAYER_PHYSICS.bodyHeight * TALL_MUSHROOM_PHYSICS.heightScale, 3);
+      expect(player.body.height).withContext('cabe em todo corredor de dois blocos').toBeLessThan(2 * TILE_SIZE);
+      expect(player.body.width).toBe(PLAYER_PHYSICS.bodyWidth);
+      expect(bottom(player.body)).toBeCloseTo(feet, 3);
+      expect(centerX(player.body)).toBeCloseTo(middle, 3);
+    });
+
+    it('tem músculo fraco: pula mais baixo e anda mais devagar', () => {
+      const normalJump = jumpHeight((() => {
+        const harness = start(flatLevel().build(META));
+        run(harness, 0.4);
+        return harness;
+      })());
+      const tallJump = jumpHeight(tallHarness());
+
+      expect(tallJump).toBeLessThan(normalJump);
+      expect(tallJump / normalJump).toBeCloseTo(TALL_MUSHROOM_PHYSICS.jumpMultiplier ** 2, 1);
+
+      const normal = start(flatLevel().build(META));
+      const tall = tallHarness();
+      run(normal, 1, { right: true });
+      run(tall, 1, { right: true });
+
+      expect(tall.simulation.player.body.vx).toBeCloseTo(normal.simulation.player.body.vx * TALL_MUSHROOM_PHYSICS.speedMultiplier, 3);
+    });
+
+    it('passa no corredor de dois blocos sem ficar preso', () => {
+      const harness = start(flatLevel().row('stone', 4, SURFACE - 3, 8).add('power-up', 3, SURFACE - 1, { powerUp: 'tall-mushroom' }).build(META));
+      const player = harness.simulation.player;
+
+      expect(runStayingClear(harness, 2.5, { right: true })).toBeTrue();
+      expect(player.isTall).toBeTrue();
+      expect(centerX(player.body)).withContext('atravessou o corredor').toBeGreaterThan(12 * TILE_SIZE);
+    });
+
+    it('com o Giga junto vale o gigante, e no fim volta ao normal avisando', () => {
+      const harness = tallHarness();
+      const player = harness.simulation.player;
+      player.grantPowerUp('giga-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      expect(player.isGiant).toBeTrue();
+      expect(player.isTall).toBeFalse();
+
+      run(harness, 10.5);
+
+      expect(player.hasPowerUp('giga-mushroom')).toBeFalse();
+      expect(player.isTall).withContext('o Alto ainda tem tempo').toBeTrue();
+
+      run(harness, 2);
+
+      expect(player.hasPowerUp('tall-mushroom')).toBeFalse();
+      expect(player.isTall).toBeFalse();
+      expect(player.body.height).toBe(PLAYER_PHYSICS.bodyHeight);
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'tall-mushroom' });
     });
   });
 

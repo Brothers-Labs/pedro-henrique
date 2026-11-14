@@ -1,4 +1,4 @@
-import { BIG_COIN_VALUE, HUGE_COIN_VALUE, MAGNET_RADIUS, TILE_SIZE } from '../../config/physics.config';
+import { BIG_COIN_VALUE, HUGE_COIN_VALUE, TILE_SIZE } from '../../config/physics.config';
 import { giantCoinValue, isGiantCoinType, type ItemType, type LevelObject, type PowerUpKind } from '../../models/level.model';
 
 export type CollectibleKind = ItemType;
@@ -85,17 +85,18 @@ export class CollectibleSystem {
     this.nextId += 1;
   }
 
-  update(deltaMs: number, playerX: number, playerY: number, hasMagnet: boolean): void {
+  /** `magnetRadius` em pixels: até onde as moedas são puxadas; 0 quando não há ímã. */
+  update(deltaMs: number, playerX: number, playerY: number, magnetRadius: number): void {
     const pull = Math.min(1, (MAGNET_PULL_PER_SECOND * deltaMs) / 1000);
 
     for (let index = this.items.length - 1; index >= 0; index -= 1) {
       const item = this.items[index];
 
-      if (hasMagnet && coinValue(item.kind) > 0) {
+      if (magnetRadius > 0 && coinValue(item.kind) > 0) {
         const distanceX = playerX - item.x;
         const distanceY = playerY - item.y;
 
-        if (distanceX * distanceX + distanceY * distanceY < MAGNET_RADIUS * MAGNET_RADIUS) {
+        if (distanceX * distanceX + distanceY * distanceY < magnetRadius * magnetRadius) {
           item.x += distanceX * pull;
           item.y += distanceY * pull;
         }
