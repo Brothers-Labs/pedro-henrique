@@ -116,6 +116,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'swap-mushroom': '#9b5de5',
   'magnet-mushroom': '#e63946',
   'tall-mushroom': '#9d4edd',
+  'reverse-mushroom': '#20c997',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -179,6 +180,9 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'tall-mushroom':
       paintTallMushroom(context, color);
+      break;
+    case 'reverse-mushroom':
+      paintReverseMushroom(context, color);
       break;
   }
 
@@ -376,6 +380,31 @@ function paintMagnetMushroom(context: CanvasRenderingContext2D, color: string): 
     circle(context, x, y, 3);
     fillAndOutline(context, '#ffd23f', 1.5);
   }
+}
+
+/** Cogumelo de ponta-cabeça, com o chapéu embaixo e uma seta de ida e volta em cima: troca os lados. */
+function paintReverseMushroom(context: CanvasRenderingContext2D, color: string): void {
+  context.save();
+  context.translate(20, 22);
+  context.scale(1, -1);
+  context.translate(-20, -20);
+  paintMushroom(context, color);
+  context.restore();
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2.5;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(9, 7);
+  context.lineTo(31, 7);
+  context.moveTo(13, 3.5);
+  context.lineTo(9, 7);
+  context.lineTo(13, 10.5);
+  context.moveTo(27, 3.5);
+  context.lineTo(31, 7);
+  context.lineTo(27, 10.5);
+  context.stroke();
 }
 
 /** Cogumelo de pé comprido e chapéu pequeno, com uma régua ao lado: é o que deixa alto. */

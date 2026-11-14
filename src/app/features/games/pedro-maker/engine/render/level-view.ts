@@ -205,6 +205,8 @@ export class LevelView {
         isTurboEnding: player.isPowerUpEnding('turbo-mushroom', now),
         hasMagnetMushroom: player.hasPowerUp('magnet-mushroom'),
         isMagnetEnding: player.isPowerUpEnding('magnet-mushroom', now),
+        hasReverseMushroom: player.hasPowerUp('reverse-mushroom'),
+        isReverseEnding: player.isPowerUpEnding('reverse-mushroom', now),
         isTall: player.isTall,
         isTallEnding: player.isTall && player.isPowerUpEnding('tall-mushroom', now),
       },

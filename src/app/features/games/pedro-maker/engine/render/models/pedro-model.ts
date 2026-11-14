@@ -36,6 +36,8 @@ const MAGNET_GLOW = 0.3;
 const MAGNET_COLOR = '#ff4d6d';
 const TALL_GLOW = 0.18;
 const TALL_COLOR = '#b388ff';
+const REVERSE_GLOW = 0.3;
+const REVERSE_COLOR = '#20c997';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -76,6 +78,10 @@ export interface PedroPose {
   readonly isTall: boolean;
   /** Últimos segundos do Cogumelo Alto: o brilho lilás pisca. */
   readonly isTallEnding: boolean;
+  /** Com os comandos trocados do Cogumelo Reverso. */
+  readonly hasReverseMushroom: boolean;
+  /** Últimos segundos do Cogumelo Reverso: o brilho verde-água pisca. */
+  readonly isReverseEnding: boolean;
 }
 
 /**
@@ -200,7 +206,7 @@ export class PedroModel {
   /**
    * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado; com
    * o Cogumelo Turbo, um elétrico; com o Ímã, um vermelho; com o Alto, um
-   * lilás. Todos acendem e apagam quando o efeito
+   * lilás; com o Reverso, um verde-água. Todos acendem e apagam quando o efeito
    * está para acabar. Flor de fogo: um brilho quente; de gelo, um frio.
    */
   private glow(pose: PedroPose, now: number): void {
@@ -219,6 +225,11 @@ export class PedroModel {
     } else if (pose.hasTurboMushroom) {
       emissive.set(TURBO_COLOR);
       this.material.emissiveIntensity = TURBO_GLOW;
+    } else if (pose.isReverseEnding) {
+      this.blinkWarning(REVERSE_COLOR, now);
+    } else if (pose.hasReverseMushroom) {
+      emissive.set(REVERSE_COLOR);
+      this.material.emissiveIntensity = REVERSE_GLOW;
     } else if (pose.isMagnetEnding) {
       this.blinkWarning(MAGNET_COLOR, now);
     } else if (pose.hasMagnetMushroom) {
