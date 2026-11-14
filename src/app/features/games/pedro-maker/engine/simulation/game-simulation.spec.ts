@@ -741,6 +741,54 @@ describe('Simulação do Pedro Maker', () => {
     });
   });
 
+  describe('Cogumelo Reverso', () => {
+    it('troca a esquerda e a direita enquanto dura, e fala com o mascote', () => {
+      const harness = start(flatLevel(60).add('power-up', 5, SURFACE - 1, { powerUp: 'reverse-mushroom' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 1, { right: true });
+
+      expect(player.hasPowerUp('reverse-mushroom')).toBeTrue();
+      expect(harness.events).toContain(jasmine.objectContaining({ type: 'mascot', text: jasmine.stringContaining('Cogumelo Reverso') }));
+
+      const afterPickup = centerX(player.body);
+      run(harness, 1, { right: true });
+
+      expect(centerX(player.body)).withContext('segurando a direita, vai para a esquerda').toBeLessThan(afterPickup);
+      expect(player.facing).toBe(-1);
+
+      const beforeLeft = centerX(player.body);
+      run(harness, 0.6, { left: true });
+
+      expect(centerX(player.body)).withContext('segurando a esquerda, vai para a direita').toBeGreaterThan(beforeLeft);
+    });
+
+    it('não mexe no pulo, pisca no fim e devolve os comandos quando acaba', () => {
+      const harness = start(flatLevel(60).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.3);
+      player.grantPowerUp('reverse-mushroom', harness.simulation.clockMs);
+      const floor = bottom(player.body);
+      harness.simulation.step({ ...IDLE_INPUT, jumpPressed: true, jumpHeld: true });
+      run(harness, 0.2, { jumpHeld: true });
+
+      expect(bottom(player.body)).withContext('o pulo continua para cima').toBeLessThan(floor);
+
+      run(harness, 6.5);
+
+      expect(player.isPowerUpEnding('reverse-mushroom', harness.simulation.clockMs)).toBeTrue();
+
+      run(harness, 1.5);
+
+      expect(player.hasPowerUp('reverse-mushroom')).toBeFalse();
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'reverse-mushroom' });
+
+      const before = centerX(player.body);
+      run(harness, 0.6, { right: true });
+
+      expect(centerX(player.body)).withContext('a direita volta a ir para a direita').toBeGreaterThan(before);
+    });
+  });
+
   describe('Cogumelo Alto', () => {
     /** Maior altura que os pés sobem num pulo segurando o botão, em pixels. */
     const jumpHeight = (harness: Harness): number => {

@@ -113,7 +113,8 @@ const RUN_DUST_SPEED = 200;
  * pulo curto ao soltar o botão, pulo duplo com a Asa, escalada e pulo de
  * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, voo curto e
  * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
- * a disparada do Cogumelo Turbo, o corpo comprido do Cogumelo Alto, braçadas na água, a descida no escorregador
+ * a disparada do Cogumelo Turbo, o corpo comprido do Cogumelo Alto, os
+ * comandos trocados do Cogumelo Reverso, braçadas na água, a descida no escorregador
  * e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
@@ -226,7 +227,7 @@ export class Player {
     return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
   }
 
-  /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã ou o Alto) o herói pisca, para avisar que vai acabar. */
+  /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã, o Alto ou o Reverso) o herói pisca, para avisar que vai acabar. */
   isPowerUpEnding(kind: PowerUpKind, now: number): boolean {
     const expiresAt = this.timedPowerUps.get(kind);
 
@@ -255,8 +256,11 @@ export class Player {
   }
 
   /** Decide a velocidade deste passo; a física move o corpo logo depois. */
-  control(now: number, deltaMs: number, input: InputSnapshot, surroundings: PlayerSurroundings): void {
+  control(now: number, deltaMs: number, pressed: InputSnapshot, surroundings: PlayerSurroundings): void {
     this.expirePowerUps(now);
+
+    const input = this.reverseControls(pressed);
+
     this.climbing = false;
     this.gliding = false;
     this.flying = false;
@@ -648,6 +652,15 @@ export class Player {
     if (direction !== 0) {
       this.facing = direction > 0 ? 1 : -1;
     }
+  }
+
+  /** Cogumelo Reverso: a esquerda e a direita trocam de lugar; o resto dos botões fica igual. */
+  private reverseControls(input: InputSnapshot): InputSnapshot {
+    if (!this.timedPowerUps.has('reverse-mushroom')) {
+      return input;
+    }
+
+    return { ...input, left: input.right, right: input.left };
   }
 
   /** Os dois turbos não se somam: vale o mais forte, para o herói não sair voando da tela. */

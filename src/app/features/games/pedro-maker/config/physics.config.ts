@@ -71,6 +71,8 @@ export const POWER_UP_DURATION_MS = {
   'turbo-mushroom': 10000,
   'magnet-mushroom': 15000,
   'tall-mushroom': 12000,
+  /** Curtinho de propósito: com os comandos trocados, oito segundos já são um desafio. */
+  'reverse-mushroom': 8000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,

@@ -70,6 +70,7 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'giga-mushroom': 'Você ficou gigante! Esbarre nos inimigos e nos tijolos!',
   'turbo-mushroom': 'Turbo ligado! Corra bem rápido antes que acabe!',
   'magnet-mushroom': 'Ímã ligado! As moedas vêm voando até você!',
+  'reverse-mushroom': 'Cogumelo Reverso! Agora a esquerda vai para a direita e a direita vai para a esquerda!',
   'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
 };
 
