@@ -1,7 +1,7 @@
 import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
 
 import type { CharacterPalette } from '../../../config/character.config';
-import { BIG_PEDRO_SCALE, GIGA_PEDRO_SCALE } from '../../../config/physics.config';
+import { BIG_PEDRO_SCALE, GIGA_PEDRO_SCALE, TALL_PEDRO_STRETCH, TALL_PEDRO_THINNING } from '../../../config/physics.config';
 import type { PlayerMode } from '../../simulation/player';
 import { disposeTree } from '../dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from '../voxel-geometry';
@@ -32,6 +32,10 @@ const GIGA_COLOR = '#ffd23f';
 const WARNING_BLINK_MS = 140;
 const TURBO_GLOW = 0.35;
 const TURBO_COLOR = '#33d6ff';
+const MAGNET_GLOW = 0.3;
+const MAGNET_COLOR = '#ff4d6d';
+const TALL_GLOW = 0.18;
+const TALL_COLOR = '#b388ff';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -64,6 +68,14 @@ export interface PedroPose {
   readonly hasTurboMushroom: boolean;
   /** Últimos segundos do Cogumelo Turbo: o brilho elétrico pisca. */
   readonly isTurboEnding: boolean;
+  /** Puxando moedas com o Cogumelo Ímã. */
+  readonly hasMagnetMushroom: boolean;
+  /** Últimos segundos do Cogumelo Ímã: o brilho vermelho pisca. */
+  readonly isMagnetEnding: boolean;
+  /** Com o corpo comprido do Cogumelo Alto. */
+  readonly isTall: boolean;
+  /** Últimos segundos do Cogumelo Alto: o brilho lilás pisca. */
+  readonly isTallEnding: boolean;
 }
 
 /**
@@ -92,6 +104,8 @@ export class PedroModel {
 
   private heading = Math.PI / 2 - TURN_TOWARD_CAMERA;
   private size = 1;
+  /** Quanto o corpo estica na altura (1 é o normal); afina nos lados na mesma medida. */
+  private stretch = 1;
   private stride = 0;
   private squash = 0;
   private wasGrounded = true;
@@ -169,15 +183,24 @@ export class PedroModel {
   }
 
   private grow(pose: PedroPose, deltaSeconds: number): void {
-    const target = pose.isGiant ? GIGA_PEDRO_SCALE : pose.isBig ? BIG_PEDRO_SCALE : 1;
+    // Comprido, o desenho acompanha a caixa de colisão esticada, e não o tamanho de grande.
+    const target = pose.isGiant ? GIGA_PEDRO_SCALE : pose.isBig && !pose.isTall ? BIG_PEDRO_SCALE : 1;
+    const blend = 1 - Math.exp(-GROW_RATE * deltaSeconds);
+    const stretchTarget = pose.isTall ? TALL_PEDRO_STRETCH : 1;
 
-    this.size = MathUtils.lerp(this.size, target, 1 - Math.exp(-GROW_RATE * deltaSeconds));
-    this.root.scale.setScalar(this.size);
+    this.size = MathUtils.lerp(this.size, target, blend);
+    this.stretch = MathUtils.lerp(this.stretch, stretchTarget, blend);
+
+    // Comprido e magrelo: estica para cima e afina dos lados, sem mexer nos pés.
+    const thinning = MathUtils.mapLinear(this.stretch, 1, TALL_PEDRO_STRETCH, 1, TALL_PEDRO_THINNING);
+
+    this.root.scale.set(this.size * thinning, this.size * this.stretch, this.size * thinning);
   }
 
   /**
    * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado; com
-   * o Cogumelo Turbo, um elétrico. Os dois acendem e apagam quando o efeito
+   * o Cogumelo Turbo, um elétrico; com o Ímã, um vermelho; com o Alto, um
+   * lilás. Todos acendem e apagam quando o efeito
    * está para acabar. Flor de fogo: um brilho quente; de gelo, um frio.
    */
   private glow(pose: PedroPose, now: number): void {
@@ -196,6 +219,16 @@ export class PedroModel {
     } else if (pose.hasTurboMushroom) {
       emissive.set(TURBO_COLOR);
       this.material.emissiveIntensity = TURBO_GLOW;
+    } else if (pose.isMagnetEnding) {
+      this.blinkWarning(MAGNET_COLOR, now);
+    } else if (pose.hasMagnetMushroom) {
+      emissive.set(MAGNET_COLOR);
+      this.material.emissiveIntensity = MAGNET_GLOW;
+    } else if (pose.isTallEnding) {
+      this.blinkWarning(TALL_COLOR, now);
+    } else if (pose.isTall) {
+      emissive.set(TALL_COLOR);
+      this.material.emissiveIntensity = TALL_GLOW;
     } else if (pose.hasFireFlower || pose.hasIceFlower) {
       emissive.set(pose.hasFireFlower ? FIRE_COLOR : ICE_COLOR);
       this.material.emissiveIntensity = FLOWER_GLOW;

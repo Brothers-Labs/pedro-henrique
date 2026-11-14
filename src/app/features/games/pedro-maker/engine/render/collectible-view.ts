@@ -54,6 +54,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'giga-mushroom': '#d6336c',
   'turbo-mushroom': '#1fa2ff',
   'swap-mushroom': '#9b5de5',
+  'magnet-mushroom': '#e63946',
+  'tall-mushroom': '#9d4edd',
 };
 
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
@@ -466,6 +468,10 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return [...mushroomParts(POWER_UP_COLORS['turbo-mushroom']), ...speedStreakParts()];
     case 'swap-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['swap-mushroom']), ...swapArrowParts()];
+    case 'magnet-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['magnet-mushroom']), ...magnetHatParts()];
+    case 'tall-mushroom':
+      return tallMushroomParts(POWER_UP_COLORS['tall-mushroom']);
     default:
       return null;
   }
@@ -515,6 +521,36 @@ function speedStreakParts(): readonly VoxelBox[] {
     box(-0.42, 0.12, -0.05, 0.22, 0.05, 0.05, streak),
     box(-0.46, 0, -0.05, 0.3, 0.05, 0.05, streak),
     box(-0.42, -0.12, -0.05, 0.22, 0.05, 0.05, streak),
+  ];
+}
+
+/** Ímã de ferradura azul em cima do chapéu, com as pontas prateadas. */
+function magnetHatParts(): readonly VoxelBox[] {
+  const magnet = '#3f8cff';
+  const tip = '#e8eef7';
+
+  return [
+    box(0, 0.42, 0, 0.26, 0.06, 0.08, magnet),
+    box(-0.1, 0.34, 0, 0.06, 0.12, 0.08, magnet),
+    box(0.1, 0.34, 0, 0.06, 0.12, 0.08, magnet),
+    box(-0.1, 0.27, 0, 0.06, 0.04, 0.08, tip),
+    box(0.1, 0.27, 0, 0.06, 0.04, 0.08, tip),
+  ];
+}
+
+/** Cogumelo de pé comprido e chapéu pequeno: dá para ver de longe que ele estica. */
+function tallMushroomParts(cap: string): readonly VoxelBox[] {
+  const stem = '#fff1d6';
+  const eye = '#2a2350';
+  const spot = '#ffffff';
+
+  return [
+    box(0, -0.12, 0, 0.18, 0.5, 0.18, stem),
+    box(-0.04, -0.02, 0.091, 0.03, 0.08, 0.01, eye),
+    box(0.04, -0.02, 0.091, 0.03, 0.08, 0.01, eye),
+    box(0, 0.2, 0, 0.42, 0.14, 0.42, cap),
+    box(0, 0.3, 0, 0.28, 0.08, 0.28, cap),
+    box(0, 0.22, 0.211, 0.12, 0.08, 0.01, spot),
   ];
 }
 

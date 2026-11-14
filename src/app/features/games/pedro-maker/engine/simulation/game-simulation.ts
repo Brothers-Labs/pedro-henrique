@@ -2,6 +2,8 @@ import { heroDefinition, nextHero } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import {
   GIGA_PHYSICS,
+  MAGNET_MUSHROOM_RADIUS,
+  MAGNET_RADIUS,
   PLAYER_PHYSICS,
   POWER_UP_DURATION_MS,
   RACCOON_SUIT_PHYSICS,
@@ -67,6 +69,8 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'leaf-mushroom': 'Segure o pulo enquanto cai para planar como uma folha!',
   'giga-mushroom': 'Você ficou gigante! Esbarre nos inimigos e nos tijolos!',
   'turbo-mushroom': 'Turbo ligado! Corra bem rápido antes que acabe!',
+  'magnet-mushroom': 'Ímã ligado! As moedas vêm voando até você!',
+  'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
 };
 
 const VICTORY_DELAY_MS = 1300;
@@ -222,7 +226,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.updateEnemies(seconds);
     this.updateFireballs(seconds);
     this.updateBoss(seconds);
-    this.collectibles.update(STEP_MS, centerX(body), centerY(body), player.hasPowerUp('magnet'));
+    this.collectibles.update(STEP_MS, centerX(body), centerY(body), this.magnetRadius());
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
   }
@@ -661,6 +665,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (boss.isHarmful) {
       this.hurtPlayer(centerX(boss.body));
     }
+  }
+
+  /** Até onde o ímã puxa moedas neste passo; 0 sem ímã. O Cogumelo Ímã alcança mais longe. */
+  private magnetRadius(): number {
+    if (this.player.hasPowerUp('magnet-mushroom')) {
+      return MAGNET_MUSHROOM_RADIUS;
+    }
+
+    return this.player.hasPowerUp('magnet') ? MAGNET_RADIUS : 0;
   }
 
   private hurtPlayer(sourceX: number): void {

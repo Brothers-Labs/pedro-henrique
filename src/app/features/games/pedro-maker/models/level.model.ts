@@ -83,7 +83,8 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * segurando o pulo; com o guaxinim, voa um pouquinho e gira o rabo. O Giga
  * Cogumelo deixa o herói gigante por alguns segundos, e o Cogumelo Turbo, bem
  * mais rápido. O Cogumelo Troca-Personagem age na hora: o herói vira o próximo
- * da turma, com o pulo e o freio dele.
+ * da turma, com o pulo e o freio dele. O Cogumelo Ímã puxa as moedas de longe,
+ * e o Cogumelo Alto estica o herói: cabeça lá em cima, músculo fraco.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -102,6 +103,8 @@ export const POWER_UP_KINDS = [
   'giga-mushroom',
   'turbo-mushroom',
   'swap-mushroom',
+  'magnet-mushroom',
+  'tall-mushroom',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
