@@ -1,9 +1,46 @@
+
+
 ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
 
-na venda o vendedor consegue add o veiculo da troca, quero fazer melhorias:
-1 - Poder adicionar o carro por documento do Veiculo
-2 - Deve ter um campo checkbox, dar entrada do veiculo da troca no Estoque, se marcado ja deve adicionar o veiculo direto automaticamente no estoque da loja, com os dados e o documento salvo, só deve dar pra add no estoque se tiver o documento, então deve ficar claro essa regra ali na tela tbm
 
+quero criar pedro pedrerê
+
+
+ele tem aventuras, pula pula, corrida, personagem e modo maker
+
+
+desenvolver senior master arquiteto de sfotware completo de ponta a ponta
+pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
+deve passar no vtest e no git actions completo
+
+___________________________________________________________________________________________________________________________________
+
+ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
+
+me de na temporada do pedro, os reais, pode trocar gemas por reais
+
+vip: R$1,99
+luxo: R$4,99
+recomeçar temporada do pedro: R$ 0,00 - gratis
+
+desenvolver senior master arquiteto de sfotware completo de ponta a ponta
+pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
+deve passar no vtest e no git actions completo
+
+__________________________________________________________________________________________________________________________________
+
+ cd .\projetos\brothers-labs\pedro-henrique\src\app\features\games\pedro-maker\levels
+
+ git pull
+ git branch
+ git status
+ git add .
+ git commit -m
+ git push origin staging --no-verify
+ npm run start
+ git push origin staging2
+
+__________________________________________________________________________________________________________________________________
 
 ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
 
@@ -11,16 +48,37 @@ desenvolver senior master arquiteto de sfotware completo de ponta a ponta
 pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
 deve passar no vtest e no git actions completo
 
+quero novas ideias no pedro maker
+faz tudo no pedro maker ficar 4k
+no superior esquerdo, coloque mais 2 vidas em testar.
+coloque ``fase secreta´´ na placa envez de fase do pedro.
+quero novos recursos no pedro maker
+porta d & e  
+cogumelo troca-personagem
+princesas de personagems em criar minha fase
+
+nao esqueça da mensagem.
+_________________________________________________________________________________________________________________________________
+
+falsity: azul
+lovity: rosa
+cruelity: vermelho
+
+_________________________________________________________________________________________________________________________________
+
+Continuar o Pedro Pedrere liberar uma versão quanto antes
+verificar o que estava parado, e ja commitar tbm o que ta feito
+prioridade é subir pra prod agora uma versão com o que tem e continuar depois desenvolver
+
+
+_________________________________________________________________________________________________________________________________
+
+ADICIONAR NOVA DEMANDA À FILA — NÃO INTERROMPER A DEMANDA ATUAL
+
+Regras
+1. aparecer novidades todos os dias
+2. nao ter o erro
+3. nao marcar mensagem ruim. tem que fazer o bom todoa os dias
+
 pode commitar essas alterações e fazer merge com a staging atualizada e com push no verify completo
-
-
-    
-
-
-me de um resumo das novidades que subiram hoje para main por perfil para lança no grupo de novidades com todos os clietnes e representantes e parceiros
-quero enviar varias mensagens uma com cada perfil e as novidades do perfil
-
-
-
-o que mais podemos fazer de melhorias e ajustes evoluções com base em todas alterações de hoje para melhorar ainda mais a usabilidade e o sistema no geral, me de uma analise por ordem de prioridade de ideias das mais uteis e melhores para plataforma premium executive
 
