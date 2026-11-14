@@ -1,6 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 
 import { DEFAULT_SETTINGS, DIFFICULTY_ORDER, DIFFICULTY_RULES } from '../config/rules.config';
+import { isScreenMode } from '../config/screen.config';
 import type { MakerSettings, TouchControlsMode } from '../models/settings.model';
 
 const STORAGE_KEY = 'pedro-henrique:pedro-maker:settings:v1';
@@ -60,6 +61,7 @@ function sanitize(value: unknown): MakerSettings {
     effects: flag(stored.effects, DEFAULT_SETTINGS.effects),
     touchControls: TOUCH_MODES.find((mode) => mode === stored.touchControls) ?? DEFAULT_SETTINGS.touchControls,
     difficulty: DIFFICULTY_ORDER.find((level) => level === stored.difficulty) ?? DEFAULT_SETTINGS.difficulty,
+    screen: isScreenMode(stored.screen) ? stored.screen : DEFAULT_SETTINGS.screen,
   };
 }
 

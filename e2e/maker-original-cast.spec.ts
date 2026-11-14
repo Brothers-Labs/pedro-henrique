@@ -189,3 +189,32 @@ test('Maker builds the Cactus King castle with the desert mountain and plays it'
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.screenshot({ path: test.info().outputPath('cactus-king-castle-in-game.png') });
 });
+
+test('Maker places doors C to F without a Power-ups tab and switches the game screen to NES', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase das Portas');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  await expect(page.getByRole('tab', { name: 'Power-ups', exact: true })).toHaveCount(0);
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Portais', exact: true }).click();
+  for (const [index, letter] of ['C', 'D', 'E', 'F'].entries()) {
+    const piece = page.getByRole('button', { name: `Porta ${letter}`, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 32, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase das Portas')?.objects
+    .filter((object) => object.type === 'door').map((object) => object.properties?.pair).sort())
+    .toEqual(['C', 'D', 'E', 'F']);
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await page.getByRole('button', { name: 'Pausar', exact: true }).click({ timeout: 60_000 });
+  await page.getByRole('button', { name: /Configurações/ }).click();
+  const nes = page.getByRole('radio', { name: 'NES', exact: true });
+  await nes.click();
+  await expect(nes).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('app-maker-game-host canvas')).toHaveCSS('image-rendering', 'pixelated');
+  await page.screenshot({ path: test.info().outputPath('nes-screen-paused.png') });
+});

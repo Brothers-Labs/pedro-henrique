@@ -216,7 +216,7 @@
               <label class="selection__field">
                 Qual poder
                 <select class="toolbar__input" (change)="setPowerUp($event)">
-                  @for (option of powerUpOptions; track option.id) {
+                  @for (option of powerUpChoices(object.properties?.powerUp); track option.id) {
                     <option [value]="option.id" [selected]="object.properties?.powerUp === option.id">
                       {{ option.emoji }} {{ option.label }}
                     </option>
@@ -229,7 +229,7 @@
             <label class="selection__field">
               Qual poder
               <select class="toolbar__input" (change)="setPowerUp($event)">
-                @for (option of powerUpOptions; track option.id) {
+                @for (option of powerUpChoices(object.properties?.powerUp); track option.id) {
                   <option [value]="option.id" [selected]="object.properties?.powerUp === option.id">
                     {{ option.emoji }} {{ option.label }}
                   </option>
@@ -247,6 +247,7 @@
                 class="tool"
                 [class.tool--active]="object.properties?.pair === pair"
                 [attr.aria-pressed]="object.properties?.pair === pair"
+                [style.border-color]="doorPairColor(pair)"
                 (click)="setPair(pair)"
               >
                 {{ pair }}

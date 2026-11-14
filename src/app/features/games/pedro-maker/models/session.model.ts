@@ -1,4 +1,5 @@
 import type { CharacterPalette } from '../config/character.config';
+import type { ScreenMode } from '../config/screen.config';
 import type { LevelRunResult } from './progress.model';
 import type { LevelBlueprint, PowerUpKind } from './level.model';
 import type { DifficultyRules } from './settings.model';
@@ -91,6 +92,8 @@ export interface GameLaunchOptions {
   /** Herói escolhido, já com as cores que veste. */
   readonly character: CharacterPalette;
   readonly effectsEnabled: boolean;
+  /** Tela escolhida: NES, SNES, Nintendo 64, 3D, HD ou 4K. */
+  readonly screen: ScreenMode;
   readonly isTouch: boolean;
   /** Emoji do mascote do site, que acompanha o Pedro na fase. */
   readonly petEmoji: string | null;
@@ -106,5 +109,7 @@ export interface MakerGameSession {
   retryFromCheckpoint(): void;
   /** Recomeça a fase do zero. */
   restart(): void;
+  /** Troca a tela na hora, sem recomeçar a fase. */
+  setScreen(screen: ScreenMode): void;
   destroy(): void;
 }

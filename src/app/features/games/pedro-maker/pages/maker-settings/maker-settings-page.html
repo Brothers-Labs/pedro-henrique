@@ -24,6 +24,26 @@
       </p>
     </section>
 
+    <section class="section" aria-labelledby="tela-titulo">
+      <h2 id="tela-titulo" class="section__title"><span aria-hidden="true">📺</span> Tela</h2>
+      <div class="choices" role="radiogroup" aria-labelledby="tela-titulo">
+        @for (option of screens; track option.id) {
+          <button
+            type="button"
+            class="choice"
+            role="radio"
+            [attr.aria-checked]="current.screen === option.id"
+            (click)="chooseScreen(option.id)"
+          >
+            <span class="choice__emoji" aria-hidden="true">{{ option.emoji }}</span>
+            <strong>{{ option.label }}</strong>
+            <small>{{ option.description }}</small>
+          </button>
+        }
+      </div>
+      <p class="section__hint">Também dá para trocar no menu de pausa (⏸), com a fase rodando.</p>
+    </section>
+
     <section class="section" aria-labelledby="dificuldade-titulo">
       <h2 id="dificuldade-titulo" class="section__title">Dificuldade</h2>
       <div class="choices" role="radiogroup" aria-labelledby="dificuldade-titulo">

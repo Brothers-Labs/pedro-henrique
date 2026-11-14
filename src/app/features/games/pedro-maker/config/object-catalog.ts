@@ -112,7 +112,6 @@ export type EditorCategoryId =
   | 'itens'
   | 'plataformas'
   | 'decoracao'
-  | 'power-ups'
   | 'cogumelos'
   | 'portais'
   | 'checkpoints';
@@ -130,7 +129,6 @@ export const EDITOR_CATEGORIES: readonly EditorCategory[] = [
   { id: 'itens', label: 'Itens', emoji: '🪙' },
   { id: 'plataformas', label: 'Plataformas', emoji: '🟰' },
   { id: 'decoracao', label: 'Decoração', emoji: '🌳' },
-  { id: 'power-ups', label: 'Power-ups', emoji: '⚡' },
   { id: 'cogumelos', label: 'Cogumelos', emoji: '🍄' },
   { id: 'portais', label: 'Portais', emoji: '🌀' },
   { id: 'checkpoints', label: 'Checkpoints', emoji: '🚩' },
@@ -195,13 +193,6 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'surprise-coins', category: 'blocos', type: 'surprise', label: 'Surpresa', properties: { contents: 'coins' } },
   { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
   { id: 'surprise-crystal', category: 'blocos', type: 'surprise', label: 'Surpresa 💎', properties: { contents: 'crystal' } },
-  {
-    id: 'surprise-power',
-    category: 'blocos',
-    type: 'surprise',
-    label: 'Surpresa ⚡',
-    properties: { contents: 'power-up', powerUp: 'super-jump' },
-  },
 
   { id: 'slime', category: 'inimigos', type: 'slime', label: 'Slime' },
   { id: 'spiky', category: 'inimigos', type: 'spiky', label: 'Espinhudo' },
@@ -267,12 +258,6 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'arrow', category: 'decoracao', type: 'arrow', label: 'Seta' },
   { id: 'crate', category: 'decoracao', type: 'crate', label: 'Caixote' },
 
-  { id: 'power-super-jump', category: 'power-ups', type: 'power-up', label: 'Super Pulo', properties: { powerUp: 'super-jump' } },
-  { id: 'power-shield', category: 'power-ups', type: 'power-up', label: 'Escudo', properties: { powerUp: 'shield' } },
-  { id: 'power-turbo', category: 'power-ups', type: 'power-up', label: 'Turbo', properties: { powerUp: 'turbo' } },
-  { id: 'power-magnet', category: 'power-ups', type: 'power-up', label: 'Ímã', properties: { powerUp: 'magnet' } },
-  { id: 'power-wings', category: 'power-ups', type: 'power-up', label: 'Asa', properties: { powerUp: 'wings' } },
-
   { id: 'power-mushroom', category: 'cogumelos', type: 'power-up', label: 'Super Cogumelo', properties: { powerUp: 'mushroom' } },
   { id: 'power-fire-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Fogo', properties: { powerUp: 'fire-flower' } },
   { id: 'power-ice-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Gelo', properties: { powerUp: 'ice-flower' } },
@@ -310,8 +295,12 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'portal-castle', category: 'portais', type: 'portal', label: 'Castelo final', properties: { portalLook: 'castle' } },
   { id: 'door-a', category: 'portais', type: 'door', label: 'Porta A', properties: { pair: 'A' } },
   { id: 'door-b', category: 'portais', type: 'door', label: 'Porta B', properties: { pair: 'B' } },
-  // Par próprio: duas portas douradas já se ligam sem mexer nas portas A e B.
-  { id: 'door-golden', category: 'portais', type: 'golden-door', label: 'Porta Dourada', properties: { pair: 'C' } },
+  { id: 'door-c', category: 'portais', type: 'door', label: 'Porta C', properties: { pair: 'C' } },
+  { id: 'door-d', category: 'portais', type: 'door', label: 'Porta D', properties: { pair: 'D' } },
+  { id: 'door-e', category: 'portais', type: 'door', label: 'Porta E', properties: { pair: 'E' } },
+  { id: 'door-f', category: 'portais', type: 'door', label: 'Porta F', properties: { pair: 'F' } },
+  // Par próprio: duas portas douradas já se ligam sem mexer nas portas de madeira de A a F.
+  { id: 'door-golden', category: 'portais', type: 'golden-door', label: 'Porta Dourada', properties: { pair: 'G' } },
 
   { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },
 ];
@@ -337,6 +326,41 @@ export function findEditorPiece(object: Pick<LevelObject, 'type' | 'properties'>
     ) ?? sameType[0]
   );
 }
+
+/**
+ * Letras dos pares de portas. Da A à F são as de madeira da paleta; a G é a
+ * da porta dourada. Portas com a mesma letra levam uma à outra.
+ */
+export const DOOR_PAIRS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
+
+export type DoorPair = (typeof DOOR_PAIRS)[number];
+
+/** Cor da plaquinha de cada letra, no editor e em cima da porta no jogo: o par se acha de longe. */
+export const DOOR_PAIR_COLORS: Readonly<Record<DoorPair, string>> = {
+  A: '#e5484d',
+  B: '#3e7bfa',
+  C: '#2fae5f',
+  D: '#f08c1b',
+  E: '#9a6cf0',
+  F: '#e2559b',
+  G: '#c99a06',
+};
+
+/** Cor da plaquinha de um par; pares com nome (das fases do Pedro) ficam roxos. */
+export function doorPairColor(pair: string): string {
+  return DOOR_PAIRS.find((letter) => letter === pair) ? DOOR_PAIR_COLORS[pair as DoorPair] : '#2a2350';
+}
+
+/**
+ * Poderes que o editor oferece: os da paleta. O Super Pulo, o Escudo, o
+ * Turbo, o Ímã e a Asa saíram do editor, mas fases antigas com eles continuam
+ * funcionando.
+ */
+export const EDITOR_POWER_UPS: readonly PowerUpKind[] = [
+  ...new Set(
+    EDITOR_PIECES.flatMap((piece) => (piece.type === 'power-up' && piece.properties?.powerUp ? [piece.properties.powerUp] : [])),
+  ),
+];
 
 export const POWER_UP_LABELS = {
   'super-jump': { label: 'Super Pulo', emoji: '🦘' },

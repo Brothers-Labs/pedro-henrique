@@ -15,7 +15,7 @@ import {
 
 import { THEME_PALETTES } from '../../art/palettes';
 import { paintObjectIcon, SHARP_ICON_SCALE } from '../../art/texture-catalog';
-import { OBJECT_BEHAVIOR } from '../../config/object-catalog';
+import { doorPairColor, OBJECT_BEHAVIOR } from '../../config/object-catalog';
 import { SKELETON_PLATFORM_CELLS, SKELETON_PLATFORM_SEGMENTS, SKELETON_SEGMENT_CELLS, skeletonWallColumn } from '../../levels/skeleton-platform';
 import type { LevelObject } from '../../models/level.model';
 import type { EditorLevel, GridCell } from '../editor-state';
@@ -475,18 +475,18 @@ export class EditorCanvas {
     }
   }
 
-  /** Letra da porta no canto: mostra qual porta leva a qual. */
+  /** Letra da porta no canto, na cor do par: mostra qual porta leva a qual. */
   private drawBadge(context: CanvasRenderingContext2D, text: string, x: number, y: number, size: number): void {
     const radius = Math.max(7, size * 0.24);
 
-    context.fillStyle = '#ffcf3f';
+    context.fillStyle = doorPairColor(text);
     context.strokeStyle = '#2a2350';
     context.lineWidth = 2;
     context.beginPath();
     context.arc(x + size - radius, y + radius, radius, 0, Math.PI * 2);
     context.fill();
     context.stroke();
-    context.fillStyle = '#2a2350';
+    context.fillStyle = '#ffffff';
     context.font = `800 ${Math.round(radius * 1.3)}px "Baloo 2", sans-serif`;
     context.textAlign = 'center';
     context.textBaseline = 'middle';

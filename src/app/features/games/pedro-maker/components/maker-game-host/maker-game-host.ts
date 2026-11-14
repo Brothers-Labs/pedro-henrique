@@ -148,6 +148,13 @@ export class MakerGameHost {
       });
     });
 
+    // A tela escolhida na pausa troca na hora, atrás do menu.
+    effect(() => {
+      const screen = this.settingsService.settings().screen;
+
+      untracked(() => this.session?.setScreen(screen));
+    });
+
     inject(DestroyRef).onDestroy(() => this.teardown());
   }
 
@@ -252,6 +259,7 @@ export class MakerGameHost {
           character: this.progress.character(),
           // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.
           effectsEnabled: settings.effects && this.motion.isAllowed(),
+          screen: settings.screen,
           isTouch: this.showsTouchControls(),
           petEmoji: this.pets.hasPet() ? pet.emoji : null,
           input: this.virtualInput,

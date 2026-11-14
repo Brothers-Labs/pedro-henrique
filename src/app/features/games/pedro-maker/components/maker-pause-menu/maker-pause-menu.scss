@@ -70,3 +70,39 @@
     @include focus-ring;
   }
 }
+
+.pause__label {
+  margin: 0.3rem 0 0;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: left;
+}
+
+.pause__screens {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.pause__screen {
+  @include touch-target;
+
+  padding: 0.35rem 0.4rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.8rem;
+  background: #ffffff;
+  color: maker.$ink;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.1;
+
+  &[aria-checked='true'] {
+    background: #ffe28a;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}

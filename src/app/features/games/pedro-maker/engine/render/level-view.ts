@@ -1,5 +1,6 @@
 import { THEME_PALETTES } from '../../art/palettes';
 import { type CharacterPalette, swappedPalette } from '../../config/character.config';
+import { DOOR_PAIR_COLORS, DOOR_PAIRS } from '../../config/object-catalog';
 import { seedFromText } from '../../levels/seeded-random';
 import type { HeroId } from '../../models/progress.model';
 import type { Boss } from '../simulation/boss';
@@ -38,6 +39,8 @@ const CELEBRATION_MS = 900;
 const HINT_FADE_RATE = 7;
 /** Altura do balão da placa, em blocos a partir do chão: logo acima da tábua. */
 const SIGN_BUBBLE_Y = 1.75;
+/** Plaquinha da letra no alto da porta (que tem 2 blocos), abaixo do aviso de entrar. */
+const DOOR_LETTER_Y = 1.6;
 const BOSS_ZOOM = 1.14;
 const FLASH_MS = 240;
 
@@ -415,6 +418,20 @@ export class LevelView {
       // Acima da tábua, para o balão não cobrir as letras escritas nela.
       label.position.set(this.space.x(sign.x), this.space.y(sign.y) + SIGN_BUBBLE_Y, -0.6);
       this.signLabels.set(sign.id, label);
+    }
+
+    // Letra do par em cima de cada porta, na cor dele: a criança acha a porta irmã de longe.
+    for (const door of triggers.doors) {
+      const pair = DOOR_PAIRS.find((letter) => letter === door.pair);
+
+      if (!pair) {
+        continue;
+      }
+
+      const label = this.labels.create('door', pair, false, DOOR_PAIR_COLORS[pair]);
+
+      label.position.set(this.space.x(door.x), this.space.y(door.y) + DOOR_LETTER_Y, -0.4);
+      label.visible = true;
     }
 
     this.promptLabel = this.labels.create('prompt', this.options.isTouch ? 'AÇÃO' : 'E', true);

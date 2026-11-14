@@ -1,3 +1,4 @@
+import type { ScreenLook } from '../../config/screen.config';
 import type { QualitySettings, QualityTier } from './quality';
 
 /** Largura de uma tela 4K: no 4K, o quadro do jogo é desenhado com até isso de pixels. */
@@ -62,4 +63,37 @@ export function renderPixelRatio(
   const supersampledRatio = Math.min(ULTRA_MAX_SUPERSAMPLING, ULTRA_RENDER_WIDTH / Math.max(1, cssWidth));
 
   return Math.max(nativeRatio, supersampledRatio);
+}
+
+/**
+ * Densidade do quadro em cada tela.
+ *
+ * Nas retrô, o quadro tem só as linhas da época (nunca mais que a densidade
+ * normal) e o navegador estica. No HD, o quadro busca 1920 pixels de largura,
+ * com o mesmo teto de supersampling do 4K. No 4K, a conta do 4K. Sem
+ * supersampling (aparelho fraco ou jogo engasgando), HD e 4K viram o 3D.
+ */
+export function screenPixelRatio(
+  look: ScreenLook,
+  quality: QualitySettings,
+  canSupersample: boolean,
+  devicePixelRatio: number,
+  cssWidth: number,
+  cssHeight: number,
+): number {
+  const normal = renderPixelRatio(quality, false, devicePixelRatio, cssWidth);
+
+  if (look.lines !== null) {
+    return Math.min(normal, look.lines / Math.max(1, cssHeight));
+  }
+
+  if (look.targetWidth === null || !canSupersample) {
+    return normal;
+  }
+
+  if (look.targetWidth >= ULTRA_RENDER_WIDTH) {
+    return renderPixelRatio(quality, true, devicePixelRatio, cssWidth);
+  }
+
+  return Math.max(normal, Math.min(ULTRA_MAX_SUPERSAMPLING, look.targetWidth / Math.max(1, cssWidth)));
 }
