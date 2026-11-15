@@ -333,3 +333,33 @@ test('Maker saves a P switch and the level screen chosen in the Screens tab, and
   await expect(page.getByRole('radio', { name: '4K', exact: true })).toHaveAttribute('aria-checked', 'false');
   await page.screenshot({ path: test.info().outputPath('p-switch-screens-paused.png') });
 });
+
+test('Maker saves the key, the locked door, the chain, the lever and the Giant Coin, and plays the level', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase da Chave');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  const pieces = [
+    ['Itens', 'Chave'],
+    ['Itens', 'Moeda Gigantesca'],
+    ['Blocos', 'Alavanca'],
+    ['Blocos', 'Corrente'],
+    ['Portais', 'Porta com Chave'],
+  ] as const;
+  for (const [index, [tab, label]] of pieces.entries()) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 64, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase da Chave')?.objects.map((object) => object.type))
+    .toEqual(expect.arrayContaining(['key', 'mega-coin', 'lever', 'chain', 'locked-door']));
+  await page.screenshot({ path: test.info().outputPath('locks-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('locks-in-game.png') });
+});

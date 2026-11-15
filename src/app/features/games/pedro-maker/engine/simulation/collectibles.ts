@@ -22,6 +22,17 @@ export interface CollectibleHost {
 /** Meia largura e meia altura da área de coleta em volta do centro do Pedro. */
 const REACH_X = 30;
 const REACH_Y = 42;
+/** A Moeda Gigantesca tem dois blocos de diâmetro: encostar na borda dela já pega. */
+const MEGA_COIN_EXTRA_REACH = 26;
+
+/**
+ * A Moeda Gigantesca vale 10 na hora e estoura numa chuva de 20 moedas
+ * comuns, espalhadas em volta, que o herói sai catando: 30 no total.
+ */
+export const MEGA_COIN = {
+  directValue: 10,
+  showerCoins: 20,
+} as const;
 const MAGNET_PULL_PER_SECOND = 9;
 
 /**
@@ -54,6 +65,7 @@ export class CollectibleSystem {
         case 'coin':
         case 'big-coin':
         case 'huge-coin':
+        case 'mega-coin':
         case 'heart':
           this.spawn(object.type, x, y, {}, null);
           break;
@@ -102,7 +114,9 @@ export class CollectibleSystem {
         }
       }
 
-      if (Math.abs(playerX - item.x) < REACH_X && Math.abs(playerY - item.y) < REACH_Y) {
+      const extra = item.kind === 'mega-coin' ? MEGA_COIN_EXTRA_REACH : 0;
+
+      if (Math.abs(playerX - item.x) < REACH_X + extra && Math.abs(playerY - item.y) < REACH_Y + extra) {
         this.items.splice(index, 1);
         this.host.onCollected(item);
       }
@@ -110,7 +124,11 @@ export class CollectibleSystem {
   }
 }
 
-/** Moedas que um item vale: as gigantes valem várias; o que não é moeda, nenhuma. */
+/**
+ * Moedas que um item vale: as gigantes valem várias; o que não é moeda,
+ * nenhuma. A Gigantesca conta também a chuva que ela solta, para a meta das
+ * estrelas somar tudo o que dá para pegar.
+ */
 export function coinValue(kind: CollectibleKind): number {
   if (isGiantCoinType(kind)) {
     return giantCoinValue(kind);
@@ -123,6 +141,8 @@ export function coinValue(kind: CollectibleKind): number {
       return BIG_COIN_VALUE;
     case 'huge-coin':
       return HUGE_COIN_VALUE;
+    case 'mega-coin':
+      return MEGA_COIN.directValue + MEGA_COIN.showerCoins;
     case 'crystal':
     case 'heart':
     case 'power-up':

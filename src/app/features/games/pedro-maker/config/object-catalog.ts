@@ -41,6 +41,12 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   cannon: { surface: 'solid', isUnique: false },
   'fire-bar': { surface: 'solid', isUnique: false },
   'p-switch': { surface: 'none', isUnique: false },
+  // Porta trancada e corrente são firmes no jogo, mas o validador de alcance
+  // conta com a chave e a alavanca: para ele, o caminho por elas fica aberto.
+  key: { surface: 'none', isUnique: false },
+  'locked-door': { surface: 'none', isUnique: false },
+  chain: { surface: 'none', isUnique: false },
+  lever: { surface: 'none', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   note: { surface: 'solid', isUnique: false },
@@ -81,6 +87,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   'big-coin': { surface: 'none', isUnique: false },
   'huge-coin': { surface: 'none', isUnique: false },
   ...perGiantCoin((): ObjectBehavior => ({ surface: 'none', isUnique: false })),
+  'mega-coin': { surface: 'none', isUnique: false },
   crystal: { surface: 'none', isUnique: false },
   heart: { surface: 'none', isUnique: false },
   'power-up': { surface: 'none', isUnique: false },
@@ -208,6 +215,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'fire-bar-long', category: 'blocos', type: 'fire-bar', label: 'Bastão de Fogo Comprido', properties: { range: 6 } },
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
   { id: 'p-switch', category: 'blocos', type: 'p-switch', label: 'Botão P' },
+  { id: 'chain', category: 'blocos', type: 'chain', label: 'Corrente' },
+  { id: 'lever', category: 'blocos', type: 'lever', label: 'Alavanca' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
   {
@@ -243,8 +252,10 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'witch', category: 'inimigos', type: 'witch', label: 'Bruxa' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
+  { id: 'mega-coin', category: 'itens', type: 'mega-coin', label: 'Moeda Gigantesca' },
   ...GIANT_COIN_PIECES,
   ...COIN_MULTIPLIER_PIECES,
+  { id: 'key', category: 'itens', type: 'key', label: 'Chave' },
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
   { id: 'coin-chest', category: 'itens', type: 'coin-chest', label: 'Baú de Moedas' },
@@ -358,6 +369,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'door-f', category: 'portais', type: 'door', label: 'Porta F', properties: { pair: 'F' } },
   // Par próprio: duas portas douradas já se ligam sem mexer nas portas de madeira de A a F.
   { id: 'door-golden', category: 'portais', type: 'golden-door', label: 'Porta Dourada', properties: { pair: 'G' } },
+  { id: 'locked-door', category: 'portais', type: 'locked-door', label: 'Porta com Chave' },
   ...WARP_PIPE_PIECES,
 
   { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },

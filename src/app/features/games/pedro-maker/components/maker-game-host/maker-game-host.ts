@@ -109,7 +109,7 @@ export class MakerGameHost {
   protected readonly phase = signal<HostPhase>('loading');
   protected readonly loadingProgress = signal(0);
   protected readonly errorMessage = signal('');
-  protected readonly hud = signal<HudState>({ hearts: 3, maxHearts: 3, coins: 0, crystalsFound: 0, crystalsTotal: 0, hasShield: false });
+  protected readonly hud = signal<HudState>({ hearts: 3, maxHearts: 3, coins: 0, crystalsFound: 0, crystalsTotal: 0, hasShield: false, keys: 0 });
   protected readonly boss = signal<BossHudState | null>(null);
   protected readonly powerUps = signal<readonly ActivePowerUp[]>([]);
   /** Tela da partida: a da aba Telas da fase, ou a dos ajustes; a pausa troca. */

@@ -31,9 +31,10 @@ import { CannonSystem } from './cannons';
 import { FireBarSystem } from './fire-bars';
 import { type PSwitchHost, PSwitchSystem } from './p-switch';
 import { Boss, type BossHost } from './boss';
-import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
+import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue, MEGA_COIN } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
 import { type BallElement, type Fireball, FireballSystem } from './fireballs';
+import { type LockHost, LockSystem } from './locks';
 import {
   bottom,
   centerX,
@@ -47,7 +48,7 @@ import {
 import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
-import { cellOf, TileGrid } from './tile-grid';
+import { cellOf, COLLISION, TileGrid } from './tile-grid';
 import { type Chest, type DoorKind, TriggerSystem, type TriggerHost } from './triggers';
 import { VisualEventQueue } from './visual-events';
 
@@ -99,6 +100,11 @@ const MAX_CACTUS_SPROUTS = 2;
 const CACTUS_SPROUT_SCALE = 0.7;
 /** O pulinho com que o espinhudo sai do Rei Cacto. */
 const CACTUS_SPROUT_HOP_VELOCITY = 420;
+/** A chuva da Moeda Gigantesca: dois anéis em volta dela, em blocos a partir do centro. */
+const MEGA_COIN_RINGS = [
+  { radius: 1.7, count: 8 },
+  { radius: 2.8, count: 12 },
+] as const;
 
 export interface SimulationOptions {
   readonly blueprint: LevelBlueprint;
@@ -120,7 +126,7 @@ export interface SimulationOptions {
  * Há dois relógios: `clockMs` anima e agenda e nunca para enquanto a partida
  * roda; `runTimeMs` é o tempo que vale para o resultado e para no portal.
  */
-export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, TriggerHost, BossHost, PSwitchHost {
+export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, TriggerHost, BossHost, PSwitchHost, LockHost {
   readonly effects = new VisualEventQueue();
   readonly scheduler = new Scheduler();
   readonly grid: TileGrid;
@@ -132,6 +138,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly cannons: CannonSystem;
   readonly fireBars: FireBarSystem;
   readonly pSwitches: PSwitchSystem;
+  readonly locks: LockSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -161,7 +168,9 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   constructor(private readonly options: SimulationOptions) {
     const { blueprint } = options;
 
-    this.currentHero = options.hero;    const crystalIndexOf = indexCrystals(blueprint.objects);
+    this.currentHero = options.hero;
+
+    const crystalIndexOf = indexCrystals(blueprint.objects);
 
     this.random = new SeededRandom(seedFromText(blueprint.id));
     this.hearts = options.rules.hearts;
@@ -178,6 +187,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.cannons = new CannonSystem(blueprint.objects);
     this.fireBars = new FireBarSystem(blueprint.objects);
     this.pSwitches = new PSwitchSystem(blueprint.objects, this.grid, this.blocks, this.collectibles, this);
+    this.locks = new LockSystem(blueprint.objects, this.grid, this);
     this.createBoss(blueprint.objects);
   }
 
@@ -241,6 +251,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.updateFireballs(seconds);
     this.updateBoss(seconds);
     this.pSwitches.update(this.clockMs, player);
+    this.locks.update(this.clockMs, body, player.isActive);
     this.collectibles.update(STEP_MS, centerX(body), centerY(body), this.magnetRadius());
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
@@ -856,6 +867,9 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       case 'huge-coin':
         this.collectGiantCoin(item);
         break;
+      case 'mega-coin':
+        this.burstMegaCoin(item);
+        break;
       case 'crystal':
         if (item.crystalIndex !== undefined) {
           this.crystalsFound[item.crystalIndex] = true;
@@ -944,6 +958,14 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.emit({ type: 'flower-speech', text });
   }
 
+  onKeysChanged(): void {
+    this.emitHud();
+  }
+
+  onLockTip(text: string): void {
+    this.emit({ type: 'mascot', text });
+  }
+
   onPSwitch(isActive: boolean, durationMs: number): void {
     this.emit(isActive ? { type: 'p-switch', durationMs } : { type: 'p-switch-ended' });
   }
@@ -984,6 +1006,40 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.addCoins(coinValue(item.kind), x, y);
     this.effects.burst('coin', x, y, 30);
     this.effects.burst('sparkle', x, y, 16);
+  }
+
+  /**
+   * A Moeda Gigantesca vale 10 na hora e estoura em moedas comuns, em dois
+   * anéis em volta dela. Moeda que cairia dentro de um bloco não aparece: vai
+   * direto para o placar, para nenhuma ficar impossível de pegar.
+   */
+  private burstMegaCoin(item: Collectible): void {
+    const { x, y } = item;
+    let buried = 0;
+
+    this.addCoins(MEGA_COIN.directValue, x, y);
+    this.effects.burst('coin', x, y, 40);
+    this.effects.burst('sparkle', x, y, 24);
+    this.effects.shake('leve');
+    this.effects.floatingText(x, y - 50, '🪙 CHUVA DE MOEDAS!', '#ffe066');
+
+    for (const ring of MEGA_COIN_RINGS) {
+      for (let index = 0; index < ring.count; index += 1) {
+        const angle = (index / ring.count) * Math.PI * 2 + ring.radius;
+        const coinX = x + Math.cos(angle) * ring.radius * TILE_SIZE;
+        const coinY = y + Math.sin(angle) * ring.radius * TILE_SIZE;
+
+        if (this.grid.collisionAt(cellOf(coinX), cellOf(coinY)) !== COLLISION.empty || coinY < 0 || coinX < 0 || coinX >= this.grid.widthPx) {
+          buried += 1;
+        } else {
+          this.collectibles.spawn('coin', coinX, coinY, {}, this.clockMs);
+        }
+      }
+    }
+
+    if (buried > 0) {
+      this.coins += buried * this.coinMultiplier();
+    }
   }
 
   private activatePowerUp(kind: PowerUpKind, x: number, y: number): void {
@@ -1054,6 +1110,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         crystalsFound: this.crystalsFound.filter(Boolean).length,
         crystalsTotal: this.crystalsFound.length,
         hasShield: this.player.hasShield,
+        keys: this.locks.keyCount,
       },
     });
   }

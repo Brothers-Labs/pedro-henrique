@@ -120,6 +120,7 @@ import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
+import { LOCK_ART_SIZE, LOCKED_DOOR_HEIGHT, LOCKED_DOOR_WIDTH, paintChain, paintKey, paintLever, paintLockedDoor } from './lock-art';
 import { PATH_ART_SIZE, paintFireBar, paintPSwitch, paintTalkingFlower, paintWarpPipe } from './path-art';
 
 /* Ícones do editor ------------------------------------------------------------- */
@@ -296,6 +297,18 @@ function drawIcon(
     case 'p-switch':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintPSwitch);
       return;
+    case 'key':
+      fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintKey);
+      return;
+    case 'locked-door':
+      fit(LOCKED_DOOR_WIDTH, LOCKED_DOOR_HEIGHT, paintLockedDoor);
+      return;
+    case 'chain':
+      fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintChain);
+      return;
+    case 'lever':
+      fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintLever);
+      return;
     case 'talking-flower':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintTalkingFlower);
       return;
@@ -359,6 +372,9 @@ function drawIcon(
       return;
     case 'huge-coin':
       fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, paintHugeCoin);
+      return;
+    case 'mega-coin':
+      fit(HUGE_COIN_SIZE, HUGE_COIN_SIZE, (inner) => paintNumberedCoin(inner, HUGE_COIN_SIZE, '★'));
       return;
     case 'crystal':
       fit(CRYSTAL_WIDTH, CRYSTAL_HEIGHT, paintCrystal);
