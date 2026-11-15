@@ -3,6 +3,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { IndexedDbService, MAKER_LEVEL_STORE } from '../../../../core/services/indexed-db.service';
 import { createId } from '../../../../core/utils/format';
 import { EDITOR_THEMES } from '../config/object-catalog';
+import { isScreenMode, type ScreenMode } from '../config/screen.config';
 import { LEVEL_LIMITS, sanitizeLevelObject } from '../levels/level-validation';
 import type { CustomLevel, LevelBlueprint, LevelObject } from '../models/level.model';
 import { SyncOutbox } from '../sync/sync-outbox';
@@ -17,6 +18,8 @@ export interface CustomLevelDraft {
   readonly width: number;
   readonly height: number;
   readonly objects: readonly LevelObject[];
+  /** Tela da aba Telas; sem ela, a fase usa a tela dos ajustes de quem joga. */
+  readonly screen?: ScreenMode;
 }
 
 const MAX_NAME_LENGTH = 40;
@@ -69,6 +72,7 @@ export class CustomLevelService {
       width: draft.width,
       height: draft.height,
       objects: draft.objects,
+      ...(draft.screen ? { screen: draft.screen } : {}),
       // Mudar a fase exige vencê-la de novo para valer como concluída.
       completed: false,
       bestStars: 0,
@@ -210,6 +214,7 @@ export function customLevelBlueprint(level: CustomLevel): LevelBlueprint {
     height: level.height,
     objects: level.objects,
     targetTimeSeconds: Math.round(level.width * 0.6),
+    ...(level.screen ? { screen: level.screen } : {}),
   };
 }
 
@@ -275,6 +280,8 @@ export function sanitizeCustomLevel(value: unknown): CustomLevel | null {
     width,
     height,
     objects,
+    // Tela desconhecida (de uma versão futura, por exemplo) vira "a dos ajustes", sem perder a fase.
+    ...(isScreenMode(stored.screen) ? { screen: stored.screen } : {}),
     completed: stored.completed === true,
     bestStars:
       typeof stored.bestStars === 'number' ? Math.min(3, Math.max(0, Math.trunc(stored.bestStars))) : 0,

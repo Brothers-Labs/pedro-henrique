@@ -120,7 +120,7 @@ import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
-import { PATH_ART_SIZE, paintFireBar, paintTalkingFlower, paintWarpPipe } from './path-art';
+import { PATH_ART_SIZE, paintFireBar, paintPSwitch, paintTalkingFlower, paintWarpPipe } from './path-art';
 
 /* Ícones do editor ------------------------------------------------------------- */
 
@@ -292,6 +292,9 @@ function drawIcon(
       return;
     case 'warp-pipe':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintWarpPipe);
+      return;
+    case 'p-switch':
+      fit(PATH_ART_SIZE, PATH_ART_SIZE, paintPSwitch);
       return;
     case 'talking-flower':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintTalkingFlower);

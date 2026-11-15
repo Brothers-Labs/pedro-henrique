@@ -6,6 +6,7 @@ import { LevelThumbnail } from '../../components/level-thumbnail/level-thumbnail
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
 import { syncStatusLabel } from '../../components/maker-sync-panel/maker-sync-panel';
 import { THEME_LABELS } from '../../config/object-catalog';
+import { SCREEN_LOOKS } from '../../config/screen.config';
 import type { CustomLevel } from '../../models/level.model';
 import { CustomLevelService, lockedSecretLevelIds } from '../../services/custom-level.service';
 import { LevelSyncService } from '../../sync/level-sync.service';
@@ -49,8 +50,10 @@ export class MakerLevelsPage {
 
   protected themeOf(level: CustomLevel): string {
     const theme = THEME_LABELS[level.theme];
+    // A tela da aba Telas aparece junto do tema: quem abre já sabe que vai jogar no NES.
+    const screen = level.screen ? ` · ${SCREEN_LOOKS[level.screen].emoji} ${SCREEN_LOOKS[level.screen].label}` : '';
 
-    return `${theme.emoji} ${theme.label}`;
+    return `${theme.emoji} ${theme.label}${screen}`;
   }
 
   protected starsOf(level: CustomLevel): readonly boolean[] {

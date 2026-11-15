@@ -86,6 +86,8 @@ export class BlockView {
     private readonly system: BlockSystem,
     private readonly atlas: VoxelAtlasTexture,
     private readonly space: WorldSpace,
+    /** Tijolos em que as moedas viram com o botão P; escondidos até ele ser apertado. */
+    coinBricks: readonly InteractiveBlock[] = [],
   ) {
     this.root.name = 'blocos';
 
@@ -96,7 +98,7 @@ export class BlockView {
     const isMultiCoin = (block: InteractiveBlock): boolean => block.contents === 'multi-coins';
     const isPlainSurprise = (block: InteractiveBlock): boolean => !isLucky(block) && !isMultiCoin(block);
 
-    this.bricks = this.blockMesh(byKind('brick'), 'brick', BLOCK_SIZE);
+    this.bricks = this.blockMesh([...byKind('brick'), ...coinBricks], 'brick', BLOCK_SIZE);
     this.surprises = this.blockMesh(surpriseBlocks.filter(isPlainSurprise), 'surprise', BLOCK_SIZE);
     this.luckyBlocks = this.blockMesh(surpriseBlocks.filter(isLucky), 'lucky', BLOCK_SIZE);
     this.multiCoinBlocks = this.blockMesh(surpriseBlocks.filter(isMultiCoin), 'brick', BLOCK_SIZE);
@@ -114,7 +116,8 @@ export class BlockView {
   }
 
   update(now: number, alpha: number): void {
-    this.updateBlocks(this.bricks, now, (block) => !block.isBroken);
+    // Escondido, o tijolo virou moeda do botão P (ou é uma moeda que ainda não virou tijolo).
+    this.updateBlocks(this.bricks, now, (block) => !block.isBroken && !block.isHidden);
     this.updateBlocks(this.surprises, now, (block) => !block.isUsed);
     this.updateBlocks(this.luckyBlocks, now, (block) => !block.isUsed);
     this.updateBlocks(this.multiCoinBlocks, now, (block) => !block.isUsed);

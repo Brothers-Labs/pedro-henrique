@@ -1,6 +1,7 @@
 import { OBJECT_BEHAVIOR } from '../config/object-catalog';
 import { DEFAULT_LEVEL_HEIGHT } from '../config/physics.config';
 import { LEVEL_LIMITS } from '../levels/level-validation';
+import type { ScreenMode } from '../config/screen.config';
 import type { LevelObject, LevelObjectProperties, LevelObjectType, LevelTheme } from '../models/level.model';
 
 /**
@@ -17,6 +18,8 @@ export interface EditorLevel {
   readonly width: number;
   readonly height: number;
   readonly objects: readonly LevelObject[];
+  /** Tela da aba Telas; sem ela, a fase usa a tela dos ajustes de quem joga. */
+  readonly screen?: ScreenMode;
 }
 
 export interface EditorHistory {
@@ -300,6 +303,21 @@ export function renameLevel(level: EditorLevel, name: string): EditorLevel {
 
 export function changeTheme(level: EditorLevel, theme: LevelTheme): EditorLevel {
   return theme === level.theme ? level : { ...level, theme };
+}
+
+/** Escolhe a tela da fase; `null` volta a usar a tela dos ajustes de quem joga. */
+export function changeScreen(level: EditorLevel, screen: ScreenMode | null): EditorLevel {
+  if ((level.screen ?? null) === screen) {
+    return level;
+  }
+
+  if (screen === null) {
+    const { screen: _removed, ...rest } = level;
+
+    return rest;
+  }
+
+  return { ...level, screen };
 }
 
 function isInside(level: EditorLevel, x: number, y: number): boolean {

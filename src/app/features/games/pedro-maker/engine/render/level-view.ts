@@ -12,6 +12,7 @@ import { BlockView } from './block-view';
 import { CameraRig } from './camera-rig';
 import { CollectibleView } from './collectible-view';
 import { FireBarView } from './fire-bar-view';
+import { PSwitchView } from './p-switch-view';
 import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
 import { BossModel } from './models/boss-model';
@@ -74,6 +75,7 @@ export class LevelView {
   private collectibles: CollectibleView | null = null;
   private fireballs: FireballView | null = null;
   private fireBars: FireBarView | null = null;
+  private pSwitches: PSwitchView | null = null;
   private talkingFlowers: TalkingFlowerView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
@@ -126,12 +128,17 @@ export class LevelView {
         scene.add(this.scenery.root);
       },
       () => {
-        this.blocks = new BlockView(simulation.blocks, this.atlas, this.space);
-        this.collectibles = new CollectibleView(simulation.collectibles, this.space);
+        const pSwitches = simulation.pSwitches;
+        // Com botão P, cada tijolo pode virar moeda: a malha de moedas reserva vaga para eles.
+        const spareCoins = pSwitches.buttons.length > 0 ? simulation.blocks.interactive.filter((block) => block.kind === 'brick').length : 0;
+
+        this.blocks = new BlockView(simulation.blocks, this.atlas, this.space, pSwitches.coinBricks);
+        this.collectibles = new CollectibleView(simulation.collectibles, this.space, spareCoins);
+        this.pSwitches = new PSwitchView(pSwitches, this.space);
         this.fireballs = new FireballView(simulation.fireballs, this.space);
         this.fireBars = new FireBarView(simulation.fireBars, this.space);
         this.talkingFlowers = new TalkingFlowerView(simulation.triggers.flowers, this.space);
-        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -249,6 +256,7 @@ export class LevelView {
     this.collectibles?.update(now);
     this.fireballs?.update(now, alpha);
     this.fireBars?.update(now);
+    this.pSwitches?.update(now);
     this.talkingFlowers?.update(now);
     this.props?.update(now);
     this.scenery?.update(deltaSeconds);
@@ -277,6 +285,7 @@ export class LevelView {
     this.collectibles?.dispose();
     this.fireballs?.dispose();
     this.fireBars?.dispose();
+    this.pSwitches?.dispose();
     this.talkingFlowers?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();

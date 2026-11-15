@@ -44,7 +44,7 @@
               type="button"
               class="pause__screen"
               role="radio"
-              [attr.aria-checked]="current.screen === option.id"
+              [attr.aria-checked]="(screen() ?? current.screen) === option.id"
               [attr.title]="option.description"
               (click)="chooseScreen(option.id)"
             >

@@ -21,6 +21,7 @@ import { CalmModeService } from '../../../../../core/services/calm-mode.service'
 import { PetService } from '../../../../../core/services/pet.service';
 import { CALM_SPEECH_RATE, DEFAULT_SPEECH_RATE, SpeechService } from '../../../../../core/services/speech.service';
 import { LOADING_TIPS } from '../../config/rules.config';
+import type { ScreenMode } from '../../config/screen.config';
 import type { LevelBlueprint } from '../../models/level.model';
 import type { LevelRunResult } from '../../models/progress.model';
 import type {
@@ -111,6 +112,8 @@ export class MakerGameHost {
   protected readonly hud = signal<HudState>({ hearts: 3, maxHearts: 3, coins: 0, crystalsFound: 0, crystalsTotal: 0, hasShield: false });
   protected readonly boss = signal<BossHudState | null>(null);
   protected readonly powerUps = signal<readonly ActivePowerUp[]>([]);
+  /** Tela da partida: a da aba Telas da fase, ou a dos ajustes; a pausa troca. */
+  protected readonly screen = signal<ScreenMode>(this.settingsService.settings().screen);
   protected readonly mascotMessage = signal<string | null>(null);
   protected readonly toast = signal<string | null>(null);
   protected readonly tip = signal(LOADING_TIPS[0]);
@@ -152,11 +155,20 @@ export class MakerGameHost {
       });
     });
 
-    // A tela escolhida na pausa troca na hora, atrás do menu.
+    // Mudou a tela dos ajustes (em outra aba, por exemplo): a partida acompanha.
+    // A primeira leitura não conta, para não passar por cima da tela da fase.
+    let settingsScreen: ScreenMode | null = null;
+
     effect(() => {
       const screen = this.settingsService.settings().screen;
 
-      untracked(() => this.session?.setScreen(screen));
+      untracked(() => {
+        if (settingsScreen !== null && settingsScreen !== screen) {
+          this.applyScreen(screen);
+        }
+
+        settingsScreen = screen;
+      });
     });
 
     inject(DestroyRef).onDestroy(() => this.teardown());
@@ -172,6 +184,12 @@ export class MakerGameHost {
     this.session?.pause();
     this.phase.set('paused');
     this.audio.play('button');
+  }
+
+  /** Tela escolhida na pausa: troca na hora, atrás do menu, e vira a dos ajustes. */
+  protected chooseScreen(screen: ScreenMode): void {
+    this.applyScreen(screen);
+    this.settingsService.update({ screen });
   }
 
   protected choosePause(choice: PauseChoice): void {
@@ -252,6 +270,9 @@ export class MakerGameHost {
     try {
       const { launchMakerGame } = await import('../../engine/launch-game');
       const settings = this.settingsService.settings();
+
+      // A tela da aba Telas vale a cada começo; sem ela, a dos ajustes.
+      this.screen.set(this.blueprint().screen ?? settings.screen);
       const pet = this.mascot();
       const rules = this.settingsService.difficultyRules();
 
@@ -263,7 +284,7 @@ export class MakerGameHost {
           character: this.progress.character(),
           // Modo calmo e movimento reduzido do sistema também apagam partículas e tremores.
           effectsEnabled: settings.effects && this.motion.isAllowed(),
-          screen: settings.screen,
+          screen: this.screen(),
           isTouch: this.showsTouchControls(),
           petEmoji: this.pets.hasPet() ? pet.emoji : null,
           input: this.virtualInput,
@@ -327,6 +348,21 @@ export class MakerGameHost {
       case 'power-up-ended':
         this.powerUps.update((list) => list.filter((power) => power.kind !== event.kind));
         return;
+      case 'p-switch':
+        // Só avisa no primeiro aperto; outro botão com o efeito valendo só recomeça o relógio.
+        if (!this.powerUps().some((power) => power.kind === 'p-switch')) {
+          this.showToast('🅿️ BOTÃO P! Tijolo vira moeda!');
+        }
+
+        this.powerUpKey += 1;
+        this.powerUps.update((list) => [
+          ...list.filter((power) => power.kind !== 'p-switch'),
+          { kind: 'p-switch', durationMs: event.durationMs, key: this.powerUpKey },
+        ]);
+        return;
+      case 'p-switch-ended':
+        this.powerUps.update((list) => list.filter((power) => power.kind !== 'p-switch'));
+        return;
       case 'mascot':
         this.speak(event.text);
         return;
@@ -375,6 +411,11 @@ export class MakerGameHost {
   }
 
   /** A frase da Flor Falante já aparece no balão em cima dela; aqui ela é lida em voz alta, para quem ainda não lê. */
+  private applyScreen(screen: ScreenMode): void {
+    this.screen.set(screen);
+    this.session?.setScreen(screen);
+  }
+
   private readFlower(text: string): void {
     // Os emojis não se leem bem em voz alta: fica só o texto (o seletor de variação some junto).
     const spoken = text.replace(/[\p{Extended_Pictographic}\u{FE0F}]/gu, '').trim();

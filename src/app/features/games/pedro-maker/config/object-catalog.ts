@@ -40,6 +40,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   pipe: { surface: 'solid', isUnique: false },
   cannon: { surface: 'solid', isUnique: false },
   'fire-bar': { surface: 'solid', isUnique: false },
+  'p-switch': { surface: 'none', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   note: { surface: 'solid', isUnique: false },
@@ -206,6 +207,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'fire-bar', category: 'blocos', type: 'fire-bar', label: 'Bastão de Fogo', properties: { range: 4 } },
   { id: 'fire-bar-long', category: 'blocos', type: 'fire-bar', label: 'Bastão de Fogo Comprido', properties: { range: 6 } },
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
+  { id: 'p-switch', category: 'blocos', type: 'p-switch', label: 'Botão P' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
   {

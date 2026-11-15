@@ -24,6 +24,7 @@ import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { MOVING_PLATFORM_WIDTH, SKELETON_RESPAWN_SECONDS, SKELETON_VANISH_DELAY_SECONDS } from './blocks';
 import { GameSimulation, STEP_MS } from './game-simulation';
+import { P_SWITCH } from './p-switch';
 import { bottom, centerX, centerY, isAreaClear } from './physics-body';
 
 const META = { id: 'teste', name: 'Teste', theme: 'vale', targetTimeSeconds: 60 } as const;
@@ -2060,6 +2061,126 @@ describe('Simulação do Pedro Maker', () => {
       run(harness, 1);
 
       expect(speeches(harness)).toEqual([]);
+    });
+  });
+
+  describe('Botão P', () => {
+    /** Botão no chão na coluna 8, dois tijolos no alto e duas moedas no caminho. */
+    const switchLevel = (): LevelBuilder =>
+      flatLevel()
+        .add('p-switch', 8, SURFACE - 1)
+        .add('brick', 14, SURFACE - 4)
+        .add('brick', 15, SURFACE - 4)
+        .add('coin', 20, SURFACE - 1)
+        .add('coin', 21, SURFACE - 1);
+    const solidAt = (harness: Harness, cellX: number, cellY: number): boolean =>
+      !isAreaClear(harness.simulation.grid, { x: cellX * TILE_SIZE + 4, y: cellY * TILE_SIZE + 4, width: 8, height: 8 });
+    const coinCells = (harness: Harness): string[] =>
+      harness.simulation.collectibles.items
+        .filter((item) => item.kind === 'coin')
+        .map((item) => `${Math.floor(item.x / TILE_SIZE)},${Math.floor(item.y / TILE_SIZE)}`)
+        .sort();
+    const press = (harness: Harness): void => {
+      harness.simulation.player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.05);
+    };
+
+    it('encostar no botão troca tijolo por moeda e moeda por tijolo, e tudo volta depois de 10 segundos', () => {
+      const harness = start(switchLevel().build(META));
+      run(harness, 0.2);
+
+      expect(coinCells(harness)).toEqual([`20,${SURFACE - 1}`, `21,${SURFACE - 1}`]);
+
+      press(harness);
+
+      expect(harness.simulation.pSwitches.isActive).toBeTrue();
+      expect(harness.simulation.pSwitches.buttons[0].isPressed).toBeTrue();
+      expect(harness.events).toContain({ type: 'p-switch', durationMs: P_SWITCH.durationMs });
+      expect(coinCells(harness)).toEqual([`14,${SURFACE - 4}`, `15,${SURFACE - 4}`]);
+      expect(solidAt(harness, 14, SURFACE - 4)).withContext('o tijolo virou moeda: dá para passar').toBeFalse();
+      expect(solidAt(harness, 20, SURFACE - 1)).withContext('a moeda virou tijolo firme').toBeTrue();
+
+      run(harness, P_SWITCH.durationMs / 1000);
+
+      expect(harness.simulation.pSwitches.isActive).toBeFalse();
+      expect(harness.events).toContain({ type: 'p-switch-ended' });
+      expect(coinCells(harness)).toEqual([`20,${SURFACE - 1}`, `21,${SURFACE - 1}`]);
+      expect(solidAt(harness, 14, SURFACE - 4)).toBeTrue();
+      expect(solidAt(harness, 20, SURFACE - 1)).toBeFalse();
+      expect(harness.simulation.pSwitches.buttons[0].isPressed).withContext('o botão fica amassado').toBeTrue();
+    });
+
+    it('a moeda pega durante o efeito some de vez: o tijolo dela não volta', () => {
+      const harness = start(flatLevel().add('p-switch', 8, SURFACE - 1).add('brick', 12, SURFACE - 1).build(META));
+      run(harness, 0.2);
+      press(harness);
+
+      const coinsBefore = lastHud(harness.events)?.coins ?? 0;
+
+      harness.simulation.player.placeFeetAt(12.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.1);
+
+      expect(lastHud(harness.events)?.coins).toBe(coinsBefore + 1);
+
+      harness.simulation.player.placeFeetAt(4.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, P_SWITCH.durationMs / 1000);
+
+      expect(harness.simulation.pSwitches.isActive).toBeFalse();
+      expect(solidAt(harness, 12, SURFACE - 1)).toBeFalse();
+      expect(harness.simulation.blocks.blockAt(12, SURFACE - 1)?.isBroken).toBeTrue();
+    });
+
+    it('a cabeçada quebra o tijolo que era moeda, e aquela moeda não volta', () => {
+      const harness = start(flatLevel().add('p-switch', 8, SURFACE - 1).add('coin', 10, SURFACE - 3).build(META));
+      run(harness, 0.2);
+      press(harness);
+
+      expect(solidAt(harness, 10, SURFACE - 3)).toBeTrue();
+
+      harness.simulation.player.placeFeetAt(10.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.05);
+      jump(harness, 0.5);
+      run(harness, 1);
+
+      expect(solidAt(harness, 10, SURFACE - 3)).withContext('quebrou').toBeFalse();
+      expect(harness.events).toContain({ type: 'sound', cue: 'break' });
+
+      run(harness, P_SWITCH.durationMs / 1000);
+
+      expect(coinCells(harness)).toEqual([]);
+    });
+
+    it('a moeda encostada no herói não vira tijolo em cima dele', () => {
+      const harness = start(flatLevel().add('p-switch', 19, SURFACE - 1).add('coin', 20, SURFACE - 1).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      // O corpo passa uns pixels para dentro da célula da moeda, sem chegar perto o bastante para pegá-la.
+      player.placeFeetAt(20 * TILE_SIZE + 3 - player.body.width / 2, SURFACE * TILE_SIZE);
+      harness.simulation.step(IDLE_INPUT);
+
+      expect(harness.simulation.pSwitches.isActive).toBeTrue();
+      expect(solidAt(harness, 20, SURFACE - 1)).toBeFalse();
+      expect(coinCells(harness)).toEqual([`20,${SURFACE - 1}`]);
+    });
+
+    it('apertar outro botão com o efeito valendo recomeça os 10 segundos', () => {
+      const harness = start(switchLevel().add('p-switch', 30, SURFACE - 1).build(META));
+      run(harness, 0.2);
+      press(harness);
+      run(harness, 6);
+
+      harness.simulation.player.placeFeetAt(30.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.05);
+      run(harness, 6);
+
+      expect(harness.simulation.pSwitches.isActive).withContext('12 segundos depois do primeiro, ainda vale').toBeTrue();
+      expect(coinCells(harness)).toEqual([`14,${SURFACE - 4}`, `15,${SURFACE - 4}`]);
+
+      run(harness, 4.5);
+
+      expect(harness.simulation.pSwitches.isActive).toBeFalse();
+      expect(coinCells(harness)).toEqual([`20,${SURFACE - 1}`, `21,${SURFACE - 1}`]);
     });
   });
 

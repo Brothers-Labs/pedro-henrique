@@ -231,7 +231,7 @@ export class BlockSystem {
       return;
     }
 
-    if (!block || block.isBroken || (block.kind !== 'brick' && block.kind !== 'surprise')) {
+    if (!block || block.isBroken || block.isHidden || (block.kind !== 'brick' && block.kind !== 'surprise')) {
       return;
     }
 
@@ -270,7 +270,8 @@ export class BlockSystem {
         // Fora da grade a chave da célula cairia numa célula de verdade do outro lado.
         const block = this.grid.contains(column, row) ? this.blockAt(column, row) : undefined;
 
-        if (block?.kind === 'brick' && !block.isBroken) {
+        // O tijolo escondido virou moeda do botão P: não há o que quebrar ali.
+        if (block?.kind === 'brick' && !block.isBroken && !block.isHidden) {
           this.breakBrick(block);
         }
       }
