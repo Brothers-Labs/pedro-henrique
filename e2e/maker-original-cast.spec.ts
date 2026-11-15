@@ -363,3 +363,29 @@ test('Maker saves the key, the locked door, the chain, the lever and the Giant C
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.screenshot({ path: test.info().outputPath('locks-in-game.png') });
 });
+
+test('Maker has a Flags tab with the checkpoint and the Goal Flag, and plays a level that ends on the flag', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase da Bandeira');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  await expect(page.getByRole('tab', { name: 'Checkpoints', exact: true })).toHaveCount(0);
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Bandeiras', exact: true }).click();
+  for (const [index, label] of ['Checkpoint', 'Bandeira Final'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 96, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => {
+    const level = (await savedLevels(page)).find((candidate) => candidate.name === 'Fase da Bandeira');
+    const portals = level?.objects.filter((object) => object.type === 'portal') ?? [];
+    return level && `${portals.length}:${portals[0]?.properties?.portalLook}:${level.objects.some((object) => object.type === 'checkpoint')}`;
+  }).toBe('1:flag:true');
+  await page.screenshot({ path: test.info().outputPath('goal-flag-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('goal-flag-in-game.png') });
+});

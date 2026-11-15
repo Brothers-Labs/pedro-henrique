@@ -15,7 +15,7 @@ import type { ThemePalette } from '../../art/palettes';
 import { paintSignText } from '../../art/sign-text-art';
 import { SLIDE_PHYSICS, TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject, LevelTheme } from '../../models/level.model';
-import { CHEST_DROP_MS, type Checkpoint, type DoorKind, type Sign, type TriggerSystem } from '../simulation/triggers';
+import { CHEST_DROP_MS, type Checkpoint, type DoorKind, GOAL_FLAG_HEIGHT, type Sign, type TriggerSystem } from '../simulation/triggers';
 import { disposeTree } from './dispose';
 import { backOut, bounceOut } from './easing';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
@@ -47,6 +47,11 @@ const DOOR_PARTS: Readonly<Record<DoorKind, () => readonly VoxelBox[]>> = {
 
 const PORTAL_SWIRL_Y = 1.33;
 const PORTAL_OPEN_MS = 600;
+/** Mastro da bandeira final, em blocos, e o tempo da bandeira descendo até o pé dele. */
+const GOAL_POLE_HEIGHT = GOAL_FLAG_HEIGHT / TILE_SIZE;
+const GOAL_FLAG_TOP = GOAL_POLE_HEIGHT - 0.55;
+const GOAL_FLAG_BOTTOM = 0.75;
+const GOAL_FLAG_LOWER_MS = 900;
 const CHEST_DROP_HEIGHT = 8.3;
 const LID_OPEN_MS = 300;
 
@@ -73,6 +78,9 @@ export class PropView {
   private readonly signTextures: CanvasTexture[] = [];
   private readonly portal: Group | null = null;
   private readonly swirl: Mesh | null = null;
+  /** O pano xadrez da bandeira final, que desce o mastro quando o herói encosta. */
+  private readonly goalFlag: Mesh | null = null;
+  private goalReachedAt: number | null = null;
   /** Um modelo por baú, na ordem da lista do jogo: o do chefão entra quando cai. */
   private readonly chests: { readonly root: Group; readonly lid: Group }[] = [];
 
@@ -93,6 +101,18 @@ export class PropView {
     if (portal) {
       this.portal = new Group();
       this.portal.position.set(space.x(portal.x), space.y(portal.y), -0.3);
+
+      if (portal.look === 'flag') {
+        // Sem redemoinho: o mastro fica na frente, onde o herói encosta nele.
+        this.portal.position.z = -0.15;
+        this.portal.add(this.voxelMesh(goalPole()));
+        this.goalFlag = this.voxelMesh(checkeredFlag());
+        this.goalFlag.position.y = GOAL_FLAG_TOP;
+        this.portal.add(this.goalFlag);
+        this.root.add(this.portal);
+        return;
+      }
+
       this.portal.add(this.voxelMesh(portal.look === 'castle' ? castleFrame() : portalFrame()));
 
       this.swirl = new Mesh(
@@ -254,12 +274,27 @@ export class PropView {
   private updatePortal(now: number): void {
     const portal = this.triggers.portal;
 
-    if (!portal || !this.portal || !this.swirl) {
+    if (!portal || !this.portal) {
       return;
     }
 
     this.portal.visible = !portal.isLocked;
-    this.swirl.rotation.z = -now / 250;
+
+    if (this.swirl) {
+      this.swirl.rotation.z = -now / 250;
+    }
+
+    if (this.goalFlag) {
+      // Herói no mastro: a bandeira desce até lá embaixo; antes, só balança ao vento.
+      if (!portal.isOpen && !portal.isLocked && this.goalReachedAt === null) {
+        this.goalReachedAt = now;
+      }
+
+      const lowering = this.goalReachedAt === null ? 0 : Math.min(1, (now - this.goalReachedAt) / GOAL_FLAG_LOWER_MS);
+
+      this.goalFlag.position.y = GOAL_FLAG_TOP - (GOAL_FLAG_TOP - GOAL_FLAG_BOTTOM) * lowering;
+      this.goalFlag.rotation.y = Math.sin(now / 300) * 0.18;
+    }
 
     const opening = portal.openedAt === null ? 1 : Math.min(1, (now - portal.openedAt) / PORTAL_OPEN_MS);
     this.portal.scale.setScalar(backOut(opening));
@@ -723,6 +758,39 @@ function castleFrame(): readonly VoxelBox[] {
     box(0, 3.72, 0, 0.06, 1.1, 0.06, '#e6e8f0'),
     box(0.24, 4.05, 0, 0.42, 0.3, 0.04, '#ffd23f'),
   ];
+}
+
+/**
+ * Mastro da bandeira final: base de pedra de um bloco, mastro branco com a
+ * altura de cinco blocos e a bola dourada no alto. Os pés ficam em y = 0.
+ */
+function goalPole(): readonly VoxelBox[] {
+  return [
+    box(0, 0.2, 0, 0.9, 0.4, 0.9, '#6b6f80'),
+    box(0, 0.44, 0, 0.7, 0.08, 0.7, '#8a8fa8'),
+    box(0, GOAL_POLE_HEIGHT / 2 + 0.24, 0, 0.12, GOAL_POLE_HEIGHT - 0.48, 0.12, '#e6e8f0'),
+    box(0, GOAL_POLE_HEIGHT, 0, 0.3, 0.3, 0.3, '#ffd23f'),
+    box(-0.06, GOAL_POLE_HEIGHT + 0.06, 0.15, 0.08, 0.08, 0.01, '#fff6c2'),
+  ];
+}
+
+/** O pano xadrez preto e branco, preso à esquerda do mastro. O centro dele fica em y = 0. */
+function checkeredFlag(): readonly VoxelBox[] {
+  const columns = 5;
+  const rows = 4;
+  const cell = 0.18;
+  const squares: VoxelBox[] = [];
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const x = -0.08 - cell / 2 - column * cell;
+      const y = (rows / 2 - row - 0.5) * cell;
+
+      squares.push(box(x, y, 0, cell, cell, 0.04, (row + column) % 2 === 0 ? '#1a1a2e' : '#ffffff'));
+    }
+  }
+
+  return squares;
 }
 
 /** Redemoinho do portal: espiral colorida num disco, girando no jogo. */

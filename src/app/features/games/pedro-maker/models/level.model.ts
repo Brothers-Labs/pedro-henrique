@@ -281,10 +281,12 @@ export function formatCoinValue(value: number): string {
 export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | GiantCoinType | 'mega-coin' | 'crystal' | 'heart' | 'power-up';
 
 /**
- * Desenho do portal final: o arco de pedra ou o castelo, que a criança
- * reconhece como o fim da fase nos jogos de plataforma. Só muda o visual.
+ * Desenho do portal final: o arco de pedra, o castelo ou a bandeira final,
+ * que a criança reconhece como o fim da fase nos jogos de plataforma. O arco
+ * e o castelo se atravessam; a bandeira é um mastro alto, e encostar nele em
+ * qualquer altura já termina a fase.
  */
-export const PORTAL_LOOKS = ['arch', 'castle'] as const;
+export const PORTAL_LOOKS = ['arch', 'castle', 'flag'] as const;
 
 export type PortalLook = (typeof PORTAL_LOOKS)[number];
 

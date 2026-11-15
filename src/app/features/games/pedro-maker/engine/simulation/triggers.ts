@@ -118,6 +118,11 @@ const SIGN_RANGE = 2.2 * TILE_SIZE;
 const FLOWER_RANGE_X = 2.2 * TILE_SIZE;
 const FLOWER_RANGE_Y = 3 * TILE_SIZE;
 
+/** Altura do mastro da bandeira final, do chão até a bola dourada. */
+export const GOAL_FLAG_HEIGHT = 5 * TILE_SIZE;
+/** Meia largura do mastro que conta como encostar: o mastro e um pouco em volta. */
+const GOAL_FLAG_REACH_X = 26;
+
 /** Tempo da queda do baú até o chão da arena. */
 export const CHEST_DROP_MS = 700;
 
@@ -291,7 +296,23 @@ export class TriggerSystem {
   private checkPortal(playerX: number, playerY: number): void {
     const portal = this.portal;
 
-    if (!portal?.isOpen || !isNear(playerX, playerY, portal.x, portal.y - 64, 34, 64)) {
+    if (!portal?.isOpen) {
+      return;
+    }
+
+    if (portal.look === 'flag') {
+      // O mastro inteiro conta: pular nele lá no alto também termina a fase.
+      if (!isNear(playerX, playerY, portal.x, portal.y - GOAL_FLAG_HEIGHT / 2, GOAL_FLAG_REACH_X, GOAL_FLAG_HEIGHT / 2 + 24)) {
+        return;
+      }
+
+      portal.isOpen = false;
+      // O herói escorrega mastro abaixo até o pé dele, do lado esquerdo.
+      this.host.onPortal(portal.x - TILE_SIZE * 0.35, portal.y);
+      return;
+    }
+
+    if (!isNear(playerX, playerY, portal.x, portal.y - 64, 34, 64)) {
       return;
     }
 

@@ -127,7 +127,7 @@ export type EditorCategoryId =
   | 'decoracao'
   | 'cogumelos'
   | 'portais'
-  | 'checkpoints';
+  | 'bandeiras';
 
 export interface EditorCategory {
   readonly id: EditorCategoryId;
@@ -144,7 +144,7 @@ export const EDITOR_CATEGORIES: readonly EditorCategory[] = [
   { id: 'decoracao', label: 'Decoração', emoji: '🌳' },
   { id: 'cogumelos', label: 'Cogumelos', emoji: '🍄' },
   { id: 'portais', label: 'Portais', emoji: '🌀' },
-  { id: 'checkpoints', label: 'Checkpoints', emoji: '🚩' },
+  { id: 'bandeiras', label: 'Bandeiras', emoji: '🏁' },
 ];
 
 /**
@@ -372,7 +372,9 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'locked-door', category: 'portais', type: 'locked-door', label: 'Porta com Chave' },
   ...WARP_PIPE_PIECES,
 
-  { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },
+  { id: 'checkpoint', category: 'bandeiras', type: 'checkpoint', label: 'Checkpoint' },
+  // É o portal final com outro desenho: continua um só por fase, como o arco e o castelo.
+  { id: 'portal-flag', category: 'bandeiras', type: 'portal', label: 'Bandeira Final', properties: { portalLook: 'flag' } },
 ];
 
 /**

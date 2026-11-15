@@ -451,6 +451,31 @@ export function paintCheckpoint(context: CanvasRenderingContext2D): void {
   context.fill();
 }
 
+/** Bandeira final: base de pedra, mastro branco com a bola dourada e o pano xadrez preto e branco. */
+export function paintGoalFlag(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 12, 84, 24, 11, 3);
+  fillAndOutline(context, '#6b6f80', 3);
+  roundedRect(context, 22, 9, 5, 77, 2.5);
+  fillAndOutline(context, '#e6e8f0', 2.5);
+  circle(context, 24.5, 8, 5.5);
+  fillAndOutline(context, '#ffd23f', 2.5);
+
+  const left = 2;
+  const top = 15;
+  const cell = 5;
+
+  for (let row = 0; row < 4; row += 1) {
+    for (let column = 0; column < 4; column += 1) {
+      context.fillStyle = (row + column) % 2 === 0 ? '#1a1a2e' : '#ffffff';
+      context.fillRect(left + column * cell, top + row * cell, cell, cell);
+    }
+  }
+
+  context.strokeStyle = '#1a1a2e';
+  context.lineWidth = 2;
+  context.strokeRect(left, top, cell * 4, cell * 4);
+}
+
 export function paintDoor(context: CanvasRenderingContext2D): void {
   const wood = '#9a5f33';
 
