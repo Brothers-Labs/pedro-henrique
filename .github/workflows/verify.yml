@@ -14,7 +14,9 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # A suíte e2e roda com WebGL por software (SwiftShader) e passa de 15 min com o
+    # npm ci e a instalação do Chromium; 30 min dão folga para o retry de um teste.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
