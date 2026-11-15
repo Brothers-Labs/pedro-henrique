@@ -171,11 +171,12 @@ export class PedroModel {
   }
 
   /** Viagem de vitória para dentro do portal: encolhe girando. */
-  celebrate(progress: number): void {
+  /** `shrinks`: entra no portal girando e encolhendo; sem ele, desce o mastro da bandeira de braços para cima. */
+  celebrate(progress: number, shrinks = true): void {
     const eased = progress * progress * progress;
 
-    this.body.rotation.set(0, eased * Math.PI * 2, 0);
-    this.root.scale.setScalar(1 - eased * 0.8);
+    this.body.rotation.set(0, shrinks ? eased * Math.PI * 2 : 0, 0);
+    this.root.scale.setScalar(shrinks ? 1 - eased * 0.8 : 1);
     this.leftArm.rotation.set(0, 0, -2.6);
     this.rightArm.rotation.set(0, 0, 2.6);
   }

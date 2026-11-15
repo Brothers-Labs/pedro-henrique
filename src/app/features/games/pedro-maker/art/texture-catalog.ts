@@ -14,6 +14,7 @@ import {
   paintCannon,
   paintBrick,
   paintCheckpoint,
+  paintGoalFlag,
   paintCrumble,
   paintDoor,
   paintCoinChest,
@@ -392,6 +393,11 @@ function drawIcon(
       fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintCheckpoint);
       return;
     case 'portal':
+      if (object.properties?.portalLook === 'flag') {
+        fit(TALL_SPRITE_WIDTH, TALL_SPRITE_HEIGHT, paintGoalFlag);
+        return;
+      }
+
       fit(PORTAL_WIDTH, PORTAL_HEIGHT, (inner) => {
         if (object.properties?.portalLook === 'castle') {
           // O portão do castelo é menor que o arco: o redemoinho entra encolhido.

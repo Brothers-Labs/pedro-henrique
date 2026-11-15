@@ -250,7 +250,8 @@ export class LevelView {
         lerp(this.space.y(celebration.fromY), this.space.y(celebration.toY), eased),
         0,
       );
-      pedro.celebrate(progress);
+      // Na bandeira final, o herói escorrega mastro abaixo inteiro; no portal, ele gira e entra.
+      pedro.celebrate(progress, simulation.triggers.portal?.look !== 'flag');
     } else {
       pedro.root.position.set(playerX, playerY, 0);
     }
