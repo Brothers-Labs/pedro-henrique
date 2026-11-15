@@ -69,7 +69,9 @@
   <app-maker-pause-menu
     [exitLabel]="exitLabel()"
     [isFullscreen]="isFullscreen()"
+    [screen]="screen()"
     (chosen)="choosePause($event)"
+    (screenChosen)="chooseScreen($event)"
     (fullscreenToggled)="toggleFullscreen()"
   />
 }

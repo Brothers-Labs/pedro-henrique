@@ -4,9 +4,15 @@ import { POWER_UP_LABELS } from '../../config/object-catalog';
 import type { PowerUpKind } from '../../models/level.model';
 import type { BossHudState, HudState } from '../../models/session.model';
 
+/** O que aparece na barra de baixo: os power-ups e o efeito do botão P, que também tem relógio. */
+export type ActivePowerKind = PowerUpKind | 'p-switch';
+
+/** O selo do botão P, ao lado dos power-ups. */
+export const P_SWITCH_LABEL = { label: 'Botão P', emoji: '🅿️' } as const;
+
 /** Power-up ativo mostrado na barra de baixo; `key` reinicia a contagem ao pegar de novo. */
 export interface ActivePowerUp {
-  readonly kind: PowerUpKind;
+  readonly kind: ActivePowerKind;
   readonly durationMs: number;
   readonly key: number;
 }
@@ -53,7 +59,7 @@ export class MakerHud {
     return boss ? Array.from({ length: boss.maxHitPoints }, (_, index) => index < boss.hitPoints) : [];
   });
 
-  protected labelOf(kind: PowerUpKind): { readonly label: string; readonly emoji: string } {
-    return POWER_UP_LABELS[kind];
+  protected labelOf(kind: ActivePowerKind): { readonly label: string; readonly emoji: string } {
+    return kind === 'p-switch' ? P_SWITCH_LABEL : POWER_UP_LABELS[kind];
   }
 }

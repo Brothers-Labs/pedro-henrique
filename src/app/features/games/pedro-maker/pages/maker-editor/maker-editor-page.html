@@ -105,27 +105,55 @@
           <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
         </button>
       }
+      <button
+        type="button"
+        role="tab"
+        class="category"
+        [class.category--active]="category() === 'telas'"
+        [attr.aria-selected]="category() === 'telas'"
+        (click)="chooseCategory('telas')"
+      >
+        <span aria-hidden="true">📺</span> Telas
+      </button>
     </div>
 
-    <div class="palette__pieces" role="tabpanel">
-      @for (entry of palette(); track entry.piece.id) {
-        <button
-          type="button"
-          class="piece"
-          [class.piece--active]="piece().id === entry.piece.id"
-          [attr.aria-pressed]="piece().id === entry.piece.id"
-          (pointerdown)="startPaletteDrag($event, entry.piece)"
-          (pointermove)="movePaletteDrag($event)"
-          (pointerup)="endPaletteDrag($event)"
-          (pointercancel)="cancelPaletteDrag()"
-          (keydown.enter)="choosePiece(entry.piece)"
-          (keydown.space)="choosePiece(entry.piece)"
-        >
-          <img class="piece__icon" [src]="entry.icon" alt="" width="48" height="48" draggable="false" />
-          <span class="piece__label">{{ entry.piece.label }}</span>
-        </button>
-      }
-    </div>
+    @if (category() === 'telas') {
+      <div class="palette__pieces" role="tabpanel" aria-label="Tela da fase">
+        @for (choice of screenChoices; track choice.id) {
+          <button
+            type="button"
+            class="piece screen-choice"
+            [class.piece--active]="(current.screen ?? null) === choice.id"
+            [attr.aria-pressed]="(current.screen ?? null) === choice.id"
+            [attr.title]="choice.description"
+            (click)="chooseScreen(choice.id)"
+          >
+            <span class="screen-choice__emoji" aria-hidden="true">{{ choice.emoji }}</span>
+            <span class="piece__label">{{ choice.label }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="palette__pieces" role="tabpanel">
+        @for (entry of palette(); track entry.piece.id) {
+          <button
+            type="button"
+            class="piece"
+            [class.piece--active]="piece().id === entry.piece.id"
+            [attr.aria-pressed]="piece().id === entry.piece.id"
+            (pointerdown)="startPaletteDrag($event, entry.piece)"
+            (pointermove)="movePaletteDrag($event)"
+            (pointerup)="endPaletteDrag($event)"
+            (pointercancel)="cancelPaletteDrag()"
+            (keydown.enter)="choosePiece(entry.piece)"
+            (keydown.space)="choosePiece(entry.piece)"
+          >
+            <img class="piece__icon" [src]="entry.icon" alt="" width="48" height="48" draggable="false" />
+            <span class="piece__label">{{ entry.piece.label }}</span>
+          </button>
+        }
+      </div>
+    }
 
     @if (selectedObject(); as object) {
       <section class="selection" aria-label="Peça selecionada">

@@ -31,8 +31,11 @@ export type PauseChoice = 'continuar' | 'recomecar' | 'sair';
 export class MakerPauseMenu {
   readonly exitLabel = input('Sair da fase');
   readonly isFullscreen = input(false);
+  /** Tela da partida agora: pode ser a da fase, diferente da dos ajustes. */
+  readonly screen = input<ScreenMode | null>(null);
 
   readonly chosen = output<PauseChoice>();
+  readonly screenChosen = output<ScreenMode>();
   readonly fullscreenToggled = output<void>();
 
   private readonly settingsService = inject(MakerSettingsService);
@@ -52,8 +55,9 @@ export class MakerPauseMenu {
     this.settingsService.toggle(key);
   }
 
+  /** A partida troca a tela na hora e guarda a escolha nos ajustes. */
   protected chooseScreen(screen: ScreenMode): void {
-    this.settingsService.update({ screen });
+    this.screenChosen.emit(screen);
   }
 
   protected toggleSettings(): void {

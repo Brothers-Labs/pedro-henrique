@@ -114,6 +114,9 @@ export class CollectibleView {
 
   private readonly coins: InstancedMesh;
   private readonly coinSlots = new Map<number, number>();
+  /** Vagas da malha de moedas sem moeda nenhuma, para as que aparecem no meio da partida. */
+  private readonly freeCoinSlots: number[] = [];
+  private now = 0;
   private readonly fountainCoins: InstancedMesh;
   private readonly fountains: Fountain[] = [];
   private readonly others = new Map<number, Object3D>();
@@ -147,17 +150,28 @@ export class CollectibleView {
   constructor(
     private readonly system: CollectibleSystem,
     private readonly space: WorldSpace,
+    /** Moedas que podem aparecer durante a partida: as que os tijolos viram com o botão P. */
+    spareCoins = 0,
   ) {
     this.root.name = 'itens';
 
     const coinGeometry = new CylinderGeometry(0.3, 0.3, 0.08, 20).rotateX(Math.PI / 2);
     const initialCoins = system.items.filter((item) => item.kind === 'coin');
 
-    this.coins = new InstancedMesh(coinGeometry, this.coinMaterial, Math.max(1, initialCoins.length));
-    this.coins.count = initialCoins.length;
+    const capacity = initialCoins.length + spareCoins;
+
+    this.coins = new InstancedMesh(coinGeometry, this.coinMaterial, Math.max(1, capacity));
+    this.coins.count = capacity;
     this.coins.castShadow = true;
     this.coins.frustumCulled = false;
     initialCoins.forEach((coin, index) => this.coinSlots.set(coin.id, index));
+
+    // As vagas de sobra começam vazias: escala zero até uma moeda ocupar.
+    for (let slot = capacity - 1; slot >= initialCoins.length; slot -= 1) {
+      this.matrix.makeScale(0, 0, 0);
+      this.coins.setMatrixAt(slot, this.matrix);
+      this.freeCoinSlots.push(slot);
+    }
 
     this.fountainCoins = new InstancedMesh(coinGeometry.clone(), this.coinMaterial, FOUNTAIN_POOL);
     this.fountainCoins.frustumCulled = false;
@@ -172,6 +186,7 @@ export class CollectibleView {
   }
 
   update(now: number): void {
+    this.now = now;
     const spin = now / 260;
     const bob = Math.sin(now / 350) * 0.05;
     const present = this.present;
@@ -216,16 +231,30 @@ export class CollectibleView {
   }
 
   private placeCoin(item: Collectible, bob: number): void {
-    const slot = this.coinSlots.get(item.id);
+    const slot = this.coinSlots.get(item.id) ?? this.takeFreeCoinSlot(item.id);
 
     if (slot === undefined) {
       return;
     }
 
+    // Saída de um tijolo do botão P, a moeda cresce com um pulinho, como os itens das surpresas.
+    const pop = item.spawnedAt === null ? 1 : backOut(Math.min(1, (this.now - item.spawnedAt) / POP_MS));
+
     this.position.set(this.space.x(item.x), this.space.y(item.y) + bob, 0);
-    this.scale.set(1, 1, 1);
+    this.scale.setScalar(pop);
     this.matrix.compose(this.position, this.rotation, this.scale);
     this.coins.setMatrixAt(slot, this.matrix);
+  }
+
+  /** Moeda nova (ou que voltou de tijolo): ocupa uma vaga livre, se houver. */
+  private takeFreeCoinSlot(id: number): number | undefined {
+    const slot = this.freeCoinSlots.pop();
+
+    if (slot !== undefined) {
+      this.coinSlots.set(id, slot);
+    }
+
+    return slot;
   }
 
   private hideCollectedCoins(present: ReadonlySet<number>): void {
@@ -234,6 +263,7 @@ export class CollectibleView {
         this.matrix.makeScale(0, 0, 0);
         this.coins.setMatrixAt(slot, this.matrix);
         this.coinSlots.delete(id);
+        this.freeCoinSlots.push(slot);
       }
     }
   }

@@ -1,6 +1,6 @@
 import { DEFAULT_LOOK } from '../config/character.config';
 import type { CustomLevel, LevelObject } from '../models/level.model';
-import { lockedSecretLevelIds, sanitizeCustomLevel } from './custom-level.service';
+import { customLevelBlueprint, lockedSecretLevelIds, sanitizeCustomLevel } from './custom-level.service';
 import { reconcile } from './maker-progress.service';
 
 describe('Leitura segura dos saves do Pedro Maker', () => {
@@ -128,6 +128,21 @@ describe('Leitura segura dos saves do Pedro Maker', () => {
         { id: 'ossos', type: 'skeleton-platform', x: 8, y: 11 },
         { id: 'mola', type: 'ceiling-spring', x: 12, y: 6 },
       ];
+
+      expect(sanitizeCustomLevel({ ...valid, objects })?.objects).toEqual(objects);
+    });
+
+    it('guarda a tela da aba Telas, e a fase antiga ou com tela estranha usa a dos ajustes', () => {
+      const withScreen = sanitizeCustomLevel({ ...valid, screen: 'nes' });
+
+      expect(withScreen?.screen).toBe('nes');
+      expect(withScreen && customLevelBlueprint(withScreen).screen).toBe('nes');
+      expect(sanitizeCustomLevel(valid)).not.toEqual(jasmine.objectContaining({ screen: jasmine.anything() }));
+      expect(sanitizeCustomLevel({ ...valid, screen: 'gameboy' })?.screen).toBeUndefined();
+    });
+
+    it('guarda o botão P', () => {
+      const objects: readonly LevelObject[] = [{ id: 'botao', type: 'p-switch', x: 8, y: 13 }];
 
       expect(sanitizeCustomLevel({ ...valid, objects })?.objects).toEqual(objects);
     });

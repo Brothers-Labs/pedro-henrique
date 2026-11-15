@@ -68,3 +68,22 @@ export function paintFireBar(context: CanvasRenderingContext2D): void {
 
   shine(context, 10, 29, 3, 2);
 }
+
+/** Botão P: corpo azul com tampa clara, a letra P branca no meio e a base escura no chão. */
+export function paintPSwitch(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 3, 40, 42, 7, 2);
+  fillAndOutline(context, '#1d3f73', 2);
+
+  roundedRect(context, 7, 12, 34, 30, 4);
+  fillAndOutline(context, '#2f7de1', 3);
+  roundedRect(context, 9, 8, 30, 7, 3);
+  fillAndOutline(context, '#79b8ff', 2);
+
+  context.fillStyle = '#ffffff';
+  context.font = 'bold 22px sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('P', 24, 28);
+
+  shine(context, 13, 19, 2, 4);
+}

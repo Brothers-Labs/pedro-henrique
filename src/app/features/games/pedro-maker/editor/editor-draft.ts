@@ -1,4 +1,5 @@
 import { EDITOR_THEMES } from '../config/object-catalog';
+import { isScreenMode } from '../config/screen.config';
 import { LEVEL_LIMITS, sanitizeLevelObject } from '../levels/level-validation';
 import type { LevelObject } from '../models/level.model';
 import type { EditorLevel } from './editor-state';
@@ -91,7 +92,9 @@ function parseDraft(value: unknown): EditorDraft | null {
     .map((object: unknown) => sanitizeLevelObject(object, width, height))
     .filter((object): object is LevelObject => object !== null);
 
-  return { levelId, level: { name: level.name.slice(0, 40), theme, width, height, objects } };
+  const screen = isScreenMode(level.screen) ? { screen: level.screen } : {};
+
+  return { levelId, level: { name: level.name.slice(0, 40), theme, width, height, objects, ...screen } };
 }
 
 function isWithin(value: unknown, minimum: number, maximum: number): value is number {

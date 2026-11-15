@@ -1,3 +1,5 @@
+import type { ScreenMode } from '../config/screen.config';
+
 /**
  * Modelos de fase do Pedro Maker.
  *
@@ -326,6 +328,8 @@ export type LevelObjectType =
   | 'slide'
   /** Bastão de fogo: bloco com uma fila de bolas de fogo girando em volta; `range` é quantas bolas. */
   | 'fire-bar'
+  /** Botão P: encostar nele troca tijolos por moedas e moedas por tijolos por dez segundos. */
+  | 'p-switch'
   | EnemyKind
   | 'boss'
   | ItemType
@@ -393,6 +397,8 @@ export interface LevelBlueprint {
   /** Tempo de referência da conquista "Velocista". */
   readonly targetTimeSeconds: number;
   readonly boss?: BossDefinition;
+  /** Tela escolhida na aba Telas do editor; sem ela, vale a tela dos ajustes de quem joga. */
+  readonly screen?: ScreenMode;
 }
 
 /** Fase criada pelo Pedro no editor, guardada no aparelho. */
@@ -406,6 +412,8 @@ export interface CustomLevel {
   readonly width: number;
   readonly height: number;
   readonly objects: readonly LevelObject[];
+  /** Tela escolhida na aba Telas do editor; fases antigas não têm, e usam a dos ajustes. */
+  readonly screen?: ScreenMode;
   /** Verdadeiro depois que a fase foi terminada pelo menos uma vez. */
   readonly completed: boolean;
   readonly bestStars: number;

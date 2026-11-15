@@ -30,6 +30,7 @@ import {
   THEME_LABELS,
 } from '../../config/object-catalog';
 import { DIFFICULTY_ORDER } from '../../config/rules.config';
+import { SCREEN_LOOKS, SCREEN_MODES, type ScreenMode } from '../../config/screen.config';
 import {
   type CellPointerEvent,
   EditorCanvas,
@@ -44,6 +45,7 @@ import { EditorMinimap } from '../../editor/editor-minimap/editor-minimap';
 import {
   cellsInRect,
   cellsOnLine,
+  changeScreen,
   changeTheme,
   commit,
   createHistory,
@@ -132,6 +134,14 @@ interface PaletteEntry {
  * "Salvar" guarda a fase no aparelho, em "Minhas fases". Entre um e outro, o
  * rascunho automático protege o trabalho se a aba for fechada.
  */
+/** Uma opção da aba Telas; `id` nulo é "quem joga escolhe". */
+interface ScreenChoice {
+  readonly id: ScreenMode | null;
+  readonly emoji: string;
+  readonly label: string;
+  readonly description: string;
+}
+
 @Component({
   selector: 'app-maker-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -158,6 +168,11 @@ export class MakerEditorPage {
 
   protected readonly tools = TOOLS;
   protected readonly categories = EDITOR_CATEGORIES;
+  /** A aba Telas: "a de quem joga" e as seis telas, do NES ao 4K. */
+  protected readonly screenChoices: readonly ScreenChoice[] = [
+    { id: null, emoji: '⚙️', label: 'Quem joga escolhe', description: 'Cada um joga na tela dos próprios ajustes' },
+    ...SCREEN_MODES.map((id) => ({ id, emoji: SCREEN_LOOKS[id].emoji, label: SCREEN_LOOKS[id].label, description: SCREEN_LOOKS[id].description })),
+  ];
   protected readonly themes = EDITOR_THEMES.map((theme) => ({ id: theme, ...THEME_LABELS[theme] }));
   protected readonly surpriseOptions = SURPRISE_OPTIONS;
   protected readonly doorPairColor = doorPairColor;
@@ -176,7 +191,8 @@ export class MakerEditorPage {
 
   protected readonly mode = signal<EditorMode>('editar');
   protected readonly tool = signal<EditorTool>('pincel');
-  protected readonly category = signal<EditorCategoryId>('terreno');
+  /** Aba aberta na paleta: uma categoria de peças ou a aba Telas, que escolhe a tela da fase. */
+  protected readonly category = signal<EditorCategoryId | 'telas'>('terreno');
   protected readonly piece = signal<EditorPiece>(EDITOR_PIECES[0]);
   protected readonly zoom = signal(1);
   protected readonly selected = signal<GridCell | null>(null);
@@ -272,8 +288,13 @@ export class MakerEditorPage {
 
   /* Paleta e ferramentas --------------------------------------------------------------- */
 
-  protected chooseCategory(id: EditorCategoryId): void {
+  protected chooseCategory(id: EditorCategoryId | 'telas'): void {
     this.category.set(id);
+
+    if (id === 'telas') {
+      return;
+    }
+
     const first = EDITOR_PIECES.find((piece) => piece.category === id);
 
     if (first) {
@@ -584,6 +605,19 @@ export class MakerEditorPage {
       this.apply(changeTheme(this.level(), theme));
     }
   }
+  /** Aba Telas: a fase passa a abrir nessa tela; `null` deixa cada um jogar na dos próprios ajustes. */
+  protected chooseScreen(screen: ScreenMode | null): void {
+    const level = this.level();
+
+    if ((level.screen ?? null) === screen) {
+      return;
+    }
+
+    this.apply(changeScreen(level, screen));
+    this.audio.play('button');
+    this.showNotice(screen ? `${SCREEN_LOOKS[screen].emoji} A fase vai abrir na tela ${SCREEN_LOOKS[screen].label}.` : '⚙️ A fase vai abrir na tela de quem joga.');
+  }
+
 
   /** Fase surpresa: o gerador monta uma fase completável do tamanho e tema atuais. */
   protected surprise(): void {
@@ -763,6 +797,7 @@ export class MakerEditorPage {
       height: level.height,
       objects: level.objects,
       targetTimeSeconds: Math.round(level.width * 0.6),
+      ...(level.screen ? { screen: level.screen } : {}),
     };
   }
 
@@ -780,7 +815,16 @@ export class MakerEditorPage {
         return;
       }
 
-      this.history.set(createHistory({ name: level.name, theme: level.theme, width: level.width, height: level.height, objects: level.objects }));
+      this.history.set(
+        createHistory({
+          name: level.name,
+          theme: level.theme,
+          width: level.width,
+          height: level.height,
+          objects: level.objects,
+          ...(level.screen ? { screen: level.screen } : {}),
+        }),
+      );
       this.currentId.set(level.id);
       this.isDirty.set(false);
       this.restoreDraft(level.id);

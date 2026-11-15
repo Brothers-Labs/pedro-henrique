@@ -12,6 +12,7 @@ import {
 import {
   cellsInRect,
   cellsOnLine,
+  changeScreen,
   commit,
   createHistory,
   createStarterLevel,
@@ -169,6 +170,19 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'mini-mushroom' } })?.id).toBe('power-mini-mushroom');
   });
 
+  it('a aba Telas escolhe a tela da fase, e "quem joga escolhe" tira a escolha', () => {
+    const nes = changeScreen(starter, 'nes');
+
+    expect(nes.screen).toBe('nes');
+    expect(changeScreen(nes, 'nes')).withContext('mesma tela: nada muda').toBe(nes);
+    expect('screen' in changeScreen(nes, null)).toBeFalse();
+    expect(changeScreen(starter, null)).toBe(starter);
+
+    const history = commit(createHistory(starter), nes);
+
+    expect(undo(history).present.screen).withContext('dá para desfazer').toBeUndefined();
+  });
+
   it('tem os canos mágicos de A a F, a Flor Falante com frase e os dois bastões de fogo', () => {
     const pipes = EDITOR_PIECES.filter((piece) => piece.type === 'warp-pipe');
 
@@ -177,6 +191,7 @@ describe('Estado do editor de fases', () => {
     expect(EDITOR_PIECES.find((piece) => piece.type === 'talking-flower')?.properties?.text).toBeTruthy();
     expect(findEditorPiece({ type: 'fire-bar', properties: { range: 4 } })?.label).toBe('Bastão de Fogo');
     expect(findEditorPiece({ type: 'fire-bar', properties: { range: 6 } })?.label).toBe('Bastão de Fogo Comprido');
+    expect(findEditorPiece({ type: 'p-switch' })).toEqual(jasmine.objectContaining({ category: 'blocos', label: 'Botão P' }));
   });
 
   it('tem as portas de madeira de A a F e a dourada num par só dela', () => {

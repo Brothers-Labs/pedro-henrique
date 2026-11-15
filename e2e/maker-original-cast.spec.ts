@@ -296,3 +296,40 @@ test('Maker saves warp pipes, a talking flower and a fire bar and plays the leve
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.screenshot({ path: test.info().outputPath('pipe-flower-firebar-playing.png') });
 });
+
+test('Maker saves a P switch and the level screen chosen in the Screens tab, and plays in it', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase do Botão P');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Blocos', exact: true }).click();
+  for (const [index, label] of ['Botão P', 'Quebrável', 'Quebrável'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 32, y: 112 } });
+  }
+  await page.getByRole('tab', { name: 'Telas', exact: true }).click();
+  const anyone = page.getByRole('button', { name: 'Quem joga escolhe', exact: true });
+  await expect(anyone).toHaveAttribute('aria-pressed', 'true');
+  for (const label of ['NES', 'SNES', 'Nintendo 64', '3D', '4K']) {
+    await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
+  }
+  const hd = page.getByRole('button', { name: 'HD', exact: true });
+  await hd.click();
+  await expect(hd).toHaveAttribute('aria-pressed', 'true');
+  await expect(anyone).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => {
+    const level = (await savedLevels(page)).find((candidate) => candidate.name === 'Fase do Botão P');
+    return level && `${level.screen}:${level.objects.filter((object) => object.type === 'p-switch' || object.type === 'brick').length}`;
+  }).toBe('hd:3');
+  await page.screenshot({ path: test.info().outputPath('p-switch-screens-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await page.getByRole('button', { name: 'Pausar', exact: true }).click({ timeout: 60_000 });
+  await page.getByRole('button', { name: /Configurações/ }).click();
+  await expect(page.getByRole('radio', { name: 'HD', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: '4K', exact: true })).toHaveAttribute('aria-checked', 'false');
+  await page.screenshot({ path: test.info().outputPath('p-switch-screens-paused.png') });
+});

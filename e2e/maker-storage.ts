@@ -4,6 +4,7 @@ export interface SavedLevel {
   readonly id: string;
   readonly name: string;
   readonly theme: string;
+  readonly screen?: string;
   readonly objects: readonly {
     readonly type: string;
     readonly properties?: {

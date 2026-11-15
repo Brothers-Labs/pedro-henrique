@@ -62,6 +62,10 @@ export type GameSessionEvent =
   | { readonly type: 'mascot'; readonly text: string }
   /** A Flor Falante disse a frase escrita no editor: a tela mostra e lê em voz alta. */
   | { readonly type: 'flower-speech'; readonly text: string }
+  /** O botão P foi apertado (ou renovado): tijolos e moedas trocados por `durationMs`. */
+  | { readonly type: 'p-switch'; readonly durationMs: number }
+  /** Acabou o efeito do botão P: tudo voltou ao lugar. */
+  | { readonly type: 'p-switch-ended' }
   | { readonly type: 'boss'; readonly boss: BossHudState | null }
   /** Uma porta liberou a fase secreta; `secretLevel` é a fase do Pedro escolhida na porta dourada, ou `null` na campanha. */
   | { readonly type: 'secret-found'; readonly secretLevel: string | null }

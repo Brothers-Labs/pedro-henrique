@@ -407,3 +407,13 @@ $side-layout: '(min-width: #{$breakpoint-lg}), #{$short-landscape}';
   filter: grayscale(1);
   opacity: 0.4;
 }
+
+/* Aba Telas: o emoji grande no lugar do ícone da peça. */
+.screen-choice__emoji {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  font-size: 2rem;
+  line-height: 1;
+}

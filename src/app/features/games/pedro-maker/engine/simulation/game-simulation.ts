@@ -29,6 +29,7 @@ import type { InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { CannonSystem } from './cannons';
 import { FireBarSystem } from './fire-bars';
+import { type PSwitchHost, PSwitchSystem } from './p-switch';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
@@ -119,7 +120,7 @@ export interface SimulationOptions {
  * Há dois relógios: `clockMs` anima e agenda e nunca para enquanto a partida
  * roda; `runTimeMs` é o tempo que vale para o resultado e para no portal.
  */
-export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, TriggerHost, BossHost {
+export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, TriggerHost, BossHost, PSwitchHost {
   readonly effects = new VisualEventQueue();
   readonly scheduler = new Scheduler();
   readonly grid: TileGrid;
@@ -130,6 +131,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly slides: SlideSystem;
   readonly cannons: CannonSystem;
   readonly fireBars: FireBarSystem;
+  readonly pSwitches: PSwitchSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -175,6 +177,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.createEnemies(blueprint.objects);
     this.cannons = new CannonSystem(blueprint.objects);
     this.fireBars = new FireBarSystem(blueprint.objects);
+    this.pSwitches = new PSwitchSystem(blueprint.objects, this.grid, this.blocks, this.collectibles, this);
     this.createBoss(blueprint.objects);
   }
 
@@ -237,6 +240,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.updateEnemies(seconds);
     this.updateFireballs(seconds);
     this.updateBoss(seconds);
+    this.pSwitches.update(this.clockMs, player);
     this.collectibles.update(STEP_MS, centerX(body), centerY(body), this.magnetRadius());
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
@@ -326,6 +330,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     if (body.headHitColumn >= 0) {
       this.blocks.handleHeadHit(this.player, body.headHitColumn, body.headHitRow, this.clockMs);
+      this.pSwitches.handleHeadHit(body.headHitColumn, body.headHitRow);
     }
 
     if (body.landedRow >= 0) {
@@ -435,6 +440,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.playSound('tailSpin');
     this.effects.burst('dust', centerX(body), bottom(body) - 10, 8);
     this.blocks.breakBricksIn(area);
+    this.pSwitches.breakBricksIn(area);
 
     for (const enemy of targets) {
       this.defeatEnemy(enemy);
@@ -450,12 +456,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const body = this.player.body;
     const reach = GIGA_PHYSICS.brickReach;
 
-    this.blocks.breakBricksIn({
+    const area: WorldArea = {
       x: body.x - reach,
       y: body.y - reach,
       width: body.width + reach * 2,
       height: body.height + reach - 1,
-    });
+    };
+
+    this.blocks.breakBricksIn(area);
+    this.pSwitches.breakBricksIn(area);
   }
 
   private updateFireballs(seconds: number): void {
@@ -933,6 +942,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   onFlowerSpeech(text: string): void {
     this.emit({ type: 'flower-speech', text });
+  }
+
+  onPSwitch(isActive: boolean, durationMs: number): void {
+    this.emit(isActive ? { type: 'p-switch', durationMs } : { type: 'p-switch-ended' });
   }
 
   spawnMinion(worldX: number, worldY: number): void {
