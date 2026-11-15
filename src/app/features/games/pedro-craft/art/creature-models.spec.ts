@@ -1,3 +1,4 @@
+import { HEROES } from '../../pedro-maker/config/hero.config';
 import type { CraftCatalog } from '../content/craft-catalog';
 import { loadTestCatalog } from '../testing/craft-test-content';
 import { creatureBoxes } from './creature-models';
@@ -19,6 +20,28 @@ describe('Modelos dos bonecos do PedroCraft', () => {
       expect(lowest).withContext(id).toBeCloseTo(0, 5);
       expect(highest).withContext(id).toBeGreaterThan(catalog.creature(id).height - 0.1);
     }
+  });
+
+  it('os bonecos do Pedro Maker ficam de pé no chão, na altura do creatures.json, sem passar do espaço de um bloco', () => {
+    for (const hero of HEROES) {
+      const definition = catalog.creature(`boneco-${hero.id}`);
+      const boxes = creatureBoxes(definition, false);
+      const lowest = Math.min(...boxes.map((part) => part.y - part.height / 2));
+      const highest = Math.max(...boxes.map((part) => part.y + part.height / 2));
+      const frontmost = Math.min(...boxes.map((part) => part.z - part.depth / 2));
+      const backmost = Math.max(...boxes.map((part) => part.z + part.depth / 2));
+
+      expect(lowest).withContext(hero.id).toBeCloseTo(0, 5);
+      expect(highest).withContext(hero.id).toBeCloseTo(definition.height, 5);
+      expect(Math.abs(frontmost)).withContext(hero.id).toBeLessThan(0.6);
+      expect(backmost).withContext(hero.id).toBeLessThan(0.6);
+    }
+  });
+
+  it('cada boneco do Maker é diferente dos outros', () => {
+    const looks = HEROES.map((hero) => JSON.stringify(creatureBoxes(catalog.creature(`boneco-${hero.id}`), false)));
+
+    expect(new Set(looks).size).toBe(HEROES.length);
   });
 
   it('cada boneco usa todas as cores dele: corpo, cara e enfeite', () => {

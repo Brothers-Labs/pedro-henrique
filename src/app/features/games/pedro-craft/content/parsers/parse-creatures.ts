@@ -7,6 +7,8 @@ import {
   type CreatureSpawn,
   TEMPERAMENTS,
 } from '../../models/content.model';
+import { isHeroId } from '../../../pedro-maker/config/hero.config';
+import type { HeroId } from '../../../pedro-maker/models/progress.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
 import { parseExplosion } from './parse-blocks';
 
@@ -30,6 +32,7 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
   const split = creature.optionalField('splitInto')?.object() ?? null;
   const lays = creature.optionalField('lays')?.object() ?? null;
   const explodes = creature.optionalField('explodes')?.object() ?? null;
+  const model = creature.field('model').oneOf(CREATURE_MODELS);
 
   return {
     id: creature.field('id').id(),
@@ -40,7 +43,7 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
     damage: creature.optionalField('damage')?.number({ integer: true, min: 0, max: 10 }) ?? 0,
     attackCooldownMs: creature.optionalField('attackCooldownMs')?.number({ integer: true, min: 200 }) ?? 1000,
     behavior: creature.field('behavior').oneOf(CREATURE_BEHAVIORS),
-    model: creature.field('model').oneOf(CREATURE_MODELS),
+    model,
     colors: colorList(creature.field('colors')),
     width: creature.field('width').number({ min: 0.2, max: 2 }),
     height: creature.field('height').number({ min: 0.2, max: 2.5 }),
@@ -55,7 +58,25 @@ function parseCreature(creature: JsonObjectReader): CreatureDefinition {
     babyGrowMs: creature.optionalField('babyGrowMs')?.number({ integer: true, min: 10000 }) ?? DEFAULT_BABY_GROW_MS,
     explodes: explodes ? parseExplosion(explodes) : null,
     greeting: creature.optionalField('greeting')?.string() ?? null,
+    hero: parseHero(creature, model === 'maker-hero'),
   };
+}
+
+/** O boneco do Maker precisa dizer qual herói é; os outros modelos não têm herói. */
+function parseHero(creature: JsonObjectReader, isMakerHero: boolean): HeroId | null {
+  const field = creature.optionalField('hero');
+
+  if (!isMakerHero) {
+    if (field) {
+      creature.fail('só o modelo "maker-hero" tem "hero"');
+    }
+
+    return null;
+  }
+
+  const hero = field?.string() ?? creature.fail('o modelo "maker-hero" precisa de "hero"');
+
+  return isHeroId(hero) ? hero : creature.fail(`"${hero}" não é um herói do Pedro Maker`);
 }
 
 function parseSpawn(spawn: JsonObjectReader): CreatureSpawn {

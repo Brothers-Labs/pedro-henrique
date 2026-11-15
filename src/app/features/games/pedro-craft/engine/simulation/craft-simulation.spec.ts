@@ -636,6 +636,34 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       }
     });
 
+    it('no Criativo, o boneco da Princesa Peach vem manso pela mochila e fica para brincar', () => {
+      useCreativeMode();
+      put('stone');
+      simulation.giveCreativeItem('boneco-peach');
+      hold('boneco-peach');
+      run(1, { secondaryPressed: true });
+
+      const [peach] = ofKind('boneco-peach');
+
+      expect(peach?.isTame).toBeTrue();
+      expect(peach?.isHostile).toBeFalse();
+      expect(peach?.definition.hero).toBe('peach');
+
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      run(STEPS_PER_SECOND * 2);
+
+      expect(simulation.creatures.list).toContain(peach);
+    });
+
+    it('fora do Criativo, o boneco do Mario não chama ninguém', () => {
+      put('stone');
+      hold('boneco-mario');
+      run(1, { secondaryPressed: true });
+
+      expect(ofKind('boneco-mario')).toEqual([]);
+      expect(hinted('mochila do modo Criativo')).toBeTrue();
+    });
+
     it('no Criativo, cabem até 5 de cada boneco', () => {
       useCreativeMode();
 

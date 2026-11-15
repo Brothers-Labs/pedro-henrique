@@ -33,6 +33,12 @@
             },
             {
               "type": "object",
+              "required": ["type", "hero"],
+              "additionalProperties": false,
+              "properties": { "type": { "const": "hero" }, "hero": { "type": "string", "minLength": 1, "description": "Id do herói do Pedro Maker; o ícone é o retrato dele." } }
+            },
+            {
+              "type": "object",
               "required": ["type", "shape", "colors"],
               "additionalProperties": false,
               "properties": {

@@ -1,3 +1,5 @@
+import type { HeroId } from '../../pedro-maker/models/progress.model';
+
 /**
  * Conteúdo do PedroCraft: tudo o que o jogo sabe sobre blocos, itens,
  * receitas, criaturas, plantações, o mundo, os drops e as missões.
@@ -247,6 +249,8 @@ export type IconShape = (typeof ICON_SHAPES)[number];
 /** Ícone de um item: o próprio bloco em miniatura, ou um desenho com cores. */
 export type ItemIcon =
   | { readonly type: 'block'; readonly block: string }
+  /** Retrato de um herói do Pedro Maker, o mesmo dos menus de lá. */
+  | { readonly type: 'hero'; readonly hero: HeroId }
   | { readonly type: 'sprite'; readonly shape: IconShape; readonly colors: readonly string[] };
 
 export interface ToolStats {
@@ -386,6 +390,7 @@ export const CREATURE_MODELS = [
   'obesity',
   'squareity',
   'pointy',
+  'maker-hero',
 ] as const;
 
 export type CreatureModel = (typeof CREATURE_MODELS)[number];
@@ -453,6 +458,11 @@ export interface CreatureDefinition {
   readonly explodes: ExplosionSpec | null;
   /** O que a criatura fala quando o herói toca nela com o botão de usar (a Verity); `null` para quem não fala. */
   readonly greeting: string | null;
+  /**
+   * Herói do Pedro Maker que o boneco `maker-hero` veste; `null` nos outros
+   * modelos. O desenho de cubos vem do próprio Maker, para ser o mesmo herói.
+   */
+  readonly hero: HeroId | null;
 }
 
 /* Plantações -------------------------------------------------------------------------- */

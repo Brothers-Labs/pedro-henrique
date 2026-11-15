@@ -1,3 +1,4 @@
+import { HEROES } from '../../pedro-maker/config/hero.config';
 import { TestBed } from '@angular/core/testing';
 
 import { recipeRequirements } from '../engine/simulation/crafting';
@@ -227,6 +228,20 @@ describe('Conteúdo do PedroCraft', () => {
       expect(golem?.spawn).toBeNull();
     });
 
+    it('cada herói do Pedro Maker tem um boneco manso, com item de retrato só na mochila do Criativo', () => {
+      for (const hero of HEROES) {
+        const creature = content.creatures.find((candidate) => candidate.id === `boneco-${hero.id}`);
+        const item = content.items.find((candidate) => candidate.summons === creature?.id);
+
+        expect(creature?.model).withContext(hero.id).toBe('maker-hero');
+        expect(creature?.hero).withContext(hero.id).toBe(hero.id);
+        expect(creature?.name).withContext(hero.id).toBe(hero.name);
+        expect(creature?.temperament).withContext(hero.id).toBe('passive');
+        expect(creature?.spawn).withContext('não aparece sozinho no mundo').toBeNull();
+        expect(item?.icon).withContext(hero.id).toEqual({ type: 'hero', hero: hero.id });
+      }
+    });
+
     it('a Verity fala, e só ela', () => {
       const speakers = content.creatures.filter((creature) => creature.greeting !== null);
 
@@ -425,6 +440,18 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'blocks', 'blocks', 'carpet-red')['solid'] = true;
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "carpet-red": um tapete não pode ser sólido');
+    });
+
+    it('não aceita boneco do Maker com herói que não existe', () => {
+      entry(files, 'creatures', 'creatures', 'boneco-mario')['hero'] = 'bowser';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('"bowser" não é um herói do Pedro Maker');
+    });
+
+    it('não aceita herói em criatura que não é boneco do Maker', () => {
+      entry(files, 'creatures', 'creatures', 'verity')['hero'] = 'mario';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('só o modelo "maker-hero" tem "hero"');
     });
 
     it('não aceita meio bloco com colisão diferente da metade: o herói flutuaria ou afundaria nele', () => {
