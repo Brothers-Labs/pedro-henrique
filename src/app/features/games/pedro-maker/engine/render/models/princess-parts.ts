@@ -1,5 +1,13 @@
 import { darken } from '../../../art/canvas';
-import { CORAL_PRINCESS, CROWN_GOLD, ESTRELA_PRINCESS, JADE_PRINCESS, type PrincessColors } from '../../../config/princess.config';
+import {
+  CORAL_PRINCESS,
+  CROWN_GOLD,
+  DAISY_PRINCESS,
+  ESTRELA_PRINCESS,
+  JADE_PRINCESS,
+  PEACH_PRINCESS,
+  type PrincessColors,
+} from '../../../config/princess.config';
 import { box, type VoxelBox } from '../voxel-geometry';
 import type { CharacterParts } from './character-parts';
 
@@ -18,6 +26,8 @@ export interface PrincessBuild {
 export const ESTRELA_BUILD: PrincessBuild = { legLength: 0.42, colors: ESTRELA_PRINCESS };
 export const JADE_BUILD: PrincessBuild = { legLength: 0.38, colors: JADE_PRINCESS };
 export const CORAL_BUILD: PrincessBuild = { legLength: TALL_LEG, colors: CORAL_PRINCESS };
+export const PEACH_BUILD: PrincessBuild = { legLength: TALL_LEG, colors: PEACH_PRINCESS };
+export const DAISY_BUILD: PrincessBuild = { legLength: 0.44, colors: DAISY_PRINCESS };
 
 /**
  * Princesa de cubos: vestido rodado em dois andares, cabelo comprido caindo
@@ -27,7 +37,7 @@ export const CORAL_BUILD: PrincessBuild = { legLength: TALL_LEG, colors: CORAL_P
 export function princessParts(build: PrincessBuild): CharacterParts {
   const { colors } = build;
   const drop = build.legLength - TALL_LEG;
-  const upperBody = [...dress(colors), ...head(colors)];
+  const upperBody = [...dress(colors), ...head(colors), ...earrings(colors)];
 
   return {
     upperBody: upperBody.map((part) => ({ ...part, y: part.y + drop })),
@@ -57,6 +67,39 @@ function dress(colors: PrincessColors): readonly VoxelBox[] {
   ];
 }
 
+/** Mechas dos lados e o cabelo de trás: comprido até as costas, ou curto na altura dos ombros. */
+function hairDown(colors: PrincessColors): readonly VoxelBox[] {
+  const { hair } = colors;
+
+  if (colors.shortHair) {
+    return [
+      box(-0.215, 1.2, -0.04, 0.04, 0.26, 0.32, hair),
+      box(0.215, 1.2, -0.04, 0.04, 0.26, 0.32, hair),
+      box(0, 1.17, -0.215, 0.44, 0.4, 0.08, hair),
+      // As pontas viradas para fora, como o cabelo da Daisy.
+      box(-0.25, 1.08, -0.04, 0.06, 0.06, 0.3, hair),
+      box(0.25, 1.08, -0.04, 0.06, 0.06, 0.3, hair),
+    ];
+  }
+
+  return [
+    box(-0.215, 1.12, -0.04, 0.04, 0.42, 0.32, hair),
+    box(0.215, 1.12, -0.04, 0.04, 0.42, 0.32, hair),
+    box(0, 1.06, -0.215, 0.44, 0.62, 0.08, hair),
+  ];
+}
+
+/** Brincos pendurados por baixo das mechas, um de cada lado do rosto. */
+function earrings(colors: PrincessColors): readonly VoxelBox[] {
+  const { earring } = colors;
+
+  if (!earring) {
+    return [];
+  }
+
+  return [-1, 1].map((side) => box(side * 0.25, 1.0, 0.06, 0.05, 0.07, 0.05, earring));
+}
+
 function head(colors: PrincessColors): readonly VoxelBox[] {
   const { hair, gem } = colors;
 
@@ -73,9 +116,7 @@ function head(colors: PrincessColors): readonly VoxelBox[] {
     // Cabelo: topo, franja, mechas dos lados e o comprido que cai nas costas.
     box(0, 1.38, -0.02, 0.43, 0.12, 0.43, hair),
     box(0, 1.385, 0.195, 0.42, 0.07, 0.04, hair),
-    box(-0.215, 1.12, -0.04, 0.04, 0.42, 0.32, hair),
-    box(0.215, 1.12, -0.04, 0.04, 0.42, 0.32, hair),
-    box(0, 1.06, -0.215, 0.44, 0.62, 0.08, hair),
+    ...hairDown(colors),
     // Coroa de ouro com três pontas e a pedra na frente.
     box(0, 1.48, 0, 0.3, 0.07, 0.3, CROWN_GOLD),
     box(-0.11, 1.55, 0.11, 0.06, 0.08, 0.05, CROWN_GOLD),

@@ -1,7 +1,7 @@
 import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry } from 'three';
 
 import type { CharacterPalette } from '../../../config/character.config';
-import { BIG_PEDRO_SCALE, GIGA_PEDRO_SCALE, TALL_PEDRO_STRETCH, TALL_PEDRO_THINNING } from '../../../config/physics.config';
+import { BIG_PEDRO_SCALE, GIGA_PEDRO_SCALE, MINI_PEDRO_SCALE, TALL_PEDRO_STRETCH, TALL_PEDRO_THINNING } from '../../../config/physics.config';
 import type { PlayerMode } from '../../simulation/player';
 import { disposeTree } from '../dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from '../voxel-geometry';
@@ -38,6 +38,8 @@ const TALL_GLOW = 0.18;
 const TALL_COLOR = '#b388ff';
 const REVERSE_GLOW = 0.3;
 const REVERSE_COLOR = '#20c997';
+const MINI_GLOW = 0.3;
+const MINI_COLOR = '#6b8cff';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -82,6 +84,10 @@ export interface PedroPose {
   readonly hasReverseMushroom: boolean;
   /** Últimos segundos do Cogumelo Reverso: o brilho verde-água pisca. */
   readonly isReverseEnding: boolean;
+  /** Com o corpinho do Cogumelo de Encolher. */
+  readonly isMini: boolean;
+  /** Últimos segundos do Cogumelo de Encolher: o brilho azul pisca. */
+  readonly isMiniEnding: boolean;
 }
 
 /**
@@ -189,8 +195,8 @@ export class PedroModel {
   }
 
   private grow(pose: PedroPose, deltaSeconds: number): void {
-    // Comprido, o desenho acompanha a caixa de colisão esticada, e não o tamanho de grande.
-    const target = pose.isGiant ? GIGA_PEDRO_SCALE : pose.isBig && !pose.isTall ? BIG_PEDRO_SCALE : 1;
+    // Comprido ou pequenininho, o desenho acompanha a caixa de colisão, e não o tamanho de grande.
+    const target = this.sizeFor(pose);
     const blend = 1 - Math.exp(-GROW_RATE * deltaSeconds);
     const stretchTarget = pose.isTall ? TALL_PEDRO_STRETCH : 1;
 
@@ -203,10 +209,22 @@ export class PedroModel {
     this.root.scale.set(this.size * thinning, this.size * this.stretch, this.size * thinning);
   }
 
+  private sizeFor(pose: PedroPose): number {
+    if (pose.isGiant) {
+      return GIGA_PEDRO_SCALE;
+    }
+
+    if (pose.isMini) {
+      return MINI_PEDRO_SCALE;
+    }
+
+    return pose.isBig && !pose.isTall ? BIG_PEDRO_SCALE : 1;
+  }
+
   /**
    * Estrela: o Pedro pisca em todas as cores. Gigante: um brilho dourado; com
    * o Cogumelo Turbo, um elétrico; com o Ímã, um vermelho; com o Alto, um
-   * lilás; com o Reverso, um verde-água. Todos acendem e apagam quando o efeito
+   * lilás; com o Reverso, um verde-água; pequenininho, um azul. Todos acendem e apagam quando o efeito
    * está para acabar. Flor de fogo: um brilho quente; de gelo, um frio.
    */
   private glow(pose: PedroPose, now: number): void {
@@ -235,6 +253,11 @@ export class PedroModel {
     } else if (pose.hasMagnetMushroom) {
       emissive.set(MAGNET_COLOR);
       this.material.emissiveIntensity = MAGNET_GLOW;
+    } else if (pose.isMiniEnding) {
+      this.blinkWarning(MINI_COLOR, now);
+    } else if (pose.isMini) {
+      emissive.set(MINI_COLOR);
+      this.material.emissiveIntensity = MINI_GLOW;
     } else if (pose.isTallEnding) {
       this.blinkWarning(TALL_COLOR, now);
     } else if (pose.isTall) {

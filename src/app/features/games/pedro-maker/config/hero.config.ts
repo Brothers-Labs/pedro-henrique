@@ -1,6 +1,6 @@
 import type { HeroId } from '../models/progress.model';
 import type { CharacterPalette } from './character.config';
-import { CORAL_PRINCESS, CROWN_GOLD, ESTRELA_PRINCESS, JADE_PRINCESS } from './princess.config';
+import { CORAL_PRINCESS, CROWN_GOLD, DAISY_PRINCESS, ESTRELA_PRINCESS, JADE_PRINCESS, PEACH_PRINCESS } from './princess.config';
 import { WARIO_COLORS } from './wario.config';
 
 /** Jeito de se mexer de um herói, em proporção à física padrão do jogo. */
@@ -40,6 +40,9 @@ export interface HeroDefinition {
  *
  * As princesas Estrela, Jade e Coral também são originais: de vestido rodado e
  * coroa, seguem a mesma regra de nunca pular menos que o Pedro.
+ *
+ * As princesas Peach e Daisy, dos jogos, dos desenhos e dos filmes do Mario,
+ * fecham a turma com o mesmo vestido rodado e a mesma regra do pulo.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -250,6 +253,28 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: Math.sqrt(1.25), brakingMultiplier: 0.6 },
     outfit: { cap: CROWN_GOLD, shirt: CORAL_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'peach',
+    name: 'Princesa Peach',
+    description: 'A princesa do Reino dos Cogumelos: vestido rosa, cabelo loiro e coroa com pedra azul.',
+    traits: [
+      { emoji: '👑', label: 'Pula bem alto' },
+      { emoji: '🎯', label: 'Freia quase sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.2), brakingMultiplier: 0.85 },
+    outfit: { cap: CROWN_GOLD, shirt: PEACH_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'daisy',
+    name: 'Princesa Daisy',
+    description: 'A princesa aventureira: vestido amarelo, cabelo ruivo e brincos de flor.',
+    traits: [
+      { emoji: '🌼', label: 'Pula um pouco mais alto' },
+      { emoji: '🧱', label: 'Para firme, sem escorregar' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.15), brakingMultiplier: 1.1 },
+    outfit: { cap: CROWN_GOLD, shirt: DAISY_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

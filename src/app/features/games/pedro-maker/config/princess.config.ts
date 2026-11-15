@@ -11,10 +11,43 @@ export interface PrincessColors {
   /** Pedra da coroa e do decote. */
   readonly gem: string;
   readonly shoe: string;
+  /** Brinco redondo dos dois lados do rosto; sem ele, a princesa não usa brinco. */
+  readonly earring?: string;
+  /** Cabelo na altura dos ombros, em vez do comprido que desce pelas costas. */
+  readonly shortHair?: boolean;
 }
 
 /** Ouro da coroa: igual para todas, é o que faz a princesa ser reconhecida de longe. */
 export const CROWN_GOLD = '#ffc629';
+
+/**
+ * Princesa Peach, a princesa do Reino dos Cogumelos dos jogos e dos filmes do
+ * Mario: vestido rosa com a barra rosa-escuro, cabelo loiro comprido e pedra
+ * azul na coroa, no decote e nos brincos.
+ */
+export const PEACH_PRINCESS: PrincessColors = {
+  dress: '#ff8fc8',
+  trim: '#e8418f',
+  hair: '#ffd23f',
+  gem: '#2f7bff',
+  shoe: '#e8418f',
+  earring: '#2f7bff',
+};
+
+/**
+ * Princesa Daisy, a amiga aventureira da Peach: vestido amarelo com a barra
+ * laranja, cabelo ruivo na altura dos ombros, pedra verde-água e brincos de
+ * flor laranja.
+ */
+export const DAISY_PRINCESS: PrincessColors = {
+  dress: '#ffc21a',
+  trim: '#ff8a1f',
+  hair: '#c8571b',
+  gem: '#1fc7a6',
+  shoe: '#ff8a1f',
+  earring: '#ff8a1f',
+  shortHair: true,
+};
 
 /** Princesa Estrela: vestido lilás com faixa branca e uma estrela azul na coroa. */
 export const ESTRELA_PRINCESS: PrincessColors = {

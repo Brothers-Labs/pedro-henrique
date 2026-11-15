@@ -10,6 +10,7 @@ import {
   SLIDE_PHYSICS,
   MAGNET_MUSHROOM_RADIUS,
   MAGNET_RADIUS,
+  MINI_MUSHROOM_PHYSICS,
   SWIM_PHYSICS,
   TALL_MUSHROOM_PHYSICS,
   TILE_SIZE,
@@ -879,6 +880,120 @@ describe('Simulação do Pedro Maker', () => {
       expect(player.isTall).toBeFalse();
       expect(player.body.height).toBe(PLAYER_PHYSICS.bodyHeight);
       expect(harness.events).toContain({ type: 'power-up-ended', kind: 'tall-mushroom' });
+    });
+  });
+
+  describe('Cogumelo de Encolher', () => {
+    /** Túnel de um bloco de altura nas colunas 5 a 14, com o cogumelo logo antes da entrada. */
+    const tunnelLevel = (withMushroom: boolean): LevelBlueprint => {
+      const builder = flatLevel().row('stone', 5, SURFACE - 2, 10);
+
+      return (withMushroom ? builder.add('power-up', 3, SURFACE - 1, { powerUp: 'mini-mushroom' }) : builder).build(META);
+    };
+
+    const miniHarness = (): Harness => {
+      const harness = start(flatLevel().build(META));
+      run(harness, 0.3);
+      harness.simulation.player.grantPowerUp('mini-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      return harness;
+    };
+
+    /** Maior altura que os pés sobem num pulo segurando o botão, em pixels. */
+    const jumpHeight = (harness: Harness): number => {
+      const player = harness.simulation.player;
+      const floor = bottom(player.body);
+      let highest = floor;
+
+      for (let step = 0; step < 90; step += 1) {
+        harness.simulation.step({ ...IDLE_INPUT, jumpPressed: step === 0, jumpHeld: true });
+        highest = Math.min(highest, bottom(player.body));
+      }
+
+      return floor - highest;
+    };
+
+    it('encolhe o corpo por igual, com os pés e o meio no mesmo lugar', () => {
+      const harness = start(flatLevel().build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.3);
+      const feet = bottom(player.body);
+      const middle = centerX(player.body);
+      player.grantPowerUp('mini-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      expect(player.isMini).toBeTrue();
+      expect(player.isTall).toBeFalse();
+      expect(player.isGiant).toBeFalse();
+      expect(player.body.width).toBeCloseTo(PLAYER_PHYSICS.bodyWidth * MINI_MUSHROOM_PHYSICS.bodyScale, 3);
+      expect(player.body.height).toBeCloseTo(PLAYER_PHYSICS.bodyHeight * MINI_MUSHROOM_PHYSICS.bodyScale, 3);
+      expect(player.body.height).withContext('cabe num buraquinho de um bloco').toBeLessThan(TILE_SIZE);
+      expect(bottom(player.body)).toBeCloseTo(feet, 3);
+      expect(centerX(player.body)).toBeCloseTo(middle, 3);
+    });
+
+    it('fica levinho e pula um pouco mais alto', () => {
+      const normal = start(flatLevel().build(META));
+      run(normal, 0.4);
+      const normalJump = jumpHeight(normal);
+      const miniJump = jumpHeight(miniHarness());
+
+      expect(miniJump).toBeGreaterThan(normalJump);
+      expect(miniJump / normalJump).toBeCloseTo(MINI_MUSHROOM_PHYSICS.jumpMultiplier ** 2, 1);
+    });
+
+    it('passa no túnel de um bloco, onde o herói normal não cabe', () => {
+      const normal = start(tunnelLevel(false));
+      run(normal, 2.5, { right: true });
+
+      expect(centerX(normal.simulation.player.body)).withContext('o normal para na entrada').toBeLessThan(5 * TILE_SIZE);
+
+      const harness = start(tunnelLevel(true));
+
+      expect(runStayingClear(harness, 3, { right: true })).toBeTrue();
+      expect(centerX(harness.simulation.player.body)).withContext('atravessou o túnel').toBeGreaterThan(15 * TILE_SIZE);
+    });
+
+    it('se o efeito acaba dentro do túnel, continua pequeno até sair e só então cresce', () => {
+      const harness = start(tunnelLevel(false));
+      const player = harness.simulation.player;
+      run(harness, 0.3);
+      player.grantPowerUp('mini-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+      player.placeFeetAt(10 * TILE_SIZE, SURFACE * TILE_SIZE);
+
+      expect(runStayingClear(harness, 12.5)).toBeTrue();
+      expect(player.hasPowerUp('mini-mushroom')).toBeFalse();
+      expect(player.isMini).withContext('sem espaço para crescer').toBeTrue();
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'mini-mushroom' });
+
+      expect(runStayingClear(harness, 3, { right: true })).toBeTrue();
+      expect(centerX(player.body)).toBeGreaterThan(15 * TILE_SIZE);
+      expect(player.isMini).toBeFalse();
+      expect(player.body.height).toBe(PLAYER_PHYSICS.bodyHeight);
+      expect(player.body.width).toBe(PLAYER_PHYSICS.bodyWidth);
+    });
+
+    it('vale o último cogumelo pego: o de Encolher desliga o Giga, e o Alto desliga o de Encolher', () => {
+      const harness = start(flatLevel().build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.3);
+      player.grantPowerUp('giga-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+      player.grantPowerUp('mini-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      expect(player.hasPowerUp('giga-mushroom')).toBeFalse();
+      expect(player.isGiant).toBeFalse();
+      expect(player.isMini).toBeTrue();
+
+      player.grantPowerUp('tall-mushroom', harness.simulation.clockMs);
+      run(harness, 0.1);
+
+      expect(player.hasPowerUp('mini-mushroom')).toBeFalse();
+      expect(player.isMini).toBeFalse();
+      expect(player.isTall).toBeTrue();
     });
   });
 

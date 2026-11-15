@@ -1,5 +1,13 @@
 import type { CharacterPalette } from '../config/character.config';
-import { CORAL_PRINCESS, CROWN_GOLD, ESTRELA_PRINCESS, JADE_PRINCESS, type PrincessColors } from '../config/princess.config';
+import {
+  CORAL_PRINCESS,
+  CROWN_GOLD,
+  DAISY_PRINCESS,
+  ESTRELA_PRINCESS,
+  JADE_PRINCESS,
+  PEACH_PRINCESS,
+  type PrincessColors,
+} from '../config/princess.config';
 import { circle, darken, ellipse, eye, fillAndOutline, hand, limb, type Point, roundedRect, smile } from './canvas';
 
 const SKIN = '#ffd2a6';
@@ -23,6 +31,8 @@ export interface PrincessPortrait {
 export const ESTRELA_PORTRAIT: PrincessPortrait = { drop: 2, colors: ESTRELA_PRINCESS };
 export const JADE_PORTRAIT: PrincessPortrait = { drop: 4, colors: JADE_PRINCESS };
 export const CORAL_PORTRAIT: PrincessPortrait = { drop: 0, colors: CORAL_PRINCESS };
+export const PEACH_PORTRAIT: PrincessPortrait = { drop: 0, colors: PEACH_PRINCESS };
+export const DAISY_PORTRAIT: PrincessPortrait = { drop: 1, colors: DAISY_PRINCESS };
 
 /** Princesa parada e sorrindo: vestido rodado, cabelo comprido e coroa de ouro. */
 export function paintPrincessPortrait(context: CanvasRenderingContext2D, palette: CharacterPalette, portrait: PrincessPortrait): void {
@@ -39,7 +49,7 @@ export function paintPrincessPortrait(context: CanvasRenderingContext2D, palette
   context.save();
   context.translate(0, drop);
 
-  paintLongHair(context, colors.hair);
+  paintLongHair(context, colors);
 
   limb(context, [28, SHOULDER_Y], BACK_HAND, SKIN_SHADE);
   hand(context, BACK_HAND, SKIN_SHADE);
@@ -52,16 +62,29 @@ export function paintPrincessPortrait(context: CanvasRenderingContext2D, palette
   fillAndOutline(context, palette.shirt, 2);
 
   paintFace(context, colors.hair);
+  paintEarring(context, colors.earring);
   paintCrown(context, colors.gem);
   context.restore();
 }
 
-/** O cabelo comprido fica atrás de tudo e desce até o meio das costas. */
-function paintLongHair(context: CanvasRenderingContext2D, hair: string): void {
+/** O cabelo fica atrás de tudo: o comprido desce até o meio das costas, e o curto para nos ombros. */
+function paintLongHair(context: CanvasRenderingContext2D, colors: PrincessColors): void {
   const [x, y] = HEAD;
 
-  roundedRect(context, x - 14, y - 8, 22, 32, 9);
-  fillAndOutline(context, hair);
+  roundedRect(context, x - 14, y - 8, 22, colors.shortHair ? 24 : 32, 9);
+  fillAndOutline(context, colors.hair);
+}
+
+/** Brinco na orelha que aparece, do lado de trás do rosto virado para a direita. */
+function paintEarring(context: CanvasRenderingContext2D, earring: string | undefined): void {
+  if (!earring) {
+    return;
+  }
+
+  const [x, y] = HEAD;
+
+  circle(context, x - 6, y + 11, 2.4);
+  fillAndOutline(context, earring, 1.2);
 }
 
 /** Corpete, faixa na cintura e a saia que abre até quase o chão. */

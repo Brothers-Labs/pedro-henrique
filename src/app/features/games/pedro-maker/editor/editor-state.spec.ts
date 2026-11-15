@@ -166,6 +166,7 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'magnet-mushroom' } })?.id).toBe('power-magnet-mushroom');
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'tall-mushroom' } })?.id).toBe('power-tall-mushroom');
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'reverse-mushroom' } })?.id).toBe('power-reverse-mushroom');
+    expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'mini-mushroom' } })?.id).toBe('power-mini-mushroom');
   });
 
   it('tem as portas de madeira de A a F e a dourada num par só dela', () => {
@@ -202,6 +203,7 @@ describe('Estado do editor de fases', () => {
     expect(EDITOR_POWER_UPS).toContain('magnet-mushroom');
     expect(EDITOR_POWER_UPS).toContain('tall-mushroom');
     expect(EDITOR_POWER_UPS).toContain('reverse-mushroom');
+    expect(EDITOR_POWER_UPS).toContain('mini-mushroom');
     // Toda categoria que sobrou tem peça.
     expect(EDITOR_CATEGORIES.every((category) => EDITOR_PIECES.some((piece) => piece.category === category.id))).toBeTrue();
   });
