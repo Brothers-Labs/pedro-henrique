@@ -60,6 +60,8 @@ export type GameSessionEvent =
   | { readonly type: 'power-up'; readonly kind: PowerUpKind; readonly durationMs: number }
   | { readonly type: 'power-up-ended'; readonly kind: PowerUpKind }
   | { readonly type: 'mascot'; readonly text: string }
+  /** A Flor Falante disse a frase escrita no editor: a tela mostra e lê em voz alta. */
+  | { readonly type: 'flower-speech'; readonly text: string }
   | { readonly type: 'boss'; readonly boss: BossHudState | null }
   /** Uma porta liberou a fase secreta; `secretLevel` é a fase do Pedro escolhida na porta dourada, ou `null` na campanha. */
   | { readonly type: 'secret-found'; readonly secretLevel: string | null }

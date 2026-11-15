@@ -74,6 +74,7 @@ import { MakerAudioService } from '../../services/maker-audio.service';
 import { MakerProgressService } from '../../services/maker-progress.service';
 import { MakerSettingsService } from '../../services/maker-settings.service';
 import { LevelSyncService } from '../../sync/level-sync.service';
+import { FIRE_BAR } from '../../engine/simulation/fire-bars';
 
 type EditorMode = 'editar' | 'testar' | 'resultado';
 
@@ -161,6 +162,10 @@ export class MakerEditorPage {
   protected readonly surpriseOptions = SURPRISE_OPTIONS;
   protected readonly doorPairColor = doorPairColor;
   protected readonly doorPairs = DOOR_PAIRS;
+  protected readonly fireBarLengths = [
+    { range: FIRE_BAR.shortLength, label: '🔥 Curto' },
+    { range: FIRE_BAR.longLength, label: '🔥🔥 Comprido' },
+  ] as const;
   protected readonly testBonusHearts = TEST_BONUS_HEARTS;
   protected readonly rangeLimits = RANGE_LIMITS;
 
@@ -208,11 +213,11 @@ export class MakerEditorPage {
   /** As outras fases do Pedro: qualquer uma pode virar a fase secreta de uma porta dourada. */
   protected readonly secretLevelChoices = computed(() => this.customLevels.levels().filter((level) => level.id !== this.currentId()));
 
-  /** Porta de madeira ou dourada: as duas escolhem a qual porta levam. */
+  /** Porta de madeira, dourada ou cano mágico: todos escolhem a letra do par a que levam. */
   protected readonly isSelectedDoor = computed(() => {
     const type = this.selectedObject()?.type;
 
-    return type === 'door' || type === 'golden-door';
+    return type === 'door' || type === 'golden-door' || type === 'warp-pipe';
   });
 
   protected readonly selectedLabel = computed(() => {
@@ -530,6 +535,11 @@ export class MakerEditorPage {
     if (powerUp) {
       this.updateSelected({ powerUp });
     }
+  }
+
+  /** Bastão de fogo curto (4 bolas) ou comprido (6): o tamanho vai no `range`. */
+  protected setFireBarLength(range: number): void {
+    this.updateSelected({ range });
   }
 
   protected setPair(pair: string): void {

@@ -28,6 +28,7 @@ import type { DifficultyRules } from '../../models/settings.model';
 import type { InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { CannonSystem } from './cannons';
+import { FireBarSystem } from './fire-bars';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue } from './collectibles';
 import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
@@ -46,7 +47,7 @@ import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
 import { cellOf, TileGrid } from './tile-grid';
-import { type Chest, TriggerSystem, type TriggerHost } from './triggers';
+import { type Chest, type DoorKind, TriggerSystem, type TriggerHost } from './triggers';
 import { VisualEventQueue } from './visual-events';
 
 /** Um passo fixo de física: 60 por segundo em qualquer tela, de 60 ou 120 Hz. */
@@ -128,6 +129,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly triggers: TriggerSystem;
   readonly slides: SlideSystem;
   readonly cannons: CannonSystem;
+  readonly fireBars: FireBarSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -172,6 +174,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.player = this.createPlayer(blueprint.objects);
     this.createEnemies(blueprint.objects);
     this.cannons = new CannonSystem(blueprint.objects);
+    this.fireBars = new FireBarSystem(blueprint.objects);
     this.createBoss(blueprint.objects);
   }
 
@@ -237,6 +240,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.collectibles.update(STEP_MS, centerX(body), centerY(body), this.magnetRadius());
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
+    this.checkFireBars();
   }
 
   /* Comandos vindos da tela ------------------------------------------------------ */
@@ -522,6 +526,19 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     if (boss.isAwake && this.player.isActive && overlaps(this.player.body, boss.body)) {
       this.onBossContact(boss);
+    }
+  }
+
+  /** Encostar numa bola do bastão de fogo machuca; a estrela e o Giga passam sem dor (o `hurtPlayer` cuida disso). */
+  private checkFireBars(): void {
+    if (!this.player.isActive) {
+      return;
+    }
+
+    const bar = this.fireBars.touching(this.clockMs, this.player.body);
+
+    if (bar) {
+      this.hurtPlayer(bar.x);
     }
   }
 
@@ -860,9 +877,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.emit({ type: 'checkpoint' });
   }
 
-  onDoor(destinationFeetX: number, destinationFeetY: number): void {
-    this.playSound('button');
+  onDoor(destinationFeetX: number, destinationFeetY: number, kind?: DoorKind): void {
+    this.playSound(kind === 'pipe' ? 'spring' : 'button');
     this.effects.flash();
+
+    if (kind === 'pipe') {
+      // A fumacinha sai da boca do cano de chegada, onde o herói aparece.
+      this.effects.burst('poof', destinationFeetX, destinationFeetY - 60, 10);
+    }
+
     this.player.placeFeetAt(destinationFeetX, destinationFeetY);
   }
 
@@ -906,6 +929,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   onMascotTip(text: string): void {
     this.emit({ type: 'mascot', text });
+  }
+
+  onFlowerSpeech(text: string): void {
+    this.emit({ type: 'flower-speech', text });
   }
 
   spawnMinion(worldX: number, worldY: number): void {

@@ -5,13 +5,16 @@ import type { VisualEventQueue } from './visual-events';
 export interface TriggerHost {
   readonly effects: VisualEventQueue;
   onCheckpoint(feetX: number, feetY: number): void;
-  onDoor(destinationFeetX: number, destinationFeetY: number): void;
+  /** `kind`: de onde saiu — o cano faz o som e a fumacinha do cano. */
+  onDoor(destinationFeetX: number, destinationFeetY: number, kind?: DoorKind): void;
   onGoldenDoorOpened(x: number, y: number): void;
   /** Uma porta destrancou a fase secreta; `secretLevel` é a fase do Pedro escolhida, ou `null` na campanha. */
   onSecretDoor(secretLevel: string | null): void;
   onPortal(centerX: number, centerY: number): void;
   onChestOpened(chest: Chest, x: number, y: number): void;
   onMascotTip(text: string): void;
+  /** A Flor Falante disse a frase dela: a tela mostra e lê em voz alta. */
+  onFlowerSpeech?(text: string): void;
 }
 
 /** Tudo aqui é ancorado no chão da célula: `x` no centro, `y` embaixo. */
@@ -23,9 +26,10 @@ export interface Checkpoint {
 
 /**
  * A de madeira e a dourada levam à porta do mesmo par; a secreta libera a
- * fase secreta. A dourada também libera, quando tem uma fase escolhida.
+ * fase secreta. A dourada também libera, quando tem uma fase escolhida. O
+ * cano leva ao outro cano da mesma letra, nunca a uma porta.
  */
-export type DoorKind = 'wooden' | 'golden' | 'secret';
+export type DoorKind = 'wooden' | 'golden' | 'secret' | 'pipe';
 
 export interface Door {
   readonly x: number;
@@ -37,11 +41,26 @@ export interface Door {
   wasUsed: boolean;
 }
 
-const DOOR_KINDS: Readonly<Record<'door' | 'golden-door' | 'secret-door', DoorKind>> = {
+const DOOR_KINDS: Readonly<Record<'door' | 'golden-door' | 'secret-door' | 'warp-pipe', DoorKind>> = {
   door: 'wooden',
   'golden-door': 'golden',
   'secret-door': 'secret',
+  'warp-pipe': 'pipe',
 };
+
+/** Porta leva a porta e cano leva a cano: a letra A da porta e a do cano não se misturam. */
+function doorFamily(kind: DoorKind): 'pipe' | 'door' {
+  return kind === 'pipe' ? 'pipe' : 'door';
+}
+
+/** A Flor Falante: fala uma vez cada vez que o herói chega perto. */
+export interface TalkingFlower {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly text: string;
+  isNear: boolean;
+}
 
 export interface Hint {
   readonly id: number;
@@ -95,6 +114,9 @@ interface MascotTip {
 const HINT_RANGE = 7 * TILE_SIZE;
 const HINT_DONE_DISTANCE = 5 * TILE_SIZE;
 const SIGN_RANGE = 2.2 * TILE_SIZE;
+/** A flor fala quando o herói chega a uns dois blocos dela, na mesma altura mais ou menos. */
+const FLOWER_RANGE_X = 2.2 * TILE_SIZE;
+const FLOWER_RANGE_Y = 3 * TILE_SIZE;
 
 /** Tempo da queda do baú até o chão da arena. */
 export const CHEST_DROP_MS = 700;
@@ -112,6 +134,7 @@ export class TriggerSystem {
   readonly doors: Door[] = [];
   readonly hints: Hint[] = [];
   readonly signs: Sign[] = [];
+  readonly flowers: TalkingFlower[] = [];
   portal: Portal | null = null;
   readonly chests: Chest[] = [];
   /** Porta ao alcance: a tela mostra o aviso do botão de ação em cima dela. */
@@ -160,6 +183,7 @@ export class TriggerSystem {
     this.checkChests(now, playerX, playerY);
     this.updateHints(playerX);
     this.updateSigns(playerX);
+    this.updateFlowers(playerX, playerY);
     this.checkTips(playerX, playerY);
   }
 
@@ -174,6 +198,7 @@ export class TriggerSystem {
       case 'door':
       case 'golden-door':
       case 'secret-door':
+      case 'warp-pipe':
         this.doors.push({
           x,
           y,
@@ -192,6 +217,9 @@ export class TriggerSystem {
         return;
       case 'sign':
         this.signs.push({ id: this.signs.length + 1, x, y, text: object.properties?.text ?? '', isNear: false });
+        return;
+      case 'talking-flower':
+        this.flowers.push({ id: this.flowers.length + 1, x, y, text: object.properties?.text ?? '', isNear: false });
         return;
       case 'hint': {
         const text = isTouch ? (object.properties?.touchText ?? object.properties?.text) : object.properties?.text;
@@ -250,10 +278,13 @@ export class TriggerSystem {
       }
     }
 
-    const destination = this.doors.find((candidate) => candidate !== door && candidate.pair !== null && candidate.pair === door.pair);
+    const destination = this.doors.find(
+      (candidate) =>
+        candidate !== door && candidate.pair !== null && candidate.pair === door.pair && doorFamily(candidate.kind) === doorFamily(door.kind),
+    );
 
     if (destination) {
-      this.host.onDoor(destination.x, destination.y);
+      this.host.onDoor(destination.x, destination.y, door.kind);
     }
   }
 
@@ -303,6 +334,19 @@ export class TriggerSystem {
   private updateSigns(playerX: number): void {
     for (const sign of this.signs) {
       sign.isNear = Math.abs(sign.x - playerX) < SIGN_RANGE;
+    }
+  }
+
+  /** A flor fala ao herói chegar perto; para falar de novo, ele precisa sair e voltar. */
+  private updateFlowers(playerX: number, playerY: number): void {
+    for (const flower of this.flowers) {
+      const isNear = Math.abs(flower.x - playerX) < FLOWER_RANGE_X && Math.abs(flower.y - TILE_SIZE / 2 - playerY) < FLOWER_RANGE_Y;
+
+      if (isNear && !flower.isNear && flower.text.trim() !== '') {
+        this.host.onFlowerSpeech?.(flower.text);
+      }
+
+      flower.isNear = isNear;
     }
   }
 

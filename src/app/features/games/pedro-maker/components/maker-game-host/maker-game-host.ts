@@ -17,7 +17,9 @@ import {
 
 import { PROFILE } from '../../../../../core/data/profile.data';
 import { MotionPreferenceService } from '../../../../../core/services/motion-preference.service';
+import { CalmModeService } from '../../../../../core/services/calm-mode.service';
 import { PetService } from '../../../../../core/services/pet.service';
+import { CALM_SPEECH_RATE, DEFAULT_SPEECH_RATE, SpeechService } from '../../../../../core/services/speech.service';
 import { LOADING_TIPS } from '../../config/rules.config';
 import type { LevelBlueprint } from '../../models/level.model';
 import type { LevelRunResult } from '../../models/progress.model';
@@ -89,6 +91,8 @@ export class MakerGameHost {
   private readonly settingsService = inject(MakerSettingsService);
   private readonly progress = inject(MakerProgressService);
   private readonly pets = inject(PetService);
+  private readonly speech = inject(SpeechService);
+  private readonly calmMode = inject(CalmModeService);
   private readonly motion = inject(MotionPreferenceService);
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly stage = viewChild.required<ElementRef<HTMLDivElement>>('stage');
@@ -326,6 +330,9 @@ export class MakerGameHost {
       case 'mascot':
         this.speak(event.text);
         return;
+      case 'flower-speech':
+        this.readFlower(event.text);
+        return;
       case 'boss':
         this.boss.set(event.boss);
         return;
@@ -365,6 +372,16 @@ export class MakerGameHost {
     this.lastMascotAt = now;
     this.mascotMessage.set(text);
     this.later(MASCOT_VISIBLE_MS, () => this.mascotMessage.set(null));
+  }
+
+  /** A frase da Flor Falante já aparece no balão em cima dela; aqui ela é lida em voz alta, para quem ainda não lê. */
+  private readFlower(text: string): void {
+    // Os emojis não se leem bem em voz alta: fica só o texto (o seletor de variação some junto).
+    const spoken = text.replace(/[\p{Extended_Pictographic}\u{FE0F}]/gu, '').trim();
+
+    if (spoken !== '') {
+      this.speech.speak(spoken, { language: 'pt-BR', rate: this.calmMode.isEnabled() ? CALM_SPEECH_RATE : DEFAULT_SPEECH_RATE });
+    }
   }
 
   private showToast(text: string): void {

@@ -6,7 +6,13 @@ export interface SavedLevel {
   readonly theme: string;
   readonly objects: readonly {
     readonly type: string;
-    readonly properties?: { readonly powerUp?: string; readonly portalLook?: string; readonly pair?: string };
+    readonly properties?: {
+      readonly powerUp?: string;
+      readonly portalLook?: string;
+      readonly pair?: string;
+      readonly text?: string;
+      readonly range?: number;
+    };
   }[];
 }
 

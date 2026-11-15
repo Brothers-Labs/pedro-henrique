@@ -160,6 +160,33 @@
               />
             </label>
           }
+          @case ('talking-flower') {
+            <label class="selection__field">
+              O que a flor fala
+              <input
+                class="toolbar__input"
+                type="text"
+                maxlength="80"
+                [value]="object.properties?.text ?? ''"
+                (change)="setSignText($event)"
+              />
+            </label>
+          }
+          @case ('fire-bar') {
+            <div class="selection__row" role="group" aria-label="Tamanho do bastão de fogo">
+              @for (option of fireBarLengths; track option.range) {
+                <button
+                  type="button"
+                  class="tool"
+                  [class.tool--active]="(object.properties?.range ?? 4) === option.range"
+                  [attr.aria-pressed]="(object.properties?.range ?? 4) === option.range"
+                  (click)="setFireBarLength(option.range)"
+                >
+                  {{ option.label }}
+                </button>
+              }
+            </div>
+          }
           @case ('moving-platform') {
             <div class="selection__row" role="group" aria-label="Direção da plataforma">
               <button
