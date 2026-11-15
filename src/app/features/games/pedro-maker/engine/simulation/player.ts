@@ -9,6 +9,7 @@ import {
   RACCOON_SUIT_PHYSICS,
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
+  MINI_MUSHROOM_PHYSICS,
   TALL_MUSHROOM_PHYSICS,
   TURBO_MUSHROOM_PHYSICS,
 } from '../../config/physics.config';
@@ -79,6 +80,10 @@ interface BodyScale {
 const NORMAL_SCALE: BodyScale = { width: 1, height: 1 };
 const GIGA_SCALE: BodyScale = { width: GIGA_PHYSICS.bodyScale, height: GIGA_PHYSICS.bodyScale };
 const TALL_SCALE: BodyScale = { width: 1, height: TALL_MUSHROOM_PHYSICS.heightScale };
+const MINI_SCALE: BodyScale = { width: MINI_MUSHROOM_PHYSICS.bodyScale, height: MINI_MUSHROOM_PHYSICS.bodyScale };
+
+/** Os cogumelos que fazem a caixa de colisão crescer. */
+const GROWTH_MUSHROOMS: readonly PowerUpKind[] = ['giga-mushroom', 'tall-mushroom'];
 
 /** Descida em andamento num escorregador. */
 interface SlideRide {
@@ -114,7 +119,8 @@ const RUN_DUST_SPEED = 200;
  * parede com o Cogumelo Gato, voo planado com o Cogumelo Folha, voo curto e
  * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
  * a disparada do Cogumelo Turbo, o corpo comprido do Cogumelo Alto, os
- * comandos trocados do Cogumelo Reverso, braçadas na água, a descida no escorregador
+ * comandos trocados do Cogumelo Reverso, o corpinho do Cogumelo de Encolher,
+ * braçadas na água, a descida no escorregador
  * e a piscada de invencibilidade depois de um toque.
  *
  * Todo tempo aqui é o relógio da partida, e não o do navegador — assim a pausa
@@ -122,7 +128,8 @@ const RUN_DUST_SPEED = 200;
  *
  * Cada herói ajusta pulo e freio pelas próprias habilidades; a caixa de
  * colisão é a mesma para todos, e por isso toda fase serve para qualquer um.
- * Só o Giga Cogumelo e o Cogumelo Alto a aumentam, e por pouco tempo.
+ * Só o Giga Cogumelo e o Cogumelo Alto a aumentam, e o Cogumelo de Encolher a
+ * diminui, todos por pouco tempo.
  */
 export class Player {
   readonly body: PhysicsBody = createBody(PLAYER_PHYSICS.bodyWidth, PLAYER_PHYSICS.bodyHeight, true, PLAYER_PHYSICS.maxFallSpeed);
@@ -213,6 +220,11 @@ export class Player {
     return !this.isGiant && this.body.height > PLAYER_PHYSICS.bodyHeight;
   }
 
+  /** Com o corpinho do Cogumelo de Encolher: menor que o normal na largura e na altura. */
+  get isMini(): boolean {
+    return this.body.height < PLAYER_PHYSICS.bodyHeight;
+  }
+
   /** Super Estrela ou Giga Cogumelo: encostar derruba o inimigo, e nada machuca. */
   get defeatsEnemiesOnTouch(): boolean {
     return this.timedPowerUps.has('star') || this.timedPowerUps.has('giga-mushroom');
@@ -227,7 +239,7 @@ export class Player {
     return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
   }
 
-  /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã, o Alto ou o Reverso) o herói pisca, para avisar que vai acabar. */
+  /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã, o Alto, o Reverso ou o de Encolher) o herói pisca, para avisar que vai acabar. */
   isPowerUpEnding(kind: PowerUpKind, now: number): boolean {
     const expiresAt = this.timedPowerUps.get(kind);
 
@@ -330,6 +342,7 @@ export class Player {
   grantPowerUp(kind: PowerUpKind, now: number): void {
     if (!PROTECTIVE_POWER_UPS.has(kind)) {
       this.timedPowerUps.set(kind, now + POWER_UP_DURATION_MS[kind]);
+      this.keepLatestSize(kind);
       return;
     }
 
@@ -338,6 +351,20 @@ export class Player {
     if (SUIT_SET.has(kind)) {
       this.protections.add('mushroom');
       this.dropOtherSuits(kind);
+    }
+  }
+
+  /**
+   * Crescer e encolher ao mesmo tempo não combina: vale o último cogumelo
+   * pego. O de Encolher desliga o Giga e o Alto, e eles desligam o de Encolher.
+   */
+  private keepLatestSize(kind: PowerUpKind): void {
+    if (kind === 'mini-mushroom') {
+      for (const growth of GROWTH_MUSHROOMS) {
+        this.timedPowerUps.delete(growth);
+      }
+    } else if (GROWTH_MUSHROOMS.includes(kind)) {
+      this.timedPowerUps.delete('mini-mushroom');
     }
   }
 
@@ -545,25 +572,34 @@ export class Player {
   }
 
   /**
-   * Giga Cogumelo e Cogumelo Alto: a caixa de colisão cresce, com os pés no
-   * mesmo lugar, mas só onde o corpo novo cabe — crescer dentro de um túnel
-   * prenderia o herói na parede. Encolher é sempre seguro: a caixa menor fica
-   * dentro da maior, que já estava livre. Se uma porta ou o checkpoint levar o
-   * herói crescido para um lugar apertado, ele volta ao tamanho normal até ter
-   * espaço de novo. Com os dois cogumelos, vale o gigante.
+   * Giga Cogumelo, Cogumelo Alto e Cogumelo de Encolher: a caixa de colisão
+   * muda de tamanho com os pés no mesmo lugar. Encolher é sempre seguro: a
+   * caixa menor fica dentro da maior, que já estava livre. Crescer só acontece
+   * onde o corpo novo cabe — crescer dentro de um túnel prenderia o herói na
+   * parede. Por isso o herói pequenininho que fica sem o cogumelo dentro de um
+   * buraquinho continua pequeno até sair dele. Se uma porta ou o checkpoint
+   * levar o herói crescido para um lugar apertado, ele volta ao tamanho normal
+   * até ter espaço de novo. Com o Giga e o Alto juntos, vale o gigante.
    */
   private fitBodySize(): void {
     const wanted = this.wantedBodyScale();
-    const isNormalSize = !this.isGiant && !this.isTall;
+    const isGrown = this.isGiant || this.isTall;
 
-    if (!isNormalSize && (!this.hasBodyScale(wanted) || !this.host.hasRoomFor(this.body))) {
-      this.resizeBody(NORMAL_SCALE);
+    if (this.hasBodyScale(wanted)) {
+      if (isGrown && !this.host.hasRoomFor(this.body)) {
+        this.resizeBody(NORMAL_SCALE);
+      }
+
+      return;
     }
 
-    const canGrow = wanted !== NORMAL_SCALE && !this.hasBodyScale(wanted);
-
-    if (canGrow && this.host.hasRoomFor(this.areaWithScale(wanted))) {
+    if (this.fitsInsideBody(wanted) || this.host.hasRoomFor(this.areaWithScale(wanted))) {
       this.resizeBody(wanted);
+    } else if (isGrown) {
+      this.resizeBody(NORMAL_SCALE);
+    } else if (this.isMini && this.host.hasRoomFor(this.areaWithScale(NORMAL_SCALE))) {
+      // Cabe o tamanho normal, mas não o gigante pedido: cresce até onde dá.
+      this.resizeBody(NORMAL_SCALE);
     }
   }
 
@@ -572,7 +608,18 @@ export class Player {
       return GIGA_SCALE;
     }
 
-    return this.timedPowerUps.has('tall-mushroom') ? TALL_SCALE : NORMAL_SCALE;
+    if (this.timedPowerUps.has('tall-mushroom')) {
+      return TALL_SCALE;
+    }
+
+    return this.timedPowerUps.has('mini-mushroom') ? MINI_SCALE : NORMAL_SCALE;
+  }
+
+  /** O tamanho cabe dentro da caixa de agora: é encolher, e não precisa procurar espaço. */
+  private fitsInsideBody(scale: BodyScale): boolean {
+    const area = this.areaWithScale(scale);
+
+    return area.width <= this.body.width && area.height <= this.body.height;
   }
 
   private hasBodyScale(scale: BodyScale): boolean {
@@ -715,8 +762,9 @@ export class Player {
   private jumpVelocity(): number {
     const boost = this.timedPowerUps.has('super-jump') ? PLAYER_PHYSICS.superJumpMultiplier : 1;
     const weakMuscle = this.isTall ? TALL_MUSHROOM_PHYSICS.jumpMultiplier : 1;
+    const lightBody = this.isMini ? MINI_MUSHROOM_PHYSICS.jumpMultiplier : 1;
 
-    return PLAYER_PHYSICS.jumpVelocity * boost * weakMuscle * this.abilities.jumpMultiplier;
+    return PLAYER_PHYSICS.jumpVelocity * boost * weakMuscle * lightBody * this.abilities.jumpMultiplier;
   }
 
   private handleLanding(grounded: boolean): void {

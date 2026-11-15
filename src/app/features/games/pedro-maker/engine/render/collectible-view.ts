@@ -57,6 +57,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'magnet-mushroom': '#e63946',
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
+  'mini-mushroom': '#4361ee',
 };
 
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
@@ -475,6 +476,8 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return tallMushroomParts(POWER_UP_COLORS['tall-mushroom']);
     case 'reverse-mushroom':
       return upsideDownParts(mushroomParts(POWER_UP_COLORS['reverse-mushroom']));
+    case 'mini-mushroom':
+      return scaleParts(mushroomParts(POWER_UP_COLORS['mini-mushroom']), 0.6);
     default:
       return null;
   }
@@ -585,12 +588,12 @@ function raccoonLeafParts(color: string): readonly VoxelBox[] {
   ];
 }
 
-/** As mesmas peças, maiores a partir do centro do item. */
 /** Vira as peças de ponta-cabeça: o Cogumelo Reverso flutua com o chapéu para baixo. */
 function upsideDownParts(parts: readonly VoxelBox[]): readonly VoxelBox[] {
   return parts.map((part) => box(part.x, -part.y, part.z, part.width, part.height, part.depth, part.color));
 }
 
+/** As mesmas peças, maiores (ou menores, abaixo de 1) a partir do centro do item. */
 function scaleParts(parts: readonly VoxelBox[], factor: number): readonly VoxelBox[] {
   return parts.map((part) =>
     box(part.x * factor, part.y * factor, part.z * factor, part.width * factor, part.height * factor, part.depth * factor, part.color),

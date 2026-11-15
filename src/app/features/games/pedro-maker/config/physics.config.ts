@@ -73,6 +73,7 @@ export const POWER_UP_DURATION_MS = {
   'tall-mushroom': 12000,
   /** Curtinho de propósito: com os comandos trocados, oito segundos já são um desafio. */
   'reverse-mushroom': 8000,
+  'mini-mushroom': 12000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
@@ -175,6 +176,19 @@ export const TALL_MUSHROOM_PHYSICS = {
   speedMultiplier: 0.85,
 } as const;
 
+/**
+ * Cogumelo de Encolher: o herói fica do tamanho de meio bloco e, levinho, pula
+ * um pouco mais alto. A caixa de colisão encolhe por igual com os pés no mesmo
+ * lugar e passa nos buraquinhos de um bloco só, onde o herói normal não cabe.
+ * Quando o efeito acaba dentro de um buraquinho, ele continua pequeno até ter
+ * espaço para crescer de novo.
+ */
+export const MINI_MUSHROOM_PHYSICS = {
+  bodyScale: 0.5,
+  /** Levinho: o pulo tem esta fração da velocidade normal. */
+  jumpMultiplier: 1.1,
+} as const;
+
 /** Bolas de fogo da Flor de Fogo: quicam pelo chão e somem ao bater numa parede. */
 export const FIREBALL_PHYSICS = {
   size: 18,
@@ -216,6 +230,9 @@ export const GIGA_PEDRO_SCALE = BIG_PEDRO_SCALE * GIGA_PHYSICS.bodyScale;
 /** No desenho, o Pedro do Cogumelo Alto estica na altura e afina nos lados. */
 export const TALL_PEDRO_STRETCH = TALL_MUSHROOM_PHYSICS.heightScale;
 export const TALL_PEDRO_THINNING = 0.8;
+
+/** No desenho, o Pedro do Cogumelo de Encolher fica do tamanho da caixa de colisão encolhida. */
+export const MINI_PEDRO_SCALE = MINI_MUSHROOM_PHYSICS.bodyScale;
 
 /** Raio de atração do ímã, em pixels. */
 export const MAGNET_RADIUS = 190;

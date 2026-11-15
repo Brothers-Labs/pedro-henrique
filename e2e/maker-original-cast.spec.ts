@@ -127,7 +127,7 @@ test('Maker saves the skeleton platform and the upside-down spring', async ({ pa
 
 test('Maker remembers Giuseppe as the chosen hero', async ({ page }) => {
   await page.goto('/jogos/pedro-maker/personagem');
-  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo', 'Princesa Estrela', 'Princesa Jade', 'Princesa Coral']) {
+  for (const name of ['Zeca Trovão', 'Tina Turbo', 'Bruno Bigorna', 'Ana Faísca', 'Caio Cometa', 'Nina Neblina', 'Otto Onda', 'Vavá Varapau', 'Rafa Rodopio', 'Duda Dínamo', 'Princesa Estrela', 'Princesa Jade', 'Princesa Coral', 'Princesa Peach', 'Princesa Daisy']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${name}\\b`) })).toBeVisible();
   }
   const giuseppe = page.getByRole('button', { name: /^Giuseppe\b/ });
@@ -219,14 +219,14 @@ test('Maker places doors C to F without a Power-ups tab and switches the game sc
   await page.screenshot({ path: test.info().outputPath('nes-screen-paused.png') });
 });
 
-test('Maker saves the magnet, tall and reverse mushrooms and plays a level with them', async ({ page }) => {
+test('Maker saves the magnet, tall, reverse and shrink mushrooms and plays a level with them', async ({ page }) => {
   test.slow();
   await page.goto('/jogos/pedro-maker/criar');
   await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase dos Cogumelos Novos');
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
   const grid = page.getByRole('application', { name: /Grade da fase/ });
   await page.getByRole('tab', { name: 'Cogumelos', exact: true }).click();
-  for (const [index, label] of ['Cogumelo Ímã', 'Cogumelo Alto', 'Cogumelo Reverso'].entries()) {
+  for (const [index, label] of ['Cogumelo Ímã', 'Cogumelo Alto', 'Cogumelo Reverso', 'Cogumelo de Encolher'].entries()) {
     const piece = page.getByRole('button', { name: label, exact: true });
     await piece.click();
     await expect(piece).toHaveAttribute('aria-pressed', 'true');
@@ -236,7 +236,7 @@ test('Maker saves the magnet, tall and reverse mushrooms and plays a level with 
   await expect.poll(async () => (await savedLevels(page))
     .find((level) => level.name === 'Fase dos Cogumelos Novos')?.objects
     .flatMap((object) => (object.properties?.powerUp ? [object.properties.powerUp] : [])).sort())
-    .toEqual(['magnet-mushroom', 'reverse-mushroom', 'tall-mushroom']);
+    .toEqual(['magnet-mushroom', 'mini-mushroom', 'reverse-mushroom', 'tall-mushroom']);
   await page.screenshot({ path: test.info().outputPath('new-mushrooms-editor.png') });
   await page.getByRole('button', { name: 'Testar', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });

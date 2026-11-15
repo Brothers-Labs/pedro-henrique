@@ -208,6 +208,8 @@ export class LevelView {
         hasReverseMushroom: player.hasPowerUp('reverse-mushroom'),
         isReverseEnding: player.isPowerUpEnding('reverse-mushroom', now),
         isTall: player.isTall,
+        isMini: player.isMini,
+        isMiniEnding: player.isMini && player.isPowerUpEnding('mini-mushroom', now),
         isTallEnding: player.isTall && player.isPowerUpEnding('tall-mushroom', now),
       },
       deltaSeconds,

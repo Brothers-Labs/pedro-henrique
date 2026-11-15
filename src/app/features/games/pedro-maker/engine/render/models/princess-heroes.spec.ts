@@ -1,7 +1,15 @@
 import { paintCharacterIcon } from '../../../art/texture-catalog';
 import { DEFAULT_LOOK, paletteFor, swappedPalette } from '../../../config/character.config';
 import { HEROES, heroDefinition, nextHero } from '../../../config/hero.config';
-import { CORAL_PRINCESS, CROWN_GOLD, ESTRELA_PRINCESS, JADE_PRINCESS, type PrincessColors } from '../../../config/princess.config';
+import {
+  CORAL_PRINCESS,
+  CROWN_GOLD,
+  DAISY_PRINCESS,
+  ESTRELA_PRINCESS,
+  JADE_PRINCESS,
+  PEACH_PRINCESS,
+  type PrincessColors,
+} from '../../../config/princess.config';
 import type { HeroId } from '../../../models/progress.model';
 import { characterParts } from './character-parts';
 
@@ -9,6 +17,8 @@ const PRINCESSES: readonly { readonly id: HeroId; readonly colors: PrincessColor
   { id: 'estrela', colors: ESTRELA_PRINCESS },
   { id: 'jade', colors: JADE_PRINCESS },
   { id: 'coral', colors: CORAL_PRINCESS },
+  { id: 'peach', colors: PEACH_PRINCESS },
+  { id: 'daisy', colors: DAISY_PRINCESS },
 ];
 
 describe('Princesas do Pedro Maker', () => {
@@ -30,6 +40,31 @@ describe('Princesas do Pedro Maker', () => {
       expect(heroDefinition(id).name).toMatch(/^Princesa /);
     });
   }
+});
+
+describe('Princesas Peach e Daisy', () => {
+  it('a Peach é rosa e loira, de cabelo comprido e brincos azuis', () => {
+    const parts = characterParts(paletteFor(DEFAULT_LOOK, 'peach'));
+    const hair = parts.upperBody.filter((part) => part.color === PEACH_PRINCESS.hair);
+
+    expect(heroDefinition('peach').name).toBe('Princesa Peach');
+    expect(parts.upperBody.filter((part) => part.color === PEACH_PRINCESS.earring).length).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...hair.map((part) => part.height))).withContext('cabelo até as costas').toBeGreaterThan(0.6);
+  });
+
+  it('a Daisy é amarela e ruiva, de cabelo curto e brincos de flor', () => {
+    const parts = characterParts(paletteFor(DEFAULT_LOOK, 'daisy'));
+    const hair = parts.upperBody.filter((part) => part.color === DAISY_PRINCESS.hair);
+
+    expect(heroDefinition('daisy').name).toBe('Princesa Daisy');
+    expect(parts.upperBody.some((part) => part.color === DAISY_PRINCESS.earring)).toBeTrue();
+    expect(Math.max(...hair.map((part) => part.height))).withContext('cabelo nos ombros').toBeLessThan(0.45);
+  });
+
+  it('as duas entram na turma do Cogumelo Troca-Personagem, depois das princesas originais', () => {
+    expect(nextHero('coral')).toBe('peach');
+    expect(nextHero('peach')).toBe('daisy');
+  });
 });
 
 describe('Cogumelo Troca-Personagem: quem vem depois', () => {

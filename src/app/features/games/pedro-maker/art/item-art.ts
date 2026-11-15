@@ -117,6 +117,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'magnet-mushroom': '#e63946',
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
+  'mini-mushroom': '#4361ee',
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
@@ -183,6 +184,9 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'reverse-mushroom':
       paintReverseMushroom(context, color);
+      break;
+    case 'mini-mushroom':
+      paintMiniMushroom(context, color);
       break;
   }
 
@@ -404,6 +408,34 @@ function paintReverseMushroom(context: CanvasRenderingContext2D, color: string):
   context.moveTo(27, 3.5);
   context.lineTo(31, 7);
   context.lineTo(27, 10.5);
+  context.stroke();
+}
+
+/** Cogumelo pequenininho no pé da bolha, com duas setas apontando para ele: é o que encolhe. */
+function paintMiniMushroom(context: CanvasRenderingContext2D, color: string): void {
+  context.save();
+  context.translate(20, 33);
+  context.scale(0.6, 0.6);
+  context.translate(-20, -32);
+  paintMushroom(context, color);
+  context.restore();
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 2.5;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+
+  for (const side of [-1, 1] as const) {
+    const tipX = 20 + side * 6;
+
+    context.moveTo(20 + side * 11, 8);
+    context.lineTo(tipX, 14);
+    context.moveTo(tipX + side * 4, 14);
+    context.lineTo(tipX, 14);
+    context.lineTo(tipX, 10);
+  }
+
   context.stroke();
 }
 

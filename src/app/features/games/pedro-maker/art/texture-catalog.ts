@@ -115,7 +115,7 @@ import {
   VAVA_PORTRAIT,
   ZECA_PORTRAIT,
 } from './overalls-art';
-import { CORAL_PORTRAIT, ESTRELA_PORTRAIT, JADE_PORTRAIT, paintPrincessPortrait } from './princess-art';
+import { CORAL_PORTRAIT, DAISY_PORTRAIT, ESTRELA_PORTRAIT, JADE_PORTRAIT, paintPrincessPortrait, PEACH_PORTRAIT } from './princess-art';
 import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
@@ -214,6 +214,12 @@ function paintCharacterPortrait(context: CanvasRenderingContext2D, character: Ch
       return;
     case 'coral':
       paintPrincessPortrait(context, character, CORAL_PORTRAIT);
+      return;
+    case 'peach':
+      paintPrincessPortrait(context, character, PEACH_PORTRAIT);
+      return;
+    case 'daisy':
+      paintPrincessPortrait(context, character, DAISY_PORTRAIT);
       return;
   }
 }
