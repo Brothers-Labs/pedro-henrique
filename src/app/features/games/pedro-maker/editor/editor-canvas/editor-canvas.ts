@@ -470,7 +470,7 @@ export class EditorCanvas {
 
     context.drawImage(icon, x, y, size, size);
 
-    if ((object.type === 'door' || object.type === 'golden-door') && object.properties?.pair) {
+    if ((object.type === 'door' || object.type === 'golden-door' || object.type === 'warp-pipe') && object.properties?.pair) {
       this.drawBadge(context, object.properties.pair, x, y, size);
     }
   }

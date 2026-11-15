@@ -11,6 +11,7 @@ import type { VisualEvent } from '../simulation/visual-events';
 import { BlockView } from './block-view';
 import { CameraRig } from './camera-rig';
 import { CollectibleView } from './collectible-view';
+import { FireBarView } from './fire-bar-view';
 import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
 import { BossModel } from './models/boss-model';
@@ -20,6 +21,7 @@ import { ParticleSystem } from './particle-system';
 import { PropView } from './prop-view';
 import type { QualitySettings } from './quality';
 import { SceneryView } from './scenery-view';
+import { TalkingFlowerView } from './talking-flower-view';
 import type { Stage } from './stage';
 import { TerrainView } from './terrain-view';
 import { VoxelAtlasTexture } from './voxel-atlas-texture';
@@ -39,6 +41,8 @@ const CELEBRATION_MS = 900;
 const HINT_FADE_RATE = 7;
 /** Altura do balão da placa, em blocos a partir do chão: logo acima da tábua. */
 const SIGN_BUBBLE_Y = 1.75;
+/** O balão da Flor Falante fica logo acima das pétalas. */
+const FLOWER_BUBBLE_Y = 1.45;
 /** Plaquinha da letra no alto da porta (que tem 2 blocos), abaixo do aviso de entrar. */
 const DOOR_LETTER_Y = 1.6;
 const BOSS_ZOOM = 1.14;
@@ -63,11 +67,14 @@ export class LevelView {
   private readonly seenEnemies = new Set<number>();
   private readonly hintLabels = new Map<number, WorldLabel>();
   private readonly signLabels = new Map<number, WorldLabel>();
+  private readonly flowerLabels = new Map<number, WorldLabel>();
 
   private scenery: SceneryView | null = null;
   private blocks: BlockView | null = null;
   private collectibles: CollectibleView | null = null;
   private fireballs: FireballView | null = null;
+  private fireBars: FireBarView | null = null;
+  private talkingFlowers: TalkingFlowerView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
   /** Herói que o modelo em cena mostra; muda quando o Cogumelo Troca-Personagem age. */
@@ -122,7 +129,9 @@ export class LevelView {
         this.blocks = new BlockView(simulation.blocks, this.atlas, this.space);
         this.collectibles = new CollectibleView(simulation.collectibles, this.space);
         this.fireballs = new FireballView(simulation.fireballs, this.space);
-        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root);
+        this.fireBars = new FireBarView(simulation.fireBars, this.space);
+        this.talkingFlowers = new TalkingFlowerView(simulation.triggers.flowers, this.space);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -239,6 +248,8 @@ export class LevelView {
     this.blocks?.update(now, alpha);
     this.collectibles?.update(now);
     this.fireballs?.update(now, alpha);
+    this.fireBars?.update(now);
+    this.talkingFlowers?.update(now);
     this.props?.update(now);
     this.scenery?.update(deltaSeconds);
     this.particles?.update(deltaSeconds);
@@ -265,6 +276,8 @@ export class LevelView {
     this.blocks?.dispose();
     this.collectibles?.dispose();
     this.fireballs?.dispose();
+    this.fireBars?.dispose();
+    this.talkingFlowers?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();
     this.particles?.dispose();
@@ -428,6 +441,13 @@ export class LevelView {
       this.signLabels.set(sign.id, label);
     }
 
+    for (const flower of triggers.flowers) {
+      const label = this.labels.create('bubble', flower.text, true);
+
+      label.position.set(this.space.x(flower.x), this.space.y(flower.y) + FLOWER_BUBBLE_Y, -0.2);
+      this.flowerLabels.set(flower.id, label);
+    }
+
     // Letra do par em cima de cada porta, na cor dele: a criança acha a porta irmã de longe.
     for (const door of triggers.doors) {
       const pair = DOOR_PAIRS.find((letter) => letter === door.pair);
@@ -472,6 +492,14 @@ export class LevelView {
 
       if (label) {
         label.visible = sign.isNear;
+      }
+    }
+
+    for (const flower of triggers.flowers) {
+      const label = this.flowerLabels.get(flower.id);
+
+      if (label) {
+        label.visible = flower.isNear && flower.text.trim() !== '';
       }
     }
 

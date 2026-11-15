@@ -2003,6 +2003,117 @@ describe('Simulação do Pedro Maker', () => {
     expect(bullet.isFireproof).toBeTrue();
   });
 
+  describe('Cano mágico', () => {
+    it('entrar no cano com a ação leva ao outro cano da mesma letra', () => {
+      const harness = start(flatLevel().add('warp-pipe', 6, SURFACE - 1, { pair: 'B' }).add('warp-pipe', 30, SURFACE - 1, { pair: 'B' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+      run(harness, 0.1);
+
+      expect(Math.round(centerX(player.body) / TILE_SIZE - 0.5)).toBe(30);
+      expect(harness.events).toContain({ type: 'sound', cue: 'spring' });
+    });
+
+    it('o cano A não leva à porta A: cano só leva a cano', () => {
+      const harness = start(flatLevel().add('warp-pipe', 6, SURFACE - 1, { pair: 'A' }).add('door', 30, SURFACE - 1, { pair: 'A' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt(6.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      harness.simulation.step({ ...IDLE_INPUT, actionPressed: true });
+      run(harness, 0.1);
+
+      expect(Math.round(centerX(player.body) / TILE_SIZE - 0.5)).toBe(6);
+    });
+  });
+
+  describe('Flor Falante', () => {
+    const speeches = (harness: Harness): readonly string[] =>
+      harness.events.flatMap((event) => (event.type === 'flower-speech' ? [event.text] : []));
+
+    it('fala a frase do editor quando o herói chega perto, uma vez só até ele sair e voltar', () => {
+      const harness = start(flatLevel().add('talking-flower', 8, SURFACE - 1, { text: 'Cuidado com o buraco!' }).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      expect(speeches(harness)).withContext('longe, quieta').toEqual([]);
+
+      player.placeFeetAt(7.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 1);
+
+      expect(speeches(harness)).toEqual(['Cuidado com o buraco!']);
+      expect(harness.simulation.triggers.flowers[0].isNear).toBeTrue();
+
+      player.placeFeetAt(20.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.2);
+      player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+      run(harness, 0.2);
+
+      expect(speeches(harness).length).withContext('saiu e voltou: fala de novo').toBe(2);
+    });
+
+    it('sem frase escrita, a flor fica quieta', () => {
+      const harness = start(flatLevel().add('talking-flower', 4, SURFACE - 1, { text: '   ' }).build(META));
+      run(harness, 1);
+
+      expect(speeches(harness)).toEqual([]);
+    });
+  });
+
+  describe('Bastão de fogo', () => {
+    /** Bloco do bastão na altura da cabeça, duas casas à frente do início. */
+    const barLevel = (range = 4): LevelBlueprint => flatLevel().add('fire-bar', 6, SURFACE - 2, { range }).build(META);
+
+    it('as bolas giram em volta do bloco no sentido do relógio: 1 segundo é um quarto de volta', () => {
+      const harness = start(barLevel());
+      const system = harness.simulation.fireBars;
+      const [bar] = system.bars;
+      const atStart = system.ballsOf(bar, 0);
+      const quarter = system.ballsOf(bar, 1000);
+
+      expect(atStart.length).toBe(4);
+      expect(atStart[3].x).toBeGreaterThan(bar.x);
+      expect(atStart[3].y).toBeCloseTo(bar.y, 5);
+      expect(quarter[3].x).toBeCloseTo(bar.x, 5);
+      expect(quarter[3].y).withContext('o y do mundo desce: para baixo').toBeGreaterThan(bar.y);
+    });
+
+    it('o comprido tem 6 bolas, e o tamanho fica entre 2 e 8', () => {
+      expect(start(barLevel(6)).simulation.fireBars.bars[0].length).toBe(6);
+      expect(start(barLevel(20)).simulation.fireBars.bars[0].length).toBe(8);
+    });
+
+    it('encostar numa bola machuca', () => {
+      const harness = start(barLevel(6));
+      run(harness, 0.2);
+      const hearts = lastHud(harness.events)?.hearts ?? 0;
+
+      // Parado embaixo do bloco, a ponta do bastão passa por ele a cada volta.
+      run(harness, 4.5, { right: true });
+
+      expect(harness.events.some((event) => event.type === 'damage')).toBeTrue();
+      expect(lastHud(harness.events)?.hearts).toBeLessThan(hearts);
+    });
+
+    it('com a Super Estrela, o fogo não machuca', () => {
+      const harness = start(barLevel(6));
+      run(harness, 0.2);
+      harness.simulation.player.grantPowerUp('star', harness.simulation.clockMs);
+      run(harness, 4.5, { right: true });
+
+      expect(harness.events.some((event) => event.type === 'damage')).toBeFalse();
+    });
+
+    it('o bloco do bastão é firme: dá para pisar nele', () => {
+      const harness = start(flatLevel().add('fire-bar', 6, SURFACE - 1, { range: 2 }).build(META));
+
+      expect(isAreaClear(harness.simulation.grid, { x: 6 * TILE_SIZE + 4, y: (SURFACE - 1) * TILE_SIZE + 4, width: 8, height: 8 })).toBeFalse();
+    });
+  });
+
   it('leva à outra porta dourada e dá moedas só na primeira passagem', () => {
     const harness = start(
       flatLevel().add('golden-door', 6, SURFACE - 1, { pair: 'C' }).add('golden-door', 30, SURFACE - 1, { pair: 'C' }).build(META),

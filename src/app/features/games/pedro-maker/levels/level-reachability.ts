@@ -230,7 +230,7 @@ function explore(grid: Grid, blueprint: LevelBlueprint): Uint8Array {
     }
   }
 
-  const doors = blueprint.objects.filter((object) => object.type === 'door' || object.type === 'golden-door');
+  const doors = blueprint.objects.filter((object) => object.type === 'door' || object.type === 'golden-door' || object.type === 'warp-pipe');
 
   while (queue.length > 0) {
     const index = queue.shift() as number;
@@ -324,8 +324,11 @@ function doorDestinations(doors: readonly LevelObject[], x: number, y: number): 
     return [];
   }
 
+  // Cano leva a cano e porta leva a porta, como no jogo.
+  const isPipe = door.type === 'warp-pipe';
+
   return doors
-    .filter((candidate) => candidate !== door && candidate.properties?.pair === pair)
+    .filter((candidate) => candidate !== door && candidate.properties?.pair === pair && (candidate.type === 'warp-pipe') === isPipe)
     .map((candidate) => ({ x: candidate.x, y: candidate.y }));
 }
 

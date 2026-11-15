@@ -69,6 +69,15 @@ describe('Validador de alcance', () => {
     expect(analyzeReachability(builder.build(META)).isPortalReachable).toBeTrue();
   });
 
+  it('atravessa canos ligados pela mesma letra, mas cano não leva a porta', () => {
+    const wall = (): LevelBuilder => flatLevel().fill('stone', 20, 21, 0, 11).add('portal', 35, 11);
+
+    expect(analyzeReachability(wall().add('warp-pipe', 18, 11, { pair: 'B' }).add('warp-pipe', 25, 11, { pair: 'B' }).build(META)).isPortalReachable)
+      .toBeTrue();
+    expect(analyzeReachability(wall().add('warp-pipe', 18, 11, { pair: 'B' }).add('door', 25, 11, { pair: 'B' }).build(META)).isPortalReachable)
+      .toBeFalse();
+  });
+
   it('aponta moedas fora de alcance', () => {
     const builder = flatLevel().add('portal', 35, 11).add('coin', 10, 2);
     const report = analyzeReachability(builder.build(META));

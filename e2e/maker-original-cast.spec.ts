@@ -266,3 +266,33 @@ test('Maker saves the magnet, tall, reverse and shrink mushrooms and plays a lev
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.screenshot({ path: test.info().outputPath('new-mushrooms-playing.png') });
 });
+
+test('Maker saves warp pipes, a talking flower and a fire bar and plays the level', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase do Cano');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  const place = async (tab: string, label: string, x: number): Promise<void> => {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x, y: 112 } });
+  };
+  await place('Portais', 'Cano C', 208);
+  await place('Portais', 'Cano C', 400);
+  await place('Decoração', 'Flor Falante', 272);
+  await place('Blocos', 'Bastão de Fogo Comprido', 336);
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase do Cano')?.objects
+    .flatMap((object) => (['warp-pipe', 'talking-flower', 'fire-bar'].includes(object.type)
+      ? [`${object.type}:${object.properties?.pair ?? object.properties?.text ?? object.properties?.range ?? ''}`]
+      : [])).sort())
+    .toEqual(['fire-bar:6', 'talking-flower:Oi! Boa sorte na fase!', 'warp-pipe:C', 'warp-pipe:C']);
+  await page.screenshot({ path: test.info().outputPath('pipe-flower-firebar-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('pipe-flower-firebar-playing.png') });
+});

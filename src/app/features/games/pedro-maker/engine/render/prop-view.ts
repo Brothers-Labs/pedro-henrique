@@ -42,6 +42,7 @@ const DOOR_PARTS: Readonly<Record<DoorKind, () => readonly VoxelBox[]>> = {
   wooden: woodenDoor,
   golden: goldenDoor,
   secret: secretDoor,
+  pipe: warpPipe,
 };
 
 const PORTAL_SWIRL_Y = 1.33;
@@ -621,6 +622,22 @@ function signPost(hasText: boolean): readonly VoxelBox[] {
     board,
     box(0, centerY + 0.1, depth / 2 + 0.005, width * 0.66, 0.06, 0.01, '#8a5a33'),
     box(0, centerY - 0.1, depth / 2 + 0.005, width * 0.55, 0.06, 0.01, '#8a5a33'),
+  ];
+}
+
+/** Cano mágico: tubo verde com a boca mais larga em cima e a entrada escura na frente. */
+function warpPipe(): readonly VoxelBox[] {
+  const green = '#2fae4e';
+  const dark = '#1f7a34';
+  const shine = '#7ee08f';
+
+  return [
+    box(0, 0.7, 0, 0.78, 1.4, 0.6, green),
+    box(-0.24, 0.7, 0.305, 0.08, 1.4, 0.01, shine),
+    box(0, 1.55, 0, 1.0, 0.36, 0.72, green),
+    box(-0.32, 1.55, 0.365, 0.1, 0.36, 0.01, shine),
+    box(0, 1.55, 0.37, 1.0, 0.04, 0.01, dark),
+    box(0, 0.62, 0.305, 0.5, 1.0, 0.02, '#123d1c'),
   ];
 }
 

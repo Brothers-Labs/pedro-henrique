@@ -39,6 +39,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   wood: { surface: 'solid', isUnique: false },
   pipe: { surface: 'solid', isUnique: false },
   cannon: { surface: 'solid', isUnique: false },
+  'fire-bar': { surface: 'solid', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   note: { surface: 'solid', isUnique: false },
@@ -88,12 +89,14 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   door: { surface: 'none', isUnique: false },
   'golden-door': { surface: 'none', isUnique: false },
   'secret-door': { surface: 'none', isUnique: false },
+  'warp-pipe': { surface: 'none', isUnique: false },
   'coin-chest': { surface: 'none', isUnique: false },
   tree: { surface: 'none', isUnique: false },
   bush: { surface: 'none', isUnique: false },
   flower: { surface: 'none', isUnique: false },
   rock: { surface: 'none', isUnique: false },
   sign: { surface: 'none', isUnique: false },
+  'talking-flower': { surface: 'none', isUnique: false },
   fence: { surface: 'none', isUnique: false },
   snowman: { surface: 'none', isUnique: false },
   toadstool: { surface: 'none', isUnique: false },
@@ -178,6 +181,15 @@ const COIN_MULTIPLIER_PIECES: readonly EditorPiece[] = COIN_MULTIPLIER_KINDS.map
   properties: { powerUp: kind },
 }));
 
+/** Canos mágicos em pares de A a F: entrar num leva ao outro cano da mesma letra. */
+const WARP_PIPE_PIECES: readonly EditorPiece[] = ['A', 'B', 'C', 'D', 'E', 'F'].map((pair): EditorPiece => ({
+  id: `warp-pipe-${pair.toLowerCase()}`,
+  category: 'portais',
+  type: 'warp-pipe',
+  label: `Cano ${pair}`,
+  properties: { pair },
+}));
+
 export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'ground', category: 'terreno', type: 'ground', label: 'Grama' },
   { id: 'stone', category: 'terreno', type: 'stone', label: 'Pedra' },
@@ -191,6 +203,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'invisible-grass', category: 'terreno', type: 'invisible-grass', label: 'Grama Invisível' },
 
   { id: 'cannon', category: 'blocos', type: 'cannon', label: 'Canhão' },
+  { id: 'fire-bar', category: 'blocos', type: 'fire-bar', label: 'Bastão de Fogo', properties: { range: 4 } },
+  { id: 'fire-bar-long', category: 'blocos', type: 'fire-bar', label: 'Bastão de Fogo Comprido', properties: { range: 6 } },
   { id: 'brick', category: 'blocos', type: 'brick', label: 'Quebrável' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
@@ -258,6 +272,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'tree', category: 'decoracao', type: 'tree', label: 'Árvore' },
   { id: 'bush', category: 'decoracao', type: 'bush', label: 'Arbusto' },
   { id: 'flower', category: 'decoracao', type: 'flower', label: 'Flor' },
+  { id: 'talking-flower', category: 'decoracao', type: 'talking-flower', label: 'Flor Falante', properties: { text: 'Oi! Boa sorte na fase!' } },
   { id: 'rock', category: 'decoracao', type: 'rock', label: 'Pedrinha' },
   { id: 'sign', category: 'decoracao', type: 'sign', label: 'Placa', properties: { text: 'Fase Secreta!' } },
   { id: 'fence', category: 'decoracao', type: 'fence', label: 'Cerca' },
@@ -341,6 +356,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'door-f', category: 'portais', type: 'door', label: 'Porta F', properties: { pair: 'F' } },
   // Par próprio: duas portas douradas já se ligam sem mexer nas portas de madeira de A a F.
   { id: 'door-golden', category: 'portais', type: 'golden-door', label: 'Porta Dourada', properties: { pair: 'G' } },
+  ...WARP_PIPE_PIECES,
 
   { id: 'checkpoint', category: 'checkpoints', type: 'checkpoint', label: 'Checkpoint' },
 ];

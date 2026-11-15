@@ -169,6 +169,16 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'power-up', properties: { powerUp: 'mini-mushroom' } })?.id).toBe('power-mini-mushroom');
   });
 
+  it('tem os canos mágicos de A a F, a Flor Falante com frase e os dois bastões de fogo', () => {
+    const pipes = EDITOR_PIECES.filter((piece) => piece.type === 'warp-pipe');
+
+    expect(pipes.map((piece) => piece.properties?.pair)).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+    expect(pipes.every((piece) => piece.category === 'portais' && piece.label.startsWith('Cano '))).toBeTrue();
+    expect(EDITOR_PIECES.find((piece) => piece.type === 'talking-flower')?.properties?.text).toBeTruthy();
+    expect(findEditorPiece({ type: 'fire-bar', properties: { range: 4 } })?.label).toBe('Bastão de Fogo');
+    expect(findEditorPiece({ type: 'fire-bar', properties: { range: 6 } })?.label).toBe('Bastão de Fogo Comprido');
+  });
+
   it('tem as portas de madeira de A a F e a dourada num par só dela', () => {
     for (const pair of ['A', 'B', 'C', 'D', 'E', 'F']) {
       const piece = findEditorPiece({ type: 'door', properties: { pair } });

@@ -285,9 +285,10 @@ export type PortalLook = (typeof PORTAL_LOOKS)[number];
 /**
  * A porta dourada leva à porta do mesmo par, como a de madeira, e na
  * primeira passagem ainda dá um punhado de moedas e destranca a fase secreta
- * escolhida para ela. O baú de moedas abre ao encostar e espalha moedas.
+ * escolhida para ela. O baú de moedas abre ao encostar e espalha moedas. O
+ * cano mágico funciona como a porta, mas só leva a outro cano da mesma letra.
  */
-export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'golden-door' | 'secret-door' | 'coin-chest';
+export type MarkerType = 'start' | 'checkpoint' | 'portal' | 'door' | 'golden-door' | 'secret-door' | 'coin-chest' | 'warp-pipe';
 
 export type DecorType =
   | 'tree'
@@ -303,7 +304,9 @@ export type DecorType =
   | 'grass'
   | 'arrow'
   | 'crate'
-  | 'pumpkin';
+  | 'pumpkin'
+  /** Flor Falante: diz a frase escrita no editor quando o herói chega perto. */
+  | 'talking-flower';
 
 /** Gatilhos invisíveis: dicas do tutorial e falas do mascote. */
 export type TriggerType = 'hint' | 'mascot-tip';
@@ -321,6 +324,8 @@ export type LevelObjectType =
   | 'moving-platform'
   | 'skeleton-platform'
   | 'slide'
+  /** Bastão de fogo: bloco com uma fila de bolas de fogo girando em volta; `range` é quantas bolas. */
+  | 'fire-bar'
   | EnemyKind
   | 'boss'
   | ItemType
