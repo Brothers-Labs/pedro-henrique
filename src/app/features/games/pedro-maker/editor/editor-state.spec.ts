@@ -204,6 +204,10 @@ describe('Estado do editor de fases', () => {
     expect(EDITOR_POWER_UPS).toContain('tall-mushroom');
     expect(EDITOR_POWER_UPS).toContain('reverse-mushroom');
     expect(EDITOR_POWER_UPS).toContain('mini-mushroom');
+    for (const kind of ['coin-x2', 'coin-x4', 'coin-x1000', 'coin-x9999'] as const) {
+      expect(EDITOR_POWER_UPS).toContain(kind);
+      expect(findEditorPiece({ type: 'power-up', properties: { powerUp: kind } })?.category).withContext('fica com as moedas').toBe('itens');
+    }
     // Toda categoria que sobrou tem peça.
     expect(EDITOR_CATEGORIES.every((category) => EDITOR_PIECES.some((piece) => piece.category === category.id))).toBeTrue();
   });

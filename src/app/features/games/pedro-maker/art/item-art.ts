@@ -1,4 +1,4 @@
-import type { PowerUpKind } from '../models/level.model';
+import { coinMultiplierLabel, isCoinMultiplier, type PowerUpKind } from '../models/level.model';
 import { circle, darken, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
 
 export const COIN_SIZE = 32;
@@ -38,17 +38,20 @@ export function paintHugeCoin(context: CanvasRenderingContext2D): void {
   paintNumberedCoin(context, HUGE_COIN_SIZE, '50');
 }
 
-/** Moeda de frente com o valor escrito no meio, desenhada num quadrado de lado `size`. */
-export function paintNumberedCoin(context: CanvasRenderingContext2D, size: number, value: string): void {
+/**
+ * Moeda de frente com o valor escrito no meio, desenhada num quadrado de lado
+ * `size`. As moedas de multiplicação usam outra cor no lugar do ouro.
+ */
+export function paintNumberedCoin(context: CanvasRenderingContext2D, size: number, value: string, color = GOLD): void {
   const center = size / 2;
 
   circle(context, center, center, size * 0.45);
-  fillAndOutline(context, GOLD, size * 0.075);
+  fillAndOutline(context, color, size * 0.075);
   circle(context, center, center, size * 0.325);
-  context.strokeStyle = darken(GOLD, 0.25);
+  context.strokeStyle = darken(color, 0.25);
   context.lineWidth = size * 0.05;
   context.stroke();
-  context.fillStyle = darken(GOLD, 0.45);
+  context.fillStyle = darken(color, 0.55);
   context.font = `bold ${Math.round(size * Math.min(0.35, 0.95 / value.length))}px sans-serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
@@ -97,6 +100,17 @@ export function paintHeart(context: CanvasRenderingContext2D): void {
   shine(context, 10, 11, 3, 2.5);
 }
 
+/**
+ * Cada moeda de multiplicação tem a sua cor, da mais fraca à mais forte:
+ * verde, azul, roxa e rosa-choque. Também é a cor do brilho e do item 3D.
+ */
+export const COIN_MULTIPLIER_COLORS = {
+  'coin-x2': '#7ed957',
+  'coin-x4': '#4cc9f0',
+  'coin-x1000': '#b388ff',
+  'coin-x9999': '#ff5fa2',
+} as const;
+
 const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'super-jump': '#5fdc6a',
   shield: '#5cb8ff',
@@ -118,11 +132,18 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
+  ...COIN_MULTIPLIER_COLORS,
 };
 
 /** Ícone de power-up dentro de uma bolha, para ser lido de longe. */
 export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKind): void {
   const color = POWER_UP_COLORS[kind];
+
+  // A moeda de multiplicação é uma moeda, e não uma bolha: a criança procura por ela junto das moedas.
+  if (isCoinMultiplier(kind)) {
+    paintNumberedCoin(context, POWER_UP_SIZE, coinMultiplierLabel(kind), color);
+    return;
+  }
 
   circle(context, 20, 20, 17);
   fillAndOutline(context, lighten(color, 0.55), 3);

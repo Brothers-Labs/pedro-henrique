@@ -219,6 +219,30 @@ test('Maker places doors C to F without a Power-ups tab and switches the game sc
   await page.screenshot({ path: test.info().outputPath('nes-screen-paused.png') });
 });
 
+test('Maker saves the coin multipliers from the Items tab and plays a level with them', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase das Moedas Mágicas');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  await page.getByRole('tab', { name: 'Itens', exact: true }).click();
+  for (const [index, label] of ['Moeda ×2', 'Moeda ×4', 'Moeda ×1000', 'Moeda ×9999'].entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 32, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase das Moedas Mágicas')?.objects
+    .flatMap((object) => (object.properties?.powerUp ? [object.properties.powerUp] : [])).sort())
+    .toEqual(['coin-x1000', 'coin-x2', 'coin-x4', 'coin-x9999']);
+  await page.screenshot({ path: test.info().outputPath('coin-multipliers-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('coin-multipliers-playing.png') });
+});
+
 test('Maker saves the magnet, tall, reverse and shrink mushrooms and plays a level with them', async ({ page }) => {
   test.slow();
   await page.goto('/jogos/pedro-maker/criar');
