@@ -87,7 +87,9 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * e o Cogumelo Alto estica o herói: cabeça lá em cima, músculo fraco. O
  * Cogumelo Reverso troca os comandos por alguns segundos: esquerda vira direita.
  * O Cogumelo de Encolher deixa o herói pequenininho, do tamanho de meio bloco:
- * ele passa nos buraquinhos e pula um pouco mais alto.
+ * ele passa nos buraquinhos e pula um pouco mais alto. As moedas de
+ * multiplicação (×2, ×4, ×1000 e ×9999) fazem cada moeda pega valer mais por
+ * alguns segundos.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -110,9 +112,34 @@ export const POWER_UP_KINDS = [
   'tall-mushroom',
   'reverse-mushroom',
   'mini-mushroom',
+  'coin-x2',
+  'coin-x4',
+  'coin-x1000',
+  'coin-x9999',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
+
+/** Moedas de multiplicação e quanto cada uma multiplica as moedas pegas enquanto dura. */
+export const COIN_MULTIPLIERS = {
+  'coin-x2': 2,
+  'coin-x4': 4,
+  'coin-x1000': 1000,
+  'coin-x9999': 9999,
+} as const satisfies Partial<Record<PowerUpKind, number>>;
+
+export type CoinMultiplierKind = keyof typeof COIN_MULTIPLIERS;
+
+export const COIN_MULTIPLIER_KINDS = Object.keys(COIN_MULTIPLIERS) as readonly CoinMultiplierKind[];
+
+export function isCoinMultiplier(kind: PowerUpKind): kind is CoinMultiplierKind {
+  return kind in COIN_MULTIPLIERS;
+}
+
+/** Como a criança lê a moeda: "×2", "×9999". */
+export function coinMultiplierLabel(kind: CoinMultiplierKind): string {
+  return `×${COIN_MULTIPLIERS[kind]}`;
+}
 
 /** Os poderes clássicos, que o Lucky Block sorteia. */
 export const CLASSIC_POWER_UPS = [

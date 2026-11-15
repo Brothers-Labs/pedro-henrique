@@ -74,6 +74,11 @@ export const POWER_UP_DURATION_MS = {
   /** Curtinho de propósito: com os comandos trocados, oito segundos já são um desafio. */
   'reverse-mushroom': 8000,
   'mini-mushroom': 12000,
+  /** Moedas de multiplicação: tempo de pegar uma boa fileira de moedas. */
+  'coin-x2': 15000,
+  'coin-x4': 15000,
+  'coin-x1000': 15000,
+  'coin-x9999': 15000,
   /** Escudo, cogumelos e flores duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,

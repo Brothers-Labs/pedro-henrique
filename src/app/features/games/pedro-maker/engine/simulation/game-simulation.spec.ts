@@ -18,7 +18,7 @@ import {
 } from '../../config/physics.config';
 import { campaignLevelById } from '../../levels/campaign';
 import { LevelBuilder } from '../../levels/level-builder';
-import { CLASSIC_POWER_UPS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
+import { CLASSIC_POWER_UPS, COIN_MULTIPLIER_KINDS, COIN_MULTIPLIERS, type LevelBlueprint, type PowerUpKind } from '../../models/level.model';
 import type { HeroId } from '../../models/progress.model';
 import type { GameSessionEvent, HudState } from '../../models/session.model';
 import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
@@ -739,6 +739,54 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(player.hasPowerUp('magnet-mushroom')).toBeFalse();
       expect(harness.events).toContain({ type: 'power-up-ended', kind: 'magnet-mushroom' });
+    });
+  });
+
+  describe('Moedas de multiplicação', () => {
+    /** A moeda de multiplicação logo à frente e três moedas comuns depois dela, no caminho do herói. */
+    const coinRowAfter = (kind: PowerUpKind): LevelBlueprint => levelWithPowerUp(kind).row('coin', 6, SURFACE - 1, 3).build(META);
+
+    for (const kind of COIN_MULTIPLIER_KINDS) {
+      it(`${kind}: cada moeda pega vale ${COIN_MULTIPLIERS[kind]}`, () => {
+        const harness = start(coinRowAfter(kind));
+        run(harness, 2, { right: true });
+
+        expect(harness.simulation.player.hasPowerUp(kind)).toBeTrue();
+        expect(lastHud(harness.events)?.coins).toBe(3 * COIN_MULTIPLIERS[kind]);
+        expect(harness.events).toContain(jasmine.objectContaining({ type: 'mascot', text: jasmine.stringContaining(`×${COIN_MULTIPLIERS[kind]}`) }));
+      });
+    }
+
+    it('multiplica também as moedas gigantes', () => {
+      const harness = start(levelWithPowerUp('coin-x4').add('big-coin', 6, SURFACE - 1).build(META));
+      run(harness, 2, { right: true });
+
+      expect(lastHud(harness.events)?.coins).toBe(BIG_COIN_VALUE * 4);
+    });
+
+    it('com duas ativas, vale a mais forte, sem somar nem multiplicar as duas', () => {
+      const harness = start(flatLevel().add('coin', 6, SURFACE - 1).build(META));
+      run(harness, 0.2);
+      harness.simulation.player.grantPowerUp('coin-x1000', harness.simulation.clockMs);
+      harness.simulation.player.grantPowerUp('coin-x2', harness.simulation.clockMs);
+      run(harness, 2, { right: true });
+
+      expect(lastHud(harness.events)?.coins).toBe(1000);
+    });
+
+    it('acaba depois de 15 segundos, avisa, e a moeda volta a valer 1', () => {
+      const harness = start(flatLevel().add('coin', 8, SURFACE - 1).build(META));
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+      player.grantPowerUp('coin-x9999', harness.simulation.clockMs);
+      run(harness, 15.2);
+
+      expect(player.hasPowerUp('coin-x9999')).toBeFalse();
+      expect(harness.events).toContain({ type: 'power-up-ended', kind: 'coin-x9999' });
+
+      run(harness, 2, { right: true });
+
+      expect(lastHud(harness.events)?.coins).toBe(1);
     });
   });
 

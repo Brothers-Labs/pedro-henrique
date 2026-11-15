@@ -13,6 +13,8 @@ import {
 import { SeededRandom, seedFromText } from '../../levels/seeded-random';
 import {
   CLASSIC_POWER_UPS,
+  COIN_MULTIPLIER_KINDS,
+  COIN_MULTIPLIERS,
   type EnemyKind,
   isEnemyKind,
   isGiantCoinType,
@@ -71,6 +73,10 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'turbo-mushroom': 'Turbo ligado! Corra bem rápido antes que acabe!',
   'magnet-mushroom': 'Ímã ligado! As moedas vêm voando até você!',
   'reverse-mushroom': 'Cogumelo Reverso! Agora a esquerda vai para a direita e a direita vai para a esquerda!',
+  'coin-x2': 'Moeda ×2! Cada moeda que você pegar agora vale o dobro!',
+  'coin-x4': 'Moeda ×4! Cada moeda que você pegar agora vale quatro!',
+  'coin-x1000': 'Moeda ×1000! Corra pegar moedas: cada uma vale mil!',
+  'coin-x9999': 'Moeda ×9999! A mais forte de todas: cada moeda vale 9999!',
   'mini-mushroom': 'Você ficou pequenininho! Passe pelos buraquinhos e pule bem levinho!',
   'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
 };
@@ -765,11 +771,26 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     return isAreaClear(this.grid, area);
   }
 
+  /** Moedas ganhas por qualquer caminho passam pela moeda de multiplicação ativa. */
   addCoins(amount: number, x: number, y: number): void {
-    this.coins += amount;
+    const gained = amount * this.coinMultiplier();
+
+    this.coins += gained;
     this.playSound('coin');
-    this.effects.floatingText(x, y - 20, `+${amount}`, '#ffe066');
+    this.effects.floatingText(x, y - 20, `+${gained}`, '#ffe066');
     this.emitHud();
+  }
+
+  /**
+   * Quanto cada moeda vale agora: 1 sem moeda de multiplicação, ou a mais forte
+   * das que estiverem ativas. Elas não se somam nem se multiplicam entre si,
+   * para o número continuar sendo o que a criança leu na moeda.
+   */
+  coinMultiplier(): number {
+    return COIN_MULTIPLIER_KINDS.reduce(
+      (strongest, kind) => (this.player.hasPowerUp(kind) ? Math.max(strongest, COIN_MULTIPLIERS[kind]) : strongest),
+      1,
+    );
   }
 
   spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void {
@@ -789,11 +810,19 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
 
     switch (item.kind) {
-      case 'coin':
-        this.coins += 1;
+      case 'coin': {
+        const multiplier = this.coinMultiplier();
+
+        this.coins += multiplier;
         this.playSound('coin');
         this.effects.burst('coin', x, y, 5);
+
+        if (multiplier > 1) {
+          this.effects.floatingText(x, y - 20, `+${multiplier}`, '#ffe066');
+        }
+
         break;
+      }
       case 'big-coin':
         this.addCoins(coinValue(item.kind), x, y);
         this.effects.burst('coin', x, y, 14);

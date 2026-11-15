@@ -1,4 +1,6 @@
 import {
+  COIN_MULTIPLIER_KINDS,
+  coinMultiplierLabel,
   formatCoinValue,
   GIANT_COIN_VALUES,
   giantCoinType,
@@ -167,6 +169,15 @@ const GIANT_COIN_PIECES: readonly EditorPiece[] = [...VALUED_COINS]
   .sort((first, second) => first.value - second.value)
   .map(({ value, type }): EditorPiece => ({ id: type, category: 'itens', type, label: `Moeda Gigante ${formatCoinValue(value)}` }));
 
+/** Moedas de multiplicação: na aba Itens, ao lado das outras moedas, mas funcionam como poder com tempo. */
+const COIN_MULTIPLIER_PIECES: readonly EditorPiece[] = COIN_MULTIPLIER_KINDS.map((kind): EditorPiece => ({
+  id: `power-${kind}`,
+  category: 'itens',
+  type: 'power-up',
+  label: `Moeda ${coinMultiplierLabel(kind)}`,
+  properties: { powerUp: kind },
+}));
+
 export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'ground', category: 'terreno', type: 'ground', label: 'Grama' },
   { id: 'stone', category: 'terreno', type: 'stone', label: 'Pedra' },
@@ -217,6 +228,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   ...GIANT_COIN_PIECES,
+  ...COIN_MULTIPLIER_PIECES,
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
   { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
   { id: 'coin-chest', category: 'itens', type: 'coin-chest', label: 'Baú de Moedas' },
@@ -411,6 +423,10 @@ export const POWER_UP_LABELS = {
   'tall-mushroom': { label: 'Cogumelo Alto', emoji: '🦒' },
   'reverse-mushroom': { label: 'Cogumelo Reverso', emoji: '🙃' },
   'mini-mushroom': { label: 'Cogumelo de Encolher', emoji: '🐜' },
+  'coin-x2': { label: 'Moeda ×2', emoji: '🪙' },
+  'coin-x4': { label: 'Moeda ×4', emoji: '🪙' },
+  'coin-x1000': { label: 'Moeda ×1000', emoji: '🪙' },
+  'coin-x9999': { label: 'Moeda ×9999', emoji: '🪙' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {

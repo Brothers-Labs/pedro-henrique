@@ -17,12 +17,16 @@ import {
 } from 'three';
 
 import { context2d, createCanvas, paint } from '../../art/canvas';
-import { BIG_COIN_SIZE, HUGE_COIN_SIZE, paintNumberedCoin } from '../../art/item-art';
+import { BIG_COIN_SIZE, COIN_MULTIPLIER_COLORS, HUGE_COIN_SIZE, paintNumberedCoin } from '../../art/item-art';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import {
+  COIN_MULTIPLIER_KINDS,
+  type CoinMultiplierKind,
+  coinMultiplierLabel,
   formatCoinValue,
   type GiantCoinType,
   giantCoinValue,
+  isCoinMultiplier,
   isGiantCoinType,
   perGiantCoin,
   type PowerUpKind,
@@ -58,12 +62,13 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
+  ...COIN_MULTIPLIER_COLORS,
 };
 
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
 const GIGA_ITEM_SCALE = 1.3;
 
-type NumberedCoinKind = 'big-coin' | 'huge-coin' | GiantCoinType;
+type NumberedCoinKind = 'big-coin' | 'huge-coin' | GiantCoinType | CoinMultiplierKind;
 
 interface NumberedCoinLook {
   /** Raio do disco, em blocos. */
@@ -71,6 +76,8 @@ interface NumberedCoinLook {
   /** Lado do desenho do ícone, que vira a estampa das faces. */
   readonly iconSize: number;
   readonly value: string;
+  /** Cor da estampa; sem ela, o ouro das moedas comuns. */
+  readonly color?: string;
 }
 
 /** As moedas gigantes mostram o quanto valem, como no ícone do editor. */
@@ -78,6 +85,12 @@ const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
   'big-coin': { radius: 0.5, iconSize: BIG_COIN_SIZE, value: '10' },
   ...perGiantCoin((type) => ({ radius: 0.72, iconSize: HUGE_COIN_SIZE, value: formatCoinValue(giantCoinValue(type)) })),
   'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
+  ...(Object.fromEntries(
+    COIN_MULTIPLIER_KINDS.map((kind) => [
+      kind,
+      { radius: 0.5, iconSize: BIG_COIN_SIZE, value: coinMultiplierLabel(kind), color: COIN_MULTIPLIER_COLORS[kind] },
+    ]),
+  ) as Record<CoinMultiplierKind, NumberedCoinLook>),
 };
 
 const COIN_FACE_RESOLUTION = 128;
@@ -311,10 +324,10 @@ export class CollectibleView {
       return cached;
     }
 
-    const { iconSize, value } = NUMBERED_COINS[kind];
+    const { iconSize, value, color } = NUMBERED_COINS[kind];
     const canvas = paint(COIN_FACE_RESOLUTION, COIN_FACE_RESOLUTION, (context) => {
       context.scale(COIN_FACE_RESOLUTION / iconSize, COIN_FACE_RESOLUTION / iconSize);
-      paintNumberedCoin(context, iconSize, value);
+      paintNumberedCoin(context, iconSize, value, color);
     });
     const texture = new CanvasTexture(canvas);
 
@@ -334,8 +347,12 @@ export class CollectibleView {
     return material;
   }
 
-  /** Os poderes clássicos têm forma própria; os outros, a caixa com o emoji. */
-  private powerUpModel(kind: PowerUpKind): Mesh {
+  /** Os poderes clássicos têm forma própria; as moedas de multiplicação, a de moeda; os outros, a caixa com o emoji. */
+  private powerUpModel(kind: PowerUpKind): Object3D {
+    if (isCoinMultiplier(kind)) {
+      return this.numberedCoin(kind);
+    }
+
     const parts = classicPowerUpParts(kind);
 
     if (!parts) {
