@@ -19,6 +19,11 @@
 
   <div class="hud__right">
     <span class="hud__pill"><span aria-hidden="true">🪙</span> {{ state.coins }}</span>
+    @if (state.keys > 0) {
+      <span class="hud__pill" role="img" [attr.aria-label]="state.keys === 1 ? '1 chave' : state.keys + ' chaves'">
+        <span aria-hidden="true">🔑</span> {{ state.keys }}
+      </span>
+    }
     @if (state.crystalsTotal > 0) {
       <span class="hud__pill" role="img" [attr.aria-label]="state.crystalsFound + ' de ' + state.crystalsTotal + ' cristais'">
         @for (isFound of crystals(); track $index) {

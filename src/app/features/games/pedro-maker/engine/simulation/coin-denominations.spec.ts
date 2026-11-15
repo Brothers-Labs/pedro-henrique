@@ -34,7 +34,8 @@ describe('Moedas de alto valor do Pedro Maker', () => {
   });
 
   it('mostra as moedas no editor da menor para a maior, com o valor abreviado no nome', () => {
-    const coins = EDITOR_PIECES.filter((piece) => piece.label.startsWith('Moeda Gigante'));
+    // Com o espaço: as numeradas. A Moeda Gigantesca, da chuva de moedas, é outra peça.
+    const coins = EDITOR_PIECES.filter((piece) => piece.label.startsWith('Moeda Gigante '));
 
     expect(coins.map((piece) => piece.label)).toEqual([
       'Moeda Gigante 5', 'Moeda Gigante 10', 'Moeda Gigante 25', 'Moeda Gigante 50', 'Moeda Gigante 100',

@@ -6,6 +6,7 @@ import type { HeroId } from '../../models/progress.model';
 import type { Boss } from '../simulation/boss';
 import type { Enemy } from '../simulation/enemy';
 import { STEP_MS, type GameSimulation } from '../simulation/game-simulation';
+import { MEGA_COIN } from '../simulation/collectibles';
 import { bottom, centerX, type PhysicsBody } from '../simulation/physics-body';
 import type { VisualEvent } from '../simulation/visual-events';
 import { BlockView } from './block-view';
@@ -15,6 +16,7 @@ import { FireBarView } from './fire-bar-view';
 import { PSwitchView } from './p-switch-view';
 import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
+import { LockView } from './lock-view';
 import { BossModel } from './models/boss-model';
 import { EnemyMaterials, EnemyModel } from './models/enemy-model';
 import { PedroModel } from './models/pedro-model';
@@ -76,6 +78,7 @@ export class LevelView {
   private fireballs: FireballView | null = null;
   private fireBars: FireBarView | null = null;
   private pSwitches: PSwitchView | null = null;
+  private locks: LockView | null = null;
   private talkingFlowers: TalkingFlowerView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
@@ -130,15 +133,19 @@ export class LevelView {
       () => {
         const pSwitches = simulation.pSwitches;
         // Com botão P, cada tijolo pode virar moeda: a malha de moedas reserva vaga para eles.
-        const spareCoins = pSwitches.buttons.length > 0 ? simulation.blocks.interactive.filter((block) => block.kind === 'brick').length : 0;
+        const brickCoins = pSwitches.buttons.length > 0 ? simulation.blocks.interactive.filter((block) => block.kind === 'brick').length : 0;
+        // E cada Moeda Gigantesca estoura numa chuva de moedas comuns.
+        const showerCoins = simulation.collectibles.items.filter((item) => item.kind === 'mega-coin').length * MEGA_COIN.showerCoins;
+        const spareCoins = brickCoins + showerCoins;
 
         this.blocks = new BlockView(simulation.blocks, this.atlas, this.space, pSwitches.coinBricks);
         this.collectibles = new CollectibleView(simulation.collectibles, this.space, spareCoins);
         this.pSwitches = new PSwitchView(pSwitches, this.space);
+        this.locks = new LockView(simulation.locks, this.space);
         this.fireballs = new FireballView(simulation.fireballs, this.space);
         this.fireBars = new FireBarView(simulation.fireBars, this.space);
         this.talkingFlowers = new TalkingFlowerView(simulation.triggers.flowers, this.space);
-        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root, this.locks.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -257,6 +264,7 @@ export class LevelView {
     this.fireballs?.update(now, alpha);
     this.fireBars?.update(now);
     this.pSwitches?.update(now);
+    this.locks?.update(now);
     this.talkingFlowers?.update(now);
     this.props?.update(now);
     this.scenery?.update(deltaSeconds);
@@ -286,6 +294,7 @@ export class LevelView {
     this.fireballs?.dispose();
     this.fireBars?.dispose();
     this.pSwitches?.dispose();
+    this.locks?.dispose();
     this.talkingFlowers?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();

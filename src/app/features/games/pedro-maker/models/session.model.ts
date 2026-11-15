@@ -39,6 +39,8 @@ export interface HudState {
   readonly crystalsFound: number;
   readonly crystalsTotal: number;
   readonly hasShield: boolean;
+  /** Chaves no bolso, para as portas com cadeado. */
+  readonly keys: number;
 }
 
 export interface BossHudState {

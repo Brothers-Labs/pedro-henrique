@@ -273,8 +273,12 @@ export function formatCoinValue(value: number): string {
   return String(value);
 }
 
-/** Itens coletáveis, incluindo as moedas gigantes numeradas. */
-export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | GiantCoinType | 'crystal' | 'heart' | 'power-up';
+/**
+ * Itens coletáveis, incluindo as moedas gigantes numeradas. A Moeda
+ * Gigantesca (`mega-coin`) ocupa dois blocos e, pega, estoura numa chuva de
+ * moedas de verdade, que o herói sai catando.
+ */
+export type ItemType = 'coin' | 'big-coin' | 'huge-coin' | GiantCoinType | 'mega-coin' | 'crystal' | 'heart' | 'power-up';
 
 /**
  * Desenho do portal final: o arco de pedra ou o castelo, que a criança
@@ -330,6 +334,14 @@ export type LevelObjectType =
   | 'fire-bar'
   /** Botão P: encostar nele troca tijolos por moedas e moedas por tijolos por dez segundos. */
   | 'p-switch'
+  /** Chave: vai para o bolso ao encostar e abre uma porta com cadeado. */
+  | 'key'
+  /** Porta com cadeado: parede de dois blocos de altura que só abre com uma chave no bolso. */
+  | 'locked-door'
+  /** Corrente: bloco firme que se solta quando alguém puxa uma alavanca da fase. */
+  | 'chain'
+  /** Alavanca: encostar nela puxa, e todas as correntes da fase se soltam. */
+  | 'lever'
   | EnemyKind
   | 'boss'
   | ItemType

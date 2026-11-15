@@ -68,7 +68,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
 /** O Giga Cogumelo flutua maior que os outros: dá para ver de longe que ele é especial. */
 const GIGA_ITEM_SCALE = 1.3;
 
-type NumberedCoinKind = 'big-coin' | 'huge-coin' | GiantCoinType | CoinMultiplierKind;
+type NumberedCoinKind = 'big-coin' | 'huge-coin' | 'mega-coin' | GiantCoinType | CoinMultiplierKind;
 
 interface NumberedCoinLook {
   /** Raio do disco, em blocos. */
@@ -85,6 +85,8 @@ const NUMBERED_COINS: Readonly<Record<NumberedCoinKind, NumberedCoinLook>> = {
   'big-coin': { radius: 0.5, iconSize: BIG_COIN_SIZE, value: '10' },
   ...perGiantCoin((type) => ({ radius: 0.72, iconSize: HUGE_COIN_SIZE, value: formatCoinValue(giantCoinValue(type)) })),
   'huge-coin': { radius: 0.72, iconSize: HUGE_COIN_SIZE, value: '50' },
+  // Dois blocos de diâmetro, com a estrela no lugar do número: ela vale uma chuva de moedas.
+  'mega-coin': { radius: 1, iconSize: HUGE_COIN_SIZE, value: '★' },
   ...(Object.fromEntries(
     COIN_MULTIPLIER_KINDS.map((kind) => [
       kind,
@@ -150,7 +152,7 @@ export class CollectibleView {
   constructor(
     private readonly system: CollectibleSystem,
     private readonly space: WorldSpace,
-    /** Moedas que podem aparecer durante a partida: as que os tijolos viram com o botão P. */
+    /** Moedas que podem aparecer durante a partida: as dos tijolos do botão P e as da chuva da Moeda Gigantesca. */
     spareCoins = 0,
   ) {
     this.root.name = 'itens';
@@ -319,6 +321,7 @@ export class CollectibleView {
         return this.powerUpModel(item.powerUp ?? 'super-jump');
       case 'big-coin':
       case 'huge-coin':
+      case 'mega-coin':
         return this.numberedCoin(item.kind);
       case 'coin':
         return new Group();
