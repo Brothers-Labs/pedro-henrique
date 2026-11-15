@@ -83,8 +83,10 @@ export interface TextureSpec {
 /**
  * `rail` é o trilho: chato no chão, liga-se sozinho aos trilhos vizinhos e leva o trem.
  * `carpet` é o tapete: uma lâmina fininha deitada no chão, que se atravessa andando.
+ * `half` é o meio bloco: a metade de baixo de um bloco, firme para pisar e
+ * construir degraus de meia altura.
  */
-export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail', 'carpet'] as const;
+export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail', 'carpet', 'half'] as const;
 
 export type BlockShape = (typeof BLOCK_SHAPES)[number];
 

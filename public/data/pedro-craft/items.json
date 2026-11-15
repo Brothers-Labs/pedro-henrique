@@ -27,6 +27,8 @@
     { "id": "gold-block", "name": "Bloco de ouro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "gold-block" }, "places": "gold-block" },
     { "id": "iron-block", "name": "Bloco de ferro", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "iron-block" }, "places": "iron-block" },
     { "id": "diamond-block", "name": "Bloco de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-block" }, "places": "diamond-block" },
+    { "id": "diamond-half", "name": "Meio bloco de diamante", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "diamond-half" }, "places": "diamond-half" },
+    { "id": "netherite-block", "name": "Bloco de netherite", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "netherite-block" }, "places": "netherite-block" },
     { "id": "emerald-block", "name": "Bloco de esmeralda", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "emerald-block" }, "places": "emerald-block" },
     { "id": "obsidian", "name": "Obsidiana", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "obsidian" }, "places": "obsidian" },
     { "id": "tnt", "name": "TNT", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "tnt" }, "places": "tnt" },

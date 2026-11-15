@@ -212,6 +212,10 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
     return 'Ilumina a noite e espanta os inimigos.';
   }
 
+  if (block.shape === 'half') {
+    return 'Meio bloco: coloque para fazer degraus baixinhos; dois, um em cima do outro, fecham um bloco inteiro.';
+  }
+
   if (block.shape === 'carpet') {
     return 'Enfeita o chão: coloque em cima de um bloco firme e ande por cima.';
   }

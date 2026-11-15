@@ -203,6 +203,31 @@ describe('Malha dos chunks do PedroCraft', () => {
     });
   });
 
+  describe('meio bloco', () => {
+    const heights = (data: ChunkMeshData): readonly number[] =>
+      Array.from({ length: data.positions.length / 3 }, (_, index) => data.positions[index * 3 + 1]);
+
+    it('desenha o meio bloco de diamante com metade da altura, no passe recortado', () => {
+      put('stone', 5, 4, 5);
+      put('diamond-half', 5, 5, 5);
+
+      const result = mesh();
+      const half = heights(result.cutout);
+
+      // Topo e quatro lados; a face de baixo fica escondida pela pedra.
+      expect(faces(result.cutout)).toBe(5);
+      expect(Math.min(...half)).toBe(5);
+      expect(Math.max(...half)).toBeCloseTo(5.5, 5);
+    });
+
+    it('não esconde a face do vizinho, que continua aparecendo acima da metade', () => {
+      put('diamond-half', 5, 5, 5);
+      put('stone', 6, 5, 5);
+
+      expect(faces(mesh().opaque)).toBe(6);
+    });
+  });
+
   it('só desenha o chunk pedido', () => {
     world = new VoxelWorld(32, 16, 32);
     put('stone', 20, 5, 20);

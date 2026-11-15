@@ -67,6 +67,11 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
       problems.push({ file: 'blocks', message: `${owner}: um tapete não pode ser sólido, o herói anda por cima dele` });
     }
 
+    // O desenho do meio bloco tem meia altura: a colisão precisa bater, senão o herói flutua ou afunda nele.
+    if (definition.shape === 'half' && (!definition.solid || definition.collisionHeight !== 0.5)) {
+      problems.push({ file: 'blocks', message: `${owner}: um meio bloco precisa ser sólido e ter collisionHeight 0.5` });
+    }
+
     // A explosão acende a TNT vizinha em vez de quebrá-la: uma TNT que aguenta explosão nunca entraria na reação em cadeia.
     if (definition.explosive && definition.blastResistant) {
       problems.push({ file: 'blocks', message: `${owner}: um bloco que estoura não pode aguentar explosão` });

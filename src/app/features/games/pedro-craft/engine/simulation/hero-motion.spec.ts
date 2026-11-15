@@ -94,6 +94,16 @@ describe('Movimento do herói do PedroCraft', () => {
     expect(hero.body.y).toBeCloseTo(FLOOR_TOP + 1, 2);
   });
 
+  it('pisa no meio bloco de diamante na metade da altura', () => {
+    wall(5, 1, 'diamond-half', 6);
+    const hero = new HeroMotion(5.5, 10, 5.5, 0);
+
+    run(hero, 120);
+
+    expect(hero.body.y).toBeCloseTo(FLOOR_TOP + 0.5, 2);
+    expect(hero.body.isOnGround).toBeTrue();
+  });
+
   it('não sobe parede de dois blocos, nem com o pulo automático', () => {
     wall(9, 2);
     const hero = new HeroMotion(5.5, FLOOR_TOP, 5.5, FACING_EAST);

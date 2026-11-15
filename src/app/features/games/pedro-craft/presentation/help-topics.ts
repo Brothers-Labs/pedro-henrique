@@ -150,6 +150,8 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { text: 'Só a picareta de ferro, de ouro ou de diamante tira o diamante da pedra.', items: ['iron-pickaxe', 'golden-pickaxe', 'diamond-pickaxe'] },
       { text: 'Na mesa, 3 diamantes e 2 gravetos viram a picareta de diamante: a mais forte e a que mais dura.', items: ['diamond', 'stick', 'diamond-pickaxe'] },
       { text: '9 diamantes viram um bloco de diamante, para enfeitar a casa.', items: ['diamond', 'diamond-block'] },
+      { text: 'Na mesa, 3 blocos de diamante em fila viram 6 meios blocos: ótimos para degraus. Dois meios blocos voltam a ser um bloco.', items: ['diamond-block', 'diamond-half'] },
+      { text: 'O mais forte de todos: 4 blocos de diamante nos cantos, 4 obsidianas nos lados e um bloco de ouro no meio viram um bloco de netherite. Nem a TNT quebra!', items: ['diamond-block', 'obsidian', 'gold-block', 'netherite-block'] },
     ],
     tip: 'Leve tochas quando for cavar fundo: lá embaixo é escurinho.',
   },

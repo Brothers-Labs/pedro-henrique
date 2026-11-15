@@ -357,8 +357,11 @@ export function paintItemIcon(catalog: CraftCatalog, itemId: string, size: numbe
   return canvas;
 }
 
+/** O meio bloco aparece no ícone com a metade da altura do bloco inteiro. */
+const HALF_ICON_HEIGHT = 0.5;
+
 /**
- * Bloco inteiro em perspectiva; o tapete é a mesma peça, só que baixinha.
+ * Bloco inteiro em perspectiva; o tapete e o meio bloco são a mesma peça, só que mais baixos.
  * Planta, tocha, água e trilho ficam de frente, como a criança os reconhece.
  */
 function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinition, size: number): void {
@@ -370,7 +373,7 @@ function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinitio
   }
 
   const unit = size / TILE_SIZE;
-  const height = block.shape === 'carpet' ? CARPET_ICON_HEIGHT : 1;
+  const height = block.shape === 'carpet' ? CARPET_ICON_HEIGHT : block.shape === 'half' ? HALF_ICON_HEIGHT : 1;
   // A peça baixa desce para o meio do ícone, em vez de ficar grudada no alto.
   const drop = ((1 - height) * size) / 4;
   const faces: readonly (readonly [HTMLCanvasElement, readonly number[], string | null])[] = [
