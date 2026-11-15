@@ -202,3 +202,40 @@
     width: 100%;
   }
 }
+
+/* Tela dividida: cada metade tem a mira, a barra e a vida do seu jogador. */
+.view {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &--left {
+    right: 50%;
+  }
+
+  &--right {
+    left: 50%;
+    border-left: 4px solid #2a2350;
+  }
+}
+
+.view__tag {
+  @include maker.panel(rgb(255 255 255 / 88%));
+
+  position: absolute;
+  // Abaixo da barra de cima, que tem os botões da mochila e da pausa.
+  top: calc(4.2rem + var(--safe-top, 0px));
+  // No canto direito de cada metade: o canto esquerdo é da missão.
+  right: 0.75rem;
+  padding: 0.15rem 0.7rem;
+  border-width: 2px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.hint--split {
+  width: min(44rem, calc(100% - 2rem));
+  font-size: 0.9rem;
+}

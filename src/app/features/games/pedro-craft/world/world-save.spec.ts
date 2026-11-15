@@ -117,6 +117,54 @@ describe('Mundo salvo do PedroCraft', () => {
     expect(restored.creatures.list[0].isCoolingDown).toBeTrue();
   });
 
+  it('jogando em dupla, salva e devolve a mochila, a posição e a vida do Jogador 2', () => {
+    const duo = (state: WorldState | null = null): CraftSimulation =>
+      new CraftSimulation({
+        catalog,
+        world: buildWorld(),
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: 0 },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: state?.inventory,
+        hero: 'mario',
+        partner: { hero: 'peach', inventory: state?.partner?.inventory },
+      });
+    const simulation = duo();
+
+    simulation.asPlayer(1, () => {
+      simulation.inventory.slots[4] = { item: 'diamond-half', count: 6, durability: null };
+      simulation.hero.teleport(9.5, FLOOR_TOP, 7.5);
+      simulation.health.damage(3);
+      simulation.selectedSlot = 4;
+    });
+
+    const state = roundTrip(simulation);
+    const restored = duo(state);
+
+    restoreWorld(restored, state);
+
+    const partner = restored.players[1];
+
+    expect(partner.inventory.count('diamond-half')).toBe(6);
+    expect(partner.motion.body.x).toBeCloseTo(9.5, 5);
+    expect(partner.motion.body.z).toBeCloseTo(7.5, 5);
+    expect(partner.health.value).toBe(catalog.world.hero.maxHealth - 3);
+    expect(partner.selectedSlot).toBe(4);
+    expect(restored.inventory.count('diamond-half')).withContext('a mochila do Jogador 1 é outra').toBe(0);
+  });
+
+  it('jogando sozinho depois, o Jogador 2 da dupla continua guardado como estava', () => {
+    const partner = {
+      hero: { x: 9.5, y: FLOOR_TOP, z: 7.5, yaw: 0, pitch: 0, health: 7, selectedSlot: 2, respawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: 0 } },
+      inventory: [{ item: 'netherite-block', count: 2, durability: null }],
+    };
+    const save = captureWorld(createSimulation(buildWorld()), IDENTITY, SAVED_AT, partner);
+    const state = cleanWorldSave(parseWorldSave(JSON.parse(JSON.stringify(save))), catalog).state;
+
+    expect(state?.partner?.hero.health).toBe(7);
+    expect(state?.partner?.inventory[0]).toEqual({ item: 'netherite-block', count: 2, durability: null });
+  });
+
   it('não guarda os inimigos nem a água corrente', () => {
     const world = buildWorld();
     const simulation = createSimulation(world);

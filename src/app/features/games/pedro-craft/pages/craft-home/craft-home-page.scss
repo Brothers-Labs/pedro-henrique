@@ -191,3 +191,52 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Quem vai jogar: 1 ou 2 jogadores e o herói do Pedro Maker de cada um. */
+.modes--players {
+  @include from($breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.heroes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.hero-pick {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+  flex: 1 1 15rem;
+  padding: 0.5rem 0.7rem;
+  border: 3px solid maker.$ink;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  color: maker.$ink;
+}
+
+.hero-pick__figure {
+  grid-row: span 2;
+  width: 3.5rem;
+}
+
+.hero-pick__label {
+  font-weight: 800;
+}
+
+.hero-pick__select {
+  @include touch-target(2.75rem);
+
+  width: 100%;
+  border: 2px solid maker.$ink;
+  border-radius: 0.6rem;
+  background: #fffaf0;
+  font: inherit;
+  font-weight: 700;
+  color: maker.$ink;
+}

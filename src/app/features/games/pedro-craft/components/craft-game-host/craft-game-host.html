@@ -39,17 +39,31 @@
 
   @default {
     <span class="hurt" [class.hurt--visible]="isHurt()" aria-hidden="true"></span>
-    <span class="crosshair" aria-hidden="true"></span>
 
-    <app-craft-hud
-      [hud]="hud()"
-      [icons]="icons()"
-      [pickups]="pickups()"
-      [isTouch]="showsTouchControls()"
-      (slotSelected)="selectSlot($event)"
-      (goalPressed)="readGoal()"
-      (firstStepsSkipped)="skipFirstSteps()"
-    />
+    <div class="view" [class.view--left]="isSplit()" [attr.aria-label]="isSplit() ? 'Jogador 1' : null" [attr.role]="isSplit() ? 'group' : null">
+      <span class="crosshair" aria-hidden="true"></span>
+      @if (isSplit()) {
+        <span class="view__tag" aria-hidden="true">Jogador 1</span>
+      }
+
+      <app-craft-hud
+        [hud]="hud()"
+        [icons]="icons()"
+        [pickups]="pickups()"
+        [isTouch]="showsTouchControls()"
+        (slotSelected)="selectSlot($event)"
+        (goalPressed)="readGoal()"
+        (firstStepsSkipped)="skipFirstSteps()"
+      />
+    </div>
+
+    @if (isSplit()) {
+      <div class="view view--right" role="group" aria-label="Jogador 2">
+        <span class="crosshair" aria-hidden="true"></span>
+        <span class="view__tag" aria-hidden="true">Jogador 2</span>
+        <app-craft-hud [hud]="partnerHud()" [icons]="icons()" [showsGoal]="false" />
+      </div>
+    }
 
     <div class="bar">
       <p class="bar__title">{{ world().name }}</p>
@@ -78,7 +92,14 @@
       <app-craft-touch-controls [state]="virtualInput" [size]="buttonSize()" />
     }
 
-    @if (showsMouseHint()) {
+    @if (showsMouseHint() && isSplit()) {
+      <p class="hint hint--split" role="status">
+        <strong>Jogador 1:</strong> clique no mundo, <strong>WASD</strong> anda, <strong>espaço</strong> pula, mouse quebra e coloca,
+        <strong>E</strong> mochila. <strong>Jogador 2:</strong> controle, ou <strong>setas</strong> andam, <strong>I J K L</strong> olham,
+        <strong>Enter</strong> pula, <strong>U</strong> quebra, <strong>O</strong> coloca, <strong>N M</strong> trocam o item e
+        <strong>H</strong> abre a mochila.
+      </p>
+    } @else if (showsMouseHint()) {
       <p class="hint" role="status">
         Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula,
         <strong>clique</strong> quebra e golpeia, <strong>botão direito</strong> coloca e usa, <strong>E</strong> abre a mochila,

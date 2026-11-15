@@ -189,3 +189,15 @@
   height: 80%;
   image-rendering: pixelated;
 }
+
+/* Na tela dividida, de quem é a mochila aberta. */
+.sheet__player {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: #2a2350;
+  color: #ffffff;
+  font-size: 0.8rem;
+  vertical-align: middle;
+}

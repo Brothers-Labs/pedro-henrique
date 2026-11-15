@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
+import { PedroFigure } from '../../../pedro-maker/components/pedro-figure/pedro-figure';
+import { DEFAULT_LOOK, paletteFor } from '../../../pedro-maker/config/character.config';
+import { HEROES, isHeroId } from '../../../pedro-maker/config/hero.config';
+import type { HeroId } from '../../../pedro-maker/models/progress.model';
 import { CraftPageFrame } from '../../components/craft-page-frame/craft-page-frame';
+import type { CraftPlayerCount } from '../../models/craft-settings.model';
+import { CraftSettingsService } from '../../services/craft-settings.service';
 import type { GameMode, WorldSave } from '../../models/world-save.model';
 import { CraftWorldsService, EXPLORATION_WORLD, MAX_WORLDS } from '../../services/craft-worlds.service';
 import { WORLD_NAME_MAX_LENGTH } from '../../world/world-save';
@@ -28,13 +34,14 @@ const SAVED_AT = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long
 @Component({
   selector: 'app-craft-home-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, CraftPageFrame],
+  imports: [RouterLink, CraftPageFrame, PedroFigure],
   templateUrl: './craft-home-page.html',
   styleUrl: './craft-home-page.scss',
 })
 export class CraftHomePage {
   private readonly worldsService = inject(CraftWorldsService);
   private readonly router = inject(Router);
+  private readonly settingsService = inject(CraftSettingsService);
 
   protected readonly maxWorlds = MAX_WORLDS;
   protected readonly nameMaxLength = WORLD_NAME_MAX_LENGTH;
@@ -46,6 +53,13 @@ export class CraftHomePage {
   protected readonly latest = computed<WorldSave | null>(() => this.worlds()[0] ?? null);
   protected readonly suggestedName = computed(() => this.worldsService.suggestedName());
 
+  protected readonly heroes = HEROES;
+  protected readonly players = computed(() => this.settingsService.settings().players);
+  protected readonly hero = computed(() => this.settingsService.settings().hero);
+  protected readonly partnerHero = computed(() => this.settingsService.settings().partnerHero);
+  protected readonly heroLook = computed(() => paletteFor(DEFAULT_LOOK, this.hero()));
+  protected readonly partnerLook = computed(() => paletteFor(DEFAULT_LOOK, this.partnerHero()));
+
   protected readonly modes = MODES;
   protected readonly modeNames = MODE_NAMES;
   protected readonly newName = signal('');
@@ -56,6 +70,20 @@ export class CraftHomePage {
 
   constructor() {
     void this.worldsService.load();
+  }
+
+  /** 1 jogador ou 2 jogadores: vale para qualquer mundo aberto depois. */
+  protected setPlayers(players: CraftPlayerCount): void {
+    this.settingsService.update({ players });
+  }
+
+  /** Troca o herói do Jogador 1 (`'hero'`) ou do Jogador 2 (`'partnerHero'`) pela lista. */
+  protected chooseHero(which: 'hero' | 'partnerHero', event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    if (isHeroId(value)) {
+      this.settingsService.update({ [which]: value } as { readonly hero: HeroId } | { readonly partnerHero: HeroId });
+    }
   }
 
   protected savedAt(world: WorldSave): string {

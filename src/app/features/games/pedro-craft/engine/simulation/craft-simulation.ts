@@ -39,6 +39,18 @@ import type { SimulationEvent, VisualEvent } from './simulation-events';
 import { TrainRide } from './train-ride';
 import { WaterFlow } from './water-flow';
 
+/** Onde o Jogador 2 tenta nascer, em blocos a partir do Jogador 1: primeiro do lado, depois na frente e atrás. */
+const PARTNER_SPAWN_OFFSETS: readonly (readonly [number, number])[] = [
+  [2, 0],
+  [-2, 0],
+  [0, 2],
+  [0, -2],
+  [2, 2],
+  [-2, -2],
+  [2, -2],
+  [-2, 2],
+];
+
 /** Folga entre dois blocos quebrados segurando o botão: dá para ver um sumir antes do outro. */
 const BREAK_COOLDOWN_MS = 150;
 
@@ -580,7 +592,7 @@ export class CraftSimulation {
     this.updateMining(input);
 
     if (input.primaryPressed) {
-      this.visualEvents.push({ type: 'swing' });
+      this.visualEvents.push({ type: 'swing', player: this.player.index });
       this.combat.swing(this.selectedItem, this.targetCreature);
     }
 
@@ -955,7 +967,7 @@ export class CraftSimulation {
     }
 
     this.events.push({ type: 'sound', cue: 'crystal' });
-    this.visualEvents.push({ type: 'swing' });
+    this.visualEvents.push({ type: 'swing', player: this.player.index });
     this.version += 1;
   }
 
@@ -1482,7 +1494,7 @@ export class CraftSimulation {
 
   private confirmUse(): void {
     this.events.push({ type: 'sound', cue: 'button' });
-    this.visualEvents.push({ type: 'swing' });
+    this.visualEvents.push({ type: 'swing', player: this.player.index });
     this.version += 1;
   }
 
@@ -1517,8 +1529,37 @@ export class CraftSimulation {
       return [first];
     }
 
-    // Os dois nascem no mesmo ponto, que o gerador garante livre: um não empurra o outro.
-    return [first, new CraftPlayer(1, options.partner.hero, options.spawn, this.catalog, this.world, hasEnergy)];
+    return [first, new CraftPlayer(1, options.partner.hero, this.partnerSpawn(options.spawn), this.catalog, this.world, hasEnergy)];
+  }
+
+  /**
+   * O Jogador 2 nasce de frente para o Jogador 1, uns passos à frente dele,
+   * num lugar livre com chão firme embaixo e sem água: as duas crianças se
+   * veem logo ao entrar. No mesmo ponto, cada câmera ficaria dentro do corpo
+   * do outro. Sem lugar livre por perto, os dois dividem o ponto do começo.
+   */
+  private partnerSpawn(spawn: SpawnPoint): SpawnPoint {
+    // A câmera olha para -z quando o ângulo é 0: "à frente" é (-sen, -cos).
+    const ahead: readonly [number, number] = [Math.round(-Math.sin(spawn.yaw) * 3), Math.round(-Math.cos(spawn.yaw) * 3)];
+    const feetY = Math.floor(spawn.y);
+    const isFree = (x: number, z: number): boolean =>
+      x >= 0 && z >= 0 && x < this.world.width && z < this.world.depth &&
+      this.terrain.collisionHeight(x, feetY, z) === 0 &&
+      this.terrain.collisionHeight(x, feetY + 1, z) === 0 &&
+      this.terrain.collisionHeight(x, feetY - 1, z) >= 1 &&
+      !this.terrain.isLiquid(x, feetY, z);
+
+    for (const [offsetX, offsetZ] of [ahead, ...PARTNER_SPAWN_OFFSETS]) {
+      const x = Math.floor(spawn.x) + offsetX;
+      const z = Math.floor(spawn.z) + offsetZ;
+
+      if (isFree(x, z)) {
+        // Virado para o Jogador 1: o ângulo que faz "à frente" apontar para ele.
+        return { x: x + 0.5, y: spawn.y, z: z + 0.5, yaw: Math.atan2(-(spawn.x - x - 0.5), -(spawn.z - z - 0.5)) };
+      }
+    }
+
+    return spawn;
   }
 
   /** Mochila guardada, ou a do começo do mundo (com as melhores ferramentas no modo Infinito). */

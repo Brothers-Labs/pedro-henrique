@@ -1,4 +1,7 @@
 import { type CraftInputSnapshot, LOOK_RADIANS_PER_PIXEL, type VirtualCraftInput } from './craft-input';
+import { PARTNER_KEYS } from './partner-input-reader';
+
+const PARTNER_CODES: ReadonlySet<string> = new Set(Object.values(PARTNER_KEYS));
 
 const FORWARD_KEYS = ['KeyW', 'ArrowUp'] as const;
 const BACK_KEYS = ['KeyS', 'ArrowDown'] as const;
@@ -112,11 +115,16 @@ export class CraftInputReader {
 
   private readonly onContextMenu = (event: Event): void => event.preventDefault();
 
+  /**
+   * `sharesKeyboard`: na tela dividida, as setas e o lado direito do teclado
+   * são do Jogador 2, e o Jogador 1 fica com o W A S D, o mouse e o E.
+   */
   constructor(
     private readonly virtual: VirtualCraftInput,
     private readonly target: Window,
     private readonly canvas: HTMLElement,
     private readonly lookSensitivity: () => number,
+    private readonly sharesKeyboard = false,
   ) {
     target.addEventListener('keydown', this.onKeyDown);
     target.addEventListener('keyup', this.onKeyUp);
@@ -231,7 +239,7 @@ export class CraftInputReader {
   }
 
   private isDown(codes: readonly string[]): boolean {
-    return codes.some((code) => this.pressed.has(code));
+    return codes.some((code) => this.pressed.has(code) && !(this.sharesKeyboard && PARTNER_CODES.has(code)));
   }
 }
 

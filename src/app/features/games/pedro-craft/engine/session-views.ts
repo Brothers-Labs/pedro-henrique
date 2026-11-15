@@ -90,6 +90,7 @@ export function screenView(simulation: CraftSimulation): ScreenView | null {
     recipes: station ? recipeBook(simulation, station) : [],
     chest: screen.kind === 'chest' ? slots(screen.slots) : null,
     infiniteChest: simulation.mode === 'infinite' && screen.kind === 'chest',
+    player: simulation.players.length > 1 ? simulation.activePlayer.index + 1 : null,
     creativeItems: simulation.mode === 'creative' && screen.kind === 'inventory' ? simulation.catalog.items.map((item) => item.id) : [],
     furnace:
       screen.kind === 'furnace'

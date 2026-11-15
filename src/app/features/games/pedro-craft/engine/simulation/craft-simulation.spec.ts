@@ -1248,7 +1248,11 @@ describe('Simulação do PedroCraft: colher e construir', () => {
         hero: 'mario',
         partner: { hero: 'peach', inventory: [] },
       });
-      simulation.asPlayer(1, () => simulation.hero.teleport(PARTNER_START.x, FLOOR_TOP, PARTNER_START.z));
+      simulation.asPlayer(1, () => {
+        simulation.hero.teleport(PARTNER_START.x, FLOOR_TOP, PARTNER_START.z);
+        // Os testes põem o Jogador 2 olhando para o leste, como o Jogador 1.
+        simulation.hero.yaw = FACING_EAST;
+      });
       partnerEvents = [];
     });
 
@@ -1332,6 +1336,45 @@ describe('Simulação do PedroCraft: colher e construir', () => {
 
       expect(simulation.activePlayer).toBe(simulation.players[0]);
       expect(simulation.inventory.count('stone')).toBe(0);
+    });
+
+    it('o Jogador 2 nasce ao lado do Jogador 1, num lugar livre, e não dentro dele', () => {
+      const fresh = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        partner: { hero: 'daisy' },
+      });
+      const [first, second] = fresh.players.map((player) => player.motion.body);
+
+      expect(Math.hypot(second.x - first.x, second.z - first.z)).toBeGreaterThanOrEqual(1.5);
+      expect(second.y).toBe(first.y);
+      // Na frente do Jogador 1 (que olha para o leste, +x) e virado de volta para ele.
+      expect(second.x).toBeGreaterThan(first.x);
+      expect(-Math.sin(fresh.players[1].motion.yaw)).toBeCloseTo(-1, 5);
+      expect(fresh.players[1].respawnPoint).toEqual(jasmine.objectContaining({ x: second.x, z: second.z }));
+    });
+
+    it('sem lugar livre por perto, o Jogador 2 divide o ponto do começo', () => {
+      for (const [x, z] of [[8, 5], [7, 5], [3, 5], [5, 7], [5, 3], [7, 7], [3, 3], [7, 3], [3, 7]]) {
+        put('stone', x, FLOOR_TOP, z);
+      }
+
+      const crowded = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        partner: { hero: 'daisy' },
+      });
+
+      expect(crowded.players[1].motion.body.x).toBe(5.5);
+      expect(crowded.players[1].motion.body.z).toBe(5.5);
     });
 
     it('sem Jogador 2, o jogo continua com um jogador só', () => {

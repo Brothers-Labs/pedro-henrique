@@ -2,9 +2,11 @@ import { GameLoop } from '../../pedro-maker/engine/game-loop';
 import { FrameBudgetMonitor, initialQualityTier } from '../../pedro-maker/engine/render/quality';
 import { STEP_MS } from '../config/craft-physics.config';
 import type { CraftEngineSettings, CraftGameSession, CraftLaunchOptions, ScreenView } from '../models/craft-session.model';
+import type { WorldState } from '../models/world-save.model';
 import { generateWorld } from '../world/world-generator';
 import { cleanWorldSave } from '../world/world-save';
 import { CraftInputReader } from './input/craft-input-reader';
+import { PartnerInputReader } from './input/partner-input-reader';
 import { nextTask } from './next-task';
 import { CraftStage } from './render/craft-stage';
 import { CraftView } from './render/craft-view';
@@ -38,6 +40,10 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   let simulation: CraftSimulation | null = null;
   let view: CraftView | null = null;
   let input: CraftInputReader | null = null;
+  /** O controle e o lado direito do teclado do Jogador 2; `null` jogando sozinho. */
+  let partnerInput: PartnerInputReader | null = null;
+  /** O Jogador 2 de uma partida em dupla anterior, guardado intacto quando se joga sozinho. */
+  let keptPartner: WorldState['partner'];
   let isDestroyed = false;
   let wasPointerLocked = false;
   let reportedHudVersion = -1;
@@ -51,7 +57,11 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
     if (running.hudVersion !== reportedHudVersion) {
       reportedHudVersion = running.hudVersion;
-      listener({ type: 'hud', hud: hudState(running) });
+      listener({ type: 'hud', hud: running.asPlayer(0, () => hudState(running)) });
+
+      if (running.players.length > 1) {
+        listener({ type: 'partner-hud', hud: running.asPlayer(1, () => hudState(running)) });
+      }
     }
   };
 
@@ -62,14 +72,19 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
     simulation.look(input.readLook());
 
+    if (partnerInput) {
+      simulation.lookPartner(partnerInput.readLook(frameMs));
+    }
+
     for (let step = 0; step < steps && loop.isRunning; step += 1) {
       const snapshot = input.read();
+      const partnerSnapshot = partnerInput?.read();
 
-      if (snapshot.pausePressed) {
+      if (snapshot.pausePressed || partnerSnapshot?.pausePressed) {
         listener({ type: 'pause-requested' });
       }
 
-      simulation.step(snapshot);
+      simulation.step(snapshot, partnerSnapshot);
     }
 
     publish(simulation);
@@ -101,6 +116,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   const stop = (): void => {
     loop.stop();
     input?.setCapturing(false);
+    partnerInput?.setCapturing(false);
   };
 
   const start = (): void => {
@@ -110,6 +126,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
     input?.reset();
     input?.setCapturing(true);
+    partnerInput?.reset();
+    partnerInput?.setCapturing(true);
     monitor.reset();
     loop.start();
   };
@@ -157,6 +175,9 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
     const { catalog } = options;
     const { state } = cleanWorldSave(options.world, catalog);
+    const partnerHero = options.players.partner;
+
+    keptPartner = partnerHero ? undefined : state?.partner;
     const generated = generateWorld(catalog, options.world.seed);
     const nextSimulation = new CraftSimulation({
       catalog,
@@ -169,6 +190,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       guideFirstSteps: options.guideFirstSteps,
       mode: options.world.mode,
       inventory: state?.inventory,
+      hero: options.players.hero,
+      partner: partnerHero ? { hero: partnerHero, inventory: state?.partner?.inventory } : undefined,
       goals: state ? progressFromCompleted(catalog.goals, state.goals.completed, state.goals.amount) : undefined,
     });
 
@@ -199,8 +222,13 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
 
     simulation = nextSimulation;
     view = nextView;
-    input = new CraftInputReader(options.input, window, activeStage.canvas, () => settings.lookSensitivity);
+    input = new CraftInputReader(options.input, window, activeStage.canvas, () => settings.lookSensitivity, partnerHero !== null);
     input.reset();
+
+    if (partnerHero) {
+      partnerInput = new PartnerInputReader(window, () => settings.lookSensitivity);
+      partnerInput.reset();
+    }
     document.addEventListener('pointerlockchange', onPointerLockChange);
     publish(nextSimulation);
     listener({ type: 'ready' });
@@ -251,7 +279,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     skipFirstSteps: () => {
       withSimulation((running) => running.skipFirstSteps());
     },
-    capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString()) : null),
+    capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString(), keptPartner) : null),
     destroy: () => {
       if (isDestroyed) {
         return;
@@ -263,6 +291,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       input?.dispose();
       input = null;
+      partnerInput?.dispose();
+      partnerInput = null;
       view?.dispose();
       view = null;
       simulation = null;

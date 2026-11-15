@@ -60,6 +60,20 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Nas Configurações dá para ligar a leitura em voz alta e ver de novo o guia dos primeiros passos.',
   },
   {
+    id: 'dois-jogadores',
+    emoji: '🧒',
+    title: 'Jogar em dois',
+    summary: 'Duas crianças no mesmo mundo, cada uma na sua metade da tela.',
+    steps: [
+      { text: 'Na tela do PedroCraft, em "Quem vai jogar?", escolha 2 jogadores e o personagem de cada um: Mario, Peach, Gui e toda a turma do Pedro Maker.' },
+      { text: 'A tela divide ao meio: o Jogador 1 fica na esquerda e o Jogador 2 na direita. Cada um tem a sua mochila, a sua vida e a sua barra.' },
+      { text: 'Jogador 1: W A S D anda, o mouse olha, clique quebra, botão direito coloca e E abre a mochila.' },
+      { text: 'Jogador 2: o controle de videogame, ou as setas para andar, I J K L para olhar, Enter para pular, U quebra, O coloca, N e M trocam o item e H abre a mochila.' },
+      { text: 'O mundo é dos dois: o que um constrói, o outro vê. O que cai no chão vai para quem estiver mais perto.' },
+    ],
+    tip: 'Os bonecos dos personagens também moram na mochila do modo Criativo!',
+  },
+  {
     id: 'quebrar',
     emoji: '⛏️',
     title: 'Quebrar e pegar blocos',

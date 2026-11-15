@@ -1,10 +1,12 @@
 import { Color } from 'three';
 
+import { DEFAULT_LOOK, paletteFor } from '../../../pedro-maker/config/character.config';
 import type { QualityTier } from '../../../pedro-maker/engine/render/quality';
 import { nextTask } from '../next-task';
 import type { CraftSimulation } from '../simulation/craft-simulation';
 import { BlockAtlas } from './block-atlas';
-import type { CraftStage } from './craft-stage';
+import { AvatarView } from './avatar-view';
+import { type CraftStage, PLAYER_VIEW_LAYERS } from './craft-stage';
 import { CreaturesView } from './creatures-view';
 import { DropsView } from './drops-view';
 import { FusesView } from './fuses-view';
@@ -59,8 +61,13 @@ export class CraftView {
   private readonly fusesView: FusesView;
   private readonly projectilesView: ProjectilesView;
   private readonly weatherView: WeatherView;
-  private readonly targetView: TargetView;
-  private readonly handView: HandView;
+  /** Um contorno de bloco mirado, uma mão e um trem por jogador. */
+  private readonly targetViews: readonly TargetView[];
+  private readonly handViews: readonly HandView[];
+  private readonly partnerTrainViews: readonly TrainView[];
+  /** Com dois jogadores, o corpo de cada um, que só o outro vê. */
+  private readonly avatars: readonly AvatarView[];
+  private readonly underwater: boolean[];
   private readonly particles: ParticlesView;
   private effectsEnabled = true;
 
@@ -86,8 +93,20 @@ export class CraftView {
     this.projectilesView = new ProjectilesView(stage.scene);
     this.weatherView = new WeatherView(stage.scene);
     this.atlas.applyPalette(simulation.calendar.season.palette);
-    this.targetView = new TargetView(stage.scene);
-    this.handView = new HandView(stage.camera, this.itemTextures);
+    const players = simulation.players;
+    const isSplit = players.length > 1;
+
+    stage.setPlayerCount(isSplit ? 2 : 1);
+    this.targetViews = players.map(() => new TargetView(stage.scene));
+    this.handViews = players.map(
+      (player, index) => new HandView(stage.cameras[index], this.itemTextures, paletteFor(DEFAULT_LOOK, player.heroId).shirt, PLAYER_VIEW_LAYERS[index]),
+    );
+    this.partnerTrainViews = players.slice(1).map(() => new TrainView(stage.scene, this.daylight));
+    // O corpo do Jogador 1 fica na camada da câmera do Jogador 2, e vice-versa.
+    this.avatars = isSplit
+      ? players.map((player, index) => new AvatarView(stage.scene, player.heroId, PLAYER_VIEW_LAYERS[1 - index], this.daylight))
+      : [];
+    this.underwater = players.map(() => false);
     this.particles = new ParticlesView(stage.scene);
   }
 
@@ -110,30 +129,48 @@ export class CraftView {
 
   render(alpha: number, frameMs: number): void {
     const simulation = this.simulation;
-    const hero = simulation.hero;
-    const body = hero.body;
     const camera = this.stage.camera;
 
-    camera.position.set(
-      lerp(hero.previousX, body.x, alpha),
-      lerp(hero.previousY, body.y, alpha) + (hero.eyeY - body.y),
-      lerp(hero.previousZ, body.z, alpha),
-    );
-    camera.rotation.set(hero.pitch, hero.yaw, 0);
+    simulation.players.forEach((player, index) => this.placePlayer(index, alpha, frameMs));
 
     this.applyVisualEvents();
     this.updateSky();
     this.worldView.rebuild();
     this.dropsView.update(simulation.drops.list);
     this.creaturesView.update(simulation.creatures.list, alpha, frameMs, !this.effectsEnabled);
-    this.trainView.update(simulation.train, alpha);
+    this.trainView.update(simulation.asPlayer(0, () => simulation.train), alpha);
+    this.partnerTrainViews.forEach((view, index) => view.update(simulation.asPlayer(index + 1, () => simulation.train), alpha));
     this.fusesView.update(simulation.explosions.lit, !this.effectsEnabled);
     this.projectilesView.update(simulation.projectiles.list, alpha);
     this.weatherView.update(simulation.weather.current, camera.position, frameMs, !this.effectsEnabled);
-    this.targetView.update(simulation.target, simulation.miningProgress);
-    this.handView.update(simulation.selectedItem?.id ?? null, simulation.mining !== null, frameMs);
     this.particles.update(frameMs);
-    this.stage.render();
+    this.stage.render((index) => this.applyFog(this.underwater[index] ?? false));
+  }
+
+  /** Câmera, mão, mira e corpo de um jogador, entre a posição do passo anterior e a do atual. */
+  private placePlayer(index: number, alpha: number, frameMs: number): void {
+    const simulation = this.simulation;
+    const view = simulation.asPlayer(index, () => ({
+      hero: simulation.hero,
+      target: simulation.target,
+      progress: simulation.miningProgress,
+      held: simulation.selectedItem?.id ?? null,
+      isMining: simulation.mining !== null,
+      isUnderwater: simulation.isEyeUnderwater,
+    }));
+    const { hero } = view;
+    const body = hero.body;
+    const x = lerp(hero.previousX, body.x, alpha);
+    const y = lerp(hero.previousY, body.y, alpha);
+    const z = lerp(hero.previousZ, body.z, alpha);
+    const camera = this.stage.cameras[index];
+
+    camera.position.set(x, y + (hero.eyeY - body.y), z);
+    camera.rotation.set(hero.pitch, hero.yaw, 0);
+    this.targetViews[index].update(view.target, view.progress);
+    this.handViews[index].update(view.held, view.isMining, frameMs);
+    this.avatars[index]?.update(x, y, z, hero.yaw, frameMs);
+    this.underwater[index] = view.isUnderwater;
   }
 
   applyQuality(tier: QualityTier): void {
@@ -148,8 +185,10 @@ export class CraftView {
     this.fusesView.dispose();
     this.projectilesView.dispose();
     this.weatherView.dispose();
-    this.targetView.dispose();
-    this.handView.dispose();
+    this.targetViews.forEach((view) => view.dispose());
+    this.handViews.forEach((view) => view.dispose());
+    this.partnerTrainViews.forEach((view) => view.dispose());
+    this.avatars.forEach((view) => view.dispose());
     this.particles.dispose();
     this.itemTextures.dispose();
     this.atlas.dispose();
@@ -159,7 +198,7 @@ export class CraftView {
     for (const event of this.simulation.drainVisualEvents()) {
       switch (event.type) {
         case 'swing':
-          this.handView.swing();
+          this.handViews[event.player]?.swing();
           break;
         case 'block-broken':
           if (this.effectsEnabled) {
@@ -215,7 +254,11 @@ export class CraftView {
       this.stage.sky.lerp(RAIN_SKY, RAIN_SKY_MIX * daylight);
     }
 
-    if (this.simulation.isEyeUnderwater) {
+  }
+
+  /** Debaixo d'água, a névoa azul chega perto — de quem está mergulhando, só na vista dele. */
+  private applyFog(isUnderwater: boolean): void {
+    if (isUnderwater) {
       this.stage.setFog(UNDERWATER_COLOR, 0, 0.18);
     } else {
       this.stage.setFog(this.stage.sky, 0.55, 1);

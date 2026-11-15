@@ -1,5 +1,7 @@
 @if (hud(); as state) {
-  @if (state.goal; as current) {
+  @if (!showsGoal()) {
+    <!-- Metade do Jogador 2: sem missão nem guia, que ficam na metade do Jogador 1. -->
+  } @else if (state.goal; as current) {
     <button type="button" class="goal" aria-live="polite" [attr.aria-label]="'Missão da vez: ' + current.goal.title + '. Toque para ouvir.'" (click)="goalPressed.emit()">
       @if (current.icon; as icon) {
         <img class="goal__icon" [src]="icons().url(icon)" alt="" />
@@ -21,7 +23,7 @@
     </aside>
   }
 
-  @if (firstStepCard(); as card) {
+  @if (showsGoal() && firstStepCard(); as card) {
     <aside class="coach" aria-live="polite" aria-label="Primeiros passos">
       <span class="coach__emoji" aria-hidden="true">{{ card.emoji }}</span>
       <div class="coach__text">

@@ -16,6 +16,9 @@ const FALLBACK: CraftSettings = {
   buttonSize: 'normal',
   readAloud: false,
   hasSeenFirstSteps: false,
+  players: 1,
+  hero: 'pedro',
+  partnerHero: 'gui',
 };
 
 describe('Preferências do PedroCraft', () => {
@@ -50,6 +53,16 @@ describe('Preferências do PedroCraft', () => {
   it('limita a sensibilidade do olhar à faixa permitida', () => {
     expect(sanitize({ lookSensitivity: 9 }, FALLBACK).lookSensitivity).toBe(2);
     expect(sanitize({ lookSensitivity: 0 }, FALLBACK).lookSensitivity).toBe(0.5);
+  });
+
+  it('guarda 1 ou 2 jogadores e o herói do Pedro Maker de cada um', () => {
+    expect(sanitize({ players: 2, hero: 'mario', partnerHero: 'peach' }, FALLBACK)).toEqual(
+      jasmine.objectContaining({ players: 2, hero: 'mario', partnerHero: 'peach' }),
+    );
+  });
+
+  it('recusa 3 jogadores e herói que não existe no Pedro Maker', () => {
+    expect(sanitize({ players: 3, hero: 'bowser', partnerHero: 42 }, FALLBACK)).toEqual(FALLBACK);
   });
 
   it('volta ao valor anterior quando o guardado não faz sentido', () => {

@@ -33,4 +33,5 @@ export type VisualEvent =
   | { readonly type: 'sparkle'; readonly x: number; readonly y: number; readonly z: number; readonly color: string }
   /** Estouro da TNT ou do creeper, centrado em (`x`, `y`, `z`). */
   | { readonly type: 'explosion'; readonly x: number; readonly y: number; readonly z: number; readonly radius: number }
-  | { readonly type: 'swing' };
+  /** `player`: 0 para o Jogador 1, 1 para o Jogador 2 — é a mão dele que balança. */
+  | { readonly type: 'swing'; readonly player: number };
