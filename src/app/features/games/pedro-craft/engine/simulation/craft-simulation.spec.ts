@@ -2,6 +2,7 @@ import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import { loadTestCatalog } from '../../testing/craft-test-content';
 import { VoxelWorld } from '../../world/voxel-world';
 import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
+import type { CraftPlayer } from './craft-player';
 import { CraftSimulation } from './craft-simulation';
 import type { Creature } from './creatures';
 import { goalIcon, hudState as hudOf } from '../session-views';
@@ -636,6 +637,34 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       }
     });
 
+    it('no Criativo, o boneco da Princesa Peach vem manso pela mochila e fica para brincar', () => {
+      useCreativeMode();
+      put('stone');
+      simulation.giveCreativeItem('boneco-peach');
+      hold('boneco-peach');
+      run(1, { secondaryPressed: true });
+
+      const [peach] = ofKind('boneco-peach');
+
+      expect(peach?.isTame).toBeTrue();
+      expect(peach?.isHostile).toBeFalse();
+      expect(peach?.definition.hero).toBe('peach');
+
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      run(STEPS_PER_SECOND * 2);
+
+      expect(simulation.creatures.list).toContain(peach);
+    });
+
+    it('fora do Criativo, o boneco do Mario não chama ninguém', () => {
+      put('stone');
+      hold('boneco-mario');
+      run(1, { secondaryPressed: true });
+
+      expect(ofKind('boneco-mario')).toEqual([]);
+      expect(hinted('mochila do modo Criativo')).toBeTrue();
+    });
+
     it('no Criativo, cabem até 5 de cada boneco', () => {
       useCreativeMode();
 
@@ -1201,6 +1230,166 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       run(2);
 
       expect(events.some((event) => event.type === 'hint')).toBeFalse();
+    });
+  });
+
+  describe('dois jogadores na mesma tela', () => {
+    const PARTNER_START = { x: 5.5, z: 10.5 } as const;
+    let partnerEvents: SimulationEvent[];
+
+    beforeEach(() => {
+      simulation = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        hero: 'mario',
+        partner: { hero: 'peach', inventory: [] },
+      });
+      simulation.asPlayer(1, () => {
+        simulation.hero.teleport(PARTNER_START.x, FLOOR_TOP, PARTNER_START.z);
+        // Os testes põem o Jogador 2 olhando para o leste, como o Jogador 1.
+        simulation.hero.yaw = FACING_EAST;
+      });
+      partnerEvents = [];
+    });
+
+    const runBoth = (steps: number, first: Partial<CraftInputSnapshot> = {}, second: Partial<CraftInputSnapshot> = {}): void => {
+      for (let step = 0; step < steps; step += 1) {
+        simulation.step({ ...IDLE_CRAFT_INPUT, ...first }, { ...IDLE_CRAFT_INPUT, ...second });
+        partnerEvents.push(...simulation.drainEvents());
+      }
+    };
+    const partner = (): CraftPlayer => simulation.players[1];
+
+    it('cada um tem o seu herói do Pedro Maker, e a vez volta sempre para o Jogador 1', () => {
+      expect(simulation.players.map((player) => player.heroId)).toEqual(['mario', 'peach']);
+
+      runBoth(5, {}, { forward: 1 });
+
+      expect(simulation.activePlayer).toBe(simulation.players[0]);
+    });
+
+    it('cada um anda com o seu controle: o Jogador 2 sai do lugar e o Jogador 1 fica parado', () => {
+      const firstX = simulation.hero.body.x;
+      const secondX = partner().motion.body.x;
+
+      runBoth(60, {}, { forward: 1 });
+
+      expect(simulation.hero.body.x).toBeCloseTo(firstX, 5);
+      expect(partner().motion.body.x).toBeGreaterThan(secondX + 1);
+    });
+
+    it('o Jogador 2 quebra um bloco e o bloco vai para a mochila dele, não para a do Jogador 1', () => {
+      put('oak-log', 7, 4, 10);
+      runBoth(200, {}, { primaryHeld: true });
+
+      expect(world.get(7, 4, 10)).toBe(AIR);
+      expect(partner().inventory.count('oak-log')).toBe(1);
+      expect(simulation.inventory.count('oak-log')).toBe(0);
+    });
+
+    it('cada um escolhe o seu espaço da barra', () => {
+      runBoth(1, { hotbarSlot: 2 }, { hotbarSlot: 6 });
+
+      expect(simulation.players.map((player) => player.selectedSlot)).toEqual([2, 6]);
+    });
+
+    it('o inimigo vai atrás de quem está mais perto e machuca só esse', () => {
+      simulation.clock.advance(catalog.world.clock.dayMs);
+      simulation.creatures.spawn(catalog.creature('scarecrow-zombie'), PARTNER_START.x + 0.9, FLOOR_TOP, PARTNER_START.z);
+      runBoth(30);
+
+      expect(partner().health.isFull).toBeFalse();
+      expect(simulation.health.isFull).toBeTrue();
+    });
+
+    it('a flecha do inimigo também acerta o Jogador 2', () => {
+      simulation.projectiles.launch({
+        owner: 'creature',
+        damage: 1,
+        x: PARTNER_START.x + 4,
+        y: FLOOR_TOP + 1,
+        z: PARTNER_START.z,
+        directionX: -1,
+        directionY: 0.05,
+        directionZ: 0,
+        speed: 16,
+      });
+      runBoth(20);
+
+      expect(partner().health.isFull).toBeFalse();
+      expect(simulation.health.isFull).toBeTrue();
+    });
+
+    it('o Jogador 2 abre a própria mochila; enquanto ela está aberta, a vez é dele, e fechar devolve a vez', () => {
+      partner().inventory.add('stone', 5);
+      runBoth(1, {}, { inventoryPressed: true });
+
+      expect(simulation.screens.screen?.kind).toBe('inventory');
+      expect(simulation.activePlayer).toBe(partner());
+      expect(simulation.inventory.count('stone')).toBe(5);
+
+      simulation.closeScreen();
+
+      expect(simulation.activePlayer).toBe(simulation.players[0]);
+      expect(simulation.inventory.count('stone')).toBe(0);
+    });
+
+    it('o Jogador 2 nasce ao lado do Jogador 1, num lugar livre, e não dentro dele', () => {
+      const fresh = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        partner: { hero: 'daisy' },
+      });
+      const [first, second] = fresh.players.map((player) => player.motion.body);
+
+      expect(Math.hypot(second.x - first.x, second.z - first.z)).toBeGreaterThanOrEqual(1.5);
+      expect(second.y).toBe(first.y);
+      // Na frente do Jogador 1 (que olha para o leste, +x) e virado de volta para ele.
+      expect(second.x).toBeGreaterThan(first.x);
+      expect(-Math.sin(fresh.players[1].motion.yaw)).toBeCloseTo(-1, 5);
+      expect(fresh.players[1].respawnPoint).toEqual(jasmine.objectContaining({ x: second.x, z: second.z }));
+    });
+
+    it('sem lugar livre por perto, o Jogador 2 divide o ponto do começo', () => {
+      for (const [x, z] of [[8, 5], [7, 5], [3, 5], [5, 7], [5, 3], [7, 7], [3, 3], [7, 3], [3, 7]]) {
+        put('stone', x, FLOOR_TOP, z);
+      }
+
+      const crowded = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        partner: { hero: 'daisy' },
+      });
+
+      expect(crowded.players[1].motion.body.x).toBe(5.5);
+      expect(crowded.players[1].motion.body.z).toBe(5.5);
+    });
+
+    it('sem Jogador 2, o jogo continua com um jogador só', () => {
+      const solo = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+      });
+
+      expect(solo.players.length).toBe(1);
+      expect(solo.players[0].heroId).toBe('pedro');
+      expect(() => solo.asPlayer(1, () => null)).toThrowError(/Jogador 2/);
     });
   });
 });

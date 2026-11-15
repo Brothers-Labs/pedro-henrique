@@ -9,6 +9,7 @@ import {
   type SavedCreature,
   type SavedFurnace,
   type SavedHero,
+  type SavedPartner,
   type SavedPlant,
   type SavedPoint,
   type SavedSlot,
@@ -100,6 +101,16 @@ function cleanState(state: WorldState, catalog: CraftCatalog): WorldState {
       selectedSlot: Math.min(HOTBAR_SIZE - 1, state.hero.selectedSlot),
     },
     inventory: cleanSlots(state.inventory, INVENTORY_SIZE),
+    partner: state.partner
+      ? {
+          hero: {
+            ...state.partner.hero,
+            health: Math.min(catalog.world.hero.maxHealth, Math.max(1, state.partner.hero.health)),
+            selectedSlot: Math.min(HOTBAR_SIZE - 1, state.partner.hero.selectedSlot),
+          },
+          inventory: cleanSlots(state.partner.inventory, INVENTORY_SIZE),
+        }
+      : undefined,
     chunks: state.chunks
       .map((chunk) => ({
         ...chunk,
@@ -150,6 +161,7 @@ function readState(root: JsonObjectReader): WorldState {
   return {
     hero: readHero(root.field('hero').object()),
     inventory: root.field('inventory').array().map(readSlot),
+    partner: readPartner(root.optionalField('partner')?.object() ?? null),
     clockMs: root.field('clockMs').number({ min: 0 }),
     day: root.optionalField('day')?.number({ integer: true, min: 1 }) ?? 1,
     goals: {
@@ -181,6 +193,12 @@ function readPoint(point: JsonObjectReader): SavedPoint {
     z: point.field('z').number(),
     yaw: point.field('yaw').number(),
   };
+}
+
+function readPartner(partner: JsonObjectReader | null): SavedPartner | undefined {
+  return partner
+    ? { hero: readHero(partner.field('hero').object()), inventory: partner.field('inventory').array().map(readSlot) }
+    : undefined;
 }
 
 function readHero(hero: JsonObjectReader): SavedHero {

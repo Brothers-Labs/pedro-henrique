@@ -21,6 +21,47 @@
     </a>
   </section>
 
+  <section class="group" aria-labelledby="quem-joga">
+    <h2 id="quem-joga" class="group__title">Quem vai jogar?</h2>
+
+    <div class="modes modes--players" role="radiogroup" aria-label="Quantos jogadores">
+      <button type="button" class="mode" role="radio" [attr.aria-checked]="players() === 1" [class.mode--active]="players() === 1" (click)="setPlayers(1)">
+        <span class="mode__emoji" aria-hidden="true">🧒</span>
+        <span class="mode__name">1 jogador</span>
+        <span class="mode__summary">A tela inteira para uma criança.</span>
+      </button>
+      <button type="button" class="mode" role="radio" [attr.aria-checked]="players() === 2" [class.mode--active]="players() === 2" (click)="setPlayers(2)">
+        <span class="mode__emoji" aria-hidden="true">🧒🧒</span>
+        <span class="mode__name">2 jogadores</span>
+        <span class="mode__summary">A tela divide ao meio. O Jogador 2 usa o controle ou as setas do teclado.</span>
+      </button>
+    </div>
+
+    <div class="heroes">
+      <label class="hero-pick">
+        <app-pedro-figure class="hero-pick__figure" [character]="heroLook()" label="" />
+        <span class="hero-pick__label">Personagem do Jogador 1</span>
+        <select class="hero-pick__select" [value]="hero()" (change)="chooseHero('hero', $event)">
+          @for (option of heroes; track option.id) {
+            <option [value]="option.id" [selected]="option.id === hero()">{{ option.name }}</option>
+          }
+        </select>
+      </label>
+
+      @if (players() === 2) {
+        <label class="hero-pick">
+          <app-pedro-figure class="hero-pick__figure" [character]="partnerLook()" label="" />
+          <span class="hero-pick__label">Personagem do Jogador 2</span>
+          <select class="hero-pick__select" [value]="partnerHero()" (change)="chooseHero('partnerHero', $event)">
+            @for (option of heroes; track option.id) {
+              <option [value]="option.id" [selected]="option.id === partnerHero()">{{ option.name }}</option>
+            }
+          </select>
+        </label>
+      }
+    </div>
+  </section>
+
   <section class="group" aria-labelledby="novo-mundo">
     <h2 id="novo-mundo" class="group__title">Novo mundo</h2>
 

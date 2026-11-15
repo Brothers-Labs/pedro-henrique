@@ -1,3 +1,6 @@
+import { paintCharacterIcon } from '../../pedro-maker/art/texture-catalog';
+import { DEFAULT_LOOK, paletteFor } from '../../pedro-maker/config/character.config';
+import type { HeroId } from '../../pedro-maker/models/progress.model';
 import { context2d, createCanvas, darken, lighten, OUTLINE } from '../../pedro-maker/art/canvas';
 import type { CraftCatalog } from '../content/craft-catalog';
 import type { BlockDefinition, IconShape, ItemIcon } from '../models/content.model';
@@ -350,6 +353,8 @@ export function paintItemIcon(catalog: CraftCatalog, itemId: string, size: numbe
 
   if (icon.type === 'block') {
     paintBlockIcon(context, catalog.block(icon.block), size);
+  } else if (icon.type === 'hero') {
+    paintHeroIcon(context, icon.hero, size);
   } else {
     context.drawImage(paintSprite(icon.shape, icon.colors), 0, 0, size, size);
   }
@@ -357,8 +362,23 @@ export function paintItemIcon(catalog: CraftCatalog, itemId: string, size: numbe
   return canvas;
 }
 
+/** O retrato do herói do Maker, centralizado no quadrado do ícone e com a suavização ligada: é desenho, não pixel. */
+function paintHeroIcon(context: CanvasRenderingContext2D, hero: HeroId, size: number): void {
+  const portrait = paintCharacterIcon(paletteFor(DEFAULT_LOOK, hero), 2);
+  const scale = size / Math.max(portrait.width, portrait.height);
+  const width = portrait.width * scale;
+  const height = portrait.height * scale;
+
+  context.imageSmoothingEnabled = true;
+  context.drawImage(portrait, (size - width) / 2, (size - height) / 2, width, height);
+  context.imageSmoothingEnabled = false;
+}
+
+/** O meio bloco aparece no ícone com a metade da altura do bloco inteiro. */
+const HALF_ICON_HEIGHT = 0.5;
+
 /**
- * Bloco inteiro em perspectiva; o tapete é a mesma peça, só que baixinha.
+ * Bloco inteiro em perspectiva; o tapete e o meio bloco são a mesma peça, só que mais baixos.
  * Planta, tocha, água e trilho ficam de frente, como a criança os reconhece.
  */
 function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinition, size: number): void {
@@ -370,7 +390,7 @@ function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinitio
   }
 
   const unit = size / TILE_SIZE;
-  const height = block.shape === 'carpet' ? CARPET_ICON_HEIGHT : 1;
+  const height = block.shape === 'carpet' ? CARPET_ICON_HEIGHT : block.shape === 'half' ? HALF_ICON_HEIGHT : 1;
   // A peça baixa desce para o meio do ícone, em vez de ficar grudada no alto.
   const drop = ((1 - height) * size) / 4;
   const faces: readonly (readonly [HTMLCanvasElement, readonly number[], string | null])[] = [

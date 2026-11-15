@@ -33,6 +33,8 @@
     { "id": "iron-block", "entries": [{ "item": "iron-block" }] },
     { "id": "diamond", "entries": [{ "item": "diamond" }] },
     { "id": "diamond-block", "entries": [{ "item": "diamond-block" }] },
+    { "id": "diamond-half", "entries": [{ "item": "diamond-half" }] },
+    { "id": "netherite-block", "entries": [{ "item": "netherite-block" }] },
     { "id": "emerald", "entries": [{ "item": "emerald" }] },
     { "id": "emerald-block", "entries": [{ "item": "emerald-block" }] },
     { "id": "lapis", "entries": [{ "item": "lapis", "min": 2, "max": 3 }] },

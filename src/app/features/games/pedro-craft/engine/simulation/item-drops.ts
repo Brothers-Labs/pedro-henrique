@@ -61,10 +61,14 @@ export class ItemDrops {
     this.drops.push({ id: this.nextId++, body, stack, ageMs: 0 });
   }
 
-  step(terrain: PhysicsTerrain, collector: DropCollector): void {
+  /** Com dois jogadores, cada item vai para quem está mais perto e tem espaço na mochila. */
+  step(terrain: PhysicsTerrain, collectors: DropCollector | readonly DropCollector[]): void {
+    const candidates: readonly DropCollector[] = Array.isArray(collectors) ? collectors : [collectors as DropCollector];
+
     for (let index = this.drops.length - 1; index >= 0; index -= 1) {
       const drop = this.drops[index];
       const body = drop.body;
+      const collector = nearestWithRoom(candidates, body, drop.stack.item);
 
       drop.ageMs += STEP_MS;
 
@@ -105,4 +109,12 @@ export class ItemDrops {
       body.move(terrain, body.velocityX * STEP_SECONDS, body.velocityY * STEP_SECONDS, body.velocityZ * STEP_SECONDS);
     }
   }
+}
+
+/** O jogador mais perto que ainda tem espaço para o item; sem nenhum com espaço, o mais perto. */
+function nearestWithRoom(collectors: readonly DropCollector[], body: { readonly x: number; readonly y: number; readonly z: number }, item: string): DropCollector {
+  const distance = (collector: DropCollector): number => Math.hypot(collector.x - body.x, collector.y - body.y, collector.z - body.z);
+  const byDistance = [...collectors].sort((first, second) => distance(first) - distance(second));
+
+  return byDistance.find((collector) => collector.roomFor(item) > 0) ?? byDistance[0];
 }

@@ -105,6 +105,12 @@ export interface SavedCreature {
 }
 
 /** Missões: as cumpridas, pelo id, e quanto já foi feito da missão da vez. */
+/** O Jogador 2: guardado quando o mundo foi jogado em dupla, e mantido nas vezes em que se joga sozinho. */
+export interface SavedPartner {
+  readonly hero: SavedHero;
+  readonly inventory: readonly SavedSlot[];
+}
+
 export interface SavedGoals {
   readonly completed: readonly string[];
   readonly amount: number;
@@ -114,6 +120,8 @@ export interface SavedGoals {
 export interface WorldState {
   readonly hero: SavedHero;
   readonly inventory: readonly SavedSlot[];
+  /** O Jogador 2, se o mundo já foi jogado em dupla. */
+  readonly partner?: SavedPartner;
   /** Milissegundos desde o começo da manhã. */
   readonly clockMs: number;
   /** Dia do calendário, a partir de 1. Ausente nos saves de antes das estações: vale o dia 1. */

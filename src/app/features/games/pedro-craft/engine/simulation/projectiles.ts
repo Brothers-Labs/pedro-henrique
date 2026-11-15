@@ -33,7 +33,8 @@ export interface Projectile {
 }
 
 export type ProjectileHit =
-  | { readonly target: 'hero'; readonly projectile: Projectile }
+  /** `body`: o jogador acertado (com dois jogadores, pode ser o Jogador 2). */
+  | { readonly target: 'hero'; readonly projectile: Projectile; readonly body: PhysicsBody }
   | { readonly target: 'creature'; readonly projectile: Projectile; readonly creature: Creature };
 
 export interface ProjectileLaunch {
@@ -86,8 +87,12 @@ export class Projectiles {
     this.projectiles.length = 0;
   }
 
-  /** Move as flechas um passo e devolve quem foi acertado; as que acertaram saem da lista. */
-  step(terrain: PhysicsTerrain, hero: PhysicsBody, creatures: readonly Creature[]): readonly ProjectileHit[] {
+  /**
+   * Move as flechas um passo e devolve quem foi acertado; as que acertaram
+   * saem da lista. `partners`: os outros jogadores, que as flechas dos
+   * inimigos também acertam.
+   */
+  step(terrain: PhysicsTerrain, hero: PhysicsBody, creatures: readonly Creature[], partners: readonly PhysicsBody[] = []): readonly ProjectileHit[] {
     const hits: ProjectileHit[] = [];
 
     for (let index = this.projectiles.length - 1; index >= 0; index -= 1) {
@@ -102,7 +107,7 @@ export class Projectiles {
       projectile.z += projectile.velocityZ * STEP_SECONDS;
       projectile.ageMs += STEP_MS;
 
-      const hit = this.findHit(projectile, hero, creatures);
+      const hit = this.findHit(projectile, [hero, ...partners], creatures);
 
       if (hit) {
         hits.push(hit);
@@ -116,9 +121,11 @@ export class Projectiles {
     return hits;
   }
 
-  private findHit(projectile: Projectile, hero: PhysicsBody, creatures: readonly Creature[]): ProjectileHit | null {
+  private findHit(projectile: Projectile, heroes: readonly PhysicsBody[], creatures: readonly Creature[]): ProjectileHit | null {
     if (projectile.owner === 'creature') {
-      return touches(hero, projectile) ? { target: 'hero', projectile } : null;
+      const body = heroes.find((candidate) => touches(candidate, projectile));
+
+      return body ? { target: 'hero', projectile, body } : null;
     }
 
     const creature = creatures.find((candidate) => touches(candidate.body, projectile));

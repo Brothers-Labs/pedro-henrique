@@ -2,7 +2,12 @@
 
 <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tela-titulo">
   <header class="sheet__top">
-    <h2 id="tela-titulo" class="sheet__title"><span aria-hidden="true">{{ title().emoji }}</span> {{ title().text }}</h2>
+    <h2 id="tela-titulo" class="sheet__title">
+      <span aria-hidden="true">{{ title().emoji }}</span> {{ title().text }}
+      @if (view().player; as player) {
+        <span class="sheet__player">Jogador {{ player }}</span>
+      }
+    </h2>
     <button type="button" class="sheet__close" (click)="closed.emit()"><span aria-hidden="true">✓</span> Fechar</button>
   </header>
 

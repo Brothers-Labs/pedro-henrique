@@ -5,6 +5,8 @@ import {
   type SavedContainer,
   type SavedCreature,
   type SavedFurnace,
+  type SavedHero,
+  type SavedPartner,
   type SavedPlant,
   type SavedSlot,
   WORLD_SAVE_VERSION,
@@ -13,6 +15,7 @@ import {
   type WorldState,
 } from '../models/world-save.model';
 import type { CraftSimulation } from './simulation/craft-simulation';
+import type { HeroMotion } from './simulation/hero-motion';
 import { completedGoalIds } from './simulation/goal-tracker';
 import { CHEST_SIZE, type SlotContent } from './simulation/inventory';
 
@@ -24,10 +27,18 @@ import { CHEST_SIZE, type SlotContent } from './simulation/inventory';
  * e vivo, e o herói. Os inimigos ficam de fora: ao abrir o mundo de novo, eles
  * já "voltaram para casa".
  */
-export function captureWorld(simulation: CraftSimulation, identity: WorldIdentity, updatedAt: string): WorldSave {
+/**
+ * `keptPartner`: o Jogador 2 de uma partida em dupla anterior. Jogando
+ * sozinho, ele continua guardado como estava, para a próxima vez em dupla.
+ */
+export function captureWorld(simulation: CraftSimulation, identity: WorldIdentity, updatedAt: string, keptPartner?: SavedPartner): WorldSave {
   const { id, name, seed, mode, createdAt } = identity;
+  const state = captureState(simulation);
+  const partner = simulation.players[1]
+    ? simulation.asPlayer(1, () => ({ hero: captureHero(simulation), inventory: simulation.inventory.slots.map(copySlot) }))
+    : keptPartner;
 
-  return { version: WORLD_SAVE_VERSION, id, name, seed, mode, createdAt, updatedAt, state: captureState(simulation) };
+  return { version: WORLD_SAVE_VERSION, id, name, seed, mode, createdAt, updatedAt, state: partner ? { ...state, partner } : state };
 }
 
 /**
@@ -46,15 +57,12 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
     }
   }
 
-  hero.teleport(state.hero.x, state.hero.y, state.hero.z);
-  hero.yaw = state.hero.yaw;
-  hero.pitch = state.hero.pitch;
-  simulation.selectedSlot = state.hero.selectedSlot;
-  simulation.respawnPoint = state.hero.respawn;
-  simulation.health.set(state.hero.health);
+  restoreHero(simulation, hero, state.hero);
 
-  if (state.hero.energy !== undefined) {
-    simulation.energy?.set(state.hero.energy);
+  const partner = state.partner;
+
+  if (partner && simulation.players[1]) {
+    simulation.asPlayer(1, () => restoreHero(simulation, simulation.hero, partner.hero));
   }
 
   simulation.setCalendarDay(state.day ?? 1);
@@ -102,23 +110,43 @@ function copySlot(slot: SavedSlot | SlotContent): SlotContent {
   return slot ? { item: slot.item, count: slot.count, durability: slot.durability } : null;
 }
 
-function captureState(simulation: CraftSimulation): WorldState {
-  const { hero, health, clock, catalog } = simulation;
+/** Posição, olhar, vida, energia, barra e cama do jogador da vez. */
+function restoreHero(simulation: CraftSimulation, hero: HeroMotion, saved: SavedHero): void {
+  hero.teleport(saved.x, saved.y, saved.z);
+  hero.yaw = saved.yaw;
+  hero.pitch = saved.pitch;
+  simulation.selectedSlot = saved.selectedSlot;
+  simulation.respawnPoint = saved.respawn;
+  simulation.health.set(saved.health);
+
+  if (saved.energy !== undefined) {
+    simulation.energy?.set(saved.energy);
+  }
+}
+
+function captureHero(simulation: CraftSimulation): SavedHero {
+  const { hero, health } = simulation;
   const body = hero.body;
   const respawn = simulation.respawnPoint;
 
   return {
-    hero: {
-      x: body.x,
-      y: body.y,
-      z: body.z,
-      yaw: hero.yaw,
-      pitch: hero.pitch,
-      health: health.value,
-      energy: simulation.energy?.value,
-      selectedSlot: simulation.selectedSlot,
-      respawn: { x: respawn.x, y: respawn.y, z: respawn.z, yaw: respawn.yaw },
-    },
+    x: body.x,
+    y: body.y,
+    z: body.z,
+    yaw: hero.yaw,
+    pitch: hero.pitch,
+    health: health.value,
+    energy: simulation.energy?.value,
+    selectedSlot: simulation.selectedSlot,
+    respawn: { x: respawn.x, y: respawn.y, z: respawn.z, yaw: respawn.yaw },
+  };
+}
+
+function captureState(simulation: CraftSimulation): WorldState {
+  const { clock, catalog } = simulation;
+
+  return {
+    hero: captureHero(simulation),
     inventory: simulation.inventory.slots.map(copySlot),
     clockMs: clock.time,
     day: simulation.calendar.day,

@@ -12,6 +12,7 @@ export const SHAPE_CODE: Readonly<Record<BlockShape, number>> = {
   slab: 6,
   rail: 7,
   carpet: 8,
+  half: 9,
 };
 
 /**

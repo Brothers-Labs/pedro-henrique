@@ -1,4 +1,7 @@
+import { DEFAULT_LOOK, paletteFor } from '../../pedro-maker/config/character.config';
+import { characterParts } from '../../pedro-maker/engine/render/models/character-parts';
 import { box, type VoxelBox } from '../../pedro-maker/engine/render/voxel-geometry';
+import type { HeroId } from '../../pedro-maker/models/progress.model';
 import type { CreatureDefinition } from '../models/content.model';
 
 const EYE = '#ffffff';
@@ -51,7 +54,35 @@ export function creatureBoxes(definition: CreatureDefinition, isShorn: boolean):
       return squareity(blobShape(definition), color(0), color(1), color(2));
     case 'pointy':
       return pointy(blobShape(definition), color(0), color(1), color(2));
+    case 'maker-hero':
+      return makerHero(definition.hero ?? 'pedro', definition.height);
   }
+}
+
+/**
+ * Boneco de um herói do Pedro Maker: as mesmas peças de cubos de lá, com os
+ * braços e as pernas presos nas juntas, de pé e parados. O Maker olha para +z
+ * e o PedroCraft para -z, então o boneco dá meia-volta; e encolhe ou cresce
+ * até a altura pedida no `creatures.json`, com os pés no chão.
+ */
+function makerHero(hero: HeroId, height: number): readonly VoxelBox[] {
+  const parts = characterParts(paletteFor(DEFAULT_LOOK, hero));
+  const at = (pieces: readonly VoxelBox[], x: number, y: number): readonly VoxelBox[] =>
+    pieces.map((part) => box(part.x + x, part.y + y, part.z, part.width, part.height, part.depth, part.color));
+  const whole = [
+    ...parts.upperBody,
+    ...[-1, 1].flatMap((side) => [
+      ...at(parts.arm, side * parts.shoulderX, parts.shoulderY),
+      ...at(parts.leg, side * parts.hipX, parts.hipY),
+    ]),
+  ];
+  const lowest = Math.min(...whole.map((part) => part.y - part.height / 2));
+  const highest = Math.max(...whole.map((part) => part.y + part.height / 2));
+  const scale = height / (highest - lowest);
+
+  return whole.map((part) =>
+    box(-part.x * scale, (part.y - lowest) * scale, -part.z * scale, part.width * scale, part.height * scale, part.depth * scale, part.color),
+  );
 }
 
 /** Cores: lã, cara e patas, pele tosquiada. Sem lã, o corpo fica fino e rosado. */

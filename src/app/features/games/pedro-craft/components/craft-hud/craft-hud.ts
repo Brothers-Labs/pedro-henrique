@@ -55,6 +55,8 @@ export class CraftHud {
   readonly pickups = input<readonly PickupNotice[]>([]);
   /** No tablet o guia fala dos botões da tela; no computador, das teclas. */
   readonly isTouch = input(false);
+  /** A missão e o guia são de todos: na tela dividida, só a metade do Jogador 1 mostra. */
+  readonly showsGoal = input(true);
 
   readonly slotSelected = output<number>();
   /** Tocar no cartão da missão pede para ouvir a missão. */

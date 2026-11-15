@@ -99,6 +99,8 @@ const WATER_SURFACE = 0.875;
 
 const TORCH_BOX = { min: [7 / 16, 0, 7 / 16], max: [9 / 16, 13 / 16, 9 / 16] } as const;
 const SLAB_HEIGHT = 9 / 16;
+/** O meio bloco tem exatamente a metade: dois, um em cima do outro, fecham um bloco inteiro. */
+const HALF_HEIGHT = 1 / 2;
 const FENCE_POST = { min: [6 / 16, 0, 6 / 16], max: [10 / 16, 1, 10 / 16] } as const;
 const FENCE_RAILS = [
   [6 / 16, 9 / 16],
@@ -169,6 +171,9 @@ class CellMesher {
         return;
       case SHAPE_CODE.slab:
         this.box(writer, block, x, y, z, { min: [0, 0, 0], max: [1, SLAB_HEIGHT, 1] }, (face) => this.isExposed(face, x, y, z, true));
+        return;
+      case SHAPE_CODE.half:
+        this.box(writer, block, x, y, z, { min: [0, 0, 0], max: [1, HALF_HEIGHT, 1] }, (face) => this.isExposed(face, x, y, z, true));
         return;
       case SHAPE_CODE.fence:
         this.fence(writer, block, x, y, z);

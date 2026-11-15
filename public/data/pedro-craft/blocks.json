@@ -374,6 +374,34 @@
       "textures": { "all": { "pattern": "panel", "colors": ["#5ee6e0", "#2fb7b1", "#d4fffd"], "detail": "plain" } }
     },
     {
+      "id": "diamond-half",
+      "name": "Meio bloco de diamante",
+      "shape": "half",
+      "solid": true,
+      "transparent": true,
+      "hardness": 2.5,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "diamond-half",
+      "collisionHeight": 0.5,
+      "mapColor": "#5ee6e0",
+      "textures": { "all": { "pattern": "panel", "colors": ["#5ee6e0", "#2fb7b1", "#d4fffd"], "detail": "plain" } }
+    },
+    {
+      "id": "netherite-block",
+      "name": "Bloco de netherite",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 30,
+      "tool": "pickaxe",
+      "minTier": 5,
+      "drops": "netherite-block",
+      "blastResistant": true,
+      "mapColor": "#3d3a3f",
+      "textures": { "all": { "pattern": "panel", "colors": ["#4a4549", "#2a2629", "#8a7f86"], "detail": "plain" } }
+    },
+    {
       "id": "emerald-ore",
       "name": "Minério de esmeralda",
       "shape": "cube",

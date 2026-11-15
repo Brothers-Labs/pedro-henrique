@@ -222,8 +222,10 @@ export interface CreatureDifficulty {
 }
 
 export interface CreaturesHost {
-  /** O corpo do herói: os bichos nascem longe dele, fogem dele ou vão atrás dele. */
+  /** O corpo do herói (o Jogador 1): os bichos nascem longe dele e o visitante chega perto dele. */
   hero(): PhysicsBody;
+  /** O jogador mais perto de um ponto, de quem o bicho foge ou atrás de quem vai; sem isto, o herói. */
+  heroNear?(x: number, z: number): PhysicsBody;
   /** Hora do dia para o sorteio de quem nasce. */
   period(): SpawnPeriod;
   /** Inimigos podem existir agora? Falso com o Modo Paz ligado. */
@@ -363,8 +365,6 @@ export class Creatures {
       this.spawnGroup();
     }
 
-    const hero = this.host.hero();
-
     // Cópia, do último ao primeiro: o golpe do golem e o estouro do creeper tiram bichos da lista no meio da volta.
     for (const creature of [...this.creatures].reverse()) {
       if (!this.creatures.includes(creature)) {
@@ -372,6 +372,7 @@ export class Creatures {
       }
 
       const body = creature.body;
+      const hero = this.host.heroNear?.(body.x, body.z) ?? this.host.hero();
 
       this.think(creature, hero);
       this.move(terrain, creature, hero);

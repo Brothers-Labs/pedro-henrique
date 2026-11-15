@@ -1,3 +1,4 @@
+import { HEROES } from '../../pedro-maker/config/hero.config';
 import { TestBed } from '@angular/core/testing';
 
 import { recipeRequirements } from '../engine/simulation/crafting';
@@ -144,6 +145,37 @@ describe('Conteúdo do PedroCraft', () => {
       expect(fromBlock?.output).toEqual({ item: 'emerald', count: 9 });
     });
 
+    it('3 blocos de diamante viram 6 meios blocos, e 2 meios blocos voltam a ser um bloco', () => {
+      const toHalves = content.recipes.crafting.find((recipe) => recipe.output.item === 'diamond-half');
+      const fromHalves = content.recipes.crafting.find((recipe) => recipe.output.item === 'diamond-block' && recipe.type === 'shapeless');
+      const half = content.blocks.find((block) => block.id === 'diamond-half');
+
+      expect(toHalves ? recipeRequirements(toHalves) : []).toEqual([{ item: 'diamond-block', count: 3 }]);
+      expect(toHalves?.output.count).toBe(6);
+      expect(fromHalves ? recipeRequirements(fromHalves) : []).toEqual([{ item: 'diamond-half', count: 2 }]);
+      expect(half?.shape).toBe('half');
+      expect(half?.collisionHeight).toBe(0.5);
+      expect(half?.minTier).toBe(content.blocks.find((block) => block.id === 'diamond-block')?.minTier);
+    });
+
+    it('o bloco de netherite sai da mesa com diamante, obsidiana e ouro, só quebra com a picareta de diamante e aguenta a TNT', () => {
+      const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'netherite-block');
+      const netherite = content.blocks.find((block) => block.id === 'netherite-block');
+      const strongestPickaxe = Math.max(...content.items.filter((item) => item.tool?.type === 'pickaxe').map((item) => item.tool?.tier ?? 0));
+
+      expect(recipe?.station).toBe('workbench');
+      expect(recipe ? recipeRequirements(recipe) : []).toEqual(
+        jasmine.arrayWithExactContents([
+          { item: 'diamond-block', count: 4 },
+          { item: 'obsidian', count: 4 },
+          { item: 'gold-block', count: 1 },
+        ]),
+      );
+      expect(netherite?.minTier).toBe(strongestPickaxe);
+      expect(netherite?.blastResistant).toBeTrue();
+      expect(netherite?.hardness).toBeGreaterThan(content.blocks.find((block) => block.id === 'obsidian')?.hardness ?? 0);
+    });
+
     it('a pólvora da TNT vem de um inimigo que estoura, e a TNT acende com um item que se fabrica', () => {
       const tnt = content.blocks.find((block) => block.id === 'tnt');
       const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'tnt');
@@ -194,6 +226,20 @@ describe('Conteúdo do PedroCraft', () => {
       );
       expect(golem?.temperament).toBe('guardian');
       expect(golem?.spawn).toBeNull();
+    });
+
+    it('cada herói do Pedro Maker tem um boneco manso, com item de retrato só na mochila do Criativo', () => {
+      for (const hero of HEROES) {
+        const creature = content.creatures.find((candidate) => candidate.id === `boneco-${hero.id}`);
+        const item = content.items.find((candidate) => candidate.summons === creature?.id);
+
+        expect(creature?.model).withContext(hero.id).toBe('maker-hero');
+        expect(creature?.hero).withContext(hero.id).toBe(hero.id);
+        expect(creature?.name).withContext(hero.id).toBe(hero.name);
+        expect(creature?.temperament).withContext(hero.id).toBe('passive');
+        expect(creature?.spawn).withContext('não aparece sozinho no mundo').toBeNull();
+        expect(item?.icon).withContext(hero.id).toEqual({ type: 'hero', hero: hero.id });
+      }
     });
 
     it('a Verity fala, e só ela', () => {
@@ -394,6 +440,24 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'blocks', 'blocks', 'carpet-red')['solid'] = true;
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "carpet-red": um tapete não pode ser sólido');
+    });
+
+    it('não aceita boneco do Maker com herói que não existe', () => {
+      entry(files, 'creatures', 'creatures', 'boneco-mario')['hero'] = 'bowser';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('"bowser" não é um herói do Pedro Maker');
+    });
+
+    it('não aceita herói em criatura que não é boneco do Maker', () => {
+      entry(files, 'creatures', 'creatures', 'verity')['hero'] = 'mario';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('só o modelo "maker-hero" tem "hero"');
+    });
+
+    it('não aceita meio bloco com colisão diferente da metade: o herói flutuaria ou afundaria nele', () => {
+      entry(files, 'blocks', 'blocks', 'diamond-half')['collisionHeight'] = 1;
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "diamond-half": um meio bloco precisa ser sólido');
     });
 
     it('não aceita TNT que aguenta explosão: a reação em cadeia nunca chegaria nela', () => {

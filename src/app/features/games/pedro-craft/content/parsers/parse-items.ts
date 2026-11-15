@@ -1,3 +1,4 @@
+import { isHeroId } from '../../../pedro-maker/config/hero.config';
 import {
   type BucketStats,
   CONTENT_SCHEMA_VERSION,
@@ -89,7 +90,13 @@ function parseVehicle(item: JsonObjectReader, kind: ItemKind): VehicleStats | nu
 }
 
 function parseIcon(icon: JsonObjectReader): ItemIcon {
-  const type = icon.field('type').oneOf(['block', 'sprite'] as const);
+  const type = icon.field('type').oneOf(['block', 'sprite', 'hero'] as const);
+
+  if (type === 'hero') {
+    const hero = icon.field('hero').string();
+
+    return isHeroId(hero) ? { type, hero } : icon.fail(`"${hero}" não é um herói do Pedro Maker`);
+  }
 
   if (type === 'block') {
     return { type, block: icon.field('block').id() };

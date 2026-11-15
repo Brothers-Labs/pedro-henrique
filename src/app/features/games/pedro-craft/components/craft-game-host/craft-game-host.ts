@@ -107,6 +107,10 @@ export class CraftGameHost {
   protected readonly loadingProgress = signal(0);
   protected readonly errorMessage = signal('');
   protected readonly hud = signal<CraftHudState | null>(null);
+  /** A barra e a vida do Jogador 2, na metade direita da tela dividida. */
+  protected readonly partnerHud = signal<CraftHudState | null>(null);
+  /** Duas crianças na mesma tela: decidido ao abrir o mundo, vale até sair dele. */
+  protected readonly isSplit = signal(false);
   protected readonly screen = signal<ScreenView | null>(null);
   protected readonly toast = signal<string | null>(null);
   protected readonly isHurt = signal(false);
@@ -122,7 +126,8 @@ export class CraftGameHost {
   protected readonly showsTouchControls = computed(() => {
     const mode = this.settingsService.settings().touchControls;
 
-    return mode === 'sempre' || (mode === 'automatico' && isTouchDevice());
+    // Na tela dividida cada criança tem o seu controle: os botões de toque cobririam as duas vistas.
+    return !this.isSplit() && (mode === 'sempre' || (mode === 'automatico' && isTouchDevice()));
   });
 
   protected readonly showsMouseHint = computed(
@@ -350,6 +355,10 @@ export class CraftGameHost {
   private async start(): Promise<void> {
     try {
       const { launchCraftGame } = await import('../../engine/launch-craft');
+      const settings = this.settingsService.settings();
+      const partner = settings.players === 2 ? settings.partnerHero : null;
+
+      this.isSplit.set(partner !== null);
 
       this.session = this.zone.runOutsideAngular(() =>
         launchCraftGame({
@@ -359,6 +368,7 @@ export class CraftGameHost {
           settings: this.engineSettings(),
           guideFirstSteps: !this.settingsService.settings().hasSeenFirstSteps,
           input: this.virtualInput,
+          players: { hero: settings.hero, partner },
           listener: (event) => this.receive(event),
         }),
       );
@@ -388,6 +398,9 @@ export class CraftGameHost {
         this.phase.set('playing');
         this.startAutosave();
         return;
+      case 'partner-hud':
+        this.partnerHud.set(event.hud);
+        break;
       case 'hud':
         this.hud.set(event.hud);
         this.announceNewGoal(event.hud);

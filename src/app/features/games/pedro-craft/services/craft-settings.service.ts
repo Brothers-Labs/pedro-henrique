@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 
 import { CalmModeService } from '../../../../core/services/calm-mode.service';
+import { isHeroId } from '../../pedro-maker/config/hero.config';
 import {
   type CraftButtonSize,
   type CraftDifficulty,
@@ -50,6 +51,9 @@ function defaults(isCalm: boolean): CraftSettings {
     buttonSize: 'normal',
     readAloud: false,
     hasSeenFirstSteps: false,
+    players: 1,
+    hero: 'pedro',
+    partnerHero: 'gui',
   };
 }
 
@@ -87,5 +91,8 @@ export function sanitize(value: unknown, fallback: CraftSettings): CraftSettings
     buttonSize: BUTTON_SIZES.find((size) => size === stored.buttonSize) ?? fallback.buttonSize,
     readAloud: typeof stored.readAloud === 'boolean' ? stored.readAloud : fallback.readAloud,
     hasSeenFirstSteps: typeof stored.hasSeenFirstSteps === 'boolean' ? stored.hasSeenFirstSteps : fallback.hasSeenFirstSteps,
+    players: stored.players === 1 || stored.players === 2 ? stored.players : fallback.players,
+    hero: isHeroId(stored.hero) ? stored.hero : fallback.hero,
+    partnerHero: isHeroId(stored.partnerHero) ? stored.partnerHero : fallback.partnerHero,
   };
 }

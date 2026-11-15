@@ -72,6 +72,16 @@
           }
         },
         "inventory": { "type": "array", "maxItems": 36, "items": { "$ref": "#/$defs/slot" }, "description": "Barra (0 a 8) e mochila (9 a 35)." },
+        "partner": {
+          "type": "object",
+          "required": ["hero", "inventory"],
+          "additionalProperties": false,
+          "description": "O Jogador 2, quando o mundo já foi jogado em dupla: mesma forma do hero e do inventory.",
+          "properties": {
+            "hero": { "$ref": "#/properties/state/properties/hero" },
+            "inventory": { "type": "array", "maxItems": 36, "items": { "$ref": "#/$defs/slot" } }
+          }
+        },
         "clockMs": { "type": "number", "minimum": 0, "description": "Milissegundos desde o começo da manhã." },
         "day": { "type": "integer", "minimum": 1, "default": 1, "description": "Dia do calendário. A estação sai dele." },
         "goals": {
