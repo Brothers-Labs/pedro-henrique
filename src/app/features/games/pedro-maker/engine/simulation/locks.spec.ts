@@ -96,6 +96,18 @@ describe('Chave e porta com cadeado', () => {
     expect(playerCellX(harness)).toBeGreaterThan(10);
   });
 
+  it('com terreno colado em cima, abrir a porta não apaga aquele bloco', () => {
+    const harness = start(flatLevel().add('key', 6, SURFACE - 1).add('locked-door', 10, SURFACE - 1).add('stone', 10, SURFACE - 2).build(META));
+
+    expect(harness.simulation.locks.doors[0].ownsTop).toBeFalse();
+
+    run(harness, 3, { right: true });
+
+    expect(harness.simulation.locks.doors[0].isOpen).toBeTrue();
+    expect(solidAt(harness, 10, SURFACE - 1)).toBeFalse();
+    expect(solidAt(harness, 10, SURFACE - 2)).withContext('a pedra de cima continua firme').toBeTrue();
+  });
+
   it('uma chave abre uma porta só: a segunda porta continua trancada', () => {
     const harness = start(flatLevel().add('key', 6, SURFACE - 1).add('locked-door', 10, SURFACE - 1).add('locked-door', 16, SURFACE - 1).build(META));
 

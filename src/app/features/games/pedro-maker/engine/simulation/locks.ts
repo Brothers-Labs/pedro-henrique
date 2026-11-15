@@ -34,6 +34,11 @@ export interface LockedDoor {
   readonly id: number;
   readonly cellX: number;
   readonly cellY: number;
+  /**
+   * A metade de cima é da porta? Com terreno já ali (um teto colado nela), a
+   * porta só ocupa a célula de baixo e, aberta, não apaga aquele bloco.
+   */
+  readonly ownsTop: boolean;
   isOpen: boolean;
   openedAt: number;
   /** Já avisou que falta a chave neste encosto; volta a avisar depois que o herói se afasta. */
@@ -89,11 +94,18 @@ export class LockSystem {
         case 'key':
           this.keys.push({ id: this.keys.length + 1, x: (object.x + 0.5) * TILE_SIZE, y: (object.y + 0.5) * TILE_SIZE, isTaken: false });
           break;
-        case 'locked-door':
-          this.doors.push({ id: this.doors.length + 1, cellX: object.x, cellY: object.y, isOpen: false, openedAt: 0, isWarned: false });
+        case 'locked-door': {
+          const ownsTop = grid.contains(object.x, object.y - 1) && grid.collisionAt(object.x, object.y - 1) === COLLISION.empty;
+
+          this.doors.push({ id: this.doors.length + 1, cellX: object.x, cellY: object.y, ownsTop, isOpen: false, openedAt: 0, isWarned: false });
           grid.setCollision(object.x, object.y, COLLISION.solid);
-          grid.setCollision(object.x, object.y - 1, COLLISION.solid);
+
+          if (ownsTop) {
+            grid.setCollision(object.x, object.y - 1, COLLISION.solid);
+          }
+
           break;
+        }
         case 'chain':
           this.chains.push({ id: this.chains.length + 1, cellX: object.x, cellY: object.y, isOpen: false, openedAt: 0 });
           grid.setCollision(object.x, object.y, COLLISION.solid);
@@ -188,7 +200,11 @@ export class LockSystem {
       door.isOpen = true;
       door.openedAt = now;
       this.grid.setCollision(door.cellX, door.cellY, COLLISION.empty);
-      this.grid.setCollision(door.cellX, door.cellY - 1, COLLISION.empty);
+
+      if (door.ownsTop) {
+        this.grid.setCollision(door.cellX, door.cellY - 1, COLLISION.empty);
+      }
+
       this.host.playSound('secret');
       this.host.effects.burst('sparkle', x, y, 24);
       this.host.effects.floatingText(x, y - TILE_SIZE, '🔓 ABRIU!', '#ffe066');
@@ -239,7 +255,7 @@ export class LockSystem {
 }
 
 function overlapsDoor(area: WorldArea, door: LockedDoor): boolean {
-  return overlapsCell(area, door.cellX, door.cellY) || overlapsCell(area, door.cellX, door.cellY - 1);
+  return overlapsCell(area, door.cellX, door.cellY) || (door.ownsTop && overlapsCell(area, door.cellX, door.cellY - 1));
 }
 
 function overlapsCell(area: WorldArea, cellX: number, cellY: number): boolean {

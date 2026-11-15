@@ -1,7 +1,7 @@
 import { type BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
 
 import { TILE_SIZE } from '../../config/physics.config';
-import type { LockSystem } from '../simulation/locks';
+import type { LockedDoor, LockSystem } from '../simulation/locks';
 import { disposeTree } from './dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
 import type { WorldSpace } from './world-space';
@@ -93,6 +93,11 @@ function leverStickParts(): readonly VoxelBox[] {
   return [box(0, 0.3, 0, 0.07, 0.6, 0.07, '#c9a26b'), box(0, 0.64, 0, 0.18, 0.18, 0.18, '#e5484d'), box(-0.04, 0.68, 0.09, 0.05, 0.05, 0.01, '#ffb3b5')];
 }
 
+/** Altura da porta em escala: dois blocos, ou um só quando o de cima é terreno. */
+function doorHeight(door: LockedDoor): number {
+  return door.ownsTop ? 1 : 0.5;
+}
+
 /**
  * Chaves, portas com cadeado, correntes e alavancas em 3D.
  *
@@ -129,7 +134,11 @@ export class LockView {
       const geometry = buildBoxesGeometry(lockedDoorParts());
 
       for (const door of system.doors) {
-        this.doorModels.set(door.id, this.placeOnCell(geometry, door.cellX, door.cellY));
+        const model = this.placeOnCell(geometry, door.cellX, door.cellY);
+
+        // Com terreno colado em cima, a porta encolhe para caber num bloco só.
+        model.scale.y = doorHeight(door);
+        this.doorModels.set(door.id, model);
       }
     }
 
@@ -180,7 +189,7 @@ export class LockView {
       if (model && door.isOpen) {
         const progress = Math.min(1, (now - door.openedAt) / DOOR_OPEN_MS);
 
-        model.scale.y = Math.max(0.001, 1 - progress);
+        model.scale.y = Math.max(0.001, (1 - progress) * doorHeight(door));
         model.visible = progress < 1;
       }
     }
