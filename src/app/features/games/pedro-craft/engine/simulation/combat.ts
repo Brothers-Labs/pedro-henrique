@@ -42,6 +42,10 @@ export interface CombatContext {
   readonly catalog: CraftCatalog;
   readonly hero: HeroMotion;
   readonly health: HeroHealth;
+  /** Os corpos dos outros jogadores na tela, que as flechas também acertam. */
+  partners?(): readonly PhysicsBody[];
+  /** Faz `act` como o jogador dono do corpo (a flecha acertou o Jogador 2). */
+  asHeroOf?(body: PhysicsBody, act: () => void): void;
   readonly creatures: Creatures;
   readonly projectiles: Projectiles;
   readonly drops: ItemDrops;
@@ -74,7 +78,8 @@ export type HitSource = 'melee' | 'arrow';
  * testável, como as ações nos blocos.
  */
 export class Combat {
-  private attackCooldownMs = 0;
+  /** Espera até o próximo golpe do jogador da vez; a simulação troca ao trocar a vez. */
+  attackCooldownMs = 0;
 
   constructor(private readonly context: CombatContext) {}
 
@@ -84,13 +89,19 @@ export class Combat {
 
     this.attackCooldownMs = Math.max(0, this.attackCooldownMs - STEP_MS);
 
-    for (const hit of projectiles.step(terrain, hero.body, creatures.list)) {
+    for (const hit of projectiles.step(terrain, hero.body, creatures.list, this.context.partners?.() ?? [])) {
       const { projectile } = hit;
       const fromX = projectile.x - projectile.velocityX;
       const fromZ = projectile.z - projectile.velocityZ;
 
       if (hit.target === 'hero') {
-        this.hurtHero(projectile.damage, fromX, fromZ, 'arrow');
+        const hurt = (): void => this.hurtHero(projectile.damage, fromX, fromZ, 'arrow');
+
+        if (hit.body !== hero.body && this.context.asHeroOf) {
+          this.context.asHeroOf(hit.body, hurt);
+        } else {
+          hurt();
+        }
       } else if (!hit.creature.isGuardian) {
         this.strike(hit.creature, projectile.damage, ARROW_KNOCKBACK, fromX, fromZ);
       }

@@ -1,4 +1,5 @@
 import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
+import type { HeroId } from '../../../pedro-maker/models/progress.model';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import type { BucketStats, CreatureDefinition, ItemDefinition, VehicleStats } from '../../models/content.model';
@@ -8,25 +9,26 @@ import type { SpawnPoint } from '../../world/world-generator';
 import { BlockChangeLog } from '../../world/block-change-log';
 import type { VoxelWorld } from '../../world/voxel-world';
 import { BlockProperties, type PhysicsTerrain, physicsTerrain } from '../block-properties';
-import type { CraftInputSnapshot } from '../input/craft-input';
+import { type CraftInputSnapshot, IDLE_CRAFT_INPUT } from '../input/craft-input';
 import type { LookDelta } from '../input/craft-input-reader';
 import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
 import { Calendar } from './calendar';
-import { Combat } from './combat';
+import { Combat, type CombatContext } from './combat';
+import { CraftPlayer, type PlayerMining } from './craft-player';
 import { type Creature, type CreatureDifficulty, Creatures, GUARDIAN_CAP, TAME_CAP, yawTowards } from './creatures';
 import { DayClock } from './day-clock';
 import { Explosions } from './explosions';
 import { Farm } from './farm';
 import { FirstStepsGuide } from './first-steps';
 import { type GoalEvent, type GoalProgress, GoalTracker } from './goal-tracker';
-import { HeroEnergy } from './hero-energy';
-import { HeroHealth } from './hero-health';
-import { HeroMotion } from './hero-motion';
+import type { HeroEnergy } from './hero-energy';
+import type { HeroHealth } from './hero-health';
+import type { HeroMotion } from './hero-motion';
 import { tickFurnace } from './furnace';
 import { bestTools } from './infinite-supplies';
-import { HOTBAR_SIZE, Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
-import { type DropCollector, ItemDrops } from './item-drops';
+import { HOTBAR_SIZE, type Inventory, type ItemStack, type SlotClick, type SlotContent } from './inventory';
+import { ItemDrops } from './item-drops';
 import { PhysicsBody } from './physics-body';
 import { Portals } from './portals';
 import { Projectiles } from './projectiles';
@@ -95,16 +97,18 @@ export interface CraftSimulationOptions {
   /** Como o mundo se joga; sem ele, aventura. */
   readonly mode?: GameMode;
   readonly difficulty?: CraftDifficulty;
+  /** Herói do Pedro Maker do Jogador 1; sem ele, o Pedro. */
+  readonly hero?: HeroId;
+  /**
+   * Segunda criança na mesma tela: o herói dela e a mochila guardada (sem
+   * mochila, ela começa com o mesmo que o Jogador 1 começaria).
+   */
+  readonly partner?: { readonly hero: HeroId; readonly inventory?: readonly SlotContent[] };
 }
 
+
 /** Bloco sendo quebrado e quanto já foi. */
-export interface MiningState {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-  elapsedMs: number;
-  readonly durationMs: number;
-}
+export type MiningState = PlayerMining;
 
 /**
  * O mundo em movimento, um passo fixo de cada vez.
@@ -120,8 +124,8 @@ export class CraftSimulation {
   readonly terrain: PhysicsTerrain;
   /** Os blocos que mudaram desde a geração: é o que vai para o save. */
   readonly changes: BlockChangeLog;
-  readonly hero: HeroMotion;
-  readonly inventory: Inventory;
+  /** Um jogador, ou dois com a tela dividida. O primeiro é sempre o Jogador 1. */
+  readonly players: readonly CraftPlayer[];
   readonly drops = new ItemDrops();
   readonly goals: GoalTracker;
   readonly screens: ScreenController;
@@ -134,25 +138,21 @@ export class CraftSimulation {
   readonly clock: DayClock;
   readonly calendar: Calendar;
   readonly weather: Weather;
-  readonly health: HeroHealth;
-  /** A energia do modo Sobrevivência gentil; `null` nos outros modos. */
-  readonly energy: HeroEnergy | null;
   readonly mode: GameMode;
   /** O guia do primeiro minuto; `null` quando não foi pedido. */
   readonly firstSteps: FirstStepsGuide | null;
 
-  /** Onde o herói volta depois de desmaiar: o começo do mundo, até a criança usar uma cama. */
-  respawnPoint: SpawnPoint;
-  selectedSlot = 0;
-  target: RayHit | null = null;
-  /** Animal na mira, mais perto que qualquer bloco: o botão de quebrar vira golpe e o de usar vale para ele. */
-  targetCreature: Creature | null = null;
-  mining: MiningState | null = null;
-
-  private ride: TrainRide | null = null;
+  /**
+   * O jogador da vez. Tudo o que é de um jogador só (o herói, a mochila, a
+   * vida, a mira) é lido por ele: a simulação passa por um jogador de cada
+   * vez, e quem chama de fora sempre encontra o Jogador 1 — ou quem abriu a
+   * tela que está na frente.
+   */
+  private player: CraftPlayer;
+  /** Quem abriu a mochila (ou o baú, a mesa, a fornalha) que está na tela. */
+  private screenOwner: CraftPlayer | null = null;
   private readonly actions: BlockActions;
   private readonly combat: Combat;
-  private readonly collector: DropCollector;
   private readonly random: () => number;
   private readonly events: SimulationEvent[] = [];
   private readonly visualEvents: VisualEvent[] = [];
@@ -164,8 +164,6 @@ export class CraftSimulation {
   /** O que o HUD mostra do tempo (dia, parte do dia, clima): mudou, a tela redesenha. */
   private timeLabel = '';
   private readonly greenhouseBlock: number;
-  private breakCooldownMs = 0;
-  private hintedCell = -1;
   private version = 0;
 
   constructor(options: CraftSimulationOptions) {
@@ -174,20 +172,17 @@ export class CraftSimulation {
     this.properties = new BlockProperties(options.catalog);
     this.terrain = physicsTerrain(options.world, this.properties);
     this.changes = new BlockChangeLog(options.world);
-    this.hero = new HeroMotion(options.spawn.x, options.spawn.y, options.spawn.z, options.spawn.yaw);
     this.autoJump = options.autoJump;
     this.isPeaceful = options.peaceful ?? false;
     this.difficulty = options.difficulty ?? 'normal';
-    this.respawnPoint = options.spawn;
-    this.inventory = new Inventory(options.catalog);
     this.goals = new GoalTracker(options.catalog.goals, options.goals);
     this.clock = new DayClock(options.catalog.world.clock.dayMs, options.catalog.world.clock.nightMs);
     this.calendar = new Calendar(options.catalog.world.calendar);
     this.greenhouseBlock = options.catalog.blockNumber(options.catalog.world.calendar.greenhouseBlock);
     this.applySeasonDurations();
-    this.health = new HeroHealth(options.catalog.world.hero);
     this.mode = options.mode ?? 'adventure';
-    this.energy = this.mode === 'survival' ? new HeroEnergy(options.catalog.world.hero.energy) : null;
+    this.players = this.createPlayers(options);
+    this.player = this.players[0];
     this.firstSteps = options.guideFirstSteps ? new FirstStepsGuide() : null;
 
     const seeded = new SeededRandom(options.randomSeed);
@@ -195,13 +190,15 @@ export class CraftSimulation {
     this.weather = new Weather(this.random);
     this.water = new WaterFlow(this.world, this.catalog);
     this.farm = new Farm(this.world, this.catalog, this.properties, seeded, {
-      isOccupied: (minX, minY, minZ, maxX, maxY, maxZ) => this.hero.body.occupies(minX, minY, minZ, maxX, maxY, maxZ),
+      isOccupied: (minX, minY, minZ, maxX, maxY, maxZ) =>
+        this.players.some((player) => player.motion.body.occupies(minX, minY, minZ, maxX, maxY, maxZ)),
       grew: (x, y, z) => this.visualEvents.push({ type: 'crop-grew', x, y, z }),
       growthAt: (x, y, z) => this.growthAt(x, y, z),
       isRainingOn: (x, y, z) => this.weather.isRaining && this.isOpenSky(x, y, z),
     });
     this.creatures = new Creatures(this.world, this.catalog, this.properties, seeded, {
-      hero: () => this.hero.body,
+      hero: () => this.players[0].motion.body,
+      heroNear: (x, z) => this.nearestPlayer(x, z).motion.body,
       period: () => this.clock.period,
       allowsHostiles: () => this.allowsHostiles,
       difficulty: () => DIFFICULTIES[this.difficulty],
@@ -217,7 +214,11 @@ export class CraftSimulation {
 
         this.drops.spawn(body.x, body.y + body.height / 2, body.z, { item, count: 1, durability: null }, this.random);
       },
-      strike: (creature) => this.combat.hurtHero(creature.definition.damage, creature.body.x, creature.body.z),
+      strike: (creature) => {
+        const { x, z } = creature.body;
+
+        this.withPlayer(this.nearestPlayer(x, z), () => this.combat.hurtHero(creature.definition.damage, x, z));
+      },
       shoot: (launch) => this.projectiles.launch(launch),
       vanished: (creature) => this.combat.vanish(creature),
       born: (baby) => {
@@ -228,10 +229,24 @@ export class CraftSimulation {
         this.events.push({ type: 'sound', cue: 'powerup' });
       },
     });
-    this.combat = new Combat({
+    // O herói e a vida são lidos na hora do golpe: valem os do jogador da vez.
+    const simulation = this;
+    const combatContext: CombatContext = {
       catalog: this.catalog,
-      hero: this.hero,
-      health: this.health,
+      get hero(): HeroMotion {
+        return simulation.hero;
+      },
+      get health(): HeroHealth {
+        return simulation.health;
+      },
+      partners: () => this.players.filter((player) => player !== this.player).map((player) => player.motion.body),
+      asHeroOf: (body, act) => {
+        const owner = this.players.find((player) => player.motion.body === body);
+
+        if (owner) {
+          this.withPlayer(owner, act);
+        }
+      },
       creatures: this.creatures,
       projectiles: this.projectiles,
       drops: this.drops,
@@ -257,12 +272,14 @@ export class CraftSimulation {
       isInvulnerable: () => this.mode === 'creative',
       blocksArrow: () => this.blockWithShield(),
       absorbWithArmor: () => this.absorbWithArmor(),
-    });
+    };
 
-    if (options.inventory) {
-      options.inventory.forEach((slot, index) => (this.inventory.slots[index] = slot));
-    } else {
-      options.catalog.world.hero.startingInventory.forEach((entry) => this.inventory.add(entry.item, entry.count));
+    this.combat = new Combat(combatContext);
+
+    this.fillInventory(this.players[0], options.inventory);
+
+    if (this.players[1]) {
+      this.fillInventory(this.players[1], options.partner?.inventory);
     }
 
     this.actions = new BlockActions({
@@ -287,7 +304,7 @@ export class CraftSimulation {
 
         return harvest?.loot ?? null;
       },
-      bodies: () => [this.hero.body, ...this.creatures.list.map((creature) => creature.body)],
+      bodies: () => [...this.players.map((player) => player.motion.body), ...this.creatures.list.map((creature) => creature.body)],
     });
     this.explosions = new Explosions({
       catalog: this.catalog,
@@ -303,37 +320,126 @@ export class CraftSimulation {
     this.screens = new ScreenController({
       catalog: this.catalog,
       infinite: this.mode === 'infinite',
-      inventory: this.inventory,
+      // A mochila da tela é a de quem abriu: o Jogador 2 também guarda e fabrica.
+      get inventory(): Inventory {
+        return simulation.inventory;
+      },
       receive: (stack) => this.receive(stack),
       dropNearHero: (stack) => this.dropNearHero(stack),
     });
 
     if (this.mode === 'infinite' && !options.inventory) {
-      for (const tool of bestTools(this.catalog)) {
-        this.inventory.add(tool.id, 1);
-      }
       this.addSupplyChest(options.spawn);
     }
 
-    const body = this.hero.body;
-
-    // O ímã puxa para a altura da cintura do herói, não para os pés.
-    this.collector = {
-      get x(): number {
-        return body.x;
-      },
-      get y(): number {
-        return body.y + body.height / 2;
-      },
-      get z(): number {
-        return body.z;
-      },
-      roomFor: (item) => this.inventory.roomFor(item),
-      collect: (stack) => this.collect(stack),
-    };
+    for (const player of this.players) {
+      player.collector = this.collectorFor(player);
+    }
   }
 
   /** Muda sempre que algo do HUD muda (barra, item escolhido, missão): a tela só redesenha quando precisa. */
+  get hero(): HeroMotion {
+    return this.player.motion;
+  }
+
+  get inventory(): Inventory {
+    return this.player.inventory;
+  }
+
+  get health(): HeroHealth {
+    return this.player.health;
+  }
+
+  /** A energia do modo Sobrevivência gentil; `null` nos outros modos. */
+  get energy(): HeroEnergy | null {
+    return this.player.energy;
+  }
+
+  /** Onde o herói volta depois de desmaiar: o começo do mundo, até a criança usar uma cama. */
+  get respawnPoint(): SpawnPoint {
+    return this.player.respawnPoint;
+  }
+
+  set respawnPoint(point: SpawnPoint) {
+    this.player.respawnPoint = point;
+  }
+
+  get selectedSlot(): number {
+    return this.player.selectedSlot;
+  }
+
+  set selectedSlot(slot: number) {
+    this.player.selectedSlot = slot;
+  }
+
+  get target(): RayHit | null {
+    return this.player.target;
+  }
+
+  set target(hit: RayHit | null) {
+    this.player.target = hit;
+  }
+
+  /** Animal na mira, mais perto que qualquer bloco: o botão de quebrar vira golpe e o de usar vale para ele. */
+  get targetCreature(): Creature | null {
+    return this.player.targetCreature;
+  }
+
+  set targetCreature(creature: Creature | null) {
+    this.player.targetCreature = creature;
+  }
+
+  get mining(): MiningState | null {
+    return this.player.mining;
+  }
+
+  set mining(state: MiningState | null) {
+    this.player.mining = state;
+  }
+
+  /** O jogador da vez: o Jogador 1, ou quem abriu a tela que está na frente. */
+  get activePlayer(): CraftPlayer {
+    return this.player;
+  }
+
+  private get ride(): TrainRide | null {
+    return this.player.ride;
+  }
+
+  private set ride(ride: TrainRide | null) {
+    this.player.ride = ride;
+  }
+
+  private get breakCooldownMs(): number {
+    return this.player.breakCooldownMs;
+  }
+
+  private set breakCooldownMs(ms: number) {
+    this.player.breakCooldownMs = ms;
+  }
+
+  private get hintedCell(): number {
+    return this.player.hintedCell;
+  }
+
+  private set hintedCell(cell: number) {
+    this.player.hintedCell = cell;
+  }
+
+  /**
+   * Faz `action` como o jogador de número `index` (0 ou 1) e volta para quem
+   * era a vez. É assim que a tela lê a mochila e a vida do Jogador 2.
+   */
+  asPlayer<T>(index: number, action: () => T): T {
+    const player = this.players[index];
+
+    if (!player) {
+      throw new Error(`Jogador ${index + 1} não está no jogo`);
+    }
+
+    return this.withPlayer(player, action);
+  }
+
   get hudVersion(): number {
     return this.version;
   }
@@ -416,6 +522,11 @@ export class CraftSimulation {
     this.noteFirstStep(this.firstSteps?.look(Math.abs(delta.yaw) + Math.abs(delta.pitch)) ?? false);
   }
 
+  /** O olhar do Jogador 2; sem Jogador 2, nada acontece. */
+  lookPartner(delta: LookDelta): void {
+    this.players[1]?.motion.look(delta.yaw, delta.pitch);
+  }
+
   /** "Pular guia": a criança já sabe jogar. */
   skipFirstSteps(): void {
     if (this.firstSteps && !this.firstSteps.isDone) {
@@ -424,12 +535,37 @@ export class CraftSimulation {
     }
   }
 
-  step(input: CraftInputSnapshot): void {
+  /** `partnerInput` é o que o Jogador 2 apertou; sem Jogador 2, não é lido. */
+  step(input: CraftInputSnapshot, partnerInput: CraftInputSnapshot = IDLE_CRAFT_INPUT): void {
     // Com uma tela aberta o mundo espera a criança; quem para o relógio é a sessão.
     if (this.screens.screen) {
       return;
     }
 
+    this.withPlayer(this.players[0], () => this.stepPlayer(input));
+
+    if (this.players[1] && !this.screens.screen) {
+      this.withPlayer(this.players[1], () => this.stepPlayer(partnerInput));
+    }
+
+    if (this.screens.screen) {
+      // Quem abriu a mochila continua sendo a vez até a tela fechar.
+      return;
+    }
+
+    this.passTime();
+    this.drops.step(this.terrain, this.players.flatMap((player) => (player.collector ? [player.collector] : [])));
+    this.creatures.step(this.terrain);
+    this.restOtherPlayers();
+    this.combat.step(this.terrain);
+    this.explosions.step(STEP_MS);
+    this.water.step(STEP_MS);
+    this.farm.step(STEP_MS);
+    this.tickFurnaces(STEP_MS);
+  }
+
+  /** A parte do passo que é de um jogador só: andar, mirar, quebrar, bater, usar e abrir a mochila. */
+  private stepPlayer(input: CraftInputSnapshot): void {
     this.applySelection(input);
     this.moveHero(input);
     this.travelThroughPortal();
@@ -452,16 +588,7 @@ export class CraftSimulation {
       this.use();
     }
 
-    this.passTime();
-    this.drops.step(this.terrain, this.collector);
-    this.creatures.step(this.terrain);
-    this.combat.step(this.terrain);
-    this.explosions.step(STEP_MS);
-    this.water.step(STEP_MS);
-    this.farm.step(STEP_MS);
-    this.tickFurnaces(STEP_MS);
-
-    if (input.inventoryPressed) {
+    if (input.inventoryPressed && !this.screens.screen) {
       this.openScreen('inventory');
     }
   }
@@ -486,7 +613,7 @@ export class CraftSimulation {
     }
 
     const body = this.hero.body;
-    const trip = this.portals.step(body.x, body.y, body.z, STEP_MS);
+    const trip = this.player.portalWalk.step(body.x, body.y, body.z, STEP_MS);
 
     if (trip?.type === 'alone') {
       this.events.push({ type: 'hint', text: PORTAL_ALONE_HINT });
@@ -525,6 +652,7 @@ export class CraftSimulation {
    */
   openScreen(kind: CraftScreen, options: { readonly cell?: number; readonly announce?: boolean } = {}): void {
     this.screens.open(kind, options.cell ?? -1);
+    this.screenOwner = this.player;
     this.mining = null;
 
     if (options.announce ?? true) {
@@ -555,6 +683,8 @@ export class CraftSimulation {
   /** Fecha a tela: a grade e a mão voltam à mochila, e o que não couber cai no chão. */
   closeScreen(): void {
     this.screens.close();
+    this.screenOwner = null;
+    this.switchTo(this.players[0]);
     this.version += 1;
   }
 
@@ -604,12 +734,22 @@ export class CraftSimulation {
 
     this.weather.step(STEP_MS);
 
-    const hasEnergyChanged = this.drainEnergy();
+    // Fome e vida que volta aos poucos são de cada jogador.
+    const hasHeroChanged = this.players
+      .map((player) =>
+        this.withPlayer(player, () => {
+          const hasEnergyChanged = this.drainEnergy();
+          const hasHealthChanged = this.health.step(STEP_MS, !this.energy?.isEmpty);
+
+          return hasEnergyChanged || hasHealthChanged;
+        }),
+      )
+      .some(Boolean);
 
     this.watchNightfall();
     const timeLabel = `${this.calendar.day}|${this.clock.partOfDay}|${this.weather.current}`;
 
-    if (this.health.step(STEP_MS, !this.energy?.isEmpty) || hasEnergyChanged || timeLabel !== this.timeLabel) {
+    if (hasHeroChanged || timeLabel !== this.timeLabel) {
       this.timeLabel = timeLabel;
       this.version += 1;
     }
@@ -1369,6 +1509,107 @@ export class CraftSimulation {
   }
 
   /** Recolhe uma pilha do chão: guarda, avisa a tela e conta para a missão. */
+  private createPlayers(options: CraftSimulationOptions): CraftPlayer[] {
+    const hasEnergy = this.mode === 'survival';
+    const first = new CraftPlayer(0, options.hero ?? 'pedro', options.spawn, this.catalog, this.world, hasEnergy);
+
+    if (!options.partner) {
+      return [first];
+    }
+
+    // Os dois nascem no mesmo ponto, que o gerador garante livre: um não empurra o outro.
+    return [first, new CraftPlayer(1, options.partner.hero, options.spawn, this.catalog, this.world, hasEnergy)];
+  }
+
+  /** Mochila guardada, ou a do começo do mundo (com as melhores ferramentas no modo Infinito). */
+  private fillInventory(player: CraftPlayer, saved: readonly SlotContent[] | undefined): void {
+    if (saved) {
+      saved.forEach((slot, index) => (player.inventory.slots[index] = slot));
+      return;
+    }
+
+    this.catalog.world.hero.startingInventory.forEach((entry) => player.inventory.add(entry.item, entry.count));
+
+    if (this.mode === 'infinite') {
+      for (const tool of bestTools(this.catalog)) {
+        player.inventory.add(tool.id, 1);
+      }
+    }
+  }
+
+  /** O ímã dos itens caídos puxa para a cintura do jogador, não para os pés, e guarda na mochila dele. */
+  private collectorFor(player: CraftPlayer): NonNullable<CraftPlayer['collector']> {
+    const body = player.motion.body;
+
+    return {
+      get x(): number {
+        return body.x;
+      },
+      get y(): number {
+        return body.y + body.height / 2;
+      },
+      get z(): number {
+        return body.z;
+      },
+      roomFor: (item) => player.inventory.roomFor(item),
+      collect: (stack) => this.withPlayer(player, () => this.collect(stack)),
+    };
+  }
+
+  /** O jogador mais perto de um ponto: é dele que o bicho foge, é atrás dele que o inimigo vai. */
+  private nearestPlayer(x: number, z: number): CraftPlayer {
+    let nearest = this.players[0];
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const player of this.players) {
+      const body = player.motion.body;
+      const distance = Math.hypot(body.x - x, body.z - z);
+
+      if (distance < nearestDistance) {
+        nearest = player;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearest;
+  }
+
+  /**
+   * Faz `action` com `player` na vez e devolve a vez a quem tinha — ou a quem
+   * abriu a tela que ficou na frente durante a ação.
+   */
+  private withPlayer<T>(player: CraftPlayer, action: () => T): T {
+    const previous = this.player;
+
+    this.switchTo(player);
+
+    try {
+      return action();
+    } finally {
+      this.switchTo(this.screenOwner ?? previous);
+    }
+  }
+
+  /** Troca a vez, guardando a espera do golpe de quem sai e trazendo a de quem entra. */
+  private switchTo(player: CraftPlayer): void {
+    if (player === this.player) {
+      return;
+    }
+
+    this.player.attackCooldownMs = this.combat.attackCooldownMs;
+    this.player = player;
+    this.combat.attackCooldownMs = player.attackCooldownMs;
+  }
+
+  /** A espera do golpe de quem não está na vez também passa (a de quem está, o combate conta). */
+  private restOtherPlayers(): void {
+    for (const player of this.players) {
+      if (player !== this.player) {
+        player.attackCooldownMs = Math.max(0, player.attackCooldownMs - STEP_MS);
+      }
+    }
+  }
+
   private collect(stack: ItemStack): number {
     const left = this.receive(stack);
     const stored = stack.count - left;
