@@ -1,0 +1,103 @@
+<form class="studio" (submit)="$event.preventDefault(); publish()">
+  <div class="studio__fields">
+    <div class="field">
+      <label class="field__label" for="tube-video-canal">Canal</label>
+      <select id="tube-video-canal" class="field__control" (change)="channelId.set($any($event.target).value)">
+        @for (channel of store.channels(); track channel.id) {
+          <option [value]="channel.id" [selected]="channel.id === channelId()">{{ channel.avatar }} {{ channel.name }}</option>
+        }
+      </select>
+      <span class="field__hint">
+        Quer um canal só seu?
+        <a routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'canal' }">Crie um canal</a>.
+      </span>
+    </div>
+
+    <label class="field">
+      <span class="field__label">Título do vídeo</span>
+      <input
+        class="field__control"
+        type="text"
+        [maxLength]="maxTitleLength"
+        [value]="title()"
+        (input)="title.set($any($event.target).value); error.set(null)"
+      />
+    </label>
+
+    <label class="field">
+      <span class="field__label">Descrição <small>(opcional)</small></span>
+      <textarea
+        class="field__control"
+        rows="2"
+        [maxLength]="maxDescriptionLength"
+        [value]="description()"
+        (input)="description.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <div class="field">
+      <span class="field__label">Como fazer o vídeo</span>
+      <app-choice-chips label="Como fazer o vídeo" [options]="sourceChips" [selected]="source()" (selectedChange)="changeSource($event)" />
+    </div>
+
+    @switch (source()) {
+      @case ('animacao') {
+        <app-scene-editor [(scenes)]="scenes" />
+      }
+      @case ('arquivo') {
+        <label class="field">
+          <span class="field__label">Arquivo de vídeo</span>
+          <input class="field__control" type="file" accept="video/*" (change)="onFileSelected($event)" />
+          <span class="field__hint">
+            @if (isReadingFile()) {
+              Lendo o vídeo…
+            } @else if (media(); as media) {
+              ✅ {{ media.label }}
+            } @else {
+              Escolha um vídeo do aparelho.
+            }
+          </span>
+        </label>
+      }
+      @case ('camera') {
+        <app-camera-recorder [effect]="effect()" (recorded)="onRecorded($event)" />
+        @if (media()) {
+          <p class="studio__hint">✅ Gravação pronta! Grave de novo se quiser trocar.</p>
+        }
+      }
+    }
+
+    <div class="field">
+      <span class="field__label">Efeito</span>
+      <app-effect-picker [effects]="store.effects()" [(selected)]="effectId" label="Efeito do vídeo" />
+      <span class="field__hint">
+        <a routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'efeito' }">Inventar um efeito novo</a>
+      </span>
+    </div>
+
+    @if (error()) {
+      <p class="field__error" role="alert">{{ error() }}</p>
+    }
+
+    <button type="submit" class="button button--primary" [disabled]="isPublishing() || isReadingFile()">
+      <span aria-hidden="true">🚀</span> {{ isPublishing() ? 'Publicando…' : 'Publicar vídeo' }}
+    </button>
+  </div>
+
+  <aside class="studio__preview" aria-label="Prévia do vídeo">
+    <h3 class="studio__preview-title">Prévia</h3>
+    @if (source() === 'animacao') {
+      <app-scene-player [scenes]="scenes()" [effect]="effect()" [loop]="true" />
+    } @else if (media(); as media) {
+      <app-effect-stage [effect]="effect()">
+        <video class="studio__video" controls playsinline [src]="media.previewUrl" aria-label="Prévia do vídeo"></video>
+      </app-effect-stage>
+    } @else if (source() === 'arquivo') {
+      <app-effect-stage [effect]="effect()">
+        <p class="studio__empty">📁 Escolha um vídeo para ver aqui.</p>
+      </app-effect-stage>
+    } @else {
+      <p class="studio__hint">A câmera aparece ao lado. Depois de gravar, o vídeo aparece aqui.</p>
+    }
+  </aside>
+</form>
