@@ -1,6 +1,6 @@
 import { circle, fillAndOutline, roundedRect, shine } from './canvas';
 
-/** Chave, corrente e alavanca ocupam o quadrado de um bloco: 48 por 48. */
+/** Chave, corrente, alavanca, prensa e corrente de subir ocupam o quadrado de um bloco: 48 por 48. */
 export const LOCK_ART_SIZE = 48;
 /** A porta com cadeado tem dois blocos de altura, como as outras portas. */
 export const LOCKED_DOOR_WIDTH = 48;
@@ -108,4 +108,80 @@ export function paintLever(context: CanvasRenderingContext2D): void {
   fillAndOutline(context, '#6b6f80', 2.5);
   roundedRect(context, 16, 33, 16, 5, 2);
   fillAndOutline(context, DARK_STEEL, 2);
+}
+
+/** Prensa Esmagadora: haste de aço saindo do alto, cabeça de ferro de olhos bravos, faixa de cuidado e dentes embaixo. */
+export function paintCrusher(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 20, 0, 8, 9, 1.5);
+  fillAndOutline(context, STEEL, 2);
+
+  roundedRect(context, 3, 8, 42, 30, 4);
+  fillAndOutline(context, DARK_STEEL, 3);
+
+  // Olhos bravos.
+  for (const x of [15, 33]) {
+    roundedRect(context, x - 5, 15, 10, 7, 2);
+    fillAndOutline(context, '#ffffff', 1.5);
+    context.fillStyle = '#1a1a2e';
+    context.fillRect(x - 2, 17, 4, 4);
+  }
+
+  context.fillStyle = '#1a1a2e';
+  context.fillRect(9, 12, 11, 2.5);
+  context.fillRect(28, 12, 11, 2.5);
+
+  // Faixa amarela e preta de cuidado.
+  for (let stripe = 0; stripe < 6; stripe += 1) {
+    context.fillStyle = stripe % 2 === 0 ? GOLD : '#1a1a2e';
+    context.fillRect(6 + stripe * 6, 27, 6, 7);
+  }
+
+  // Dentes de aço.
+  for (let tooth = 0; tooth < 5; tooth += 1) {
+    const x = 6 + tooth * 8;
+
+    context.beginPath();
+    context.moveTo(x, 38);
+    context.lineTo(x + 7, 38);
+    context.lineTo(x + 3.5, 46);
+    context.closePath();
+    fillAndOutline(context, STEEL, 1.5);
+  }
+
+  shine(context, 8, 11, 3, 2);
+}
+
+/** Corrente de Subir: barra com gancho em cima e uma corrente comprida de elos pendurada no meio. */
+export function paintClimbChain(context: CanvasRenderingContext2D): void {
+  roundedRect(context, 10, 1, 28, 6, 2);
+  fillAndOutline(context, DARK_STEEL, 2);
+
+  for (let link = 0; link < 6; link += 1) {
+    const y = 6 + link * 7;
+
+    if (link % 2 === 0) {
+      roundedRect(context, 19, y, 10, 10, 4);
+      context.strokeStyle = '#1a1a2e';
+      context.lineWidth = 5;
+      context.stroke();
+      context.strokeStyle = STEEL;
+      context.lineWidth = 2.5;
+      context.stroke();
+    } else {
+      roundedRect(context, 22.5, y, 3, 10, 1.5);
+      fillAndOutline(context, '#a9b1c2', 1.5);
+    }
+  }
+
+  // Seta para cima: dá para subir.
+  context.beginPath();
+  context.moveTo(40, 14);
+  context.lineTo(46, 24);
+  context.lineTo(42, 24);
+  context.lineTo(42, 34);
+  context.lineTo(38, 34);
+  context.lineTo(38, 24);
+  context.lineTo(34, 24);
+  context.closePath();
+  fillAndOutline(context, '#7bd389', 1.5);
 }

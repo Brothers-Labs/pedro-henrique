@@ -19,6 +19,8 @@ export interface LockHost {
   onKeysChanged(keys: number): void;
   /** Dica do mascote, na primeira vez que algo acontece. */
   onLockTip(text: string): void;
+  /** Uma alavanca acabou de ser puxada: outras máquinas da fase (as prensas) também reagem. */
+  onLeverPulled(now: number): void;
 }
 
 /** Chave flutuando na fase. `x` e `y` são o centro, em pixels. */
@@ -69,7 +71,8 @@ export interface Lever {
  * A chave vai para o bolso ao encostar; a porta com cadeado é uma parede de
  * dois blocos que se abre quando o herói encosta nela com uma chave no bolso,
  * e gasta a chave. A alavanca é puxada ao encostar e solta todas as correntes
- * da fase, de vez.
+ * da fase, de vez; quem levanta as prensas esmagadoras é a partida, avisada
+ * pelo `onLeverPulled`.
  *
  * Nada aqui volta a fechar, de propósito: uma porta ou corrente que fechasse
  * de novo poderia prender o herói dentro do bloco.
@@ -228,6 +231,7 @@ export class LockSystem {
       this.host.effects.burst('dust', x, y, 8);
       this.host.effects.floatingText(x, y - TILE_SIZE, '🕹️ CLAQUE!', '#ffffff');
       this.openChains(now, x);
+      this.host.onLeverPulled(now);
     }
   }
 

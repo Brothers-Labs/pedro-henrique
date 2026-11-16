@@ -389,3 +389,27 @@ test('Maker has a Flags tab with the checkpoint and the Goal Flag, and plays a l
   await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
   await page.screenshot({ path: test.info().outputPath('goal-flag-in-game.png') });
 });
+
+test('Maker saves the Crushing Press, the Climbing Chain and the lever, and plays the level', async ({ page }) => {
+  test.slow();
+  await page.goto('/jogos/pedro-maker/criar');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase da Prensa');
+  await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
+  const grid = page.getByRole('application', { name: /Grade da fase/ });
+  const pieces = ['Prensa Esmagadora', 'Corrente de Subir', 'Alavanca'] as const;
+  await page.getByRole('tab', { name: 'Blocos', exact: true }).click();
+  for (const [index, label] of pieces.entries()) {
+    const piece = page.getByRole('button', { name: label, exact: true });
+    await piece.click();
+    await expect(piece).toHaveAttribute('aria-pressed', 'true');
+    await grid.click({ position: { x: 208 + index * 64, y: 112 } });
+  }
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect.poll(async () => (await savedLevels(page))
+    .find((level) => level.name === 'Fase da Prensa')?.objects.map((object) => object.type))
+    .toEqual(expect.arrayContaining(['crusher', 'climb-chain', 'lever']));
+  await page.screenshot({ path: test.info().outputPath('crusher-editor.png') });
+  await page.getByRole('button', { name: 'Testar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pausar', exact: true })).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: test.info().outputPath('crusher-in-game.png') });
+});

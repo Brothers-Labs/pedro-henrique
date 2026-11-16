@@ -121,7 +121,17 @@ import { paintWarioPortrait } from './wario-art';
 import { THEME_PALETTES, type ThemePalette } from './palettes';
 import { PEDRO_FRAME_HEIGHT, PEDRO_FRAME_WIDTH, paintPedroPortrait } from './pedro-art';
 import { paintVoxelIcon } from './voxel-tiles';
-import { LOCK_ART_SIZE, LOCKED_DOOR_HEIGHT, LOCKED_DOOR_WIDTH, paintChain, paintKey, paintLever, paintLockedDoor } from './lock-art';
+import {
+  LOCK_ART_SIZE,
+  LOCKED_DOOR_HEIGHT,
+  LOCKED_DOOR_WIDTH,
+  paintChain,
+  paintClimbChain,
+  paintCrusher,
+  paintKey,
+  paintLever,
+  paintLockedDoor,
+} from './lock-art';
 import { PATH_ART_SIZE, paintFireBar, paintPSwitch, paintTalkingFlower, paintWarpPipe } from './path-art';
 
 /* Ícones do editor ------------------------------------------------------------- */
@@ -309,6 +319,12 @@ function drawIcon(
       return;
     case 'lever':
       fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintLever);
+      return;
+    case 'crusher':
+      fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintCrusher);
+      return;
+    case 'climb-chain':
+      fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintClimbChain);
       return;
     case 'talking-flower':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintTalkingFlower);

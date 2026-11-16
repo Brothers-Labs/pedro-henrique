@@ -342,8 +342,16 @@ export type LevelObjectType =
   | 'locked-door'
   /** Corrente: bloco firme que se solta quando alguém puxa uma alavanca da fase. */
   | 'chain'
-  /** Alavanca: encostar nela puxa, e todas as correntes da fase se soltam. */
+  /** Alavanca: encostar nela puxa, todas as correntes da fase se soltam e as prensas esmagadoras sobem de vez. */
   | 'lever'
+  /**
+   * Prensa Esmagadora: bloco de ferro preso no teto que despenca até o chão,
+   * esmaga quem estiver embaixo e sobe de novo, sem parar. Puxar uma alavanca
+   * da fase faz a prensa subir e ficar lá em cima, com o caminho livre.
+   */
+  | 'crusher'
+  /** Corrente de Subir: corrente pendurada; segurando o pulo, qualquer herói sobe por ela. */
+  | 'climb-chain'
   | EnemyKind
   | 'boss'
   | ItemType
