@@ -10,7 +10,10 @@ import { skeletonWallColumn } from './skeleton-platform';
  * pulos de verdade — com a mesma gravidade do jogo e um impulso um pouco menor
  * que o real — a partir de cada chão alcançado. Paredes, tetos, molas,
  * plataformas de mão única, lava e água entram na conta como no jogo. Na água
- * o Pedro nada para qualquer lado e salta para fora pela superfície.
+ * o Pedro nada para qualquer lado e salta para fora pela superfície; a
+ * Corrente de Subir conta do mesmo jeito: sobe, desce e, no alto, pula para
+ * fora. A Prensa Esmagadora parada lá em cima é um bloco firme, a não ser que
+ * a fase tenha uma alavanca, que a levanta de vez.
  *
  * É conservador de propósito: aprova só o que uma criança consegue fazer sem
  * precisar de um pulo perfeito. Inimigos e power-ups ficam fora da conta.
@@ -94,7 +97,17 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
     }
   };
 
+  const hasLever = blueprint.objects.some((object) => object.type === 'lever');
+
   for (const object of blueprint.objects) {
+    if (object.type === 'crusher') {
+      if (!hasLever) {
+        mark(object.x, object.y, Surface.Solid);
+      }
+
+      continue;
+    }
+
     if (object.type === 'spring') {
       mark(object.x, object.y, Surface.Spring);
       continue;
@@ -127,6 +140,11 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
         break;
     }
   }
+
+  // A corrente só vale onde nada mais ocupa a célula: dentro de um bloco, o bloco manda.
+  blueprint.objects
+    .filter((object) => object.type === 'climb-chain' && surfaces[object.y * width + object.x] === Surface.Empty)
+    .forEach((object) => mark(object.x, object.y, Surface.Water));
 
   blueprint.objects
     .filter((object) => object.type === 'skeleton-platform')

@@ -16,6 +16,7 @@ import {
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
 import type { InputSnapshot } from '../input/input-snapshot';
+import { CLIMB_CHAIN, type ClimbChainGrip } from './climb-chains';
 import type { BallElement } from './fireballs';
 import { bottom, centerX, createBody, type PhysicsBody, placeFeet, type WorldArea } from './physics-body';
 import { rampSurfaceY, type SlideRamp } from './slides';
@@ -38,6 +39,8 @@ export interface PlayerSurroundings {
   readonly isInWater: boolean;
   /** Dentro da água, mas com a cabeça para fora: a braçada vira salto. */
   readonly isAtWaterSurface: boolean;
+  /** Pendurado numa Corrente de Subir; `null` longe de todas. Opcional: sem correntes na fase, nem é medido. */
+  readonly climbChain?: ClimbChainGrip | null;
 }
 
 /** Poderes que duram até proteger de um toque, em vez de acabar com o tempo. */
@@ -154,6 +157,7 @@ export class Player {
   private slideRide: SlideRide | null = null;
   private climbTimeLeftMs: number = CAT_SUIT_PHYSICS.climbMs;
   private climbing = false;
+  private onClimbChain = false;
   private gliding = false;
   private flightTimeLeftMs: number = RACCOON_SUIT_PHYSICS.flightMs;
   private flying = false;
@@ -195,9 +199,14 @@ export class Player {
     return this.slideRide !== null;
   }
 
-  /** Subindo uma parede com o Cogumelo Gato. */
+  /** Subindo uma parede com o Cogumelo Gato ou pendurado numa Corrente de Subir. */
   get isClimbing(): boolean {
     return this.climbing;
+  }
+
+  /** Pendurado numa Corrente de Subir neste passo. */
+  get isOnClimbChain(): boolean {
+    return this.onClimbChain;
   }
 
   /** Planando com o Cogumelo Folha. */
@@ -274,6 +283,7 @@ export class Player {
     const input = this.reverseControls(pressed);
 
     this.climbing = false;
+    this.onClimbChain = false;
     this.gliding = false;
     this.flying = false;
 
@@ -307,6 +317,8 @@ export class Player {
 
     if (this.isInWater) {
       this.handleSwim(input, surroundings.isAtWaterSurface);
+    } else if (surroundings.climbChain && this.climbChain(now, input, grounded, surroundings.climbChain)) {
+      // A corrente cuidou da subida (ou do pulo para fora dela) neste passo.
     } else if (!this.climbWall(deltaMs, input, grounded) && !this.fly(now, deltaMs, input, grounded)) {
       this.handleJump(now, input, grounded);
       this.glide(input, grounded);
@@ -514,6 +526,62 @@ export class Player {
     this.climbTimeLeftMs -= deltaMs;
     this.body.vy = -CAT_SUIT_PHYSICS.climbSpeed;
     this.climbing = true;
+
+    return true;
+  }
+
+  /**
+   * Corrente de Subir: segurando o pulo, sobe; soltando, escorrega devagar. No
+   * último elo, um pulinho leva o herói para cima do chão do lado. Pular
+   * apertando para um lado solta da corrente. Qualquer herói sobe, sem poder
+   * nenhum. Verdadeiro quando a corrente cuidou do movimento deste passo.
+   */
+  private climbChain(now: number, input: InputSnapshot, grounded: boolean, grip: ClimbChainGrip): boolean {
+    const isPushingSideways = input.left !== input.right;
+
+    if (input.jumpPressed && isPushingSideways) {
+      this.jump(this.jumpVelocity() * CLIMB_CHAIN.jumpOffMultiplier);
+      this.host.effects.burst('dust', centerX(this.body), this.body.y + this.body.height / 2, 4);
+
+      return true;
+    }
+
+    // Parado no chão e sem apertar o pulo, a corrente é só enfeite: o herói anda normalmente.
+    if (grounded && !input.jumpHeld) {
+      return false;
+    }
+
+    const body = this.body;
+
+    this.onClimbChain = true;
+    this.climbing = true;
+    this.hasUsedDoubleJump = false;
+    this.lastGroundedAt = now;
+    this.body.riding = null;
+
+    if (!isPushingSideways) {
+      body.vx = (grip.x - centerX(body)) * CLIMB_CHAIN.centeringSpeed;
+    }
+
+    if (!input.jumpHeld) {
+      body.vy = Math.min(body.vy, CLIMB_CHAIN.slideSpeed);
+      this.isJumpCut = true;
+
+      return true;
+    }
+
+    const hop = this.jumpVelocity() * CLIMB_CHAIN.topHopMultiplier;
+
+    if (grip.isAtTop && body.vy > -hop * 0.6) {
+      // O último elo: um pulinho para o herói chegar em cima do chão do lado.
+      this.jump(hop);
+      this.isJumpCut = true;
+
+      return true;
+    }
+
+    body.vy = Math.min(body.vy, -CLIMB_CHAIN.climbSpeed);
+    this.isJumpCut = true;
 
     return true;
   }

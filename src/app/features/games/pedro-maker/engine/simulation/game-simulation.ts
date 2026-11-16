@@ -28,6 +28,8 @@ import type { DifficultyRules } from '../../models/settings.model';
 import type { InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { CannonSystem } from './cannons';
+import { ClimbChainSystem } from './climb-chains';
+import { CrusherSystem } from './crushers';
 import { FireBarSystem } from './fire-bars';
 import { type PSwitchHost, PSwitchSystem } from './p-switch';
 import { Boss, type BossHost } from './boss';
@@ -54,6 +56,9 @@ import { VisualEventQueue } from './visual-events';
 
 /** Um passo fixo de física: 60 por segundo em qualquer tela, de 60 ou 120 Hz. */
 export const STEP_MS = 1000 / 60;
+
+/** A batida da prensa no chão só treme a tela com o herói a menos de dez blocos dela. */
+const CRUSHER_SHAKE_DISTANCE = TILE_SIZE * 10;
 
 /** Distância do Pedro além da qual os inimigos esperam parados. */
 const ENEMY_ACTIVE_DISTANCE = 1000;
@@ -139,6 +144,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly fireBars: FireBarSystem;
   readonly pSwitches: PSwitchSystem;
   readonly locks: LockSystem;
+  readonly crushers: CrusherSystem;
+  readonly climbChains: ClimbChainSystem;
   readonly fireballs = new FireballSystem();
   readonly enemies: Enemy[] = [];
   boss: Boss | null = null;
@@ -188,6 +195,9 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.fireBars = new FireBarSystem(blueprint.objects);
     this.pSwitches = new PSwitchSystem(blueprint.objects, this.grid, this.blocks, this.collectibles, this);
     this.locks = new LockSystem(blueprint.objects, this.grid, this);
+    // Depois das portas e correntes: a prensa desce só até o primeiro bloco firme embaixo dela.
+    this.crushers = new CrusherSystem(blueprint.objects, this.grid);
+    this.climbChains = new ClimbChainSystem(blueprint.objects);
     this.createBoss(blueprint.objects);
   }
 
@@ -230,6 +240,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       isOnIce: this.grid.isIceAtPoint(centerX(body), bottom(body) + 4),
       isInWater,
       isAtWaterSurface: isInWater && !this.blocks.isWaterAtPoint(centerX(body), body.y),
+      climbChain: this.climbChains.gripOf(body),
     });
     this.blocks.update(seconds);
 
@@ -252,6 +263,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.updateBoss(seconds);
     this.pSwitches.update(this.clockMs, player);
     this.locks.update(this.clockMs, body, player.isActive);
+    this.updateCrushers();
     this.collectibles.update(STEP_MS, centerX(body), centerY(body), this.magnetRadius());
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
@@ -546,6 +558,53 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     if (boss.isAwake && this.player.isActive && overlaps(this.player.body, boss.body)) {
       this.onBossContact(boss);
+    }
+  }
+
+  /**
+   * Prensas esmagadoras: a casa fica firme enquanto a prensa espera lá em
+   * cima; descendo, ela esmaga o herói (que perde um coração e é jogado para
+   * o lado) e qualquer inimigo que estiver embaixo. Perto do herói, a batida no
+   * chão treme a tela.
+   */
+  private updateCrushers(): void {
+    if (!this.crushers.hasCrushers) {
+      return;
+    }
+
+    const now = this.clockMs;
+    const playerBody = this.player.body;
+    const livingEnemies = this.enemies.filter((enemy) => !enemy.isDefeated);
+
+    this.crushers.update(now, [playerBody, ...livingEnemies.map((enemy) => enemy.body)]);
+
+    for (const crusher of this.crushers.crushers) {
+      if (!this.crushers.slammedBetween(crusher, now - STEP_MS, now)) {
+        continue;
+      }
+
+      const x = (crusher.cellX + 0.5) * TILE_SIZE;
+
+      this.effects.burst('dust', x, (crusher.cellY + crusher.dropCells + 1) * TILE_SIZE, 10);
+
+      if (Math.abs(x - centerX(playerBody)) < CRUSHER_SHAKE_DISTANCE) {
+        this.effects.shake('leve');
+        this.playSound('break');
+      }
+    }
+
+    for (const enemy of livingEnemies) {
+      if (!enemy.isHidden && this.crushers.crushing(now, enemy.body)) {
+        this.defeatEnemy(enemy);
+      }
+    }
+
+    if (this.player.isActive) {
+      const crusher = this.crushers.crushing(now, playerBody);
+
+      if (crusher) {
+        this.hurtPlayer((crusher.cellX + 0.5) * TILE_SIZE);
+      }
     }
   }
 
@@ -964,6 +1023,22 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   onLockTip(text: string): void {
     this.emit({ type: 'mascot', text });
+  }
+
+  /** Uma alavanca foi puxada: além das correntes, as prensas esmagadoras sobem e ficam lá em cima. */
+  onLeverPulled(now: number): void {
+    const raised = this.crushers.raiseAll(now);
+
+    if (raised === 0) {
+      return;
+    }
+
+    for (const crusher of this.crushers.crushers) {
+      this.effects.floatingText((crusher.cellX + 0.5) * TILE_SIZE, crusher.cellY * TILE_SIZE - TILE_SIZE / 2, '⬆️ SUBIU!', '#ffe066');
+    }
+
+    this.playSound('secret');
+    this.onLockTip(raised === 1 ? 'A alavanca levantou a prensa! Pode passar embaixo dela.' : 'A alavanca levantou as prensas! Pode passar embaixo delas.');
   }
 
   onPSwitch(isActive: boolean, durationMs: number): void {

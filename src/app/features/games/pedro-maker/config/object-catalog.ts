@@ -47,6 +47,9 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   'locked-door': { surface: 'none', isUnique: false },
   chain: { surface: 'none', isUnique: false },
   lever: { surface: 'none', isUnique: false },
+  // A prensa não é terreno: a simulação cuida da colisão dela enquanto desce e sobe.
+  crusher: { surface: 'none', isUnique: false },
+  'climb-chain': { surface: 'none', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
   note: { surface: 'solid', isUnique: false },
@@ -217,6 +220,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'p-switch', category: 'blocos', type: 'p-switch', label: 'Botão P' },
   { id: 'chain', category: 'blocos', type: 'chain', label: 'Corrente' },
   { id: 'lever', category: 'blocos', type: 'lever', label: 'Alavanca' },
+  { id: 'crusher', category: 'blocos', type: 'crusher', label: 'Prensa Esmagadora' },
+  { id: 'climb-chain', category: 'blocos', type: 'climb-chain', label: 'Corrente de Subir' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
   {

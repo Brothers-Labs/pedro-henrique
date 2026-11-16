@@ -17,6 +17,7 @@ import { PSwitchView } from './p-switch-view';
 import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
 import { LockView } from './lock-view';
+import { MachineView } from './machine-view';
 import { BossModel } from './models/boss-model';
 import { EnemyMaterials, EnemyModel } from './models/enemy-model';
 import { PedroModel } from './models/pedro-model';
@@ -79,6 +80,7 @@ export class LevelView {
   private fireBars: FireBarView | null = null;
   private pSwitches: PSwitchView | null = null;
   private locks: LockView | null = null;
+  private machines: MachineView | null = null;
   private talkingFlowers: TalkingFlowerView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
@@ -142,10 +144,11 @@ export class LevelView {
         this.collectibles = new CollectibleView(simulation.collectibles, this.space, spareCoins);
         this.pSwitches = new PSwitchView(pSwitches, this.space);
         this.locks = new LockView(simulation.locks, this.space);
+        this.machines = new MachineView(simulation.crushers, simulation.climbChains, simulation.grid, this.space);
         this.fireballs = new FireballView(simulation.fireballs, this.space);
         this.fireBars = new FireBarView(simulation.fireBars, this.space);
         this.talkingFlowers = new TalkingFlowerView(simulation.triggers.flowers, this.space);
-        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root, this.locks.root);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root, this.locks.root, this.machines.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -266,6 +269,7 @@ export class LevelView {
     this.fireBars?.update(now);
     this.pSwitches?.update(now);
     this.locks?.update(now);
+    this.machines?.update(now);
     this.talkingFlowers?.update(now);
     this.props?.update(now);
     this.scenery?.update(deltaSeconds);
@@ -296,6 +300,7 @@ export class LevelView {
     this.fireBars?.dispose();
     this.pSwitches?.dispose();
     this.locks?.dispose();
+    this.machines?.dispose();
     this.talkingFlowers?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();

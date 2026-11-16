@@ -38,6 +38,8 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   'locked-door': '#7a4a2a',
   chain: '#8d96a8',
   lever: '#e5484d',
+  crusher: '#4a5163',
+  'climb-chain': '#b9c0cf',
   start: '#ffffff',
   portal: '#9a6cf0',
   checkpoint: '#ff4f9a',
