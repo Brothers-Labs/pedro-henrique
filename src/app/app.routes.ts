@@ -142,6 +142,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/videos/videos-page').then((m) => m.VideosPage),
   },
   {
+    path: 'pedro-tube',
+    data: {
+      description:
+        'PedroTube: o canal de vídeos do Pedro Henrique. Assista, crie o seu canal, faça vídeos de animação ou com a câmera e invente efeitos.',
+    },
+    loadChildren: () => import('./features/pedro-tube/pedro-tube.routes').then((m) => m.PEDRO_TUBE_ROUTES),
+  },
+  {
     path: 'planos',
     title: 'Planos',
     data: {

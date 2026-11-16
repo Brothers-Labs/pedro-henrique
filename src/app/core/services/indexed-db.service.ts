@@ -6,6 +6,7 @@ export const MAKER_LEVEL_STORE = 'maker-levels';
 export const KART_TRACK_STORE = 'kart-tracks';
 export const FLASH_COURSE_STORE = 'flash-courses';
 export const CRAFT_WORLD_STORE = 'craft-worlds';
+export const TUBE_MEDIA_STORE = 'tube-media';
 
 const DATABASE_NAME = 'pedro-henrique-site';
 
@@ -13,9 +14,9 @@ const DATABASE_NAME = 'pedro-henrique-site';
  * Versão 2 acrescentou a prancheta de desenho ao banco dos vídeos; a versão 3,
  * as fases criadas no editor do Pedro Maker; a versão 4, as pistas do Pedro
  * Kart Maker; a versão 5, as fases do Pedro Flash Maker; a versão 6, os
- * mundos do PedroCraft.
+ * mundos do PedroCraft; a versão 7, os arquivos de vídeo do PedroTube.
  */
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
 
 const STORES: readonly string[] = [
   VIDEO_STORE,
@@ -24,6 +25,7 @@ const STORES: readonly string[] = [
   KART_TRACK_STORE,
   FLASH_COURSE_STORE,
   CRAFT_WORLD_STORE,
+  TUBE_MEDIA_STORE,
 ];
 
 /**
@@ -45,6 +47,13 @@ export class IndexedDbService {
     return this.runRequest(() =>
       database.transaction(storeName, 'readonly').objectStore(storeName).getAll(),
     ) as Promise<TValue[]>;
+  }
+
+  async get<TValue>(storeName: string, key: IDBValidKey): Promise<TValue | undefined> {
+    const database = await this.openDatabase();
+    return this.runRequest(() =>
+      database.transaction(storeName, 'readonly').objectStore(storeName).get(key),
+    ) as Promise<TValue | undefined>;
   }
 
   async put<TValue>(storeName: string, value: TValue): Promise<void> {
@@ -85,8 +94,24 @@ export class IndexedDbService {
         }
       };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error('Falha ao abrir o banco local.'));
+      request.onsuccess = () => {
+        const database = request.result;
+
+        /**
+         * Outra aba com uma versão mais nova do site quer atualizar o banco:
+         * esta conexão sai da frente, e a próxima leitura abre de novo.
+         */
+        database.onversionchange = () => {
+          database.close();
+          this.databasePromise = null;
+        };
+
+        resolve(database);
+      };
+      request.onerror = () => {
+        this.databasePromise = null;
+        reject(request.error ?? new Error('Falha ao abrir o banco local.'));
+      };
     });
 
     return this.databasePromise;

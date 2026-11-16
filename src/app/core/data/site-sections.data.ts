@@ -123,6 +123,14 @@ export const SITE_SECTIONS: readonly SiteSection[] = [
     color: 'purple',
   },
   {
+    id: 'pedro-tube',
+    label: 'PedroTube',
+    route: '/pedro-tube',
+    emoji: '📺',
+    description: 'Meu canal de vídeos: assisto, crio canais, faço vídeos e invento efeitos.',
+    color: 'pink',
+  },
+  {
     id: 'videos',
     label: 'Vídeos',
     route: '/videos',
@@ -157,7 +165,7 @@ export const PRIMARY_SECTIONS: readonly SiteSection[] = ['inicio', 'falar', 'des
  */
 export const NAVIGATION_GROUPS: readonly NavigationGroup[] = [
   { id: 'comecar', label: 'Começar', sections: ['inicio', 'falar'].map(findSection) },
-  { id: 'criar', label: 'Criar', sections: ['desenhos', 'ideias'].map(findSection) },
+  { id: 'criar', label: 'Criar', sections: ['desenhos', 'pedro-tube', 'ideias'].map(findSection) },
   {
     id: 'brincar',
     label: 'Brincar',
