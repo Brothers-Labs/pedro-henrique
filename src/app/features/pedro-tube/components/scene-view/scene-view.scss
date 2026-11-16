@@ -1,0 +1,125 @@
+:host {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqi;
+  padding: 4cqi;
+  overflow: hidden;
+  text-align: center;
+}
+
+.scene__emoji {
+  font-size: 26cqi;
+  line-height: 1;
+  filter: drop-shadow(0 1.2cqi 1.5cqi rgb(0 0 0 / 35%));
+  animation: 1.2s ease-in-out infinite;
+}
+
+.scene__text {
+  margin: 0;
+  max-width: 90%;
+  font-family: var(--font-display);
+  font-size: 6.2cqi;
+  font-weight: 800;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+:host([data-motion='pular']) .scene__emoji {
+  animation-name: scene-jump;
+}
+
+:host([data-motion='girar']) .scene__emoji {
+  animation-name: scene-spin;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+}
+
+:host([data-motion='crescer']) .scene__emoji {
+  animation-name: scene-grow;
+}
+
+:host([data-motion='deslizar']) .scene__emoji {
+  animation-name: scene-slide;
+  animation-duration: 2s;
+}
+
+:host([data-motion='tremer']) .scene__emoji {
+  animation-name: scene-shake;
+  animation-duration: 0.4s;
+}
+
+:host([data-motion='parado']) .scene__emoji {
+  animation: none;
+}
+
+:host-context(.stage--still) .scene__emoji {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene__emoji {
+    animation: none !important;
+  }
+}
+
+@keyframes scene-jump {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+
+  10% {
+    transform: translateY(0) scale(1.1, 0.9);
+  }
+
+  45% {
+    transform: translateY(-18%) scale(0.95, 1.05);
+  }
+}
+
+@keyframes scene-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scene-grow {
+  0%,
+  100% {
+    transform: scale(0.85);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes scene-slide {
+  0%,
+  100% {
+    transform: translateX(-30%) rotate(-6deg);
+  }
+
+  50% {
+    transform: translateX(30%) rotate(6deg);
+  }
+}
+
+@keyframes scene-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateX(-4%) rotate(-5deg);
+  }
+
+  75% {
+    transform: translateX(4%) rotate(5deg);
+  }
+}

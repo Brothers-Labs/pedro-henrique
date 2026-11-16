@@ -1,0 +1,73 @@
+@use 'mixins' as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.channel__banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(90deg, rgb(14 11 29 / 85%) 0%, rgb(14 11 29 / 35%) 100%),
+    linear-gradient(135deg, var(--channel-color), #0e0b1d);
+  box-shadow: 0 0 2rem color-mix(in srgb, var(--channel-color) 40%, transparent);
+}
+
+.channel__identity {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.channel__name {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.channel__handle,
+.channel__description {
+  margin: 0;
+  color: #d9d4f2;
+}
+
+.channel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.channel__videos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.channel__heading {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.channel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-5) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.channel__danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}

@@ -1,0 +1,170 @@
+@use 'mixins' as *;
+
+/*
+ * Formulários do estúdio do PedroTube: campos de um lado, prévia ao vivo do
+ * outro. No celular a prévia sobe para cima dos campos, que é onde o olho
+ * está quando a criança troca uma opção.
+ */
+.studio {
+  display: grid;
+  gap: var(--space-5);
+
+  @include from($breakpoint-lg) {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+    align-items: start;
+  }
+}
+
+.studio__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+
+  > .button {
+    align-self: flex-start;
+  }
+}
+
+.studio__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  order: -1;
+
+  @include from($breakpoint-lg) {
+    position: sticky;
+    top: var(--space-5);
+    order: 0;
+  }
+}
+
+.studio__preview-title {
+  margin: 0;
+  font-size: var(--text-md);
+  color: #b9b3d9;
+}
+
+.studio__banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  text-shadow: 0 2px 4px rgb(0 0 0 / 45%);
+}
+
+.studio__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  border: 2px solid rgb(255 255 255 / 12%);
+  border-radius: var(--radius-sm);
+
+  legend {
+    padding-inline: var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
+}
+
+.studio__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.studio__slider {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) 1fr 3.5rem;
+  align-items: center;
+  gap: var(--space-2);
+
+  input {
+    width: 100%;
+    accent-color: #c86bff;
+  }
+
+  output {
+    color: #b9b3d9;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+.studio__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.studio__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 7%);
+
+  > span {
+    margin-right: auto;
+  }
+}
+
+.studio__hint {
+  margin: 0;
+  color: #b9b3d9;
+  font-size: var(--text-sm);
+}
+
+.field select.field__control option {
+  background: #1c1733;
+  color: #ffffff;
+}
+
+app-scene-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+
+  > * {
+    align-self: stretch;
+  }
+
+  > .button {
+    align-self: flex-start;
+  }
+}
+
+.field__hint a {
+  color: #8fd3ff;
+  font-weight: 700;
+}
+
+.studio__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000000;
+}
+
+.studio__empty {
+  display: grid;
+  height: 100%;
+  margin: 0;
+  place-items: center;
+  color: #ffffff;
+  text-align: center;
+}

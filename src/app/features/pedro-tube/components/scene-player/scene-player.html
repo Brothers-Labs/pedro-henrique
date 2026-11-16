@@ -1,0 +1,29 @@
+<app-effect-stage [effect]="effect()">
+  @for (position of current(); track position.index) {
+    <app-scene-view [scene]="position.scene" [animate]="isPlaying()" [attr.data-scene]="position.index + 1" />
+  }
+</app-effect-stage>
+
+<div class="player__controls">
+  <button
+    type="button"
+    class="player__play"
+    [attr.aria-label]="isPlaying() ? 'Pausar' : 'Tocar'"
+    (click)="togglePlay()"
+  >
+    {{ isPlaying() ? '⏸️' : '▶️' }}
+  </button>
+
+  <input
+    class="player__progress"
+    type="range"
+    min="0"
+    step="0.1"
+    aria-label="Posição do vídeo"
+    [max]="duration()"
+    [value]="time()"
+    (input)="seek($any($event.target).value)"
+  />
+
+  <span class="player__time">{{ timeLabel() }}</span>
+</div>

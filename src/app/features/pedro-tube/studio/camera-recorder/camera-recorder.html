@@ -1,0 +1,42 @@
+@if (!isSupported) {
+  <p class="camera__hint">Este navegador não consegue gravar vídeos. Use “Enviar vídeo” para escolher um arquivo.</p>
+} @else {
+  <app-effect-stage [effect]="effect()">
+    @switch (status()) {
+      @case ('parado') {
+        <p class="camera__message">📹 Toque em “Abrir câmera” para começar.</p>
+      }
+      @case ('abrindo') {
+        <p class="camera__message">Abrindo a câmera…</p>
+      }
+      @case ('erro') {
+        <p class="camera__message">😕 {{ errorMessage() }}</p>
+      }
+      @default {
+        <video #preview class="camera__video" muted playsinline aria-label="Câmera ao vivo"></video>
+      }
+    }
+  </app-effect-stage>
+
+  <div class="camera__actions">
+    @switch (status()) {
+      @case ('pronto') {
+        <button type="button" class="button button--small button--primary" (click)="startRecording()">
+          <span aria-hidden="true">🔴</span> Gravar
+        </button>
+      }
+      @case ('gravando') {
+        <button type="button" class="button button--small" (click)="stopRecording()">
+          <span aria-hidden="true">⏹️</span> Parar
+        </button>
+        <span class="camera__clock"><span class="camera__rec" aria-hidden="true">●</span> {{ clock() }}</span>
+      }
+      @case ('abrindo') {}
+      @default {
+        <button type="button" class="button button--small button--secondary" (click)="openCamera()">
+          <span aria-hidden="true">📷</span> Abrir câmera
+        </button>
+      }
+    }
+  </div>
+}

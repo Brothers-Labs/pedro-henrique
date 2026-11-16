@@ -1,0 +1,39 @@
+<div class="tube container">
+  <header class="tube__bar">
+    <a class="tube__brand" routerLink="/pedro-tube" aria-label="PedroTube: início">
+      <app-tube-logo />
+    </a>
+
+    <form class="tube__search" role="search" (submit)="$event.preventDefault(); search(searchBox.value)">
+      <label class="visually-hidden" for="tube-busca">Buscar no PedroTube</label>
+      <input
+        #searchBox
+        id="tube-busca"
+        class="tube__search-input"
+        type="search"
+        placeholder="Buscar vídeos"
+        enterkeyhint="search"
+        [value]="searchTerm()"
+      />
+      <button type="submit" class="tube__search-button" aria-label="Buscar">🔍</button>
+    </form>
+
+    <nav class="tube__nav" aria-label="PedroTube">
+      <a
+        class="tube__nav-link"
+        routerLink="/pedro-tube"
+        routerLinkActive="tube__nav-link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <span aria-hidden="true">🏠</span> Início
+      </a>
+      <a class="tube__nav-link tube__nav-link--create" routerLink="/pedro-tube/estudio" routerLinkActive="tube__nav-link--active">
+        <span aria-hidden="true">➕</span> Criar
+      </a>
+    </nav>
+  </header>
+
+  <div class="tube__page">
+    <router-outlet />
+  </div>
+</div>

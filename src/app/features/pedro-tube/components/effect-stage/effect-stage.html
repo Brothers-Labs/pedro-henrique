@@ -1,0 +1,25 @@
+<div class="stage__screen">
+  <div class="stage__media" [style.filter]="filterCss()">
+    <ng-content />
+  </div>
+
+  @if (particles().length > 0) {
+    <div class="stage__particles" aria-hidden="true" [attr.data-flow]="flow()">
+      @for (particle of particles(); track $index) {
+        <span
+          class="stage__particle"
+          [style.left.%]="particle.left"
+          [style.--top]="particle.top + '%'"
+          [style.--size]="particle.size + 'rem'"
+          [style.animation-duration.s]="particle.duration"
+          [style.animation-delay.s]="-particle.delay"
+          >{{ particle.glyph }}</span
+        >
+      }
+    </div>
+  }
+
+  @if (effect().sticker) {
+    <span class="stage__sticker" aria-hidden="true">{{ effect().sticker }}</span>
+  }
+</div>

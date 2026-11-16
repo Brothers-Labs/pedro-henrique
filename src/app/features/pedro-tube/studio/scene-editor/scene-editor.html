@@ -1,0 +1,68 @@
+@for (scene of scenes(); track $index; let index = $index) {
+  <fieldset class="studio__group">
+    <legend>🎞️ Cena {{ index + 1 }}</legend>
+
+    <div class="studio__row">
+      <label class="field">
+        <span class="field__label">Desenho da cena {{ index + 1 }}</span>
+        <select class="field__control" [value]="scene.emoji" (change)="update(index, { emoji: $any($event.target).value })">
+          @for (emoji of emojiChoices; track emoji) {
+            <option [value]="emoji" [selected]="emoji === scene.emoji">{{ emoji }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Movimento da cena {{ index + 1 }}</span>
+        <select class="field__control" (change)="setMotion(index, $any($event.target).value)">
+          @for (motion of motionOptions; track motion.value) {
+            <option [value]="motion.value" [selected]="motion.value === scene.motion">{{ motion.emoji }} {{ motion.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Tempo da cena {{ index + 1 }}</span>
+        <select class="field__control" (change)="update(index, { seconds: +$any($event.target).value })">
+          @for (seconds of secondChoices; track seconds) {
+            <option [value]="seconds" [selected]="seconds === scene.seconds">{{ seconds }} s</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="field">
+      <span class="field__label">Frase da cena {{ index + 1 }}</span>
+      <input
+        class="field__control"
+        type="text"
+        [maxLength]="maxTextLength"
+        [value]="scene.text"
+        (input)="update(index, { text: $any($event.target).value })"
+      />
+    </label>
+
+    <div class="field">
+      <span class="field__label">Fundo da cena {{ index + 1 }}</span>
+      <app-choice-chips
+        look="cor"
+        [label]="'Fundo da cena ' + (index + 1)"
+        [options]="colorChips"
+        [selected]="scene.background"
+        (selectedChange)="update(index, { background: $event })"
+      />
+    </div>
+
+    @if (scenes().length > 1) {
+      <button type="button" class="button button--small button--ghost" (click)="remove(index)">
+        <span aria-hidden="true">✖️</span> Tirar cena {{ index + 1 }}
+      </button>
+    }
+  </fieldset>
+}
+
+@if (scenes().length < maxScenes) {
+  <button type="button" class="button button--small button--secondary" (click)="add()">
+    <span aria-hidden="true">➕</span> Adicionar cena
+  </button>
+}

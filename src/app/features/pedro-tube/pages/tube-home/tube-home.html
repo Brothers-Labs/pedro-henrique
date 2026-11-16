@@ -1,0 +1,73 @@
+@if (!term() && !filter()) {
+  <section class="home__hero" aria-labelledby="tube-hero-titulo">
+    <h1 id="tube-hero-titulo" class="home__hero-title">
+      <span class="visually-hidden">PedroTube</span>
+      <app-tube-logo [large]="true" aria-hidden="true" />
+    </h1>
+    <p class="home__hero-text">Assista, crie o seu canal, faça vídeos e invente efeitos.</p>
+    <div class="home__hero-actions">
+      <a class="home__action" routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'canal' }">
+        <span aria-hidden="true">📺</span> Criar canal
+      </a>
+      <a class="home__action" routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'video' }">
+        <span aria-hidden="true">🎬</span> Criar vídeo
+      </a>
+      <a class="home__action" routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'efeito' }">
+        <span aria-hidden="true">✨</span> Criar efeito
+      </a>
+    </div>
+  </section>
+}
+
+<nav class="home__chips" aria-label="Filtrar vídeos">
+  <a class="home__chip" routerLink="/pedro-tube" [attr.aria-current]="!filter() ? 'page' : null">Tudo</a>
+  <a
+    class="home__chip"
+    routerLink="/pedro-tube"
+    [queryParams]="{ canal: subscriptionsFilter }"
+    [attr.aria-current]="filter() === subscriptionsFilter ? 'page' : null"
+  >
+    <span aria-hidden="true">🔔</span> Inscrições
+  </a>
+  @for (channel of store.channels(); track channel.id) {
+    <a
+      class="home__chip"
+      routerLink="/pedro-tube"
+      [queryParams]="{ canal: channel.id }"
+      [attr.aria-current]="filter() === channel.id ? 'page' : null"
+    >
+      <app-tube-avatar [avatar]="channel.avatar" [color]="channel.color" [size]="1.5" />
+      {{ channel.name }}
+    </a>
+  }
+</nav>
+
+<section class="home__feed" aria-labelledby="tube-feed-titulo">
+  <h2 id="tube-feed-titulo" class="home__heading">
+    @if (term()) {
+      Resultados para “{{ term() }}”
+    } @else {
+      {{ heading() }}
+    }
+  </h2>
+
+  @if (visibleVideos().length > 0) {
+    <ul class="home__grid">
+      @for (video of visibleVideos(); track video.id) {
+        <li><app-tube-video-card [video]="video" /></li>
+      }
+    </ul>
+  } @else if (term()) {
+    <app-empty-state emoji="🔍" title="Nenhum vídeo encontrado" message="Tente buscar com outra palavra." />
+  } @else if (filter() === subscriptionsFilter) {
+    <app-empty-state
+      emoji="🔔"
+      title="Você ainda não se inscreveu em nenhum canal"
+      message="Abra um canal e toque em Inscreva-se para ver os vídeos dele aqui."
+    />
+  } @else {
+    <app-empty-state emoji="🎥" title="Este canal ainda não tem vídeos" message="Que tal criar o primeiro?">
+      <a class="button button--primary" routerLink="/pedro-tube/estudio" [queryParams]="{ aba: 'video' }">Criar vídeo</a>
+    </app-empty-state>
+  }
+</section>
