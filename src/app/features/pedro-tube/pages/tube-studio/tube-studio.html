@@ -1,0 +1,31 @@
+<h1 class="studio-page__title"><span aria-hidden="true">🎥</span> Estúdio</h1>
+
+<div class="studio-page__tabs" role="tablist" aria-label="O que criar">
+  @for (option of tabs; track option.id) {
+    <button
+      type="button"
+      role="tab"
+      class="studio-page__tab"
+      [id]="'aba-' + option.id"
+      [attr.aria-selected]="tab() === option.id"
+      [attr.aria-controls]="'painel-' + option.id"
+      (click)="select(option.id)"
+    >
+      <span aria-hidden="true">{{ option.emoji }}</span> {{ option.label }}
+    </button>
+  }
+</div>
+
+<section role="tabpanel" [id]="'painel-' + tab()" [attr.aria-labelledby]="'aba-' + tab()">
+  @switch (tab()) {
+    @case ('canal') {
+      <app-channel-creator />
+    }
+    @case ('efeito') {
+      <app-effect-creator />
+    }
+    @default {
+      <app-video-creator [initialChannelId]="channelId()" [initialEffectId]="effectId()" />
+    }
+  }
+</section>

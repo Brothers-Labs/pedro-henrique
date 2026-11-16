@@ -1,0 +1,50 @@
+<form class="studio" (submit)="$event.preventDefault(); create()">
+  <div class="studio__fields">
+    <label class="field">
+      <span class="field__label">Nome do canal</span>
+      <input
+        class="field__control"
+        type="text"
+        [maxLength]="maxNameLength"
+        [value]="name()"
+        (input)="name.set($any($event.target).value); error.set(null)"
+      />
+    </label>
+
+    <div class="field">
+      <span class="field__label">Bolinha do canal</span>
+      <app-choice-chips look="emoji" label="Bolinha do canal" [options]="emojiChips" [(selected)]="avatar" />
+    </div>
+
+    <div class="field">
+      <span class="field__label">Cor do banner</span>
+      <app-choice-chips look="cor" label="Cor do banner" [options]="colorChips" [(selected)]="color" />
+    </div>
+
+    <label class="field">
+      <span class="field__label">Sobre o canal <small>(opcional)</small></span>
+      <textarea
+        class="field__control"
+        rows="3"
+        [maxLength]="maxDescriptionLength"
+        [value]="description()"
+        (input)="description.set($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    @if (error()) {
+      <p class="field__error" role="alert">{{ error() }}</p>
+    }
+
+    <button type="submit" class="button button--primary" [disabled]="isFull()">
+      <span aria-hidden="true">📺</span> Criar canal
+    </button>
+  </div>
+
+  <aside class="studio__preview" aria-label="Prévia do canal">
+    <div class="studio__banner" [style.background]="color()">
+      <app-tube-avatar [avatar]="avatar()" [color]="color()" [size]="4" />
+      <strong>{{ previewName() }}</strong>
+    </div>
+  </aside>
+</form>

@@ -1,0 +1,33 @@
+<a class="card__thumb" [routerLink]="link()" [attr.aria-label]="'Assistir: ' + video().title">
+  <app-effect-stage [effect]="effect()" [compact]="true">
+    @if (video().scenes.length > 0) {
+      <app-scene-view [scene]="video().scenes[0]" />
+    } @else if (video().posterDataUrl) {
+      <img class="card__poster" [src]="video().posterDataUrl" alt="" loading="lazy" />
+    } @else {
+      <span class="card__placeholder" aria-hidden="true">{{ video().source === 'camera' ? '📹' : '🎞️' }}</span>
+    }
+  </app-effect-stage>
+  <span class="card__duration">{{ duration() }}</span>
+  @if (effect().id !== 'normal') {
+    <span class="card__effect" [attr.title]="'Efeito ' + effect().name">{{ effect().emoji }}</span>
+  }
+</a>
+
+<div class="card__info">
+  @if (showChannel() && channel(); as channel) {
+    <a class="card__avatar" [routerLink]="['/pedro-tube/canal', channel.id]" [attr.aria-label]="'Canal ' + channel.name">
+      <app-tube-avatar [avatar]="channel.avatar" [color]="channel.color" [size]="2.25" />
+    </a>
+  }
+
+  <div class="card__text">
+    <h3 class="card__title">
+      <a [routerLink]="link()">{{ video().title }}</a>
+    </h3>
+    @if (showChannel() && channel(); as channel) {
+      <a class="card__channel" [routerLink]="['/pedro-tube/canal', channel.id]">{{ channel.name }}</a>
+    }
+    <p class="card__meta">{{ meta() }}</p>
+  </div>
+</div>

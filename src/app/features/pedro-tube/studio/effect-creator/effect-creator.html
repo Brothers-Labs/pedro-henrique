@@ -1,0 +1,92 @@
+<form class="studio" (submit)="$event.preventDefault(); save()">
+  <div class="studio__fields">
+    <label class="field">
+      <span class="field__label">Nome do efeito</span>
+      <input
+        class="field__control"
+        type="text"
+        [maxLength]="maxNameLength"
+        [value]="name()"
+        (input)="name.set($any($event.target).value); error.set(null)"
+      />
+    </label>
+
+    <div class="field">
+      <span class="field__label">Emoji do efeito</span>
+      <app-choice-chips look="emoji" label="Emoji do efeito" [options]="emojiChips" [(selected)]="emoji" />
+    </div>
+
+    <fieldset class="studio__group">
+      <legend>🎨 Cores</legend>
+      @for (key of filterKeys; track key) {
+        <label class="studio__slider">
+          <span>{{ limits[key].label }}</span>
+          <input
+            type="range"
+            [min]="limits[key].min"
+            [max]="limits[key].max"
+            [step]="limits[key].step"
+            [value]="filter()[key]"
+            (input)="setFilter(key, $any($event.target).value)"
+          />
+          <output>{{ filter()[key] }}{{ limits[key].unit }}</output>
+        </label>
+      }
+      <button type="button" class="button button--small button--ghost" (click)="resetFilter()">Cores normais</button>
+    </fieldset>
+
+    <div class="field">
+      <span class="field__label">Partículas</span>
+      <app-choice-chips label="Partículas" [options]="overlayChips" [(selected)]="overlay" />
+    </div>
+
+    <div class="field">
+      <span class="field__label">Moldura</span>
+      <app-choice-chips label="Moldura" [options]="frameChips" [(selected)]="frame" />
+    </div>
+
+    <div class="field">
+      <span class="field__label">Figurinha</span>
+      <app-choice-chips look="emoji" label="Figurinha" [options]="stickerChips" [(selected)]="sticker" />
+    </div>
+
+    @if (error()) {
+      <p class="field__error" role="alert">{{ error() }}</p>
+    }
+    <p class="studio__hint" role="status" aria-live="polite">{{ feedback() }}</p>
+
+    <button type="submit" class="button button--primary" [disabled]="!store.canCreateEffect()">
+      <span aria-hidden="true">✨</span> Salvar efeito
+    </button>
+  </div>
+
+  <aside class="studio__preview" aria-label="Prévia do efeito">
+    <h3 class="studio__preview-title">Prévia</h3>
+    <app-scene-player [scenes]="sampleScenes" [effect]="draft()" [loop]="true" />
+
+    @if (store.customEffects().length > 0) {
+      <h3 class="studio__preview-title">Meus efeitos</h3>
+      <ul class="studio__list">
+        @for (effect of store.customEffects(); track effect.id) {
+          <li class="studio__item">
+            <span><span aria-hidden="true">{{ effect.emoji }}</span> {{ effect.name }}</span>
+            <a
+              class="button button--small"
+              routerLink="/pedro-tube/estudio"
+              [queryParams]="{ aba: 'video', efeito: effect.id }"
+              >Usar</a
+            >
+            <button
+              type="button"
+              class="button button--small button--ghost"
+              [attr.aria-label]="'Apagar efeito ' + effect.name"
+              (click)="remove(effect)"
+            >
+              🗑️
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+</form>

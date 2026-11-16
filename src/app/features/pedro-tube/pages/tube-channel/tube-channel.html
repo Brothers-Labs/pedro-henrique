@@ -1,0 +1,55 @@
+@if (channel(); as channel) {
+  <header class="channel__banner" [style.--channel-color]="channel.color">
+    <app-tube-avatar [avatar]="channel.avatar" [color]="channel.color" [size]="5" />
+    <div class="channel__identity">
+      <h1 class="channel__name">{{ channel.name }}</h1>
+      <p class="channel__handle">
+        &#64;{{ channel.handle }} • {{ videos().length }} {{ videos().length === 1 ? 'vídeo' : 'vídeos' }}
+      </p>
+      @if (channel.description) {
+        <p class="channel__description">{{ channel.description }}</p>
+      }
+    </div>
+    <div class="channel__actions">
+      <app-subscribe-button [channelId]="channel.id" />
+      <a
+        class="button button--small"
+        routerLink="/pedro-tube/estudio"
+        [queryParams]="{ aba: 'video', canal: channel.id }"
+      >
+        <span aria-hidden="true">🎬</span> Novo vídeo
+      </a>
+    </div>
+  </header>
+
+  <section class="channel__videos" aria-labelledby="canal-videos">
+    <h2 id="canal-videos" class="channel__heading">Vídeos</h2>
+    @if (videos().length > 0) {
+      <ul class="channel__grid">
+        @for (video of videos(); track video.id) {
+          <li><app-tube-video-card [video]="video" [showChannel]="false" /></li>
+        }
+      </ul>
+    } @else {
+      <app-empty-state emoji="🎥" title="Nenhum vídeo ainda" message="Toque em Novo vídeo para fazer o primeiro do canal." />
+    }
+  </section>
+
+  @if (isOwn()) {
+    <div class="channel__danger">
+      @if (isConfirmingDelete()) {
+        <span>Apagar o canal e todos os vídeos dele?</span>
+        <button type="button" class="button button--small button--primary" (click)="deleteChannel()">Sim, apagar canal</button>
+        <button type="button" class="button button--small button--ghost" (click)="isConfirmingDelete.set(false)">Não</button>
+      } @else {
+        <button type="button" class="button button--small button--ghost" (click)="isConfirmingDelete.set(true)">
+          <span aria-hidden="true">🗑️</span> Apagar canal
+        </button>
+      }
+    </div>
+  }
+} @else {
+  <app-empty-state emoji="📺" title="Canal não encontrado" message="Ele pode ter sido apagado.">
+    <a class="button button--primary" routerLink="/pedro-tube">Voltar ao início</a>
+  </app-empty-state>
+}

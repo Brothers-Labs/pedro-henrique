@@ -1,0 +1,80 @@
+@if (video(); as video) {
+  <div class="watch">
+    <article class="watch__main">
+      <app-tube-player [video]="video" [effect]="previewEffect()" />
+
+      <h1 class="watch__title">{{ video.title }}</h1>
+
+      <div class="watch__row">
+        @if (channel(); as channel) {
+          <a class="watch__channel" [routerLink]="['/pedro-tube/canal', channel.id]">
+            <app-tube-avatar [avatar]="channel.avatar" [color]="channel.color" [size]="2.75" />
+            <span class="watch__channel-text">
+              <strong>{{ channel.name }}</strong>
+              <small>{{ channelVideoCount() }} {{ channelVideoCount() === 1 ? 'vídeo' : 'vídeos' }}</small>
+            </span>
+          </a>
+          <app-subscribe-button [channelId]="channel.id" />
+        }
+
+        <button
+          type="button"
+          class="watch__love"
+          [class.watch__love--on]="isLiked()"
+          [attr.aria-pressed]="isLiked()"
+          (click)="toggleLike()"
+        >
+          <span aria-hidden="true">{{ isLiked() ? '❤️' : '🤍' }}</span> AMO
+        </button>
+      </div>
+
+      <section class="watch__box" aria-labelledby="watch-efeitos">
+        <h2 id="watch-efeitos" class="watch__box-title">
+          <span aria-hidden="true">✨</span> Experimente outro efeito
+        </h2>
+        <app-effect-picker [effects]="store.effects()" [(selected)]="previewEffectId" label="Efeito do player" />
+        @if (isTryingEffect() && isOwn()) {
+          <button type="button" class="button button--small button--accent" (click)="keepEffect()">
+            Usar {{ previewEffect().name }} neste vídeo
+          </button>
+        }
+      </section>
+
+      <section class="watch__box" aria-label="Descrição">
+        <p class="watch__meta">{{ views() }} • {{ video.createdAt | date: 'd MMM y' }}</p>
+        @if (video.description) {
+          <p class="watch__description">{{ video.description }}</p>
+        }
+      </section>
+
+      <p class="watch__feedback" role="status" aria-live="polite">{{ feedback() ?? store.saveError() }}</p>
+
+      @if (isOwn()) {
+        <div class="watch__danger">
+          @if (isConfirmingDelete()) {
+            <span>Apagar este vídeo para sempre?</span>
+            <button type="button" class="button button--small button--primary" (click)="deleteVideo()">Sim, apagar</button>
+            <button type="button" class="button button--small button--ghost" (click)="isConfirmingDelete.set(false)">Não</button>
+          } @else {
+            <button type="button" class="button button--small button--ghost" (click)="isConfirmingDelete.set(true)">
+              <span aria-hidden="true">🗑️</span> Apagar vídeo
+            </button>
+          }
+        </div>
+      }
+    </article>
+
+    <aside class="watch__next" aria-labelledby="watch-proximos">
+      <h2 id="watch-proximos" class="watch__box-title">A seguir</h2>
+      <ul class="watch__next-list">
+        @for (next of upNext(); track next.id) {
+          <li><app-tube-video-card [video]="next" layout="row" /></li>
+        }
+      </ul>
+    </aside>
+  </div>
+} @else {
+  <app-empty-state emoji="📼" title="Vídeo não encontrado" message="Ele pode ter sido apagado. Que tal ver outros vídeos?">
+    <a class="button button--primary" routerLink="/pedro-tube">Voltar ao início</a>
+  </app-empty-state>
+}

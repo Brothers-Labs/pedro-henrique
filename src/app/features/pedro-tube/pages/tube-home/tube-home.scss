@@ -1,0 +1,115 @@
+@use 'mixins' as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.home__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 2px solid rgb(200 107 255 / 45%);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgb(63 169 255 / 14%), rgb(255 40 60 / 14%));
+  box-shadow: 0 0 2rem rgb(200 107 255 / 25%);
+  text-align: center;
+}
+
+.home__hero-title {
+  margin: 0;
+}
+
+.home__hero-text {
+  margin: 0;
+  color: #d9d4f2;
+  font-size: var(--text-lg);
+}
+
+.home__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.home__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1b1530;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-decoration: none;
+
+  &:first-child {
+    background: linear-gradient(180deg, #ff4b4b, #c4001a);
+    color: #ffffff;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #c86bff;
+    outline-offset: 3px;
+  }
+}
+
+.home__chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: thin;
+}
+
+.home__chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 10%);
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &[aria-current='page'] {
+    background: #ffffff;
+    color: #1b1530;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #c86bff;
+    outline-offset: 2px;
+  }
+}
+
+.home__feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.home__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+}
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-5) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -1,0 +1,191 @@
+:host {
+  --frame-size: 0px;
+
+  display: block;
+  padding: var(--frame-size);
+  border-radius: 1rem;
+  background: #000000;
+}
+
+.stage__screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: calc(1rem - var(--frame-size) * 0.6);
+  background: #000000;
+  container-type: inline-size;
+}
+
+.stage__media {
+  position: absolute;
+  inset: 0;
+}
+
+.stage__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stage__particle {
+  position: absolute;
+  top: var(--top);
+  font-size: var(--size);
+  line-height: 1;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: top, opacity, transform;
+}
+
+[data-flow='cai'] .stage__particle {
+  animation-name: tube-fall;
+}
+
+[data-flow='sobe'] .stage__particle {
+  animation-name: tube-rise;
+}
+
+[data-flow='pisca'] .stage__particle {
+  animation-name: tube-twinkle;
+  animation-timing-function: ease-in-out;
+}
+
+.stage__sticker {
+  position: absolute;
+  right: 3%;
+  bottom: 5%;
+  font-size: 11cqi;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 0.15rem 0.3rem rgb(0 0 0 / 50%));
+  animation: tube-wobble 1.6s ease-in-out infinite;
+}
+
+/* Molduras ---------------------------------------------------------------- */
+:host([data-frame='neon']) {
+  --frame-size: 5px;
+
+  background: linear-gradient(120deg, #3fa9ff, #c86bff, #ff4fd8, #3fa9ff);
+  box-shadow:
+    0 0 14px #c86bff,
+    0 0 32px rgb(63 169 255 / 60%);
+  animation: tube-neon 2.4s ease-in-out infinite;
+}
+
+:host([data-frame='ouro']) {
+  --frame-size: 8px;
+
+  background: linear-gradient(135deg, #fff3b0, #ffc629 35%, #c98a06 60%, #ffe066);
+  box-shadow: 0 0 18px rgb(255 198 41 / 55%);
+}
+
+:host([data-frame='arco-iris']) {
+  --frame-size: 7px;
+
+  background: conic-gradient(#ff4b4b, #ffb703, #ffe066, #12b886, #2ba8e0, #7b52d3, #ff4fd8, #ff4b4b);
+}
+
+:host([data-frame='cinema']) {
+  --frame-size: 12px;
+
+  background:
+    radial-gradient(circle, #f3e9d2 2px, transparent 2.5px) 0 0 / 14px 12px repeat-x,
+    radial-gradient(circle, #f3e9d2 2px, transparent 2.5px) 0 100% / 14px 12px repeat-x,
+    #141414;
+}
+
+/* Miniaturas -------------------------------------------------------------- */
+:host(.stage--compact) {
+  padding: min(var(--frame-size), 4px);
+  border-radius: 0.75rem;
+}
+
+:host(.stage--compact) .stage__particle {
+  font-size: calc(var(--size) * 0.6);
+}
+
+/* Modo calmo e menos movimento: o efeito aparece, mas parado. -------------- */
+:host(.stage--still),
+:host(.stage--still) .stage__particle,
+:host(.stage--still) .stage__sticker {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  .stage__particle,
+  .stage__sticker {
+    animation: none;
+  }
+}
+
+@keyframes tube-fall {
+  from {
+    top: -12%;
+    transform: rotate(0deg);
+  }
+
+  to {
+    top: 108%;
+    transform: rotate(320deg);
+  }
+}
+
+@keyframes tube-rise {
+  0% {
+    top: 108%;
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    top: -12%;
+    opacity: 0;
+  }
+}
+
+@keyframes tube-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.6);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes tube-wobble {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+
+  50% {
+    transform: rotate(8deg) scale(1.08);
+  }
+}
+
+@keyframes tube-neon {
+  0%,
+  100% {
+    box-shadow:
+      0 0 14px #c86bff,
+      0 0 32px rgb(63 169 255 / 60%);
+  }
+
+  50% {
+    box-shadow:
+      0 0 22px #ff4fd8,
+      0 0 44px rgb(63 169 255 / 85%);
+  }
+}
