@@ -107,6 +107,11 @@ export interface GameLaunchOptions {
   readonly petEmoji: string | null;
   readonly input: VirtualInputState;
   readonly listener: GameSessionListener;
+  /**
+   * Os amigos que jogam junto, já com as cores: o Jogador 2 e o Jogador 3.
+   * Vazio (ou ausente), joga uma criança só, com o teclado todo.
+   */
+  readonly partners?: readonly CharacterPalette[];
 }
 
 /** Controle de uma partida em andamento. */

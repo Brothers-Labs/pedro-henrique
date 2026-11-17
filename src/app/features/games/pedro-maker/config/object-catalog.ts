@@ -117,6 +117,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   grass: { surface: 'none', isUnique: false },
   arrow: { surface: 'none', isUnique: false },
   crate: { surface: 'none', isUnique: false },
+  balloons: { surface: 'none', isUnique: false },
   hint: { surface: 'none', isUnique: false },
   'mascot-tip': { surface: 'none', isUnique: false },
 };
@@ -138,7 +139,19 @@ export interface EditorCategory {
   readonly emoji: string;
 }
 
-export const EDITOR_CATEGORIES: readonly EditorCategory[] = [
+/**
+ * Ordem alfabética do editor, do jeito que se lê em português: "Água" fica
+ * junto do "A", e "Moeda Gigante 10" vem antes de "Moeda Gigante 100".
+ */
+const ALPHABETICAL = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+
+/** Cópia em ordem alfabética do rótulo: a criança acha a aba e a peça pela letra. */
+export function sortByLabel<T extends { readonly label: string }>(items: readonly T[]): readonly T[] {
+  return [...items].sort((first, second) => ALPHABETICAL.compare(first.label, second.label));
+}
+
+/** Abas de peças do editor, em ordem alfabética. */
+export const EDITOR_CATEGORIES: readonly EditorCategory[] = sortByLabel([
   { id: 'terreno', label: 'Terreno', emoji: '🟫' },
   { id: 'blocos', label: 'Blocos', emoji: '🧱' },
   { id: 'inimigos', label: 'Inimigos', emoji: '👾' },
@@ -148,7 +161,19 @@ export const EDITOR_CATEGORIES: readonly EditorCategory[] = [
   { id: 'cogumelos', label: 'Cogumelos', emoji: '🍄' },
   { id: 'portais', label: 'Portais', emoji: '🌀' },
   { id: 'bandeiras', label: 'Bandeiras', emoji: '🏁' },
-];
+]);
+
+/** A aba Telas não tem peças: escolhe a tela da fase. Entra na fila das abas pela letra, como as outras. */
+export interface EditorTab {
+  readonly id: EditorCategoryId | 'telas';
+  readonly label: string;
+  readonly emoji: string;
+}
+
+export const EDITOR_TABS: readonly EditorTab[] = sortByLabel<EditorTab>([
+  ...EDITOR_CATEGORIES,
+  { id: 'telas', label: 'Telas', emoji: '📺' },
+]);
 
 /**
  * Peça da paleta do editor.
@@ -302,6 +327,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'grass', category: 'decoracao', type: 'grass', label: 'Matinho' },
   { id: 'arrow', category: 'decoracao', type: 'arrow', label: 'Seta' },
   { id: 'crate', category: 'decoracao', type: 'crate', label: 'Caixote' },
+  { id: 'balloons', category: 'decoracao', type: 'balloons', label: 'Balões' },
 
   { id: 'power-mushroom', category: 'cogumelos', type: 'power-up', label: 'Super Cogumelo', properties: { powerUp: 'mushroom' } },
   { id: 'power-fire-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Fogo', properties: { powerUp: 'fire-flower' } },
@@ -388,6 +414,19 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   // É o portal final com outro desenho: continua um só por fase, como o arco e o castelo.
   { id: 'portal-flag', category: 'bandeiras', type: 'portal', label: 'Bandeira Final', properties: { portalLook: 'flag' } },
 ];
+
+const PIECES_BY_CATEGORY: ReadonlyMap<EditorCategoryId, readonly EditorPiece[]> = new Map(
+  EDITOR_CATEGORIES.map((category) => [category.id, sortByLabel(EDITOR_PIECES.filter((piece) => piece.category === category.id))]),
+);
+
+/**
+ * Peças de uma aba, em ordem alfabética. `EDITOR_PIECES` continua na ordem em
+ * que as peças foram criadas, porque a primeira de cada tipo é a peça padrão
+ * de `findEditorPiece`; a paleta é que mostra pela letra.
+ */
+export function editorPiecesIn(category: EditorCategoryId): readonly EditorPiece[] {
+  return PIECES_BY_CATEGORY.get(category) ?? [];
+}
 
 /**
  * Peça da paleta que corresponde a uma peça já colocada na fase.

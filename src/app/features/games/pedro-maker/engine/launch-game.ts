@@ -1,12 +1,13 @@
 import { THEME_PALETTES } from '../art/palettes';
 import type { GameLaunchOptions, MakerGameSession } from '../models/session.model';
 import { GameLoop } from './game-loop';
+import { PARTNER_SEATS, PartnerInput } from './input/partner-input';
 import { PlayerInput } from './input/player-input';
 import { LevelView } from './render/level-view';
 import { FrameBudgetMonitor, initialQualityTier, QUALITY } from './render/quality';
 import { Stage } from './render/stage';
 import { startsInUltra } from './render/ultra-resolution';
-import { GameSimulation, STEP_MS } from './simulation/game-simulation';
+import { GameSimulation, MAX_PARTNERS, STEP_MS } from './simulation/game-simulation';
 
 const NO_3D_MESSAGE = 'Este aparelho não conseguiu abrir o jogo em 3D. Tente atualizar o navegador.';
 const BUILD_FAILED_MESSAGE = 'Não foi possível montar esta fase.';
@@ -22,7 +23,20 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
   const { blueprint, listener } = options;
   const tier = initialQualityTier();
   let monitor = new FrameBudgetMonitor(tier);
-  const input = new PlayerInput(options.input, window);
+  const partners = (options.partners ?? []).slice(0, MAX_PARTNERS);
+  // Com amigos, as setas são do Jogador 2: o Jogador 1 fica com o lado esquerdo do teclado.
+  const input = new PlayerInput(options.input, window, partners.length > 0 ? 'left-side' : 'whole');
+  const partnerInputs = partners.map((_, index) => new PartnerInput(window, PARTNER_SEATS[index]));
+  const readPartners = () => partnerInputs.map((partnerInput) => partnerInput.read());
+  const resetInputs = (): void => {
+    input.reset();
+    input.setCapturing(true);
+
+    for (const partnerInput of partnerInputs) {
+      partnerInput.reset();
+      partnerInput.setCapturing(true);
+    }
+  };
 
   let stage: Stage | null = null;
   let simulation: GameSimulation | null = null;
@@ -39,7 +53,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
     }
 
     for (let step = 0; step < steps && loop.isRunning; step += 1) {
-      running.step(input.read());
+      running.step(input.read(), readPartners());
     }
 
     view.render(alpha, frameMs);
@@ -79,11 +93,18 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       rules: options.rules,
       isTouch: options.isTouch,
       listener,
+      partners: partners.map((partner) => partner.hero),
     });
     const nextView = new LevelView(
       stage,
       nextSimulation,
-      { character: options.character, petEmoji: options.petEmoji, effectsEnabled: options.effectsEnabled, isTouch: options.isTouch },
+      {
+        character: options.character,
+        partners,
+        petEmoji: options.petEmoji,
+        effectsEnabled: options.effectsEnabled,
+        isTouch: options.isTouch,
+      },
       options.parent,
     );
 
@@ -105,8 +126,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
 
     simulation = nextSimulation;
     view = nextView;
-    input.reset();
-    input.setCapturing(true);
+    resetInputs();
     nextSimulation.announceReady();
     monitor.reset();
     loop.start();
@@ -139,14 +159,17 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
     pause: () => {
       loop.stop();
       input.setCapturing(false);
+
+      for (const partnerInput of partnerInputs) {
+        partnerInput.setCapturing(false);
+      }
     },
     resume: () => {
       if (isDestroyed || !simulation) {
         return;
       }
 
-      input.reset();
-      input.setCapturing(true);
+      resetInputs();
       monitor.reset();
       loop.start();
     },
@@ -156,8 +179,7 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       }
 
       simulation.retryFromCheckpoint();
-      input.reset();
-      input.setCapturing(true);
+      resetInputs();
       monitor.reset();
       loop.start();
     },
@@ -190,6 +212,10 @@ export function launchMakerGame(options: GameLaunchOptions): MakerGameSession {
       stage?.dispose();
       stage = null;
       input.dispose();
+
+      for (const partnerInput of partnerInputs) {
+        partnerInput.dispose();
+      }
     },
   };
 }

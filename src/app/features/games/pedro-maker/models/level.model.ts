@@ -314,6 +314,8 @@ export type DecorType =
   | 'arrow'
   | 'crate'
   | 'pumpkin'
+  /** Cacho de balões coloridos amarrados no chão: enfeite de festa, para a turma comemorar a fase. */
+  | 'balloons'
   /** Flor Falante: diz a frase escrita no editor quando o herói chega perto. */
   | 'talking-flower';
 

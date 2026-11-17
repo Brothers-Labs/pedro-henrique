@@ -5,9 +5,18 @@ import { PROFILE } from '../../../../../core/data/profile.data';
 import { PetService } from '../../../../../core/services/pet.service';
 import { PedroFigure } from '../../components/pedro-figure/pedro-figure';
 import { MakerPageFrame } from '../../components/maker-page-frame/maker-page-frame';
+import { swappedPalette } from '../../config/character.config';
+import { heroDefinition, HEROES, isHeroId } from '../../config/hero.config';
+import { PLAYER_COUNT_OPTIONS } from '../../config/players.config';
 import { COIN_RULES, DAILY_MISSION, XP_RULES } from '../../config/rules.config';
 import { CAMPAIGN_LEVELS } from '../../levels/campaign';
+import type { MakerPlayerCount } from '../../models/settings.model';
+import { MakerAudioService } from '../../services/maker-audio.service';
 import { MakerProgressService } from '../../services/maker-progress.service';
+import { MakerSettingsService } from '../../services/maker-settings.service';
+
+/** Ajuste do herói de cada amigo: o Jogador 2 ou o Jogador 3. */
+type PartnerSetting = 'partnerHero' | 'thirdHero';
 
 interface MenuEntry {
   readonly label: string;
@@ -34,6 +43,17 @@ interface MenuEntry {
 export class MakerHomePage {
   private readonly progress = inject(MakerProgressService);
   private readonly pets = inject(PetService);
+  private readonly settingsService = inject(MakerSettingsService);
+  private readonly audio = inject(MakerAudioService);
+
+  protected readonly playerOptions = PLAYER_COUNT_OPTIONS;
+  protected readonly heroes = HEROES;
+  protected readonly players = computed(() => this.settingsService.settings().players);
+  protected readonly heroName = computed(() => heroDefinition(this.character().hero).name);
+  protected readonly partnerHero = computed(() => this.settingsService.settings().partnerHero);
+  protected readonly thirdHero = computed(() => this.settingsService.settings().thirdHero);
+  protected readonly partnerLook = computed(() => swappedPalette(this.character(), this.partnerHero()));
+  protected readonly thirdLook = computed(() => swappedPalette(this.character(), this.thirdHero()));
 
   protected readonly character = this.progress.character;
   protected readonly nextLevel = this.progress.nextLevel;
@@ -66,4 +86,18 @@ export class MakerHomePage {
     { label: 'Meu personagem', emoji: '👤', route: 'personagem', tone: 'pink' },
     { label: 'Configurações', emoji: '⚙️', route: 'configuracoes', tone: 'gray' },
   ]);
+
+  /** 1, 2 ou 3 jogadores: vale para a aventura, as fases salvas e o Testar do editor. */
+  protected setPlayers(players: MakerPlayerCount): void {
+    this.settingsService.update({ players });
+    this.audio.play('button');
+  }
+
+  protected chooseHero(which: PartnerSetting, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    if (isHeroId(value)) {
+      this.settingsService.update({ [which]: value });
+    }
+  }
 }

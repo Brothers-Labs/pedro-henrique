@@ -105,16 +105,6 @@
           <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}
         </button>
       }
-      <button
-        type="button"
-        role="tab"
-        class="category"
-        [class.category--active]="category() === 'telas'"
-        [attr.aria-selected]="category() === 'telas'"
-        (click)="chooseCategory('telas')"
-      >
-        <span aria-hidden="true">📺</span> Telas
-      </button>
     </div>
 
     @if (category() === 'telas') {
