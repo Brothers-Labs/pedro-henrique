@@ -20,6 +20,7 @@ import { MotionPreferenceService } from '../../../../../core/services/motion-pre
 import { CalmModeService } from '../../../../../core/services/calm-mode.service';
 import { PetService } from '../../../../../core/services/pet.service';
 import { CALM_SPEECH_RATE, DEFAULT_SPEECH_RATE, SpeechService } from '../../../../../core/services/speech.service';
+import { partnerPalettes } from '../../config/players.config';
 import { LOADING_TIPS } from '../../config/rules.config';
 import type { ScreenMode } from '../../config/screen.config';
 import type { LevelBlueprint } from '../../models/level.model';
@@ -289,6 +290,7 @@ export class MakerGameHost {
           petEmoji: this.pets.hasPet() ? pet.emoji : null,
           input: this.virtualInput,
           listener: (event) => this.receive(event),
+          partners: partnerPalettes(this.progress.character(), settings),
         }),
       );
     } catch (error) {

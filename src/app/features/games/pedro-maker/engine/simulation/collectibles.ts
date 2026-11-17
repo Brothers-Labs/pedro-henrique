@@ -98,11 +98,19 @@ export class CollectibleSystem {
   }
 
   /** `magnetRadius` em pixels: até onde as moedas são puxadas; 0 quando não há ímã. */
-  update(deltaMs: number, playerX: number, playerY: number, magnetRadius: number): void {
+  /**
+   * `canCollect` deixa de fora o que este herói não pega: os amigos do
+   * Jogador 1 pegam moedas, cristais e corações, mas deixam os poderes para ele.
+   */
+  update(deltaMs: number, playerX: number, playerY: number, magnetRadius: number, canCollect?: (item: Collectible) => boolean): void {
     const pull = Math.min(1, (MAGNET_PULL_PER_SECOND * deltaMs) / 1000);
 
     for (let index = this.items.length - 1; index >= 0; index -= 1) {
       const item = this.items[index];
+
+      if (canCollect && !canCollect(item)) {
+        continue;
+      }
 
       if (magnetRadius > 0 && coinValue(item.kind) > 0) {
         const distanceX = playerX - item.x;

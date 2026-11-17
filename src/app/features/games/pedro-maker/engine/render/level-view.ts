@@ -5,6 +5,7 @@ import { seedFromText } from '../../levels/seeded-random';
 import type { HeroId } from '../../models/progress.model';
 import type { Boss } from '../simulation/boss';
 import type { Enemy } from '../simulation/enemy';
+import type { Player } from '../simulation/player';
 import { STEP_MS, type GameSimulation } from '../simulation/game-simulation';
 import { MEGA_COIN } from '../simulation/collectibles';
 import { bottom, centerX, type PhysicsBody } from '../simulation/physics-body';
@@ -20,7 +21,7 @@ import { LockView } from './lock-view';
 import { MachineView } from './machine-view';
 import { BossModel } from './models/boss-model';
 import { EnemyMaterials, EnemyModel } from './models/enemy-model';
-import { PedroModel } from './models/pedro-model';
+import { PedroModel, type PedroPose } from './models/pedro-model';
 import { ParticleSystem } from './particle-system';
 import { PropView } from './prop-view';
 import type { QualitySettings } from './quality';
@@ -33,6 +34,8 @@ import { WorldSpace } from './world-space';
 
 export interface LevelViewOptions {
   readonly character: CharacterPalette;
+  /** Cores dos amigos que jogam junto, na ordem: o Jogador 2 e o Jogador 3. */
+  readonly partners?: readonly CharacterPalette[];
   readonly petEmoji: string | null;
   readonly effectsEnabled: boolean;
   readonly isTouch: boolean;
@@ -50,6 +53,10 @@ const FLOWER_BUBBLE_Y = 1.45;
 /** Plaquinha da letra no alto da porta (que tem 2 blocos), abaixo do aviso de entrar. */
 const DOOR_LETTER_Y = 1.6;
 const BOSS_ZOOM = 1.14;
+/** Plaquinha "J1", "J2", "J3" acima da cabeça de cada herói quando a turma joga junta. */
+const PLAYER_TAG_Y = 1.95;
+/** Cor da plaquinha de cada jogador, na ordem das portas A, B e C: vermelho, azul e verde. */
+const PLAYER_TAG_COLORS = ['#e5484d', '#3e7bfa', '#2fae5f'] as const;
 const FLASH_MS = 240;
 
 /**
@@ -84,6 +91,10 @@ export class LevelView {
   private talkingFlowers: TalkingFlowerView | null = null;
   private props: PropView | null = null;
   private pedro: PedroModel | null = null;
+  /** Os amigos do Jogador 1, na ordem da simulação. */
+  private readonly partnerModels: PedroModel[] = [];
+  /** "J1", "J2" e "J3": só aparecem com mais de um jogador. */
+  private readonly playerTags: WorldLabel[] = [];
   /** Herói que o modelo em cena mostra; muda quando o Cogumelo Troca-Personagem age. */
   private pedroHero: HeroId;
   private particles: ParticleSystem | null = null;
@@ -158,6 +169,13 @@ export class LevelView {
         this.pedro = new PedroModel(this.options.character);
         this.particles = new ParticleSystem(this.stage.qualitySettings.maxParticles);
         scene.add(this.pedro.root, this.particles.mesh);
+
+        simulation.partners.forEach((_, index) => {
+          const model = new PedroModel(this.options.partners?.[index] ?? this.options.character);
+
+          this.partnerModels.push(model);
+          scene.add(model.root);
+        });
         this.createLabels();
       },
     );
@@ -205,42 +223,7 @@ export class LevelView {
     const playerX = this.space.x(lerp(body.previousX, body.x, alpha) + body.width / 2);
     const playerY = this.space.y(lerp(body.previousY, body.y, alpha) + body.height);
 
-    pedro.update(
-      {
-        mode: player.mode,
-        facing: player.facing,
-        speedX: body.vx,
-        isGrounded: body.blockedDown,
-        isBlinking: player.isActive && player.isInvincible(now) && Math.floor(now / 90) % 2 === 0,
-        hasShield: player.hasShield,
-        hasWings: player.hasPowerUp('wings'),
-        isBig: player.isBig,
-        hasStar: player.hasPowerUp('star'),
-        hasFireFlower: player.hasPowerUp('fire-flower'),
-        hasIceFlower: player.hasPowerUp('ice-flower'),
-        hasCatSuit: player.hasPowerUp('cat-mushroom'),
-        hasLeafSuit: player.hasPowerUp('leaf-mushroom'),
-        isClimbing: player.isClimbing,
-        isGliding: player.isGliding,
-        hasRaccoonSuit: player.hasPowerUp('raccoon-leaf'),
-        isFlying: player.isFlying,
-        isSpinningTail: player.isSpinningTail(now),
-        isGiant: player.isGiant,
-        isGigaEnding: player.isPowerUpEnding('giga-mushroom', now),
-        hasTurboMushroom: player.hasPowerUp('turbo-mushroom'),
-        isTurboEnding: player.isPowerUpEnding('turbo-mushroom', now),
-        hasMagnetMushroom: player.hasPowerUp('magnet-mushroom'),
-        isMagnetEnding: player.isPowerUpEnding('magnet-mushroom', now),
-        hasReverseMushroom: player.hasPowerUp('reverse-mushroom'),
-        isReverseEnding: player.isPowerUpEnding('reverse-mushroom', now),
-        isTall: player.isTall,
-        isMini: player.isMini,
-        isMiniEnding: player.isMini && player.isPowerUpEnding('mini-mushroom', now),
-        isTallEnding: player.isTall && player.isPowerUpEnding('tall-mushroom', now),
-      },
-      deltaSeconds,
-      now,
-    );
+    pedro.update(poseOf(player, now), deltaSeconds, now);
 
     const celebration = player.celebration;
 
@@ -260,6 +243,8 @@ export class LevelView {
     }
 
     this.stage.playerLight?.position.set(playerX, playerY + 1.6, 2.2);
+    this.syncPartners(alpha, deltaSeconds, now);
+    this.placePlayerTag(0, pedro);
 
     this.syncEnemies(alpha, deltaSeconds, now);
     this.syncBoss(alpha, deltaSeconds, now);
@@ -304,6 +289,11 @@ export class LevelView {
     this.talkingFlowers?.dispose();
     this.props?.dispose();
     this.pedro?.dispose();
+
+    for (const model of this.partnerModels) {
+      model.dispose();
+    }
+
     this.particles?.dispose();
     this.bossModel?.dispose();
 
@@ -316,6 +306,36 @@ export class LevelView {
     this.atlas.dispose();
     this.labels.dispose();
     this.flash.remove();
+  }
+
+  /** Cada amigo no lugar dele, com a pose calculada do mesmo jeito que a do Jogador 1. */
+  private syncPartners(alpha: number, deltaSeconds: number, now: number): void {
+    this.simulation.partners.forEach((partner, index) => {
+      const model = this.partnerModels[index];
+
+      if (!model) {
+        return;
+      }
+
+      const body = partner.body;
+
+      model.update(poseOf(partner, now), deltaSeconds, now);
+      model.root.position.set(
+        this.space.x(lerp(body.previousX, body.x, alpha) + body.width / 2),
+        this.space.y(lerp(body.previousY, body.y, alpha) + body.height),
+        0,
+      );
+      this.placePlayerTag(index + 1, model);
+    });
+  }
+
+  /** A plaquinha acompanha a cabeça do herói; `index` 0 é o Jogador 1. */
+  private placePlayerTag(index: number, model: PedroModel): void {
+    const tag = this.playerTags[index];
+
+    if (tag) {
+      tag.position.set(model.root.position.x, model.root.position.y + PLAYER_TAG_Y, 0.3);
+    }
   }
 
   /** O herói da simulação mudou: o modelo do novo entra no lugar do antigo, na mesma cena. */
@@ -488,6 +508,16 @@ export class LevelView {
 
     this.promptLabel = this.labels.create('prompt', this.options.isTouch ? 'AÇÃO' : 'E', true);
 
+    // Com a turma junta, cada criança acha o próprio herói pela plaquinha colorida.
+    if (this.simulation.partners.length > 0) {
+      for (let index = 0; index <= this.simulation.partners.length; index += 1) {
+        const tag = this.labels.create('door', `J${index + 1}`, true, PLAYER_TAG_COLORS[index]);
+
+        tag.visible = true;
+        this.playerTags.push(tag);
+      }
+    }
+
     if (this.options.petEmoji) {
       const pet = this.labels.create('pet', this.options.petEmoji);
       const body = this.simulation.player.body;
@@ -548,6 +578,44 @@ export class LevelView {
       pet.position.y = lerp(pet.position.y, playerY + 1.6 + bob, follow);
     }
   }
+}
+
+/** Pose do modelo a partir do estado do herói: vale para o Jogador 1 e para os amigos. */
+function poseOf(player: Player, now: number): PedroPose {
+  const body = player.body;
+
+  return {
+    mode: player.mode,
+    facing: player.facing,
+    speedX: body.vx,
+    isGrounded: body.blockedDown,
+    isBlinking: player.isActive && player.isInvincible(now) && Math.floor(now / 90) % 2 === 0,
+    hasShield: player.hasShield,
+    hasWings: player.hasPowerUp('wings'),
+    isBig: player.isBig,
+    hasStar: player.hasPowerUp('star'),
+    hasFireFlower: player.hasPowerUp('fire-flower'),
+    hasIceFlower: player.hasPowerUp('ice-flower'),
+    hasCatSuit: player.hasPowerUp('cat-mushroom'),
+    hasLeafSuit: player.hasPowerUp('leaf-mushroom'),
+    isClimbing: player.isClimbing,
+    isGliding: player.isGliding,
+    hasRaccoonSuit: player.hasPowerUp('raccoon-leaf'),
+    isFlying: player.isFlying,
+    isSpinningTail: player.isSpinningTail(now),
+    isGiant: player.isGiant,
+    isGigaEnding: player.isPowerUpEnding('giga-mushroom', now),
+    hasTurboMushroom: player.hasPowerUp('turbo-mushroom'),
+    isTurboEnding: player.isPowerUpEnding('turbo-mushroom', now),
+    hasMagnetMushroom: player.hasPowerUp('magnet-mushroom'),
+    isMagnetEnding: player.isPowerUpEnding('magnet-mushroom', now),
+    hasReverseMushroom: player.hasPowerUp('reverse-mushroom'),
+    isReverseEnding: player.isPowerUpEnding('reverse-mushroom', now),
+    isTall: player.isTall,
+    isMini: player.isMini,
+    isMiniEnding: player.isMini && player.isPowerUpEnding('mini-mushroom', now),
+    isTallEnding: player.isTall && player.isPowerUpEnding('tall-mushroom', now),
+  };
 }
 
 function lerp(from: number, to: number, amount: number): number {

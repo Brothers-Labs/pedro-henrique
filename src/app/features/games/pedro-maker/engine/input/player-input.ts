@@ -1,12 +1,40 @@
 import type { VirtualInputState } from '../../models/session.model';
 import type { InputSnapshot } from './input-snapshot';
 
-const LEFT_KEYS = ['ArrowLeft', 'KeyA'] as const;
-const RIGHT_KEYS = ['ArrowRight', 'KeyD'] as const;
-const JUMP_KEYS = ['ArrowUp', 'KeyW', 'Space'] as const;
-const RUN_KEYS = ['ShiftLeft', 'ShiftRight'] as const;
-const ACTION_KEYS = ['KeyE'] as const;
-const PAUSE_KEYS = ['Escape'] as const;
+interface KeyMap {
+  readonly left: readonly string[];
+  readonly right: readonly string[];
+  readonly jump: readonly string[];
+  readonly run: readonly string[];
+  readonly action: readonly string[];
+  readonly pause: readonly string[];
+}
+
+/** Sozinho, o Jogador 1 usa o teclado todo: setas ou W A S D. */
+const WHOLE_KEYBOARD: KeyMap = {
+  left: ['ArrowLeft', 'KeyA'],
+  right: ['ArrowRight', 'KeyD'],
+  jump: ['ArrowUp', 'KeyW', 'Space'],
+  run: ['ShiftLeft', 'ShiftRight'],
+  action: ['KeyE'],
+  pause: ['Escape'],
+};
+
+/**
+ * Jogando junto, o Jogador 1 fica com o lado esquerdo do teclado (A D, W ou
+ * espaço, Shift da esquerda e E): as setas são do Jogador 2, como no Pedro Craft.
+ */
+const LEFT_SIDE: KeyMap = {
+  left: ['KeyA'],
+  right: ['KeyD'],
+  jump: ['KeyW', 'Space'],
+  run: ['ShiftLeft'],
+  action: ['KeyE'],
+  pause: ['Escape'],
+};
+
+/** Que parte do teclado é do Jogador 1. */
+export type KeyboardShare = 'whole' | 'left-side';
 
 /** Teclas que o jogo usa e que, sem isso, rolariam a página. */
 const SCROLLING_KEYS: ReadonlySet<string> = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']);
@@ -25,6 +53,7 @@ export class PlayerInput {
   private wasJumpHeld = false;
   private wasActionHeld = false;
   private wasPauseHeld = false;
+  private readonly keys: KeyMap;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     if (isTyping(event.target)) {
@@ -51,7 +80,9 @@ export class PlayerInput {
   constructor(
     private readonly virtual: VirtualInputState,
     private readonly target: Window,
+    share: KeyboardShare = 'whole',
   ) {
+    this.keys = share === 'whole' ? WHOLE_KEYBOARD : LEFT_SIDE;
     target.addEventListener('keydown', this.onKeyDown);
     target.addEventListener('keyup', this.onKeyUp);
     target.addEventListener('blur', this.onBlur);
@@ -63,14 +94,15 @@ export class PlayerInput {
 
   read(): InputSnapshot {
     const virtual = this.virtual;
-    const jumpHeld = virtual.jump || this.isDown(JUMP_KEYS);
-    const actionHeld = virtual.action || this.isDown(ACTION_KEYS);
-    const pauseHeld = this.isDown(PAUSE_KEYS);
+    const keys = this.keys;
+    const jumpHeld = virtual.jump || this.isDown(keys.jump);
+    const actionHeld = virtual.action || this.isDown(keys.action);
+    const pauseHeld = this.isDown(keys.pause);
 
     const snapshot: InputSnapshot = {
-      left: virtual.left || this.isDown(LEFT_KEYS),
-      right: virtual.right || this.isDown(RIGHT_KEYS),
-      run: virtual.run || this.isDown(RUN_KEYS),
+      left: virtual.left || this.isDown(keys.left),
+      right: virtual.right || this.isDown(keys.right),
+      run: virtual.run || this.isDown(keys.run),
       jumpHeld,
       jumpPressed: jumpHeld && !this.wasJumpHeld,
       actionPressed: actionHeld && !this.wasActionHeld,

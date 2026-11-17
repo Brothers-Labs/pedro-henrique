@@ -26,6 +26,41 @@ export const ARROW_HEIGHT = 48;
 export const CRATE_SIZE = 40;
 export const PUMPKIN_WIDTH = 48;
 export const PUMPKIN_HEIGHT = 40;
+export const BALLOONS_WIDTH = 48;
+export const BALLOONS_HEIGHT = 72;
+
+/** Os três balões do cacho, da esquerda para a direita: vermelho, amarelo e azul, como no 3D. */
+export const BALLOON_COLORS = ['#e5484d', '#ffcf3f', '#3e7bfa'] as const;
+
+/** Cacho de três balões, cada um com o barbante descendo até o pesinho no chão. */
+export function paintBalloons(context: CanvasRenderingContext2D): void {
+  const knotX = 24;
+  const knotY = 66;
+  const balloons = [
+    { x: 12, y: 22, color: BALLOON_COLORS[0] },
+    { x: 36, y: 22, color: BALLOON_COLORS[2] },
+    { x: 24, y: 14, color: BALLOON_COLORS[1] },
+  ];
+
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 1.5;
+
+  for (const balloon of balloons) {
+    context.beginPath();
+    context.moveTo(balloon.x, balloon.y + 12);
+    context.quadraticCurveTo(balloon.x + 3, (balloon.y + knotY) / 2, knotX, knotY);
+    context.stroke();
+  }
+
+  for (const balloon of balloons) {
+    ellipse(context, balloon.x, balloon.y, 10, 12);
+    fillAndOutline(context, balloon.color, 2);
+    shine(context, balloon.x - 3, balloon.y - 4, 2.5, 3.5);
+  }
+
+  roundedRect(context, knotX - 5, knotY - 2, 10, 6, 2);
+  fillAndOutline(context, '#8d8aa6', 2);
+}
 
 /**
  * "Árvore" é o enfeite grande de cada tema: árvore no vale, pinheiro na

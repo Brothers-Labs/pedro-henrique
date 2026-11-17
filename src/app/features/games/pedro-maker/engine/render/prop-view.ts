@@ -11,6 +11,7 @@ import {
 } from 'three';
 
 import { context2d, createCanvas, darken, lighten } from '../../art/canvas';
+import { BALLOON_COLORS } from '../../art/decor-art';
 import type { ThemePalette } from '../../art/palettes';
 import { paintSignText } from '../../art/sign-text-art';
 import { SLIDE_PHYSICS, TILE_SIZE } from '../../config/physics.config';
@@ -209,6 +210,9 @@ export class PropView {
           break;
         case 'crate':
           at(x, y, DECOR_Z, crate());
+          break;
+        case 'balloons':
+          at(x, y, DECOR_Z, balloons());
           break;
         case 'pumpkin':
           at(x, y, DECOR_Z + 0.3, pumpkin());
@@ -589,6 +593,34 @@ function crate(): readonly VoxelBox[] {
     box(-0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
     box(0.32, 0.36, 0.365, 0.08, 0.72, 0.02, edge),
   ];
+}
+
+/**
+ * Cacho de balões: um pesinho no chão, três barbantes e os balões vermelho,
+ * amarelo e azul lá em cima, cada um com o nozinho embaixo e um brilho.
+ */
+function balloons(): readonly VoxelBox[] {
+  const string = '#f4f1e8';
+  const parts: VoxelBox[] = [box(0, 0.06, 0, 0.22, 0.12, 0.22, '#8d8aa6')];
+  const bunch = [
+    { x: -0.24, top: 1.45, color: BALLOON_COLORS[0] },
+    { x: 0, top: 1.7, color: BALLOON_COLORS[1] },
+    { x: 0.24, top: 1.45, color: BALLOON_COLORS[2] },
+  ];
+
+  for (const balloon of bunch) {
+    const stringHeight = balloon.top - 0.12;
+
+    parts.push(
+      box(balloon.x / 2, 0.12 + stringHeight / 2, 0, 0.03, stringHeight, 0.03, string),
+      box(balloon.x, balloon.top + 0.02, 0, 0.08, 0.06, 0.08, darken(balloon.color, 0.2)),
+      box(balloon.x, balloon.top + 0.25, 0, 0.36, 0.42, 0.36, balloon.color),
+      box(balloon.x, balloon.top + 0.25, 0, 0.26, 0.5, 0.26, balloon.color),
+      box(balloon.x - 0.08, balloon.top + 0.36, 0.17, 0.07, 0.1, 0.03, lighten(balloon.color, 0.45)),
+    );
+  }
+
+  return parts;
 }
 
 /**

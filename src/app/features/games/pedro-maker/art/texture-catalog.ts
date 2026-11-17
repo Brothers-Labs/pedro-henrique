@@ -47,6 +47,8 @@ import { paint } from './canvas';
 import {
   ARROW_HEIGHT,
   ARROW_WIDTH,
+  BALLOONS_HEIGHT,
+  BALLOONS_WIDTH,
   BARREL_HEIGHT,
   BARREL_WIDTH,
   BUSH_HEIGHT,
@@ -60,6 +62,7 @@ import {
   LAMP_HEIGHT,
   LAMP_WIDTH,
   paintArrowSign,
+  paintBalloons,
   paintBarrel,
   paintBush,
   paintCrate,
@@ -477,6 +480,9 @@ function drawIcon(
       return;
     case 'crate':
       fit(CRATE_SIZE, CRATE_SIZE, paintCrate);
+      return;
+    case 'balloons':
+      fit(BALLOONS_WIDTH, BALLOONS_HEIGHT, paintBalloons);
       return;
     case 'sign':
       paintSign(context, object.properties?.text ?? '');

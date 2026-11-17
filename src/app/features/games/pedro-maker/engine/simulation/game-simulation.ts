@@ -25,7 +25,7 @@ import {
 import type { HeroId, LevelRunResult } from '../../models/progress.model';
 import type { GameSessionEvent, GameSessionListener, MakerSoundCue } from '../../models/session.model';
 import type { DifficultyRules } from '../../models/settings.model';
-import type { InputSnapshot } from '../input/input-snapshot';
+import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { CannonSystem } from './cannons';
 import { ClimbChainSystem } from './climb-chains';
@@ -43,11 +43,12 @@ import {
   centerY,
   isAreaClear,
   overlaps,
+  type PhysicsBody,
   type PhysicsWorld,
   stepBody,
   type WorldArea,
 } from './physics-body';
-import { Player, type PlayerHost, SUIT_POWER_UPS } from './player';
+import { Player, type PlayerHost, type PlayerSurroundings, SUIT_POWER_UPS } from './player';
 import { Scheduler } from './scheduler';
 import { SlideSystem } from './slides';
 import { cellOf, COLLISION, TileGrid } from './tile-grid';
@@ -89,6 +90,22 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
 };
 
+/** Amigos que entram junto com o Jogador 1: o Jogador 2 e o Jogador 3. */
+export const MAX_PARTNERS = 2;
+
+/**
+ * Até onde um amigo pode se afastar do Jogador 1, em pixels. A câmera segue o
+ * Jogador 1; quem fica para trás além disso volta para perto dele num estalo,
+ * antes de sumir da tela.
+ */
+export const PARTNER_LEASH = { x: TILE_SIZE * 8, y: TILE_SIZE * 6 } as const;
+
+/** Distância entre os heróis quando a turma aparece junta: no começo, numa porta ou no checkpoint. */
+const PARTNER_GAP = TILE_SIZE * 0.75;
+
+/** Os amigos pegam moedas, cristais e corações para a turma; cogumelos e flores ficam para o Jogador 1. */
+const isTeamCollectible = (item: Collectible): boolean => item.kind !== 'power-up';
+
 const VICTORY_DELAY_MS = 1300;
 const DEFEAT_DELAY_MS = 700;
 /** O baú do chefão é o tesouro da fase: chove moeda. */
@@ -117,6 +134,11 @@ export interface SimulationOptions {
   readonly rules: DifficultyRules;
   readonly isTouch: boolean;
   readonly listener: GameSessionListener;
+  /**
+   * Heróis dos amigos que jogam junto, na ordem: o Jogador 2 e o Jogador 3.
+   * Sem amigos (ou sem a lista), é a partida de sempre, de uma criança só.
+   */
+  readonly partners?: readonly HeroId[];
 }
 
 /**
@@ -136,6 +158,13 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly scheduler = new Scheduler();
   readonly grid: TileGrid;
   readonly player: Player;
+  /**
+   * Os amigos do Jogador 1: o Jogador 2 e o Jogador 3. Andam, pulam, pisam
+   * nos inimigos, batem nos blocos e pegam moedas para a turma. Não perdem
+   * coração: quem se machuca, cai ou fica longe volta para perto do Jogador 1.
+   * Portas, bandeiras e o portal são com o Jogador 1, que leva a turma.
+   */
+  readonly partners: readonly Player[];
   readonly blocks: BlockSystem;
   readonly collectibles: CollectibleSystem;
   readonly triggers: TriggerSystem;
@@ -190,6 +219,9 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.world = { grid: this.grid, platforms: this.blocks.platforms };
     this.coinsTotal = this.collectibles.coinCount + countSurpriseCoins(blueprint.objects) * SURPRISE_COIN_COUNT;
     this.player = this.createPlayer(blueprint.objects);
+    this.partners = (options.partners ?? [])
+      .slice(0, MAX_PARTNERS)
+      .map((hero) => new Player(this.respawnX, this.respawnY, this, heroDefinition(hero).abilities));
     this.createEnemies(blueprint.objects);
     this.cannons = new CannonSystem(blueprint.objects);
     this.fireBars = new FireBarSystem(blueprint.objects);
@@ -199,6 +231,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.crushers = new CrusherSystem(blueprint.objects, this.grid);
     this.climbChains = new ClimbChainSystem(blueprint.objects);
     this.createBoss(blueprint.objects);
+    // Por último: portas trancadas e prensas já marcaram na grade onde não cabe ninguém.
+    this.gatherPartners(this.respawnX, this.respawnY);
   }
 
   get blueprint(): LevelBlueprint {
@@ -216,7 +250,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.emitHud();
   }
 
-  step(input: InputSnapshot): void {
+  /** `partnerInputs` traz a entrada de cada amigo, na ordem de `partners`. */
+  step(input: InputSnapshot, partnerInputs: readonly InputSnapshot[] = []): void {
     const seconds = STEP_MS / 1000;
 
     this.clockMs += STEP_MS;
@@ -228,20 +263,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     this.runTimeMs += STEP_MS;
 
-    if (input.pausePressed) {
+    // O Start do controle de um amigo também pausa: a pausa é da turma toda.
+    if (input.pausePressed || partnerInputs.some((partnerInput) => partnerInput.pausePressed)) {
       this.emit({ type: 'pause-requested' });
     }
 
     const player = this.player;
     const body = player.body;
-    const isInWater = this.blocks.isWaterAtPoint(centerX(body), centerY(body));
 
-    player.control(this.clockMs, STEP_MS, input, {
-      isOnIce: this.grid.isIceAtPoint(centerX(body), bottom(body) + 4),
-      isInWater,
-      isAtWaterSurface: isInWater && !this.blocks.isWaterAtPoint(centerX(body), body.y),
-      climbChain: this.climbChains.gripOf(body),
-    });
+    player.control(this.clockMs, STEP_MS, input, this.surroundingsOf(body));
     this.blocks.update(seconds);
 
     if (player.isActive) {
@@ -252,6 +282,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       this.spinTail(input);
       this.crushBricksAsGiant();
     }
+
+    this.stepPartners(partnerInputs, seconds);
 
     this.cannons.update(this.clockMs, centerX(body), (x, y, direction) => {
       const bullet = this.addEnemy('bullet', x, y, 1, true);
@@ -268,6 +300,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
     this.checkFireBars();
+    this.checkPartners();
   }
 
   /* Comandos vindos da tela ------------------------------------------------------ */
@@ -279,6 +312,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.player.clearPowerUps();
     this.player.placeFeetAt(this.respawnX, this.respawnY);
     this.player.revive(this.clockMs, this.options.rules.invincibilityMs);
+    this.gatherPartners(this.respawnX, this.respawnY);
     this.effects.flash();
     this.emitHud();
   }
@@ -348,16 +382,29 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   /* Passo a passo ------------------------------------------------------------------- */
 
-  private reactToPlayerCollisions(): void {
-    const body = this.player.body;
+  /** O que fica em volta de um herói neste passo: gelo embaixo, água em volta, corrente na mão. */
+  private surroundingsOf(body: PhysicsBody): PlayerSurroundings {
+    const isInWater = this.blocks.isWaterAtPoint(centerX(body), centerY(body));
+
+    return {
+      isOnIce: this.grid.isIceAtPoint(centerX(body), bottom(body) + 4),
+      isInWater,
+      isAtWaterSurface: isInWater && !this.blocks.isWaterAtPoint(centerX(body), body.y),
+      climbChain: this.climbChains.gripOf(body),
+    };
+  }
+
+  /** Cabeçada e pouso valem para qualquer herói da turma: o amigo também abre bloco surpresa. */
+  private reactToPlayerCollisions(player: Player = this.player): void {
+    const body = player.body;
 
     if (body.headHitColumn >= 0) {
-      this.blocks.handleHeadHit(this.player, body.headHitColumn, body.headHitRow, this.clockMs);
+      this.blocks.handleHeadHit(player, body.headHitColumn, body.headHitRow, this.clockMs);
       this.pSwitches.handleHeadHit(body.headHitColumn, body.headHitRow);
     }
 
     if (body.landedRow >= 0) {
-      this.blocks.handleLanding(this.player, body.landedRow, body.landedFromColumn, body.landedToColumn, this.clockMs);
+      this.blocks.handleLanding(player, body.landedRow, body.landedFromColumn, body.landedToColumn, this.clockMs);
     }
 
     this.blocks.revealInvisibleGrassTouching(body);
@@ -407,9 +454,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   }
 
   /** Pousou num escorregador: a descida começa. */
-  private catchSlide(): void {
-    const player = this.player;
-
+  private catchSlide(player: Player = this.player): void {
     if (player.isSliding) {
       return;
     }
@@ -576,7 +621,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const playerBody = this.player.body;
     const livingEnemies = this.enemies.filter((enemy) => !enemy.isDefeated);
 
-    this.crushers.update(now, [playerBody, ...livingEnemies.map((enemy) => enemy.body)]);
+    this.crushers.update(now, [playerBody, ...this.partners.map((partner) => partner.body), ...livingEnemies.map((enemy) => enemy.body)]);
 
     for (const crusher of this.crushers.crushers) {
       if (!this.crushers.slammedBetween(crusher, now - STEP_MS, now)) {
@@ -647,6 +692,159 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       player.revive(this.clockMs, this.options.rules.invincibilityMs);
       this.effects.flash();
     }
+  }
+
+  /* Amigos do Jogador 1 --------------------------------------------------------------- */
+
+  /** Cada amigo anda com a própria entrada, bate nos blocos e pega o que é da turma. */
+  private stepPartners(inputs: readonly InputSnapshot[], seconds: number): void {
+    this.partners.forEach((partner, index) => {
+      if (!partner.isActive) {
+        return;
+      }
+
+      const body = partner.body;
+
+      partner.control(this.clockMs, STEP_MS, inputs[index] ?? IDLE_INPUT, this.surroundingsOf(body));
+      stepBody(body, this.world, seconds, true);
+      this.reactToPlayerCollisions(partner);
+      this.catchSlide(partner);
+      this.collectibles.update(0, centerX(body), centerY(body), 0, isTeamCollectible);
+    });
+  }
+
+  /**
+   * Perigos dos amigos, depois de tudo se mexer. Ninguém perde coração por
+   * eles: o amigo que cai, se machuca ou fica para trás volta para perto do
+   * Jogador 1, piscando como quem acabou de voltar ao checkpoint.
+   */
+  private checkPartners(): void {
+    const now = this.clockMs;
+
+    for (const partner of this.partners) {
+      if (!partner.isActive) {
+        continue;
+      }
+
+      const body = partner.body;
+
+      if (this.isPartnerLost(body)) {
+        this.bringPartnerBack(partner);
+        continue;
+      }
+
+      if (partner.isInvincible(now)) {
+        continue;
+      }
+
+      const isHurt =
+        this.blocks.touchesHazard(body) ||
+        Boolean(this.blocks.spikesTouching(body)) ||
+        Boolean(this.fireBars.touching(now, body)) ||
+        Boolean(this.crushers.crushing(now, body)) ||
+        this.partnerMeetsEnemies(partner) ||
+        this.partnerMeetsBoss(partner);
+
+      if (isHurt) {
+        this.bringPartnerBack(partner);
+      }
+    }
+  }
+
+  /** Caiu da fase ou ficou longe demais do Jogador 1, fora da câmera. */
+  private isPartnerLost(body: PhysicsBody): boolean {
+    const leader = this.player.body;
+
+    return (
+      body.y > this.grid.heightPx + TILE_SIZE ||
+      Math.abs(centerX(body) - centerX(leader)) > PARTNER_LEASH.x ||
+      Math.abs(bottom(body) - bottom(leader)) > PARTNER_LEASH.y
+    );
+  }
+
+  /** Pisão do amigo derruba o inimigo, como o do Jogador 1; esbarrar de lado manda o amigo de volta. Diz se ele se machucou. */
+  private partnerMeetsEnemies(partner: Player): boolean {
+    const body = partner.body;
+
+    // Cópia: o Rei Slime derrotado solta slimes novos no meio da conta.
+    for (const enemy of [...this.enemies]) {
+      if (enemy.isDefeated || this.clockMs < enemy.harmlessUntil || !overlaps(body, enemy.body)) {
+        continue;
+      }
+
+      const isStomp = body.impactVelocityY > 0 && bottom(body) <= enemy.body.y + PLAYER_PHYSICS.stompTolerance;
+
+      if (enemy.isFrozen) {
+        if (isStomp) {
+          this.effects.burst('ice', centerX(enemy.body), centerY(enemy.body), 16);
+          this.defeatEnemy(enemy);
+          partner.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
+        }
+
+        continue;
+      }
+
+      if (!enemy.isHarmful) {
+        continue;
+      }
+
+      if (isStomp && enemy.canBeStomped) {
+        this.defeatEnemy(enemy);
+        partner.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
+        continue;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /** O amigo também pode pisar no chefão cansado: a turma vence junta. */
+  private partnerMeetsBoss(partner: Player): boolean {
+    const boss = this.boss;
+    const body = partner.body;
+
+    if (!boss?.isAwake || !overlaps(body, boss.body)) {
+      return false;
+    }
+
+    const isStomp = body.impactVelocityY > 0 && bottom(body) <= boss.body.y + PLAYER_PHYSICS.stompTolerance * 1.5;
+
+    if (isStomp) {
+      partner.bounce(PLAYER_PHYSICS.stompBounceVelocity * 1.15, true);
+      boss.takeHit(this.clockMs);
+      return false;
+    }
+
+    return boss.isHarmful;
+  }
+
+  /** Um estalo de fumaça onde o amigo estava, e ele reaparece junto do Jogador 1. */
+  private bringPartnerBack(partner: Player): void {
+    const from = partner.body;
+    const leader = this.player.body;
+
+    this.effects.burst('poof', centerX(from), centerY(from), 10);
+    partner.placeFeetAt(centerX(leader), bottom(leader));
+    partner.revive(this.clockMs, this.options.rules.invincibilityMs);
+    this.effects.burst('sparkle', centerX(leader), centerY(leader), 10);
+  }
+
+  /**
+   * Põe a turma junta num lugar: o Jogador 2 logo atrás do Jogador 1, o 3
+   * atrás dele. Sem espaço ali (uma parede, a borda da fase), o amigo fica no
+   * mesmo lugar do Jogador 1 — os heróis não se empurram.
+   */
+  private gatherPartners(feetX: number, feetY: number): void {
+    this.partners.forEach((partner, index) => {
+      const body = partner.body;
+      const x = feetX - (index + 1) * PARTNER_GAP;
+      const spot: WorldArea = { x: x - body.width / 2, y: feetY - body.height, width: body.width, height: body.height };
+
+      partner.placeFeetAt(spot.x >= 0 && this.hasRoomFor(spot) ? x : feetX, feetY);
+      partner.revive(this.clockMs, 0);
+    });
   }
 
   /* Contatos --------------------------------------------------------------------------- */
@@ -969,6 +1167,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
 
     this.player.placeFeetAt(destinationFeetX, destinationFeetY);
+    this.gatherPartners(destinationFeetX, destinationFeetY);
   }
 
   onGoldenDoorOpened(x: number, y: number): void {

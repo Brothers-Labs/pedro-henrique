@@ -19,12 +19,13 @@ import { MakerGameHost } from '../../components/maker-game-host/maker-game-host'
 import {
   DOOR_PAIRS,
   doorPairColor,
-  EDITOR_CATEGORIES,
   EDITOR_PIECES,
   EDITOR_POWER_UPS,
+  EDITOR_TABS,
   EDITOR_THEMES,
   type EditorCategoryId,
   type EditorPiece,
+  editorPiecesIn,
   findEditorPiece,
   POWER_UP_LABELS,
   THEME_LABELS,
@@ -167,7 +168,8 @@ export class MakerEditorPage {
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly tools = TOOLS;
-  protected readonly categories = EDITOR_CATEGORIES;
+  /** Abas da paleta em ordem alfabética, com a aba Telas no meio delas, pela letra. */
+  protected readonly categories = EDITOR_TABS;
   /** A aba Telas: "a de quem joga" e as seis telas, do NES ao 4K. */
   protected readonly screenChoices: readonly ScreenChoice[] = [
     { id: null, emoji: '⚙️', label: 'Quem joga escolhe', description: 'Cada um joga na tela dos próprios ajustes' },
@@ -193,6 +195,7 @@ export class MakerEditorPage {
   protected readonly tool = signal<EditorTool>('pincel');
   /** Aba aberta na paleta: uma categoria de peças ou a aba Telas, que escolhe a tela da fase. */
   protected readonly category = signal<EditorCategoryId | 'telas'>('terreno');
+  /** Começa na Grama, a peça mais usada, mesmo com a aba Terreno em ordem alfabética. */
   protected readonly piece = signal<EditorPiece>(EDITOR_PIECES[0]);
   protected readonly zoom = signal(1);
   protected readonly selected = signal<GridCell | null>(null);
@@ -214,7 +217,13 @@ export class MakerEditorPage {
   protected readonly palette = computed<readonly PaletteEntry[]>(() => {
     const theme = this.level().theme;
 
-    return EDITOR_PIECES.filter((piece) => piece.category === this.category()).map((piece) => ({
+    const category = this.category();
+
+    if (category === 'telas') {
+      return [];
+    }
+
+    return editorPiecesIn(category).map((piece) => ({
       piece,
       icon: paintObjectIcon(piece, theme, SHARP_ICON_SCALE).toDataURL(),
     }));
@@ -295,7 +304,7 @@ export class MakerEditorPage {
       return;
     }
 
-    const first = EDITOR_PIECES.find((piece) => piece.category === id);
+    const first = editorPiecesIn(id)[0];
 
     if (first) {
       this.piece.set(first);

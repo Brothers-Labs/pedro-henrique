@@ -83,6 +83,9 @@ export const DEFAULT_SETTINGS: MakerSettings = {
   touchControls: 'automatico',
   difficulty: 'aventura',
   screen: DEFAULT_SCREEN,
+  players: 1,
+  partnerHero: 'gui',
+  thirdHero: 'tina',
 };
 
 export const MAKER_ACHIEVEMENTS: readonly MakerAchievement[] = [

@@ -63,7 +63,10 @@ async function expectDragToPlaceSlime(page: Page, levelName: string): Promise<vo
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
   await page.getByRole('tab', { name: 'Inimigos', exact: true }).click();
   const grid = await centerOf(page.getByRole('application', { name: /Grade da fase/ }));
-  const slime = await centerOf(page.getByRole('button', { name: 'Slime', exact: true }));
+  // The pieces are in alphabetical order, so the slime sits near the end of the row.
+  const slimeButton = page.getByRole('button', { name: 'Slime', exact: true });
+  await slimeButton.scrollIntoViewIfNeeded();
+  const slime = await centerOf(slimeButton);
 
   await swipe(page, slime, grid);
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();

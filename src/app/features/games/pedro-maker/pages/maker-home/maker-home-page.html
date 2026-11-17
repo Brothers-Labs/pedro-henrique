@@ -67,5 +67,63 @@
         <p class="card__text">Seu companheiro vai junto em todas as fases e avisa quando tem cristal por perto!</p>
       </article>
     </section>
+
+    <section class="group" aria-labelledby="quem-joga">
+      <h2 id="quem-joga" class="group__title"><span aria-hidden="true">🎮</span> Quem vai jogar?</h2>
+
+      <div class="modes" role="radiogroup" aria-label="Quantos jogadores">
+        @for (option of playerOptions; track option.count) {
+          <button
+            type="button"
+            class="mode"
+            role="radio"
+            [attr.aria-checked]="players() === option.count"
+            [class.mode--active]="players() === option.count"
+            (click)="setPlayers(option.count)"
+          >
+            <span class="mode__emoji" aria-hidden="true">{{ option.emoji }}</span>
+            <span class="mode__name">{{ option.name }}</span>
+            <span class="mode__summary">{{ option.summary }}</span>
+          </button>
+        }
+      </div>
+
+      @if (players() >= 2) {
+        <div class="heroes">
+          <div class="hero-pick">
+            <app-pedro-figure class="hero-pick__figure" [character]="character()" label="" />
+            <span class="hero-pick__label">Jogador 1</span>
+            <a class="hero-pick__link" routerLink="personagem">{{ heroName() }} · trocar em Meu personagem</a>
+          </div>
+
+          <label class="hero-pick">
+            <app-pedro-figure class="hero-pick__figure" [character]="partnerLook()" label="" />
+            <span class="hero-pick__label">Personagem do Jogador 2</span>
+            <select class="hero-pick__select" [value]="partnerHero()" (change)="chooseHero('partnerHero', $event)">
+              @for (option of heroes; track option.id) {
+                <option [value]="option.id" [selected]="option.id === partnerHero()">{{ option.name }}</option>
+              }
+            </select>
+          </label>
+
+          @if (players() === 3) {
+            <label class="hero-pick">
+              <app-pedro-figure class="hero-pick__figure" [character]="thirdLook()" label="" />
+              <span class="hero-pick__label">Personagem do Jogador 3</span>
+              <select class="hero-pick__select" [value]="thirdHero()" (change)="chooseHero('thirdHero', $event)">
+                @for (option of heroes; track option.id) {
+                  <option [value]="option.id" [selected]="option.id === thirdHero()">{{ option.name }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+
+        <p class="group__hint">
+          Jogando juntos, a câmera segue o Jogador 1, que abre as portas e leva a turma até o portal. Os amigos pisam
+          nos inimigos e pegam moedas para todos — e quem se machuca volta para perto do Jogador 1, sem perder coração.
+        </p>
+      }
+    </section>
   </div>
 </app-maker-page-frame>
