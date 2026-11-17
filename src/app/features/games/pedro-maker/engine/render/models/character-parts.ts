@@ -41,6 +41,7 @@ export interface CharacterParts {
 export function characterParts(palette: CharacterPalette): CharacterParts {
   switch (palette.hero) {
     case 'pedro':
+    case 'pedrere':
       return pedroParts(palette);
     case 'wario':
       return warioParts(palette);

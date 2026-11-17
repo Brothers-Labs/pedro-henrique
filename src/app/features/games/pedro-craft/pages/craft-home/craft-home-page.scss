@@ -192,10 +192,10 @@
   gap: 0.5rem;
 }
 
-/* Quem vai jogar: 1 ou 2 jogadores e o herói do Pedro Maker de cada um. */
+/* Quem vai jogar: 1, 2 ou 3 jogadores e o herói do Pedro Maker de cada um. */
 .modes--players {
   @include from($breakpoint-md) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

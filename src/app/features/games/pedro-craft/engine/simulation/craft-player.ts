@@ -33,8 +33,8 @@ export interface PlayerMining {
  * energia, a mira, o bloco sendo quebrado, o trem em que está e a cama onde
  * volta. O mundo, os bichos, os baús e o relógio são de todos.
  *
- * Com duas crianças na mesma tela, a simulação tem dois destes; cada uma
- * joga com o seu, e as duas veem o mesmo mundo.
+ * Com duas ou três crianças na mesma tela, a simulação tem um destes para
+ * cada uma; cada uma joga com o seu, e todas veem o mesmo mundo.
  */
 export class CraftPlayer {
   readonly motion: HeroMotion;
@@ -59,7 +59,7 @@ export class CraftPlayer {
   collector: DropCollector | null = null;
 
   constructor(
-    /** 0 para o Jogador 1, 1 para o Jogador 2. */
+    /** 0 para o Jogador 1, 1 para o Jogador 2, 2 para o Jogador 3. */
     readonly index: number,
     /** Herói do Pedro Maker que este jogador veste. */
     readonly heroId: HeroId,

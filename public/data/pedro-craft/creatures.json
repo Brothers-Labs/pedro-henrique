@@ -553,6 +553,19 @@
       "colors": ["#ffc21a", "#ffc629"],
       "width": 0.6,
       "height": 1.3
+    },
+    {
+      "id": "boneco-pedrere",
+      "name": "Pedro Pedrerê",
+      "temperament": "passive",
+      "health": 8,
+      "speed": 1.4,
+      "behavior": "grazer",
+      "model": "maker-hero",
+      "hero": "pedrere",
+      "colors": ["#e8433f", "#e8433f"],
+      "width": 0.6,
+      "height": 1.3
     }
   ]
 }

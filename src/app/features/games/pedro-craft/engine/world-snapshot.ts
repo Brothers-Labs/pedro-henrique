@@ -30,15 +30,38 @@ import { CHEST_SIZE, type SlotContent } from './simulation/inventory';
 /**
  * `keptPartner`: o Jogador 2 de uma partida em dupla anterior. Jogando
  * sozinho, ele continua guardado como estava, para a próxima vez em dupla.
+ * `keptThird` faz o mesmo pelo Jogador 3 de uma partida em trio anterior.
  */
-export function captureWorld(simulation: CraftSimulation, identity: WorldIdentity, updatedAt: string, keptPartner?: SavedPartner): WorldSave {
+export function captureWorld(
+  simulation: CraftSimulation,
+  identity: WorldIdentity,
+  updatedAt: string,
+  keptPartner?: SavedPartner,
+  keptThird?: SavedPartner,
+): WorldSave {
   const { id, name, seed, mode, createdAt } = identity;
   const state = captureState(simulation);
-  const partner = simulation.players[1]
-    ? simulation.asPlayer(1, () => ({ hero: captureHero(simulation), inventory: simulation.inventory.slots.map(copySlot) }))
-    : keptPartner;
+  const partner = capturePartner(simulation, 1) ?? keptPartner;
+  const third = capturePartner(simulation, 2) ?? keptThird;
 
-  return { version: WORLD_SAVE_VERSION, id, name, seed, mode, createdAt, updatedAt, state: partner ? { ...state, partner } : state };
+  return {
+    version: WORLD_SAVE_VERSION,
+    id,
+    name,
+    seed,
+    mode,
+    createdAt,
+    updatedAt,
+    // Sem Jogador 2 ou 3, o campo nem aparece: o save fica igual ao de quem sempre jogou sozinho.
+    state: { ...state, ...(partner ? { partner } : {}), ...(third ? { third } : {}) },
+  };
+}
+
+/** O herói e a mochila do jogador `index` (1 ou 2); `undefined` quando ele não está nesta partida. */
+function capturePartner(simulation: CraftSimulation, index: number): SavedPartner | undefined {
+  return simulation.players[index]
+    ? simulation.asPlayer(index, () => ({ hero: captureHero(simulation), inventory: simulation.inventory.slots.map(copySlot) }))
+    : undefined;
 }
 
 /**
@@ -59,11 +82,14 @@ export function restoreWorld(simulation: CraftSimulation, state: WorldState): vo
 
   restoreHero(simulation, hero, state.hero);
 
-  const partner = state.partner;
+  // O Jogador 2 e o 3 voltam para onde estavam, cada um se estiver nesta partida.
+  ([state.partner, state.third] as const).forEach((saved, offset) => {
+    const index = offset + 1;
 
-  if (partner && simulation.players[1]) {
-    simulation.asPlayer(1, () => restoreHero(simulation, simulation.hero, partner.hero));
-  }
+    if (saved && simulation.players[index]) {
+      simulation.asPlayer(index, () => restoreHero(simulation, simulation.hero, saved.hero));
+    }
+  });
 
   simulation.setCalendarDay(state.day ?? 1);
   simulation.clock.setTime(state.clockMs);

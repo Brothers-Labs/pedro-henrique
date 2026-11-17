@@ -217,6 +217,16 @@
     left: 50%;
     border-left: 4px solid #2a2350;
   }
+
+  /* Três jogadores: a tela divide em quatro, Jogadores 1 e 2 em cima e o Jogador 3 embaixo à esquerda. */
+  &--top {
+    bottom: 50%;
+  }
+
+  &--bottom {
+    top: 50%;
+    border-top: 4px solid #2a2350;
+  }
 }
 
 .view__tag {
@@ -233,6 +243,11 @@
   font-size: 0.85rem;
   font-weight: 800;
   pointer-events: none;
+}
+
+/* Embaixo não há a barra de botões: a etiqueta sobe para o canto. */
+.view--bottom .view__tag {
+  top: 0.75rem;
 }
 
 .hint--split {

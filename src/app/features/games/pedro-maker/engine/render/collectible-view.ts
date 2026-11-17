@@ -62,6 +62,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
+  'pedrere-mushroom': '#ffb92e',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -519,7 +520,7 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
     case 'turbo-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['turbo-mushroom']), ...speedStreakParts()];
     case 'swap-mushroom':
-      return [...mushroomParts(POWER_UP_COLORS['swap-mushroom']), ...swapArrowParts()];
+      return [...mushroomParts(POWER_UP_COLORS['swap-mushroom'], 'question'), ...swapArrowParts()];
     case 'magnet-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['magnet-mushroom']), ...magnetHatParts()];
     case 'tall-mushroom':
@@ -528,20 +529,35 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return upsideDownParts(mushroomParts(POWER_UP_COLORS['reverse-mushroom']));
     case 'mini-mushroom':
       return scaleParts(mushroomParts(POWER_UP_COLORS['mini-mushroom']), 0.6);
+    case 'pedrere-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['pedrere-mushroom']), ...pedrereCapParts()];
     default:
       return null;
   }
 }
 
-function mushroomParts(cap: string): readonly VoxelBox[] {
+/** O que vai na frente do pé do cogumelo: os olhinhos, ou um "?" no lugar deles. */
+type MushroomFace = 'eyes' | 'question';
+
+/** Lado de cada quadradinho do "?" de cubos, em blocos. */
+const QUESTION_PIXEL = 0.04;
+
+/**
+ * O "?" desenhado em cubinhos, linha por linha de cima para baixo: cinco
+ * linhas de três colunas, com o pingo separado embaixo.
+ */
+const QUESTION_ROWS = ['###', '..#', '.#.', '...', '.#.'] as const;
+
+function mushroomParts(cap: string, face: MushroomFace = 'eyes'): readonly VoxelBox[] {
   const stem = '#fff1d6';
   const eye = '#2a2350';
   const spot = '#ffffff';
 
   return [
     box(0, -0.13, 0, 0.3, 0.26, 0.3, stem),
-    box(-0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye),
-    box(0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye),
+    ...(face === 'eyes'
+      ? [box(-0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye), box(0.06, -0.11, 0.151, 0.04, 0.09, 0.01, eye)]
+      : questionMarkParts(eye)),
     box(0, 0.08, 0, 0.6, 0.16, 0.6, cap),
     box(0, 0.2, 0, 0.44, 0.1, 0.44, cap),
     box(0, 0.12, 0.301, 0.16, 0.1, 0.01, spot),
@@ -607,6 +623,28 @@ function tallMushroomParts(cap: string): readonly VoxelBox[] {
     box(0, 0.2, 0, 0.42, 0.14, 0.42, cap),
     box(0, 0.3, 0, 0.28, 0.08, 0.28, cap),
     box(0, 0.22, 0.211, 0.12, 0.08, 0.01, spot),
+  ];
+}
+
+/** O "?" na frente do pé do cogumelo, centralizado onde ficavam os olhos. */
+function questionMarkParts(color: string): readonly VoxelBox[] {
+  const top = -0.03;
+
+  return QUESTION_ROWS.flatMap((row, line) =>
+    [...row].flatMap((cell, column) =>
+      cell === '#' ? [box((column - 1) * QUESTION_PIXEL, top - line * QUESTION_PIXEL, 0.151, QUESTION_PIXEL, QUESTION_PIXEL, 0.01, color)] : [],
+    ),
+  );
+}
+
+/** O boné vermelho do Pedro Pedrerê em cima do chapéu, com a aba para a frente. */
+function pedrereCapParts(): readonly VoxelBox[] {
+  const cap = '#e8433f';
+
+  return [
+    box(0, 0.31, 0, 0.3, 0.12, 0.28, cap),
+    box(0, 0.28, 0.2, 0.28, 0.04, 0.14, cap),
+    box(0, 0.39, 0, 0.06, 0.02, 0.06, '#ff9c99'),
   ];
 }
 

@@ -3,6 +3,9 @@ import type { CharacterPalette } from './character.config';
 import { CORAL_PRINCESS, CROWN_GOLD, DAISY_PRINCESS, ESTRELA_PRINCESS, JADE_PRINCESS, PEACH_PRINCESS } from './princess.config';
 import { WARIO_COLORS } from './wario.config';
 
+/** O vermelho do boné e da camiseta do Pedro no Pedro Pedrerê, o mesmo de lá. */
+export const PEDRERE_RED = '#e8433f';
+
 /** Jeito de se mexer de um herói, em proporção à física padrão do jogo. */
 export interface HeroAbilities {
   /** Multiplica a velocidade do pulo; a altura cresce com o quadrado dela. */
@@ -43,6 +46,9 @@ export interface HeroDefinition {
  *
  * As princesas Peach e Daisy, dos jogos, dos desenhos e dos filmes do Mario,
  * fecham a turma com o mesmo vestido rodado e a mesma regra do pulo.
+ *
+ * O Pedro Pedrerê é o Pedro do jogo mais novo do site, com a roupa de lá:
+ * chega pelo Cogumelo Pedrerê ou pela tela de personagens.
  */
 export const HEROES: readonly HeroDefinition[] = [
   {
@@ -275,6 +281,17 @@ export const HEROES: readonly HeroDefinition[] = [
     ],
     abilities: { jumpMultiplier: Math.sqrt(1.15), brakingMultiplier: 1.1 },
     outfit: { cap: CROWN_GOLD, shirt: DAISY_PRINCESS.dress, backpack: '#cccccc', backpackStyle: 'none' },
+  },
+  {
+    id: 'pedrere',
+    name: 'Pedro Pedrerê',
+    description: 'O Pedro do jogo novo, o Pedro Pedrerê: boné e camiseta vermelhos, sem mochila, pronto para quicar.',
+    traits: [
+      { emoji: '🤸', label: 'Pula um pouquinho mais alto' },
+      { emoji: '🎯', label: 'Para certinho onde quer' },
+    ],
+    abilities: { jumpMultiplier: Math.sqrt(1.1), brakingMultiplier: 1 },
+    outfit: { cap: PEDRERE_RED, shirt: PEDRERE_RED, backpack: '#cccccc', backpackStyle: 'none' },
   },
 ];
 

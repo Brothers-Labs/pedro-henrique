@@ -354,6 +354,13 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
     label: 'Cogumelo de Encolher',
     properties: { powerUp: 'mini-mushroom' },
   },
+  {
+    id: 'power-pedrere-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo Pedrerê',
+    properties: { powerUp: 'pedrere-mushroom' },
+  },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
   {
     id: 'surprise-mushroom',
@@ -460,6 +467,7 @@ export const POWER_UP_LABELS = {
   'tall-mushroom': { label: 'Cogumelo Alto', emoji: '🦒' },
   'reverse-mushroom': { label: 'Cogumelo Reverso', emoji: '🙃' },
   'mini-mushroom': { label: 'Cogumelo de Encolher', emoji: '🐜' },
+  'pedrere-mushroom': { label: 'Cogumelo Pedrerê', emoji: '🤸' },
   'coin-x2': { label: 'Moeda ×2', emoji: '🪙' },
   'coin-x4': { label: 'Moeda ×4', emoji: '🪙' },
   'coin-x1000': { label: 'Moeda ×1000', emoji: '🪙' },

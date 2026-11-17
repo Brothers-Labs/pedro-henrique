@@ -6,7 +6,7 @@ import { nextTask } from '../next-task';
 import type { CraftSimulation } from '../simulation/craft-simulation';
 import { BlockAtlas } from './block-atlas';
 import { AvatarView } from './avatar-view';
-import { type CraftStage, PLAYER_VIEW_LAYERS } from './craft-stage';
+import { AVATAR_LAYERS, type CraftStage, PLAYER_VIEW_LAYERS, type StagePlayerCount } from './craft-stage';
 import { CreaturesView } from './creatures-view';
 import { DropsView } from './drops-view';
 import { FusesView } from './fuses-view';
@@ -65,7 +65,7 @@ export class CraftView {
   private readonly targetViews: readonly TargetView[];
   private readonly handViews: readonly HandView[];
   private readonly partnerTrainViews: readonly TrainView[];
-  /** Com dois jogadores, o corpo de cada um, que só o outro vê. */
+  /** Com dois ou três jogadores, o corpo de cada um, que só os outros veem. */
   private readonly avatars: readonly AvatarView[];
   private readonly underwater: boolean[];
   private readonly particles: ParticlesView;
@@ -96,15 +96,15 @@ export class CraftView {
     const players = simulation.players;
     const isSplit = players.length > 1;
 
-    stage.setPlayerCount(isSplit ? 2 : 1);
+    stage.setPlayerCount(Math.min(3, players.length) as StagePlayerCount);
     this.targetViews = players.map(() => new TargetView(stage.scene));
     this.handViews = players.map(
       (player, index) => new HandView(stage.cameras[index], this.itemTextures, paletteFor(DEFAULT_LOOK, player.heroId).shirt, PLAYER_VIEW_LAYERS[index]),
     );
     this.partnerTrainViews = players.slice(1).map(() => new TrainView(stage.scene, this.daylight));
-    // O corpo do Jogador 1 fica na camada da câmera do Jogador 2, e vice-versa.
+    // O corpo de cada jogador fica na camada dele, que só as câmeras dos outros desenham.
     this.avatars = isSplit
-      ? players.map((player, index) => new AvatarView(stage.scene, player.heroId, PLAYER_VIEW_LAYERS[1 - index], this.daylight))
+      ? players.map((player, index) => new AvatarView(stage.scene, player.heroId, AVATAR_LAYERS[index], this.daylight))
       : [];
     this.underwater = players.map(() => false);
     this.particles = new ParticlesView(stage.scene);

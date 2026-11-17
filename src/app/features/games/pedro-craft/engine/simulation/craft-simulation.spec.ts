@@ -1392,4 +1392,87 @@ describe('Simulação do PedroCraft: colher e construir', () => {
       expect(() => solo.asPlayer(1, () => null)).toThrowError(/Jogador 2/);
     });
   });
+
+  describe('três jogadores na mesma tela', () => {
+    const trio = (): CraftSimulation =>
+      new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        hero: 'mario',
+        partner: { hero: 'peach', inventory: [] },
+        third: { hero: 'daisy', inventory: [] },
+      });
+
+    it('cada um tem o seu herói, e o Jogador 3 é o terceiro da lista', () => {
+      const simulation = trio();
+
+      expect(simulation.players.map((player) => player.heroId)).toEqual(['mario', 'peach', 'daisy']);
+      expect(simulation.players.map((player) => player.index)).toEqual([0, 1, 2]);
+    });
+
+    it('os três nascem em lugares diferentes, sem ninguém dentro de ninguém', () => {
+      const bodies = trio().players.map((player) => player.motion.body);
+
+      for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+        expect(Math.hypot(bodies[a].x - bodies[b].x, bodies[a].z - bodies[b].z))
+          .withContext(`Jogadores ${a + 1} e ${b + 1}`)
+          .toBeGreaterThanOrEqual(1.5);
+      }
+    });
+
+    it('o Jogador 3 anda e olha com o próprio controle, e os outros ficam parados', () => {
+      const simulation = trio();
+      const [first, second, third] = simulation.players.map((player) => ({ x: player.motion.body.x, z: player.motion.body.z }));
+      const yawBefore = simulation.players[2].motion.yaw;
+
+      simulation.lookPartner({ yaw: 0.3, pitch: 0 }, 2);
+
+      for (let step = 0; step < 60; step += 1) {
+        simulation.step(IDLE_CRAFT_INPUT, IDLE_CRAFT_INPUT, { ...IDLE_CRAFT_INPUT, forward: 1 });
+      }
+
+      const bodies = simulation.players.map((player) => player.motion.body);
+
+      expect(simulation.players[2].motion.yaw).toBeCloseTo(yawBefore + 0.3, 5);
+      expect(Math.hypot(bodies[2].x - third.x, bodies[2].z - third.z)).toBeGreaterThan(1);
+      expect(bodies[0].x).toBeCloseTo(first.x, 5);
+      expect(bodies[0].z).toBeCloseTo(first.z, 5);
+      expect(bodies[1].x).toBeCloseTo(second.x, 5);
+      expect(bodies[1].z).toBeCloseTo(second.z, 5);
+      expect(simulation.activePlayer).toBe(simulation.players[0]);
+    });
+
+    it('o Jogador 3 abre a própria mochila; enquanto ela está aberta, a vez é dele', () => {
+      const simulation = trio();
+
+      simulation.players[2].inventory.add('stone', 3);
+      simulation.step(IDLE_CRAFT_INPUT, IDLE_CRAFT_INPUT, { ...IDLE_CRAFT_INPUT, inventoryPressed: true });
+
+      expect(simulation.screens.screen?.kind).toBe('inventory');
+      expect(simulation.activePlayer).toBe(simulation.players[2]);
+      expect(simulation.inventory.count('stone')).toBe(3);
+
+      simulation.closeScreen();
+
+      expect(simulation.activePlayer).toBe(simulation.players[0]);
+    });
+
+    it('sem Jogador 2, o Jogador 3 não entra', () => {
+      const alone = new CraftSimulation({
+        catalog,
+        world,
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: FACING_EAST },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: [],
+        third: { hero: 'daisy' },
+      });
+
+      expect(alone.players.length).toBe(1);
+    });
+  });
 });
