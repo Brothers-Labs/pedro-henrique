@@ -40,7 +40,13 @@
   @default {
     <span class="hurt" [class.hurt--visible]="isHurt()" aria-hidden="true"></span>
 
-    <div class="view" [class.view--left]="isSplit()" [attr.aria-label]="isSplit() ? 'Jogador 1' : null" [attr.role]="isSplit() ? 'group' : null">
+    <div
+      class="view"
+      [class.view--left]="isSplit()"
+      [class.view--top]="isTrio()"
+      [attr.aria-label]="isSplit() ? 'Jogador 1' : null"
+      [attr.role]="isSplit() ? 'group' : null"
+    >
       <span class="crosshair" aria-hidden="true"></span>
       @if (isSplit()) {
         <span class="view__tag" aria-hidden="true">Jogador 1</span>
@@ -58,10 +64,23 @@
     </div>
 
     @if (isSplit()) {
-      <div class="view view--right" role="group" aria-label="Jogador 2">
+      <div class="view view--right" [class.view--top]="isTrio()" role="group" aria-label="Jogador 2">
         <span class="crosshair" aria-hidden="true"></span>
         <span class="view__tag" aria-hidden="true">Jogador 2</span>
         <app-craft-hud [hud]="partnerHud()" [icons]="icons()" [showsGoal]="false" />
+      </div>
+    }
+
+    @if (isTrio()) {
+      <div class="view view--left view--bottom" role="group" aria-label="Jogador 3">
+        <span class="crosshair" aria-hidden="true"></span>
+        <span class="view__tag" aria-hidden="true">Jogador 3</span>
+        <app-craft-hud [hud]="thirdHud()" [icons]="icons()" [showsGoal]="false" />
+      </div>
+
+      <!-- O quarto que sobra na tela em quatro: o nome do mundo e como cada um joga, sempre à vista. -->
+      <div class="view view--right view--bottom">
+        <app-craft-trio-panel [worldName]="world().name" />
       </div>
     }
 
@@ -92,14 +111,15 @@
       <app-craft-touch-controls [state]="virtualInput" [size]="buttonSize()" />
     }
 
-    @if (showsMouseHint() && isSplit()) {
+    <!-- Com três, as teclas de cada um já ficam sempre à vista no quarto de baixo à direita. -->
+    @if (showsMouseHint() && isSplit() && !isTrio()) {
       <p class="hint hint--split" role="status">
         <strong>Jogador 1:</strong> clique no mundo, <strong>WASD</strong> anda, <strong>espaço</strong> pula, mouse quebra e coloca,
         <strong>E</strong> mochila. <strong>Jogador 2:</strong> controle, ou <strong>setas</strong> andam, <strong>I J K L</strong> olham,
         <strong>Enter</strong> pula, <strong>U</strong> quebra, <strong>O</strong> coloca, <strong>N M</strong> trocam o item e
         <strong>H</strong> abre a mochila.
       </p>
-    } @else if (showsMouseHint()) {
+    } @else if (showsMouseHint() && !isSplit()) {
       <p class="hint" role="status">
         Clique no mundo para olhar com o mouse. <strong>WASD</strong> anda, <strong>espaço</strong> pula,
         <strong>clique</strong> quebra e golpeia, <strong>botão direito</strong> coloca e usa, <strong>E</strong> abre a mochila,

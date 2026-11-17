@@ -1183,6 +1183,34 @@ describe('Simulação do Pedro Maker', () => {
     expect(swappedApex / pedroApex).toBeCloseTo(heroDefinition(nextHero('pedro')).abilities.jumpMultiplier ** 2, 1);
   });
 
+  it('o Cogumelo Pedrerê transforma qualquer herói no Pedro do Pedro Pedrerê, com o pulo dele', () => {
+    const harness = start(flatLevel().add('power-up', 8, SURFACE - 1, { powerUp: 'pedrere-mushroom' }).build(META), 'peach');
+    const pedroApex = jumpApex(start(flatLevel().build(META)));
+    run(harness, 0.2);
+
+    harness.simulation.player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(harness.simulation.hero).toBe('pedrere');
+    expect(harness.simulation.player.hasPowerUp('pedrere-mushroom')).toBeFalse();
+    expect(harness.events).toContain({ type: 'mascot', text: 'Agora você é Pedro Pedrerê!' });
+    expect(harness.events.some((event) => event.type === 'power-up')).toBeFalse();
+
+    const pedrereApex = jumpApex(harness);
+    expect(pedrereApex / pedroApex).toBeCloseTo(heroDefinition('pedrere').abilities.jumpMultiplier ** 2, 1);
+  });
+
+  it('o Pedro Pedrerê que pega outro Cogumelo Pedrerê continua sendo ele', () => {
+    const harness = start(flatLevel().add('power-up', 8, SURFACE - 1, { powerUp: 'pedrere-mushroom' }).build(META), 'pedrere');
+    run(harness, 0.2);
+
+    harness.simulation.player.placeFeetAt(8.5 * TILE_SIZE, SURFACE * TILE_SIZE);
+    run(harness, 0.1);
+
+    expect(harness.simulation.hero).toBe('pedrere');
+    expect(harness.events).toContain({ type: 'mascot', text: 'Agora você é Pedro Pedrerê!' });
+  });
+
   it('dois Cogumelos Troca-Personagem seguem a turma em ordem', () => {
     const harness = start(
       flatLevel()

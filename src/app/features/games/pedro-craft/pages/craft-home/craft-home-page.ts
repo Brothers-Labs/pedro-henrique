@@ -22,6 +22,9 @@ const MODES: readonly { readonly id: GameMode; readonly emoji: string; readonly 
 
 const MODE_NAMES: Readonly<Record<GameMode, string>> = { infinite: '♾️ Infinito', adventure: '🗺️ Normal', creative: '🎨 Criativo', survival: '🍎 Sobrevivência' };
 
+/** As preferências que guardam o herói de cada jogador. */
+type HeroSetting = 'hero' | 'partnerHero' | 'thirdHero';
+
 const SAVED_AT = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
 /**
@@ -57,8 +60,10 @@ export class CraftHomePage {
   protected readonly players = computed(() => this.settingsService.settings().players);
   protected readonly hero = computed(() => this.settingsService.settings().hero);
   protected readonly partnerHero = computed(() => this.settingsService.settings().partnerHero);
+  protected readonly thirdHero = computed(() => this.settingsService.settings().thirdHero);
   protected readonly heroLook = computed(() => paletteFor(DEFAULT_LOOK, this.hero()));
   protected readonly partnerLook = computed(() => paletteFor(DEFAULT_LOOK, this.partnerHero()));
+  protected readonly thirdLook = computed(() => paletteFor(DEFAULT_LOOK, this.thirdHero()));
 
   protected readonly modes = MODES;
   protected readonly modeNames = MODE_NAMES;
@@ -72,17 +77,17 @@ export class CraftHomePage {
     void this.worldsService.load();
   }
 
-  /** 1 jogador ou 2 jogadores: vale para qualquer mundo aberto depois. */
+  /** 1, 2 ou 3 jogadores: vale para qualquer mundo aberto depois. */
   protected setPlayers(players: CraftPlayerCount): void {
     this.settingsService.update({ players });
   }
 
-  /** Troca o herói do Jogador 1 (`'hero'`) ou do Jogador 2 (`'partnerHero'`) pela lista. */
-  protected chooseHero(which: 'hero' | 'partnerHero', event: Event): void {
+  /** Troca o herói do Jogador 1 (`'hero'`), do Jogador 2 (`'partnerHero'`) ou do Jogador 3 (`'thirdHero'`) pela lista. */
+  protected chooseHero(which: HeroSetting, event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
 
     if (isHeroId(value)) {
-      this.settingsService.update({ [which]: value } as { readonly hero: HeroId } | { readonly partnerHero: HeroId });
+      this.settingsService.update({ [which]: value } as Partial<Record<HeroSetting, HeroId>>);
     }
   }
 

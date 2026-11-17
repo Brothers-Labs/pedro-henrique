@@ -5,6 +5,7 @@ import { isHeroId } from '../../pedro-maker/config/hero.config';
 import {
   type CraftButtonSize,
   type CraftDifficulty,
+  type CraftPlayerCount,
   type CraftSettings,
   type CraftTouchMode,
   LOOK_SENSITIVITY_RANGE,
@@ -15,6 +16,7 @@ const STORAGE_KEY = 'pedro-henrique:pedro-craft:settings:v1';
 const TOUCH_MODES: readonly CraftTouchMode[] = ['automatico', 'sempre', 'nunca'];
 const BUTTON_SIZES: readonly CraftButtonSize[] = ['normal', 'grande'];
 const DIFFICULTIES: readonly CraftDifficulty[] = ['facil', 'normal'];
+const PLAYER_COUNTS: readonly CraftPlayerCount[] = [1, 2, 3];
 
 /**
  * Preferências do PedroCraft, guardadas no aparelho.
@@ -54,6 +56,8 @@ function defaults(isCalm: boolean): CraftSettings {
     players: 1,
     hero: 'pedro',
     partnerHero: 'gui',
+    // Um terceiro herói diferente dos outros dois: as três crianças se reconhecem logo na tela.
+    thirdHero: 'mario',
   };
 }
 
@@ -91,8 +95,10 @@ export function sanitize(value: unknown, fallback: CraftSettings): CraftSettings
     buttonSize: BUTTON_SIZES.find((size) => size === stored.buttonSize) ?? fallback.buttonSize,
     readAloud: typeof stored.readAloud === 'boolean' ? stored.readAloud : fallback.readAloud,
     hasSeenFirstSteps: typeof stored.hasSeenFirstSteps === 'boolean' ? stored.hasSeenFirstSteps : fallback.hasSeenFirstSteps,
-    players: stored.players === 1 || stored.players === 2 ? stored.players : fallback.players,
+    players: PLAYER_COUNTS.find((count) => count === stored.players) ?? fallback.players,
     hero: isHeroId(stored.hero) ? stored.hero : fallback.hero,
     partnerHero: isHeroId(stored.partnerHero) ? stored.partnerHero : fallback.partnerHero,
+    // Preferências de antes do Jogador 3 não têm este campo: vale o herói padrão.
+    thirdHero: isHeroId(stored.thirdHero) ? stored.thirdHero : fallback.thirdHero,
   };
 }

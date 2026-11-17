@@ -1133,6 +1133,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return;
     }
 
+    if (kind === 'pedrere-mushroom') {
+      this.becomeHero('pedrere', x, y, '🤸');
+      return;
+    }
+
     this.player.grantPowerUp(kind, this.clockMs);
 
     const { emoji, label } = POWER_UP_LABELS[kind];
@@ -1155,12 +1160,21 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
   /** O troca-personagem não fica com o herói: na hora ele vira o próximo da turma, com os poderes que já tinha. */
   private swapHero(x: number, y: number): void {
-    const hero = heroDefinition(nextHero(this.currentHero));
+    this.becomeHero(nextHero(this.currentHero), x, y, '🔄');
+  }
+
+  /**
+   * O herói vira `id` na hora, com os poderes que já tinha. Serve ao
+   * troca-personagem e ao Cogumelo Pedrerê, que sempre traz o Pedro do
+   * Pedro Pedrerê — mesmo quem já é ele ganha a festa de novo.
+   */
+  private becomeHero(id: HeroId, x: number, y: number, emoji: string): void {
+    const hero = heroDefinition(id);
 
     this.currentHero = hero.id;
     this.player.changeAbilities(hero.abilities);
     this.effects.burst('sparkle', x, y, 24);
-    this.effects.floatingText(x, y - 30, `🔄 VIROU ${hero.name.toUpperCase()}!`, '#e2c6ff');
+    this.effects.floatingText(x, y - 30, `${emoji} VIROU ${hero.name.toUpperCase()}!`, '#e2c6ff');
     this.emit({ type: 'mascot', text: `Agora você é ${hero.name}!` });
   }
 

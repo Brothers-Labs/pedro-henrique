@@ -37,10 +37,33 @@ const TRIGGER_PRESSED = 0.4;
 
 type GamepadSource = () => readonly (Gamepad | null)[];
 
+/** Qual controle este jogador usa e se o lado direito do teclado também é dele. */
+export interface PartnerSeat {
+  /**
+   * 0 é o primeiro controle ligado (o do Jogador 2), 1 é o segundo (o do
+   * Jogador 3). Conta só os controles ligados, na ordem do navegador: um
+   * controle que desligou não empurra o outro para a vez errada.
+   */
+  readonly padSlot: number;
+  /** O lado direito do teclado: só o Jogador 2 usa, o Jogador 3 é só controle. */
+  readonly usesKeyboard: boolean;
+}
+
+/** O Jogador 2: o primeiro controle e o lado direito do teclado. */
+export const PARTNER_SEAT: PartnerSeat = { padSlot: 0, usesKeyboard: true };
+
 /**
- * Entrada do Jogador 2 na tela dividida: um controle de videogame ligado no
- * computador e, junto, o lado direito do teclado. As duas fontes valem ao
- * mesmo tempo, como o teclado e o toque do Jogador 1.
+ * O Jogador 3: o segundo controle, e só ele. O teclado já está todo
+ * repartido (W A S D do Jogador 1, setas e I J K L do Jogador 2), e um
+ * terceiro grupo de teclas espremeria três crianças em cima de um teclado só.
+ */
+export const THIRD_SEAT: PartnerSeat = { padSlot: 1, usesKeyboard: false };
+
+/**
+ * Entrada do Jogador 2 (ou do 3) na tela dividida: um controle de videogame
+ * ligado no computador e, junto, o lado direito do teclado. As duas fontes
+ * valem ao mesmo tempo, como o teclado e o toque do Jogador 1. O Jogador 3
+ * lê só o segundo controle (veja `THIRD_SEAT`).
  *
  * O olhar gira por tempo, e não por pixel: o analógico e as teclas I J K L
  * dizem "gire para lá", e quanto mais tempo seguram, mais gira.
@@ -77,10 +100,14 @@ export class PartnerInputReader {
     private readonly target: Window,
     private readonly lookSensitivity: () => number,
     private readonly gamepads: GamepadSource = () => (typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : []),
+    private readonly seat: PartnerSeat = PARTNER_SEAT,
   ) {
-    target.addEventListener('keydown', this.onKeyDown);
-    target.addEventListener('keyup', this.onKeyUp);
-    target.addEventListener('blur', this.onBlur);
+    // Sem teclado, nem escuta: as teclas do Jogador 2 não podem mexer o Jogador 3.
+    if (seat.usesKeyboard) {
+      target.addEventListener('keydown', this.onKeyDown);
+      target.addEventListener('keyup', this.onKeyUp);
+      target.addEventListener('blur', this.onBlur);
+    }
   }
 
   setCapturing(isCapturing: boolean): void {
@@ -158,9 +185,9 @@ export class PartnerInputReader {
     this.target.removeEventListener('blur', this.onBlur);
   }
 
-  /** O primeiro controle ligado é o do Jogador 2. */
+  /** O primeiro controle ligado é o do Jogador 2; o segundo, o do Jogador 3. */
   private pad(): Gamepad | null {
-    return this.gamepads().find((pad) => pad !== null && pad.connected) ?? null;
+    return this.gamepads().filter((pad): pad is Gamepad => pad !== null && pad.connected)[this.seat.padSlot] ?? null;
   }
 
   private isDown(code: string): boolean {

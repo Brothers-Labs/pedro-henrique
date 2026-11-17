@@ -6,7 +6,7 @@ import type { WorldState } from '../models/world-save.model';
 import { generateWorld } from '../world/world-generator';
 import { cleanWorldSave } from '../world/world-save';
 import { CraftInputReader } from './input/craft-input-reader';
-import { PartnerInputReader } from './input/partner-input-reader';
+import { PartnerInputReader, THIRD_SEAT } from './input/partner-input-reader';
 import { nextTask } from './next-task';
 import { CraftStage } from './render/craft-stage';
 import { CraftView } from './render/craft-view';
@@ -42,8 +42,12 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
   let input: CraftInputReader | null = null;
   /** O controle e o lado direito do teclado do Jogador 2; `null` jogando sozinho. */
   let partnerInput: PartnerInputReader | null = null;
+  /** O segundo controle do Jogador 3; `null` sem ele. */
+  let thirdInput: PartnerInputReader | null = null;
   /** O Jogador 2 de uma partida em dupla anterior, guardado intacto quando se joga sozinho. */
   let keptPartner: WorldState['partner'];
+  /** O Jogador 3 de uma partida em trio anterior, guardado intacto quando se joga com menos gente. */
+  let keptThird: WorldState['third'];
   let isDestroyed = false;
   let wasPointerLocked = false;
   let reportedHudVersion = -1;
@@ -62,6 +66,10 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       if (running.players.length > 1) {
         listener({ type: 'partner-hud', hud: running.asPlayer(1, () => hudState(running)) });
       }
+
+      if (running.players.length > 2) {
+        listener({ type: 'third-hud', hud: running.asPlayer(2, () => hudState(running)) });
+      }
     }
   };
 
@@ -76,15 +84,20 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       simulation.lookPartner(partnerInput.readLook(frameMs));
     }
 
+    if (thirdInput) {
+      simulation.lookPartner(thirdInput.readLook(frameMs), 2);
+    }
+
     for (let step = 0; step < steps && loop.isRunning; step += 1) {
       const snapshot = input.read();
       const partnerSnapshot = partnerInput?.read();
+      const thirdSnapshot = thirdInput?.read();
 
-      if (snapshot.pausePressed || partnerSnapshot?.pausePressed) {
+      if (snapshot.pausePressed || partnerSnapshot?.pausePressed || thirdSnapshot?.pausePressed) {
         listener({ type: 'pause-requested' });
       }
 
-      simulation.step(snapshot, partnerSnapshot);
+      simulation.step(snapshot, partnerSnapshot, thirdSnapshot);
     }
 
     publish(simulation);
@@ -117,6 +130,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     loop.stop();
     input?.setCapturing(false);
     partnerInput?.setCapturing(false);
+    thirdInput?.setCapturing(false);
   };
 
   const start = (): void => {
@@ -128,6 +142,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     input?.setCapturing(true);
     partnerInput?.reset();
     partnerInput?.setCapturing(true);
+    thirdInput?.reset();
+    thirdInput?.setCapturing(true);
     monitor.reset();
     loop.start();
   };
@@ -176,8 +192,11 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     const { catalog } = options;
     const { state } = cleanWorldSave(options.world, catalog);
     const partnerHero = options.players.partner;
+    // O Jogador 3 só entra junto com o Jogador 2: ele é sempre o terceiro da lista.
+    const thirdHero = partnerHero ? options.players.third : null;
 
     keptPartner = partnerHero ? undefined : state?.partner;
+    keptThird = thirdHero ? undefined : state?.third;
     const generated = generateWorld(catalog, options.world.seed);
     const nextSimulation = new CraftSimulation({
       catalog,
@@ -192,6 +211,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       inventory: state?.inventory,
       hero: options.players.hero,
       partner: partnerHero ? { hero: partnerHero, inventory: state?.partner?.inventory } : undefined,
+      third: thirdHero ? { hero: thirdHero, inventory: state?.third?.inventory } : undefined,
       goals: state ? progressFromCompleted(catalog.goals, state.goals.completed, state.goals.amount) : undefined,
     });
 
@@ -228,6 +248,11 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     if (partnerHero) {
       partnerInput = new PartnerInputReader(window, () => settings.lookSensitivity);
       partnerInput.reset();
+    }
+
+    if (thirdHero) {
+      thirdInput = new PartnerInputReader(window, () => settings.lookSensitivity, undefined, THIRD_SEAT);
+      thirdInput.reset();
     }
     document.addEventListener('pointerlockchange', onPointerLockChange);
     publish(nextSimulation);
@@ -279,7 +304,7 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
     skipFirstSteps: () => {
       withSimulation((running) => running.skipFirstSteps());
     },
-    capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString(), keptPartner) : null),
+    capture: () => (simulation ? captureWorld(simulation, options.world, new Date().toISOString(), keptPartner, keptThird) : null),
     destroy: () => {
       if (isDestroyed) {
         return;
@@ -293,6 +318,8 @@ export function launchCraftGame(options: CraftLaunchOptions): CraftGameSession {
       input = null;
       partnerInput?.dispose();
       partnerInput = null;
+      thirdInput?.dispose();
+      thirdInput = null;
       view?.dispose();
       view = null;
       simulation = null;

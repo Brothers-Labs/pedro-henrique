@@ -35,6 +35,11 @@
         <span class="mode__name">2 jogadores</span>
         <span class="mode__summary">A tela divide ao meio. O Jogador 2 usa o controle ou as setas do teclado.</span>
       </button>
+      <button type="button" class="mode" role="radio" [attr.aria-checked]="players() === 3" [class.mode--active]="players() === 3" (click)="setPlayers(3)">
+        <span class="mode__emoji" aria-hidden="true">🧒🧒🧒</span>
+        <span class="mode__name">3 jogadores</span>
+        <span class="mode__summary">A tela divide em quatro. O Jogador 3 usa um segundo controle de videogame.</span>
+      </button>
     </div>
 
     <div class="heroes">
@@ -48,13 +53,25 @@
         </select>
       </label>
 
-      @if (players() === 2) {
+      @if (players() >= 2) {
         <label class="hero-pick">
           <app-pedro-figure class="hero-pick__figure" [character]="partnerLook()" label="" />
           <span class="hero-pick__label">Personagem do Jogador 2</span>
           <select class="hero-pick__select" [value]="partnerHero()" (change)="chooseHero('partnerHero', $event)">
             @for (option of heroes; track option.id) {
               <option [value]="option.id" [selected]="option.id === partnerHero()">{{ option.name }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      @if (players() === 3) {
+        <label class="hero-pick">
+          <app-pedro-figure class="hero-pick__figure" [character]="thirdLook()" label="" />
+          <span class="hero-pick__label">Personagem do Jogador 3</span>
+          <select class="hero-pick__select" [value]="thirdHero()" (change)="chooseHero('thirdHero', $event)">
+            @for (option of heroes; track option.id) {
+              <option [value]="option.id" [selected]="option.id === thirdHero()">{{ option.name }}</option>
             }
           </select>
         </label>

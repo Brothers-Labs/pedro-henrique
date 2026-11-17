@@ -91,6 +91,8 @@ export const POWER_UP_DURATION_MS = {
   'one-up': 0,
   /** O troca-personagem também age na hora: o herói vira outro. */
   'swap-mushroom': 0,
+  /** O Cogumelo Pedrerê também: o herói vira o Pedro do Pedro Pedrerê na hora. */
+  'pedrere-mushroom': 0,
 } as const;
 
 /**

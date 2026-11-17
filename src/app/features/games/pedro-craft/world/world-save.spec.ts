@@ -165,6 +165,68 @@ describe('Mundo salvo do PedroCraft', () => {
     expect(state?.partner?.inventory[0]).toEqual({ item: 'netherite-block', count: 2, durability: null });
   });
 
+  it('jogando em trio, salva e devolve a mochila, a posição e a vida do Jogador 3', () => {
+    const trio = (state: WorldState | null = null): CraftSimulation =>
+      new CraftSimulation({
+        catalog,
+        world: buildWorld(),
+        spawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: 0 },
+        autoJump: false,
+        randomSeed: 1,
+        inventory: state?.inventory,
+        hero: 'mario',
+        partner: { hero: 'peach', inventory: state?.partner?.inventory },
+        third: { hero: 'daisy', inventory: state?.third?.inventory },
+      });
+    const simulation = trio();
+
+    simulation.asPlayer(2, () => {
+      simulation.inventory.slots[3] = { item: 'netherite-block', count: 4, durability: null };
+      simulation.hero.teleport(12.5, FLOOR_TOP, 3.5);
+      simulation.health.damage(2);
+      simulation.selectedSlot = 3;
+    });
+
+    const state = roundTrip(simulation);
+    const restored = trio(state);
+
+    restoreWorld(restored, state);
+
+    const third = restored.players[2];
+
+    expect(third.heroId).toBe('daisy');
+    expect(third.inventory.count('netherite-block')).toBe(4);
+    expect(third.motion.body.x).toBeCloseTo(12.5, 5);
+    expect(third.motion.body.z).toBeCloseTo(3.5, 5);
+    expect(third.health.value).toBe(catalog.world.hero.maxHealth - 2);
+    expect(third.selectedSlot).toBe(3);
+    expect(restored.players[1].inventory.count('netherite-block')).withContext('a mochila do Jogador 2 é outra').toBe(0);
+    expect(restored.inventory.count('netherite-block')).withContext('a mochila do Jogador 1 é outra').toBe(0);
+  });
+
+  it('jogando em dupla depois, o Jogador 3 do trio continua guardado como estava', () => {
+    const third = {
+      hero: { x: 12.5, y: FLOOR_TOP, z: 3.5, yaw: 0, pitch: 0, health: 6, selectedSlot: 1, respawn: { x: 5.5, y: FLOOR_TOP, z: 5.5, yaw: 0 } },
+      inventory: [{ item: 'diamond-half', count: 3, durability: null }],
+    };
+    const save = captureWorld(createSimulation(buildWorld()), IDENTITY, SAVED_AT, undefined, third);
+    const state = cleanWorldSave(parseWorldSave(JSON.parse(JSON.stringify(save))), catalog).state;
+
+    expect(state?.third?.hero.health).toBe(6);
+    expect(state?.third?.inventory[0]).toEqual({ item: 'diamond-half', count: 3, durability: null });
+  });
+
+  it('save de antes do Jogador 3 abre do mesmo jeito, sem Jogador 3 guardado', () => {
+    const before = JSON.parse(JSON.stringify(captureWorld(createSimulation(buildWorld()), IDENTITY, SAVED_AT))) as { state: Record<string, unknown> };
+
+    expect('third' in before.state).toBeFalse();
+
+    const state = cleanWorldSave(parseWorldSave(before), catalog).state;
+
+    expect(state?.third).toBeUndefined();
+    expect(state?.partner).toBeUndefined();
+  });
+
   it('não guarda os inimigos nem a água corrente', () => {
     const world = buildWorld();
     const simulation = createSimulation(world);

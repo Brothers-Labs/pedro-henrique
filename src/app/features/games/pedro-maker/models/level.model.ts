@@ -114,6 +114,7 @@ export const POWER_UP_KINDS = [
   'tall-mushroom',
   'reverse-mushroom',
   'mini-mushroom',
+  'pedrere-mushroom',
   'coin-x2',
   'coin-x4',
   'coin-x1000',

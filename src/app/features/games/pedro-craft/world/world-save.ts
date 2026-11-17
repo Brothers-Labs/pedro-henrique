@@ -92,6 +92,18 @@ function cleanState(state: WorldState, catalog: CraftCatalog): WorldState {
   };
   const cleanSlots = (slots: readonly SavedSlot[], size: number): SavedSlot[] =>
     Array.from({ length: size }, (_, index) => cleanSlot(slots[index] ?? null));
+  /** O Jogador 2 ou o 3 passam pela mesma limpeza da vida, da barra e da mochila do Jogador 1. */
+  const cleanPartner = (partner: SavedPartner | undefined): SavedPartner | undefined =>
+    partner
+      ? {
+          hero: {
+            ...partner.hero,
+            health: Math.min(catalog.world.hero.maxHealth, Math.max(1, partner.hero.health)),
+            selectedSlot: Math.min(HOTBAR_SIZE - 1, partner.hero.selectedSlot),
+          },
+          inventory: cleanSlots(partner.inventory, INVENTORY_SIZE),
+        }
+      : undefined;
 
   return {
     ...state,
@@ -101,16 +113,8 @@ function cleanState(state: WorldState, catalog: CraftCatalog): WorldState {
       selectedSlot: Math.min(HOTBAR_SIZE - 1, state.hero.selectedSlot),
     },
     inventory: cleanSlots(state.inventory, INVENTORY_SIZE),
-    partner: state.partner
-      ? {
-          hero: {
-            ...state.partner.hero,
-            health: Math.min(catalog.world.hero.maxHealth, Math.max(1, state.partner.hero.health)),
-            selectedSlot: Math.min(HOTBAR_SIZE - 1, state.partner.hero.selectedSlot),
-          },
-          inventory: cleanSlots(state.partner.inventory, INVENTORY_SIZE),
-        }
-      : undefined,
+    partner: cleanPartner(state.partner),
+    third: cleanPartner(state.third),
     chunks: state.chunks
       .map((chunk) => ({
         ...chunk,
@@ -162,6 +166,8 @@ function readState(root: JsonObjectReader): WorldState {
     hero: readHero(root.field('hero').object()),
     inventory: root.field('inventory').array().map(readSlot),
     partner: readPartner(root.optionalField('partner')?.object() ?? null),
+    // Saves de antes do Jogador 3 não têm este campo: abrem como sempre abriram.
+    third: readPartner(root.optionalField('third')?.object() ?? null),
     clockMs: root.field('clockMs').number({ min: 0 }),
     day: root.optionalField('day')?.number({ integer: true, min: 1 }) ?? 1,
     goals: {

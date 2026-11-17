@@ -1,7 +1,7 @@
 import type { HeroId } from '../../pedro-maker/models/progress.model';
 
-/** Uma criança, ou duas na mesma tela dividida ao meio. */
-export type CraftPlayerCount = 1 | 2;
+/** Uma criança, duas na tela dividida ao meio, ou três na tela dividida em quatro. */
+export type CraftPlayerCount = 1 | 2 | 3;
 
 /** Quando mostrar os controles de toque durante o jogo. */
 export type CraftTouchMode = 'automatico' | 'sempre' | 'nunca';
@@ -26,12 +26,17 @@ export interface CraftSettings {
   readonly readAloud: boolean;
   /** Os primeiros passos guiados já foram vistos neste aparelho. */
   readonly hasSeenFirstSteps: boolean;
-  /** Quantas crianças jogam: com 2, a tela divide ao meio e o Jogador 2 usa o controle ou o lado direito do teclado. */
+  /**
+   * Quantas crianças jogam: com 2, a tela divide ao meio e o Jogador 2 usa o
+   * controle ou o lado direito do teclado; com 3, o Jogador 3 usa o segundo controle.
+   */
   readonly players: CraftPlayerCount;
   /** Herói do Pedro Maker do Jogador 1. */
   readonly hero: HeroId;
   /** Herói do Pedro Maker do Jogador 2. */
   readonly partnerHero: HeroId;
+  /** Herói do Pedro Maker do Jogador 3. */
+  readonly thirdHero: HeroId;
 }
 
 export const LOOK_SENSITIVITY_RANGE = { min: 0.5, max: 2, step: 0.25 } as const;

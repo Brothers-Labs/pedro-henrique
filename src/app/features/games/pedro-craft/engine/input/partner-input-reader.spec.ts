@@ -1,5 +1,5 @@
 import { IDLE_CRAFT_INPUT } from './craft-input';
-import { PARTNER_KEYS, PartnerInputReader } from './partner-input-reader';
+import { PARTNER_KEYS, PartnerInputReader, THIRD_SEAT } from './partner-input-reader';
 
 /** Um controle de mentira, no mapa padrão do navegador: 4 eixos e 17 botões. */
 function fakePad(axes: readonly number[] = [0, 0, 0, 0], pressed: readonly number[] = []): Gamepad {
@@ -102,5 +102,55 @@ describe('Entrada do Jogador 2 do PedroCraft', () => {
     reader.setCapturing(true);
 
     expect(reader.read().primaryPressed).toBeFalse();
+  });
+
+  it('com dois controles ligados, o primeiro é do Jogador 2 e o segundo não mexe nele', () => {
+    pads = [fakePad([0, -1, 0, 0]), fakePad([1, 0, 0, 0], [0])];
+
+    expect(reader.read()).toEqual(jasmine.objectContaining({ forward: 1, strafe: 0, jumpHeld: false }));
+  });
+});
+
+describe('Entrada do Jogador 3 do PedroCraft', () => {
+  let pads: (Gamepad | null)[];
+  let reader: PartnerInputReader;
+
+  beforeEach(() => {
+    pads = [];
+    reader = new PartnerInputReader(window, () => 1, () => pads, THIRD_SEAT);
+  });
+
+  afterEach(() => reader.dispose());
+
+  it('lê o segundo controle ligado: o primeiro é do Jogador 2', () => {
+    pads = [fakePad([0, -1, 0, 0]), fakePad([1, 0, -1, 0], [0, 7])];
+
+    const snapshot = reader.read();
+
+    expect(snapshot).toEqual(jasmine.objectContaining({ strafe: 1, forward: 0, jumpHeld: true, primaryPressed: true }));
+    expect(reader.readLook(1000).yaw).toBeGreaterThan(0);
+  });
+
+  it('com um controle só, o Jogador 3 fica parado: aquele controle é do Jogador 2', () => {
+    pads = [fakePad([0, -1, 0, 0], [0])];
+
+    expect(reader.read()).toEqual(IDLE_CRAFT_INPUT);
+  });
+
+  it('um controle desligado no meio da lista não troca os controles de dono', () => {
+    pads = [null, fakePad([0, -1, 0, 0]), fakePad([-1, 0, 0, 0])];
+
+    expect(reader.read().strafe).toBe(-1);
+  });
+
+  it('não usa o teclado: as setas e o Enter são do Jogador 2', () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: PARTNER_KEYS.forward }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: PARTNER_KEYS.jump }));
+
+    expect(reader.read()).toEqual(IDLE_CRAFT_INPUT);
+    expect(reader.readLook(1000)).toEqual({ yaw: 0, pitch: 0 });
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: PARTNER_KEYS.forward }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: PARTNER_KEYS.jump }));
   });
 });

@@ -37,6 +37,7 @@ import { CraftHelp } from '../craft-help/craft-help';
 import { CraftHud, type PickupNotice } from '../craft-hud/craft-hud';
 import { CraftScreenPanel, type SlotRequest } from '../craft-screen-panel/craft-screen-panel';
 import { CraftTouchControls } from '../craft-touch-controls/craft-touch-controls';
+import { CraftTrioPanel } from '../craft-trio-panel/craft-trio-panel';
 
 type HostPhase = 'loading' | 'playing' | 'screen' | 'help' | 'paused' | 'error';
 
@@ -65,7 +66,7 @@ const MAX_PICKUPS = 3;
 @Component({
   selector: 'app-craft-game-host',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CraftTouchControls, CraftHud, CraftScreenPanel, CraftHelp],
+  imports: [CraftTouchControls, CraftHud, CraftScreenPanel, CraftHelp, CraftTrioPanel],
   templateUrl: './craft-game-host.html',
   styleUrl: './craft-game-host.scss',
   host: {
@@ -109,8 +110,14 @@ export class CraftGameHost {
   protected readonly hud = signal<CraftHudState | null>(null);
   /** A barra e a vida do Jogador 2, na metade direita da tela dividida. */
   protected readonly partnerHud = signal<CraftHudState | null>(null);
-  /** Duas crianças na mesma tela: decidido ao abrir o mundo, vale até sair dele. */
-  protected readonly isSplit = signal(false);
+  /** A barra e a vida do Jogador 3, no quarto de baixo à esquerda. */
+  protected readonly thirdHud = signal<CraftHudState | null>(null);
+  /** Quantas crianças na mesma tela: decidido ao abrir o mundo, vale até sair dele. */
+  private readonly playerCount = signal<1 | 2 | 3>(1);
+  /** Duas ou três crianças: a tela divide. */
+  protected readonly isSplit = computed(() => this.playerCount() > 1);
+  /** Três crianças: a tela divide em quatro, e o quarto que sobra mostra o nome do mundo. */
+  protected readonly isTrio = computed(() => this.playerCount() === 3);
   protected readonly screen = signal<ScreenView | null>(null);
   protected readonly toast = signal<string | null>(null);
   protected readonly isHurt = signal(false);
@@ -356,9 +363,10 @@ export class CraftGameHost {
     try {
       const { launchCraftGame } = await import('../../engine/launch-craft');
       const settings = this.settingsService.settings();
-      const partner = settings.players === 2 ? settings.partnerHero : null;
+      const partner = settings.players >= 2 ? settings.partnerHero : null;
+      const third = settings.players === 3 ? settings.thirdHero : null;
 
-      this.isSplit.set(partner !== null);
+      this.playerCount.set(settings.players);
 
       this.session = this.zone.runOutsideAngular(() =>
         launchCraftGame({
@@ -368,7 +376,7 @@ export class CraftGameHost {
           settings: this.engineSettings(),
           guideFirstSteps: !this.settingsService.settings().hasSeenFirstSteps,
           input: this.virtualInput,
-          players: { hero: settings.hero, partner },
+          players: { hero: settings.hero, partner, third },
           listener: (event) => this.receive(event),
         }),
       );
@@ -400,6 +408,9 @@ export class CraftGameHost {
         return;
       case 'partner-hud':
         this.partnerHud.set(event.hud);
+        break;
+      case 'third-hud':
+        this.thirdHud.set(event.hud);
         break;
       case 'hud':
         this.hud.set(event.hud);

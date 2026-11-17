@@ -8,10 +8,54 @@ const VIEW_DISTANCE: Readonly<Record<QualityTier, number>> = { alta: 88, media: 
 const FIELD_OF_VIEW = 72;
 
 /**
- * Camada que só a câmera de cada jogador desenha: a mão dele e o corpo do
- * outro jogador. A camada 0 é o mundo, que as duas câmeras desenham.
+ * Camada que só a câmera de cada jogador desenha: a mão dele. A camada 0 é
+ * o mundo, que todas as câmeras desenham.
  */
-export const PLAYER_VIEW_LAYERS = [1, 2] as const;
+export const PLAYER_VIEW_LAYERS = [1, 2, 3] as const;
+
+/**
+ * Camada do corpo de cada jogador: a câmera dele não desenha (ficaria por
+ * dentro da cabeça), a dos outros desenha. Com três jogadores, uma camada só
+ * por vista não bastaria: o corpo do Jogador 1 precisa aparecer em duas.
+ */
+export const AVATAR_LAYERS = [4, 5, 6] as const;
+
+/** Quantas crianças a tela divide: uma, duas lado a lado ou três em quatro quartos. */
+export type StagePlayerCount = 1 | 2 | 3;
+
+/** Um pedaço da tela, em pixels, a partir do canto de baixo à esquerda, como o WebGL conta. */
+export interface StageViewport {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Onde cada jogador aparece na tela.
+ *
+ * Com dois, a tela divide ao meio: Jogador 1 à esquerda, Jogador 2 à
+ * direita. Com três, ela divide em quatro quartos, como nos jogos de corrida
+ * de sofá: Jogadores 1 e 2 em cima, Jogador 3 embaixo à esquerda, e o quarto
+ * de baixo à direita fica para a tela mostrar o nome do mundo. Cada vista tem
+ * o formato da tela inteira, e ninguém fica com uma faixa esticada e torta.
+ */
+export function playerViewports(count: StagePlayerCount, width: number, height: number): readonly StageViewport[] {
+  const columns = count === 1 ? 1 : 2;
+  const rows = count === 3 ? 2 : 1;
+
+  return Array.from({ length: count }, (_, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const left = Math.floor((column * width) / columns);
+    const right = Math.floor(((column + 1) * width) / columns);
+    // A linha 0 é a de cima; o WebGL conta a altura a partir de baixo.
+    const top = Math.floor((row * height) / rows);
+    const bottom = Math.floor(((row + 1) * height) / rows);
+
+    return { x: left, y: height - bottom, width: right - left, height: bottom - top };
+  });
+}
 
 /**
  * O palco do PedroCraft: renderizador, cena, câmera, céu e névoa.
@@ -23,7 +67,7 @@ export class CraftStage {
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(FIELD_OF_VIEW, 16 / 9, 0.05, VIEW_DISTANCE.alta);
-  /** Uma câmera por jogador; com dois, a tela divide ao meio, Jogador 1 à esquerda. */
+  /** Uma câmera por jogador, na ordem de `playerViewports`. */
   readonly cameras: PerspectiveCamera[] = [this.camera];
   readonly sky = new Color('#8fd0ff');
   private readonly size = new Vector2();
@@ -31,6 +75,7 @@ export class CraftStage {
   private readonly fog: Fog;
   private readonly resizeObserver: ResizeObserver;
   private viewDistance = VIEW_DISTANCE.alta;
+  private playerCount: StagePlayerCount = 1;
 
   constructor(
     private readonly parent: HTMLElement,
@@ -57,17 +102,33 @@ export class CraftStage {
     this.resize();
   }
 
-  /** Com 2, ganha a câmera do Jogador 2 e a tela divide ao meio. */
-  setPlayerCount(count: 1 | 2): void {
-    if (count === 2 && this.cameras.length === 1) {
-      const partner = new PerspectiveCamera(FIELD_OF_VIEW, this.camera.aspect, this.camera.near, this.camera.far);
-
-      partner.rotation.order = 'YXZ';
-      partner.layers.enable(PLAYER_VIEW_LAYERS[1]);
-      this.scene.add(partner);
-      this.cameras.push(partner);
-      this.resize();
+  /**
+   * Com 2 ou 3, ganha a câmera de cada jogador a mais e a tela divide. Cada
+   * câmera desenha a própria mão e o corpo dos outros jogadores.
+   */
+  setPlayerCount(count: StagePlayerCount): void {
+    if (count <= this.cameras.length) {
+      return;
     }
+
+    while (this.cameras.length < count) {
+      const camera = new PerspectiveCamera(FIELD_OF_VIEW, this.camera.aspect, this.camera.near, this.camera.far);
+
+      camera.rotation.order = 'YXZ';
+      camera.layers.enable(PLAYER_VIEW_LAYERS[this.cameras.length]);
+      this.scene.add(camera);
+      this.cameras.push(camera);
+    }
+
+    this.playerCount = count;
+    this.cameras.forEach((camera, index) => {
+      AVATAR_LAYERS.slice(0, count).forEach((layer, owner) => {
+        if (owner !== index) {
+          camera.layers.enable(layer);
+        }
+      });
+    });
+    this.resize();
   }
 
   get canvas(): HTMLCanvasElement {
@@ -110,13 +171,15 @@ export class CraftStage {
 
     this.renderer.getSize(this.size);
 
-    const width = Math.floor(this.size.x / this.cameras.length);
+    const viewports = playerViewports(this.playerCount, this.size.x, this.size.y);
 
     this.renderer.setScissorTest(true);
 
     this.cameras.forEach((camera, index) => {
-      this.renderer.setViewport(index * width, 0, width, this.size.y);
-      this.renderer.setScissor(index * width, 0, width, this.size.y);
+      const { x, y, width, height } = viewports[index];
+
+      this.renderer.setViewport(x, y, width, height);
+      this.renderer.setScissor(x, y, width, height);
       beforeView(index);
       this.renderer.render(this.scene, camera);
     });
@@ -138,9 +201,13 @@ export class CraftStage {
 
     this.renderer.setSize(width, height, false);
 
-    for (const camera of this.cameras) {
-      camera.aspect = width / this.cameras.length / height;
+    const viewports = playerViewports(this.playerCount, width, height);
+
+    this.cameras.forEach((camera, index) => {
+      const viewport = viewports[index];
+
+      camera.aspect = Math.max(1, viewport.width) / Math.max(1, viewport.height);
       camera.updateProjectionMatrix();
-    }
+    });
   }
 }

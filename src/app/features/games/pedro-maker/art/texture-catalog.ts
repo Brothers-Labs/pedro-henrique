@@ -172,6 +172,7 @@ export function paintCharacterIcon(character: CharacterPalette, scale = 1): HTML
 function paintCharacterPortrait(context: CanvasRenderingContext2D, character: CharacterPalette): void {
   switch (character.hero) {
     case 'pedro':
+    case 'pedrere':
       paintPedroPortrait(context, character);
       return;
     case 'wario':

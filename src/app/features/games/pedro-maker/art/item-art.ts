@@ -111,6 +111,9 @@ export const COIN_MULTIPLIER_COLORS = {
   'coin-x9999': '#ff5fa2',
 } as const;
 
+/** Vermelho do boné do Pedro no Pedro Pedrerê. */
+const PEDRERE_CAP = '#e8433f';
+
 const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'super-jump': '#5fdc6a',
   shield: '#5cb8ff',
@@ -132,6 +135,7 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'tall-mushroom': '#9d4edd',
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
+  'pedrere-mushroom': '#ffb92e',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -209,6 +213,9 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
     case 'mini-mushroom':
       paintMiniMushroom(context, color);
       break;
+    case 'pedrere-mushroom':
+      paintPedrereMushroom(context, color);
+      break;
   }
 
   shine(context, 12, 11, 4, 2.5);
@@ -274,13 +281,24 @@ function paintMagnet(context: CanvasRenderingContext2D, color: string): void {
   context.fillRect(26.5, 26, 5, 5);
 }
 
+/** O que vai no pé do cogumelo: os olhinhos, ou um "?" no lugar deles. */
+type MushroomFace = 'eyes' | 'question';
+
 /** Cogumelo de chapéu pintado e carinha no pé: vermelho cresce, verde dá vida. */
-function paintMushroom(context: CanvasRenderingContext2D, color: string): void {
+function paintMushroom(context: CanvasRenderingContext2D, color: string, face: MushroomFace = 'eyes'): void {
   roundedRect(context, 14, 19, 12, 13, 4);
   fillAndOutline(context, '#fff1d6', 2.5);
   context.fillStyle = OUTLINE;
-  context.fillRect(17, 23, 2, 4);
-  context.fillRect(21, 23, 2, 4);
+
+  if (face === 'eyes') {
+    context.fillRect(17, 23, 2, 4);
+    context.fillRect(21, 23, 2, 4);
+  } else {
+    context.font = 'bold 12px "Baloo 2", "Trebuchet MS", sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText('?', 20, 26.5);
+  }
 
   context.beginPath();
   context.moveTo(7, 21);
@@ -519,9 +537,12 @@ function paintTurboMushroom(context: CanvasRenderingContext2D, color: string): v
   fillAndOutline(context, '#ffd23f', 1.5);
 }
 
-/** Cogumelo roxo com duas setas girando em volta: o herói vira outro da turma. */
+/**
+ * Cogumelo roxo com duas setas girando em volta: o herói vira outro da turma.
+ * No pé, um "?" no lugar dos olhos, porque a criança não sabe quem vem.
+ */
 function paintSwapMushroom(context: CanvasRenderingContext2D, color: string): void {
-  paintMushroom(context, color);
+  paintMushroom(context, color, 'question');
 
   context.strokeStyle = '#ffd23f';
   context.lineWidth = 2.5;
@@ -541,6 +562,21 @@ function paintSwapMushroom(context: CanvasRenderingContext2D, color: string): vo
     context.lineTo(tipX, tipY + 4 * direction);
     context.stroke();
   }
+}
+
+/** Cogumelo amarelo com o boné vermelho do Pedro Pedrerê no chapéu: o herói vira o Pedro do jogo novo. */
+function paintPedrereMushroom(context: CanvasRenderingContext2D, color: string): void {
+  paintMushroom(context, color);
+
+  // Copa do boné, sentada no alto do chapéu, e a aba virada para a frente.
+  context.beginPath();
+  context.moveTo(14, 8);
+  context.quadraticCurveTo(14, 1, 20, 1);
+  context.quadraticCurveTo(26, 1, 26, 8);
+  context.closePath();
+  fillAndOutline(context, PEDRERE_CAP, 2);
+  roundedRect(context, 23, 6, 9, 3, 1.5);
+  fillAndOutline(context, PEDRERE_CAP, 2);
 }
 
 /** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */

@@ -116,7 +116,7 @@ export interface ScreenView {
   readonly furnace: FurnaceView | null;
   /** Modo Criativo, na mochila: todos os itens do jogo para pegar com um toque. Vazio nos outros casos. */
   readonly creativeItems: readonly string[];
-  /** Na tela dividida, de quem é a mochila aberta (1 ou 2); `null` jogando sozinho. */
+  /** Na tela dividida, de quem é a mochila aberta (1, 2 ou 3); `null` jogando sozinho. */
   readonly player: number | null;
 }
 
@@ -127,6 +127,8 @@ export type CraftSessionEvent =
   | { readonly type: 'hud'; readonly hud: CraftHudState }
   /** A barra, a vida e a energia do Jogador 2, na metade direita da tela. */
   | { readonly type: 'partner-hud'; readonly hud: CraftHudState }
+  /** A barra, a vida e a energia do Jogador 3, no quarto de baixo à esquerda. */
+  | { readonly type: 'third-hud'; readonly hud: CraftHudState }
   | { readonly type: 'hint'; readonly text: string }
   /** Uma criatura falou com o herói: sempre mostrada e lida em voz alta. */
   | { readonly type: 'creature-speech'; readonly speaker: string; readonly text: string }
@@ -153,8 +155,11 @@ export interface CraftLaunchOptions {
   readonly guideFirstSteps: boolean;
   readonly input: VirtualCraftInput;
   readonly listener: CraftSessionListener;
-  /** Herói do Jogador 1 e, na tela dividida, o do Jogador 2 (`null` jogando sozinho). */
-  readonly players: { readonly hero: HeroId; readonly partner: HeroId | null };
+  /**
+   * Herói do Jogador 1 e, na tela dividida, o do Jogador 2 (`null` jogando
+   * sozinho) e o do Jogador 3 (`null` sem ele; só vale junto com o Jogador 2).
+   */
+  readonly players: { readonly hero: HeroId; readonly partner: HeroId | null; readonly third: HeroId | null };
 }
 
 /** Controle de uma partida em andamento. */

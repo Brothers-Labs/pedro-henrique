@@ -19,6 +19,7 @@ const FALLBACK: CraftSettings = {
   players: 1,
   hero: 'pedro',
   partnerHero: 'gui',
+  thirdHero: 'mario',
 };
 
 describe('Preferências do PedroCraft', () => {
@@ -61,8 +62,22 @@ describe('Preferências do PedroCraft', () => {
     );
   });
 
-  it('recusa 3 jogadores e herói que não existe no Pedro Maker', () => {
-    expect(sanitize({ players: 3, hero: 'bowser', partnerHero: 42 }, FALLBACK)).toEqual(FALLBACK);
+  it('guarda 3 jogadores e o herói do Jogador 3', () => {
+    expect(sanitize({ players: 3, hero: 'pedro', partnerHero: 'gui', thirdHero: 'daisy' }, FALLBACK)).toEqual(
+      jasmine.objectContaining({ players: 3, thirdHero: 'daisy' }),
+    );
+  });
+
+  it('preferência guardada antes do Jogador 3 abre com o herói padrão dele', () => {
+    const before: Record<string, unknown> = { ...FALLBACK, players: 2, partnerHero: 'peach' };
+
+    delete before['thirdHero'];
+
+    expect(sanitize(before, FALLBACK)).toEqual({ ...FALLBACK, players: 2, partnerHero: 'peach' });
+  });
+
+  it('recusa 4 jogadores e herói que não existe no Pedro Maker', () => {
+    expect(sanitize({ players: 4, hero: 'bowser', partnerHero: 42, thirdHero: 'ninguem' }, FALLBACK)).toEqual(FALLBACK);
   });
 
   it('volta ao valor anterior quando o guardado não faz sentido', () => {

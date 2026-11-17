@@ -39,7 +39,7 @@ import type { SimulationEvent, VisualEvent } from './simulation-events';
 import { TrainRide } from './train-ride';
 import { WaterFlow } from './water-flow';
 
-/** Onde o Jogador 2 tenta nascer, em blocos a partir do Jogador 1: primeiro do lado, depois na frente e atrás. */
+/** Onde o Jogador 2 (e o 3) tenta nascer, em blocos a partir do Jogador 1: primeiro do lado, depois na frente e atrás. */
 const PARTNER_SPAWN_OFFSETS: readonly (readonly [number, number])[] = [
   [2, 0],
   [-2, 0],
@@ -116,6 +116,11 @@ export interface CraftSimulationOptions {
    * mochila, ela começa com o mesmo que o Jogador 1 começaria).
    */
   readonly partner?: { readonly hero: HeroId; readonly inventory?: readonly SlotContent[] };
+  /**
+   * Terceira criança na mesma tela, do mesmo jeito que a segunda. Só vale
+   * junto com `partner`: o Jogador 3 é sempre o terceiro da lista.
+   */
+  readonly third?: { readonly hero: HeroId; readonly inventory?: readonly SlotContent[] };
 }
 
 
@@ -136,7 +141,7 @@ export class CraftSimulation {
   readonly terrain: PhysicsTerrain;
   /** Os blocos que mudaram desde a geração: é o que vai para o save. */
   readonly changes: BlockChangeLog;
-  /** Um jogador, ou dois com a tela dividida. O primeiro é sempre o Jogador 1. */
+  /** Um jogador, ou dois ou três com a tela dividida. O primeiro é sempre o Jogador 1. */
   readonly players: readonly CraftPlayer[];
   readonly drops = new ItemDrops();
   readonly goals: GoalTracker;
@@ -294,6 +299,10 @@ export class CraftSimulation {
       this.fillInventory(this.players[1], options.partner?.inventory);
     }
 
+    if (this.players[2]) {
+      this.fillInventory(this.players[2], options.third?.inventory);
+    }
+
     this.actions = new BlockActions({
       catalog: this.catalog,
       world: this.world,
@@ -439,8 +448,8 @@ export class CraftSimulation {
   }
 
   /**
-   * Faz `action` como o jogador de número `index` (0 ou 1) e volta para quem
-   * era a vez. É assim que a tela lê a mochila e a vida do Jogador 2.
+   * Faz `action` como o jogador de número `index` (0, 1 ou 2) e volta para
+   * quem era a vez. É assim que a tela lê a mochila e a vida dos Jogadores 2 e 3.
    */
   asPlayer<T>(index: number, action: () => T): T {
     const player = this.players[index];
@@ -534,9 +543,9 @@ export class CraftSimulation {
     this.noteFirstStep(this.firstSteps?.look(Math.abs(delta.yaw) + Math.abs(delta.pitch)) ?? false);
   }
 
-  /** O olhar do Jogador 2; sem Jogador 2, nada acontece. */
-  lookPartner(delta: LookDelta): void {
-    this.players[1]?.motion.look(delta.yaw, delta.pitch);
+  /** O olhar do Jogador 2 (ou do 3, com `index` 2); sem esse jogador, nada acontece. */
+  lookPartner(delta: LookDelta, index: 1 | 2 = 1): void {
+    this.players[index]?.motion.look(delta.yaw, delta.pitch);
   }
 
   /** "Pular guia": a criança já sabe jogar. */
@@ -547,17 +556,25 @@ export class CraftSimulation {
     }
   }
 
-  /** `partnerInput` é o que o Jogador 2 apertou; sem Jogador 2, não é lido. */
-  step(input: CraftInputSnapshot, partnerInput: CraftInputSnapshot = IDLE_CRAFT_INPUT): void {
+  /**
+   * `partnerInput` é o que o Jogador 2 apertou, e `thirdInput` o do Jogador 3;
+   * sem esse jogador, a entrada dele não é lida.
+   */
+  step(input: CraftInputSnapshot, partnerInput: CraftInputSnapshot = IDLE_CRAFT_INPUT, thirdInput: CraftInputSnapshot = IDLE_CRAFT_INPUT): void {
     // Com uma tela aberta o mundo espera a criança; quem para o relógio é a sessão.
     if (this.screens.screen) {
       return;
     }
 
-    this.withPlayer(this.players[0], () => this.stepPlayer(input));
+    const inputs = [input, partnerInput, thirdInput];
 
-    if (this.players[1] && !this.screens.screen) {
-      this.withPlayer(this.players[1], () => this.stepPlayer(partnerInput));
+    for (const [index, player] of this.players.entries()) {
+      // Quem abriu a mochila no meio do passo segura o mundo: os outros esperam ela fechar.
+      if (this.screens.screen) {
+        break;
+      }
+
+      this.withPlayer(player, () => this.stepPlayer(inputs[index] ?? IDLE_CRAFT_INPUT));
     }
 
     if (this.screens.screen) {
@@ -1529,7 +1546,17 @@ export class CraftSimulation {
       return [first];
     }
 
-    return [first, new CraftPlayer(1, options.partner.hero, this.partnerSpawn(options.spawn), this.catalog, this.world, hasEnergy)];
+    const partnerSpawn = this.partnerSpawn(options.spawn, []);
+    const partner = new CraftPlayer(1, options.partner.hero, partnerSpawn, this.catalog, this.world, hasEnergy);
+
+    if (!options.third) {
+      return [first, partner];
+    }
+
+    // O Jogador 3 procura outro lugar livre: no lugar do Jogador 2, um nasceria dentro do outro.
+    const thirdSpawn = this.partnerSpawn(options.spawn, [partnerSpawn]);
+
+    return [first, partner, new CraftPlayer(2, options.third.hero, thirdSpawn, this.catalog, this.world, hasEnergy)];
   }
 
   /**
@@ -1537,8 +1564,12 @@ export class CraftSimulation {
    * num lugar livre com chão firme embaixo e sem água: as duas crianças se
    * veem logo ao entrar. No mesmo ponto, cada câmera ficaria dentro do corpo
    * do outro. Sem lugar livre por perto, os dois dividem o ponto do começo.
+   *
+   * `taken`: onde outro jogador já vai nascer. O Jogador 3 pula esses
+   * lugares e os vizinhos deles, e fica no próximo livre da lista: colado no
+   * Jogador 2, um tamparia a vista do outro logo ao entrar.
    */
-  private partnerSpawn(spawn: SpawnPoint): SpawnPoint {
+  private partnerSpawn(spawn: SpawnPoint, taken: readonly SpawnPoint[]): SpawnPoint {
     // A câmera olha para -z quando o ângulo é 0: "à frente" é (-sen, -cos).
     const ahead: readonly [number, number] = [Math.round(-Math.sin(spawn.yaw) * 3), Math.round(-Math.cos(spawn.yaw) * 3)];
     const feetY = Math.floor(spawn.y);
@@ -1549,11 +1580,14 @@ export class CraftSimulation {
       this.terrain.collisionHeight(x, feetY - 1, z) >= 1 &&
       !this.terrain.isLiquid(x, feetY, z);
 
+    const isTaken = (x: number, z: number): boolean =>
+      taken.some((point) => Math.abs(Math.floor(point.x) - x) <= 1 && Math.abs(Math.floor(point.z) - z) <= 1);
+
     for (const [offsetX, offsetZ] of [ahead, ...PARTNER_SPAWN_OFFSETS]) {
       const x = Math.floor(spawn.x) + offsetX;
       const z = Math.floor(spawn.z) + offsetZ;
 
-      if (isFree(x, z)) {
+      if (isFree(x, z) && !isTaken(x, z)) {
         // Virado para o Jogador 1: o ângulo que faz "à frente" apontar para ele.
         return { x: x + 0.5, y: spawn.y, z: z + 0.5, yaw: Math.atan2(-(spawn.x - x - 0.5), -(spawn.z - z - 0.5)) };
       }
