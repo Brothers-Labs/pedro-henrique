@@ -2,7 +2,7 @@ import { OBJECT_BEHAVIOR } from '../config/object-catalog';
 import { DEFAULT_LEVEL_HEIGHT } from '../config/physics.config';
 import { LEVEL_LIMITS } from '../levels/level-validation';
 import type { ScreenMode } from '../config/screen.config';
-import type { LevelObject, LevelObjectProperties, LevelObjectType, LevelTheme } from '../models/level.model';
+import type { LevelObject, LevelObjectProperties, LevelObjectType, LevelTheme, PowerUpKind, SurpriseContent } from '../models/level.model';
 
 /**
  * Estado do editor de fases, sem Angular e sem tela.
@@ -210,6 +210,46 @@ export function updatePropertiesAt(level: EditorLevel, x: number, y: number, pro
   const updated = { ...current, properties };
 
   return { ...level, objects: level.objects.map((object) => (object === current ? updated : object)) };
+}
+
+/**
+ * Surpresa de "?" que os botões de "todas as surpresas" alcançam. O Lucky
+ * Block e o Bloco de Moedas ficam de fora: são peças com cara própria, e
+ * trocar o que têm dentro mudaria o desenho delas na fase.
+ */
+export function isRefillableSurprise(object: LevelObject): boolean {
+  const contents = object.properties?.contents;
+
+  return object.type === 'surprise' && contents !== 'lucky' && contents !== 'multi-coins';
+}
+
+/**
+ * Troca de uma vez o que sai de todas as surpresas de "?" da fase: esvazia
+ * todas ou enche todas de moedas, cristais ou um poder. Só o poder guarda qual
+ * é o poder; as outras propriedades da peça ficam como estavam. Sem nada para
+ * mudar, devolve a mesma fase — o desfazer não ganha um passo vazio.
+ */
+export function refillSurprises(level: EditorLevel, contents: SurpriseContent, powerUp?: PowerUpKind): EditorLevel {
+  const nextPowerUp = contents === 'power-up' ? (powerUp ?? 'mushroom') : undefined;
+  let changed = false;
+
+  const objects = level.objects.map((object) => {
+    const current = object.properties ?? {};
+
+    if (!isRefillableSurprise(object) || ((current.contents ?? 'coins') === contents && current.powerUp === nextPowerUp)) {
+      return object;
+    }
+
+    // Sem poder, a chave sai de vez, em vez de ficar guardada vazia.
+    const properties = Object.fromEntries(
+      Object.entries({ ...current, contents, powerUp: nextPowerUp }).filter(([, value]) => value !== undefined),
+    ) as LevelObjectProperties;
+
+    changed = true;
+    return { ...object, properties };
+  });
+
+  return changed ? { ...level, objects } : level;
 }
 
 /**

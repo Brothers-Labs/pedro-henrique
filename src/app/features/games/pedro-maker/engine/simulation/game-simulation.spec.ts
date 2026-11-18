@@ -225,6 +225,17 @@ describe('Simulação do Pedro Maker', () => {
     expect(lastHud(harness.events)?.coins).toBe(5);
   });
 
+  it('a surpresa vazia só solta poeira: abre, mas não dá moeda nem prêmio', () => {
+    const harness = start(flatLevel().add('surprise', 2, SURFACE - 3, { contents: 'empty' }).build(META));
+    run(harness, 0.2);
+
+    jump(harness, 0.4);
+
+    expect(harness.simulation.blocks.blockAt(2, SURFACE - 3)?.isUsed).toBeTrue();
+    expect(lastHud(harness.events)?.coins ?? 0).toBe(0);
+    expect(harness.simulation.collectibles.items.length).toBe(0);
+  });
+
   it('coleta moedas no caminho', () => {
     const harness = start(flatLevel().coins(5, SURFACE - 1, 4).build(META));
 

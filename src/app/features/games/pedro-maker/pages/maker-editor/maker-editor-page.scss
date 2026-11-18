@@ -315,6 +315,12 @@ $side-layout: '(min-width: #{$breakpoint-lg}), #{$short-landscape}';
   justify-content: space-between;
 }
 
+/* Os botões que mexem em todas as surpresas da fase ficam separados dos da peça. */
+.selection__row--all {
+  padding-top: 0.4rem;
+  border-top: 2px dashed rgba(42, 35, 80, 0.25);
+}
+
 .selection__field {
   display: grid;
   gap: 0.2rem;

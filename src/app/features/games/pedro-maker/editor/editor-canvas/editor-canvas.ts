@@ -561,7 +561,8 @@ export class EditorCanvas {
 
   private iconFor(object: LevelObject, level: EditorLevel): HTMLCanvasElement {
     // O texto entra na chave: duas placas com frases diferentes têm ícones diferentes.
-    const key = `${level.theme}:${object.type}:${object.properties?.powerUp ?? ''}:${object.properties?.text ?? ''}`;
+    // O conteúdo também: a surpresa mostra o que tem dentro, e o Lucky Block tem outra cara.
+    const key = `${level.theme}:${object.type}:${object.properties?.contents ?? ''}:${object.properties?.powerUp ?? ''}:${object.properties?.text ?? ''}`;
     const cached = this.icons.get(key);
 
     if (cached) {

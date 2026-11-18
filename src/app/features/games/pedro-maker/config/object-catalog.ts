@@ -259,6 +259,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'surprise-coins', category: 'blocos', type: 'surprise', label: 'Surpresa', properties: { contents: 'coins' } },
   { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
   { id: 'surprise-crystal', category: 'blocos', type: 'surprise', label: 'Surpresa 💎', properties: { contents: 'crystal' } },
+  { id: 'surprise-empty', category: 'blocos', type: 'surprise', label: 'Surpresa Vazia', properties: { contents: 'empty' } },
 
   { id: 'slime', category: 'inimigos', type: 'slime', label: 'Slime' },
   { id: 'spiky', category: 'inimigos', type: 'spiky', label: 'Espinhudo' },

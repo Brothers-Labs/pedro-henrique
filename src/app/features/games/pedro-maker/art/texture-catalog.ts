@@ -6,6 +6,7 @@ import {
   isGiantCoinType,
   type LevelObject,
   type LevelTheme,
+  type PowerUpKind,
   type SurpriseContent,
 } from '../models/level.model';
 import {
@@ -35,6 +36,7 @@ import {
   paintSpikes,
   paintSpring,
   paintSurprise,
+  paintSurpriseBadge,
   paintTerrainTile,
   PORTAL_HEIGHT,
   PORTAL_SWIRL_SIZE,
@@ -340,7 +342,7 @@ function drawIcon(
       paintVoxelIcon(context, ICON_SIZE, palette, 'note');
       return;
     case 'surprise':
-      paintSurpriseIcon(context, object.properties?.contents, palette);
+      paintSurpriseIcon(context, object.properties?.contents, object.properties?.powerUp, palette);
       return;
     case 'spring':
       paintSpring(context);
@@ -493,8 +495,16 @@ function drawIcon(
   }
 }
 
-/** O Lucky Block e o bloco de moedas têm cara própria; os outros, a do "?". */
-function paintSurpriseIcon(context: CanvasRenderingContext2D, contents: SurpriseContent | undefined, palette: ThemePalette): void {
+/**
+ * O Lucky Block e o bloco de moedas têm cara própria; os outros, a do "?",
+ * com um selo no canto que conta o que sai dele (sem conteúdo, são moedas).
+ */
+function paintSurpriseIcon(
+  context: CanvasRenderingContext2D,
+  contents: SurpriseContent | undefined,
+  powerUp: PowerUpKind | undefined,
+  palette: ThemePalette,
+): void {
   switch (contents) {
     case 'lucky':
       paintVoxelIcon(context, ICON_SIZE, palette, 'lucky');
@@ -504,5 +514,6 @@ function paintSurpriseIcon(context: CanvasRenderingContext2D, contents: Surprise
       return;
     default:
       paintSurprise(context);
+      paintSurpriseBadge(context, contents ?? 'coins', powerUp === 'mushroom');
   }
 }

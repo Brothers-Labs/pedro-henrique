@@ -162,8 +162,10 @@ export const CLASSIC_POWER_UPS = [
  * `lucky`: o Lucky Block, que sorteia um poder clássico na hora da cabeçada.
  * `multi-coins`: o bloco de moedas, com cara de tijolo, que solta uma moeda a
  * cada cabeçada até esvaziar.
+ * `empty`: a surpresa vazia, que só solta uma nuvenzinha de poeira — a pegadinha
+ * de quem monta a fase.
  */
-export const SURPRISE_CONTENTS = ['coins', 'heart', 'crystal', 'power-up', 'lucky', 'multi-coins'] as const;
+export const SURPRISE_CONTENTS = ['coins', 'heart', 'crystal', 'power-up', 'lucky', 'multi-coins', 'empty'] as const;
 
 export type SurpriseContent = (typeof SURPRISE_CONTENTS)[number];
 

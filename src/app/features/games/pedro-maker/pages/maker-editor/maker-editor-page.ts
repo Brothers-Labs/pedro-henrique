@@ -54,10 +54,12 @@ import {
   type EditorHistory,
   type EditorLevel,
   type GridCell,
+  isRefillableSurprise,
   moveObject,
   objectAt,
   placeMany,
   redo,
+  refillSurprises,
   removeMany,
   removeObjectAt,
   renameLevel,
@@ -96,13 +98,44 @@ const TOOLS: readonly ToolOption[] = [
   { id: 'mover', label: 'Mover', emoji: '✋' },
 ];
 
-const SURPRISE_OPTIONS: readonly { readonly id: SurpriseContent; readonly label: string }[] = [
-  { id: 'coins', label: '🪙 Moedas' },
-  { id: 'heart', label: '❤️ Coração' },
-  { id: 'crystal', label: '💎 Cristal' },
-  { id: 'power-up', label: '⚡ Poder' },
-  { id: 'lucky', label: '🍀 Sorte (Lucky Block)' },
+/** Um botão do "o que sai do bloco": o conteúdo e, no Cogumelo, já o poder. */
+interface SurpriseChoice {
+  readonly id: string;
+  readonly emoji: string;
+  readonly label: string;
+  readonly contents: SurpriseContent;
+  readonly powerUp?: PowerUpKind;
+}
+
+const SURPRISE_CHOICES: readonly SurpriseChoice[] = [
+  { id: 'empty', emoji: '💨', label: 'Vazia', contents: 'empty' },
+  { id: 'coins', emoji: '🪙', label: 'Moedas', contents: 'coins' },
+  { id: 'crystal', emoji: '💎', label: 'Cristal', contents: 'crystal' },
+  { id: 'mushroom', emoji: '🍄', label: 'Cogumelo', contents: 'power-up', powerUp: 'mushroom' },
+  { id: 'heart', emoji: '❤️', label: 'Coração', contents: 'heart' },
+  { id: 'power-up', emoji: '⭐', label: 'Outro poder', contents: 'power-up', powerUp: 'star' },
+  { id: 'lucky', emoji: '🍀', label: 'Sorte', contents: 'lucky' },
+  { id: 'multi-coins', emoji: '🧱', label: 'Várias moedas', contents: 'multi-coins' },
 ];
+
+/** Os botões de "todas as surpresas": tirar tudo, ou encher de moedas, cristais ou cogumelos. */
+const SURPRISE_FILL_CHOICES: readonly SurpriseChoice[] = [
+  { id: 'empty', emoji: '💨', label: 'Tirar tudo', contents: 'empty' },
+  { id: 'coins', emoji: '🪙', label: 'Moedas', contents: 'coins' },
+  { id: 'crystal', emoji: '💎', label: 'Cristais', contents: 'crystal' },
+  { id: 'mushroom', emoji: '🍄', label: 'Cogumelos', contents: 'power-up', powerUp: 'mushroom' },
+];
+
+/** Botão aceso para a surpresa: sem conteúdo são moedas; poder que não é o cogumelo, "Outro poder". */
+function surpriseChoiceOf(properties: LevelObjectProperties | undefined): string {
+  const contents = properties?.contents ?? 'coins';
+
+  if (contents === 'power-up') {
+    return properties?.powerUp === 'mushroom' ? 'mushroom' : 'power-up';
+  }
+
+  return contents;
+}
 
 const POWER_UP_OPTIONS = (Object.keys(POWER_UP_LABELS) as PowerUpKind[]).map((id) => ({ id, ...POWER_UP_LABELS[id] }));
 const EDITOR_POWER_UP_OPTIONS = POWER_UP_OPTIONS.filter((option) => EDITOR_POWER_UPS.includes(option.id));
@@ -176,7 +209,9 @@ export class MakerEditorPage {
     ...SCREEN_MODES.map((id) => ({ id, emoji: SCREEN_LOOKS[id].emoji, label: SCREEN_LOOKS[id].label, description: SCREEN_LOOKS[id].description })),
   ];
   protected readonly themes = EDITOR_THEMES.map((theme) => ({ id: theme, ...THEME_LABELS[theme] }));
-  protected readonly surpriseOptions = SURPRISE_OPTIONS;
+  protected readonly surpriseChoices = SURPRISE_CHOICES;
+  protected readonly surpriseFillChoices = SURPRISE_FILL_CHOICES;
+  protected readonly surpriseChoiceOf = surpriseChoiceOf;
   protected readonly doorPairColor = doorPairColor;
   protected readonly doorPairs = DOOR_PAIRS;
   protected readonly fireBarLengths = [
@@ -540,13 +575,29 @@ export class MakerEditorPage {
     this.updateSelected({ range });
   }
 
-  protected setContents(event: Event): void {
-    const contents = SURPRISE_OPTIONS.find((option) => option.id === (event.target as HTMLSelectElement).value)?.id;
+  protected setContents(choice: SurpriseChoice): void {
+    // Só a surpresa de poder guarda qual é o poder.
+    this.updateSelected({ contents: choice.contents, powerUp: choice.powerUp });
+  }
 
-    if (contents) {
-      // Só a surpresa de poder guarda qual é o poder.
-      this.updateSelected({ contents, powerUp: contents === 'power-up' ? 'mushroom' : undefined });
+  /** Esvazia todas as surpresas de "?" da fase, ou enche todas com o mesmo prêmio — um passo só no Desfazer. */
+  protected fillAllSurprises(choice: SurpriseChoice): void {
+    const level = this.level();
+    const total = level.objects.filter(isRefillableSurprise).length;
+
+    if (total === 0) {
+      this.showNotice('Coloque uma Surpresa na fase primeiro.');
+      return;
     }
+
+    this.apply(refillSurprises(level, choice.contents, choice.powerUp));
+
+    const count = total === 1 ? 'A surpresa' : `As ${total} surpresas`;
+    this.showNotice(
+      choice.contents === 'empty'
+        ? `💨 ${count} da fase ${total === 1 ? 'ficou vazia' : 'ficaram vazias'}!`
+        : `${choice.emoji} ${count} da fase agora ${total === 1 ? 'tem' : 'têm'} ${choice.label.toLowerCase()}!`,
+    );
   }
 
   /**

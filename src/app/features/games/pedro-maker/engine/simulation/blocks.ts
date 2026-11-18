@@ -514,6 +514,11 @@ export class BlockSystem {
       case 'multi-coins':
         this.releaseOneCoin(block, x, y);
         return;
+      case 'empty':
+        // Nada lá dentro: só poeira e o aviso, para a criança entender que não é defeito.
+        this.host.effects.burst('dust', x, y + TILE_SIZE / 2, 8);
+        this.host.effects.floatingText(x, y - TILE_SIZE / 2, '💨 VAZIA!', '#d9e2ec');
+        return;
       case 'coins':
       case undefined:
         this.host.addCoins(SURPRISE_COIN_COUNT, x, y);
