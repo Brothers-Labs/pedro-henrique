@@ -176,6 +176,12 @@ export const COMMUNICATION_CARDS: readonly CommunicationCard[] = [
     emoji: '⏳',
   },
   {
+    id: 'card-espera-um-pouquinho',
+    categoryId: 'respostas',
+    label: { 'pt-BR': 'espera um pouquinho', 'en-US': 'wait just a little bit' },
+    emoji: '🤏',
+  },
+  {
     id: 'card-nao-sei',
     categoryId: 'respostas',
     label: { 'pt-BR': 'eu não sei', 'en-US': "I don't know" },
@@ -242,6 +248,12 @@ export const COMMUNICATION_CARDS: readonly CommunicationCard[] = [
     categoryId: 'inicios',
     label: { 'pt-BR': 'Eu estou', 'en-US': 'I am' },
     emoji: '🧍',
+  },
+  {
+    id: 'card-eu-estou-jogando',
+    categoryId: 'inicios',
+    label: { 'pt-BR': 'Eu estou jogando', 'en-US': 'I am playing' },
+    emoji: '🕹️',
   },
   {
     id: 'card-eu-vou',
@@ -1075,6 +1087,12 @@ export const COMMUNICATION_CARDS: readonly CommunicationCard[] = [
     categoryId: 'brincar',
     label: { 'pt-BR': 'jogar bola', 'en-US': 'to play ball' },
     emoji: '⚽',
+  },
+  {
+    id: 'card-bola-objeto',
+    categoryId: 'brincar',
+    label: { 'pt-BR': 'bola', 'en-US': 'ball' },
+    emoji: '🏀',
   },
   {
     id: 'card-musica',
