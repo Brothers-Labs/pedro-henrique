@@ -222,6 +222,64 @@ const COIN_MULTIPLIER_PIECES: readonly EditorPiece[] = COIN_MULTIPLIER_KINDS.map
   properties: { powerUp: kind },
 }));
 
+export const POWER_UP_LABELS = {
+  'super-jump': { label: 'Super Pulo', emoji: '🦘' },
+  shield: { label: 'Escudo', emoji: '🛡️' },
+  turbo: { label: 'Turbo', emoji: '⚡' },
+  magnet: { label: 'Ímã', emoji: '🧲' },
+  wings: { label: 'Asa', emoji: '🪽' },
+  mushroom: { label: 'Super Cogumelo', emoji: '🍄' },
+  'fire-flower': { label: 'Flor de Fogo', emoji: '🔥' },
+  'ice-flower': { label: 'Flor de Gelo', emoji: '❄️' },
+  star: { label: 'Super Estrela', emoji: '⭐' },
+  'one-up': { label: 'Cogumelo Vida', emoji: '💚' },
+  'cat-mushroom': { label: 'Cogumelo Gato', emoji: '🐱' },
+  'leaf-mushroom': { label: 'Cogumelo Folha', emoji: '🍃' },
+  'raccoon-leaf': { label: 'Folha do Guaxinim', emoji: '🦝' },
+  'giga-mushroom': { label: 'Giga Cogumelo', emoji: '💪' },
+  'turbo-mushroom': { label: 'Cogumelo Turbo', emoji: '💨' },
+  'swap-mushroom': { label: 'Cogumelo Troca-Personagem', emoji: '🔄' },
+  'magnet-mushroom': { label: 'Cogumelo Ímã', emoji: '🧲' },
+  'tall-mushroom': { label: 'Cogumelo Alto', emoji: '🦒' },
+  'reverse-mushroom': { label: 'Cogumelo Reverso', emoji: '🙃' },
+  'mini-mushroom': { label: 'Cogumelo de Encolher', emoji: '🐜' },
+  'pedrere-mushroom': { label: 'Cogumelo Pedrerê', emoji: '🤸' },
+  'coin-x2': { label: 'Moeda ×2', emoji: '🪙' },
+  'coin-x4': { label: 'Moeda ×4', emoji: '🪙' },
+  'coin-x1000': { label: 'Moeda ×1000', emoji: '🪙' },
+  'coin-x9999': { label: 'Moeda ×9999', emoji: '🪙' },
+} as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
+
+/** Poderes que têm um bloco surpresa próprio na aba Cogumelos: a cabeçada solta aquele poder. */
+export const SURPRISE_POWER_UPS = [
+  'mushroom',
+  'fire-flower',
+  'star',
+  'one-up',
+  'ice-flower',
+  'cat-mushroom',
+  'raccoon-leaf',
+  'giga-mushroom',
+  'turbo-mushroom',
+  'swap-mushroom',
+  'magnet-mushroom',
+  'tall-mushroom',
+  'mini-mushroom',
+  'pedrere-mushroom',
+] as const satisfies readonly PowerUpKind[];
+
+/**
+ * Uma surpresa para cada poder. O id segue o poder, e a do Super Cogumelo
+ * continua `surprise-mushroom`, como antes: a peça que já existia não muda.
+ */
+const POWER_UP_SURPRISE_PIECES: readonly EditorPiece[] = SURPRISE_POWER_UPS.map((powerUp): EditorPiece => ({
+  id: `surprise-${powerUp}`,
+  category: 'cogumelos',
+  type: 'surprise',
+  label: `Surpresa ${POWER_UP_LABELS[powerUp].label}`,
+  properties: { contents: 'power-up', powerUp },
+}));
+
 /** Canos mágicos em pares de A a F: entrar num leva ao outro cano da mesma letra. */
 const WARP_PIPE_PIECES: readonly EditorPiece[] = ['A', 'B', 'C', 'D', 'E', 'F'].map((pair): EditorPiece => ({
   id: `warp-pipe-${pair.toLowerCase()}`,
@@ -397,13 +455,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
     properties: { powerUp: 'pedrere-mushroom' },
   },
   { id: 'lucky-block', category: 'cogumelos', type: 'surprise', label: 'Lucky Block', properties: { contents: 'lucky' } },
-  {
-    id: 'surprise-mushroom',
-    category: 'cogumelos',
-    type: 'surprise',
-    label: 'Surpresa 🍄',
-    properties: { contents: 'power-up', powerUp: 'mushroom' },
-  },
+  ...POWER_UP_SURPRISE_PIECES,
 
   { id: 'start', category: 'portais', type: 'start', label: 'Início' },
   { id: 'portal', category: 'portais', type: 'portal', label: 'Portal final' },
@@ -493,34 +545,6 @@ export const EDITOR_POWER_UPS: readonly PowerUpKind[] = [
     EDITOR_PIECES.flatMap((piece) => (piece.type === 'power-up' && piece.properties?.powerUp ? [piece.properties.powerUp] : [])),
   ),
 ];
-
-export const POWER_UP_LABELS = {
-  'super-jump': { label: 'Super Pulo', emoji: '🦘' },
-  shield: { label: 'Escudo', emoji: '🛡️' },
-  turbo: { label: 'Turbo', emoji: '⚡' },
-  magnet: { label: 'Ímã', emoji: '🧲' },
-  wings: { label: 'Asa', emoji: '🪽' },
-  mushroom: { label: 'Super Cogumelo', emoji: '🍄' },
-  'fire-flower': { label: 'Flor de Fogo', emoji: '🔥' },
-  'ice-flower': { label: 'Flor de Gelo', emoji: '❄️' },
-  star: { label: 'Super Estrela', emoji: '⭐' },
-  'one-up': { label: 'Cogumelo Vida', emoji: '💚' },
-  'cat-mushroom': { label: 'Cogumelo Gato', emoji: '🐱' },
-  'leaf-mushroom': { label: 'Cogumelo Folha', emoji: '🍃' },
-  'raccoon-leaf': { label: 'Folha do Guaxinim', emoji: '🦝' },
-  'giga-mushroom': { label: 'Giga Cogumelo', emoji: '💪' },
-  'turbo-mushroom': { label: 'Cogumelo Turbo', emoji: '💨' },
-  'swap-mushroom': { label: 'Cogumelo Troca-Personagem', emoji: '🔄' },
-  'magnet-mushroom': { label: 'Cogumelo Ímã', emoji: '🧲' },
-  'tall-mushroom': { label: 'Cogumelo Alto', emoji: '🦒' },
-  'reverse-mushroom': { label: 'Cogumelo Reverso', emoji: '🙃' },
-  'mini-mushroom': { label: 'Cogumelo de Encolher', emoji: '🐜' },
-  'pedrere-mushroom': { label: 'Cogumelo Pedrerê', emoji: '🤸' },
-  'coin-x2': { label: 'Moeda ×2', emoji: '🪙' },
-  'coin-x4': { label: 'Moeda ×4', emoji: '🪙' },
-  'coin-x1000': { label: 'Moeda ×1000', emoji: '🪙' },
-  'coin-x9999': { label: 'Moeda ×9999', emoji: '🪙' },
-} as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {
   vale: { label: 'Vale', emoji: '🌳' },
