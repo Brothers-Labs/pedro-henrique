@@ -291,6 +291,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return bullet;
     });
     this.updateEnemies(seconds);
+    this.settleColorBlocks();
     this.updateFireballs(seconds);
     this.updateBoss(seconds);
     this.pSwitches.update(this.clockMs, player);
@@ -410,6 +411,17 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.blocks.revealInvisibleGrassTouching(body);
     this.blocks.wakePlatform(body.riding);
   }
+
+  /** Depois de todo mundo andar: o bloco colorido que acendeu só fica firme onde não há ninguém. */
+  private settleColorBlocks(): void {
+    this.blocks.solidifyWaitingColorBlocks(this.isAnyoneIn);
+  }
+
+  /** Função fixa, e não criada a cada passo: herói, amigo ou inimigo ocupando a área. */
+  private readonly isAnyoneIn = (area: WorldArea): boolean =>
+    (this.player.isActive && overlaps(this.player.body, area)) ||
+    this.partners.some((partner) => partner.isActive && overlaps(partner.body, area)) ||
+    this.enemies.some((enemy) => !enemy.isDefeated && overlaps(enemy.body, area));
 
   private updateEnemies(seconds: number): void {
     const playerBody = this.player.body;

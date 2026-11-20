@@ -247,16 +247,29 @@
             </div>
           }
           @case ('surprise') {
-            <label class="selection__field">
-              O que sai do bloco
-              <select class="toolbar__input" (change)="setContents($event)">
-                @for (option of surpriseOptions; track option.id) {
-                  <option [value]="option.id" [selected]="(object.properties?.contents ?? 'coins') === option.id">
-                    {{ option.label }}
-                  </option>
-                }
-              </select>
-            </label>
+            <div class="selection__row" role="group" aria-label="O que sai do bloco">
+              <span>O que sai do bloco:</span>
+              @for (choice of surpriseChoices; track choice.id) {
+                <button
+                  type="button"
+                  class="tool"
+                  [class.tool--active]="surpriseChoiceOf(object.properties) === choice.id"
+                  [attr.aria-pressed]="surpriseChoiceOf(object.properties) === choice.id"
+                  [attr.data-surprise]="choice.id"
+                  (click)="setContents(choice)"
+                >
+                  <span aria-hidden="true">{{ choice.emoji }}</span> {{ choice.label }}
+                </button>
+              }
+            </div>
+            <div class="selection__row selection__row--all" role="group" aria-label="Todas as surpresas da fase">
+              <span>Todas as surpresas:</span>
+              @for (choice of surpriseFillChoices; track choice.id) {
+                <button type="button" class="tool" [attr.data-fill-surprises]="choice.id" (click)="fillAllSurprises(choice)">
+                  <span aria-hidden="true">{{ choice.emoji }}</span> {{ choice.label }}
+                </button>
+              }
+            </div>
             @if (object.properties?.contents === 'power-up') {
               <label class="selection__field">
                 Qual poder

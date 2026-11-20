@@ -16,11 +16,13 @@ import {
   commit,
   createHistory,
   createStarterLevel,
+  isRefillableSurprise,
   moveObject,
   objectAt,
   placeMany,
   placeObject,
   redo,
+  refillSurprises,
   removeMany,
   removeObjectAt,
   resizeLevel,
@@ -150,15 +152,50 @@ describe('Estado do editor de fases', () => {
     expect(updatePropertiesAt(renamed, 40, 2, { text: 'x' })).toBe(renamed);
   });
 
+  it('esvazia e enche todas as surpresas de "?" de uma vez, sem mexer no Lucky Block nem no Bloco de Moedas', () => {
+    let level = placeObject(starter, 'surprise', 4, 8, nextId());
+    level = placeObject(level, 'surprise', 5, 8, nextId(), { contents: 'heart' });
+    level = placeObject(level, 'surprise', 6, 8, nextId(), { contents: 'power-up', powerUp: 'fire-flower' });
+    level = placeObject(level, 'surprise', 7, 8, nextId(), { contents: 'lucky' });
+    level = placeObject(level, 'surprise', 8, 8, nextId(), { contents: 'multi-coins' });
+
+    const surprises = (current: EditorLevel) => [4, 5, 6, 7, 8].map((x) => objectAt(current, x, 8)?.properties);
+
+    const empty = refillSurprises(level, 'empty');
+    expect(surprises(empty)).toEqual([
+      { contents: 'empty' },
+      { contents: 'empty' },
+      { contents: 'empty' },
+      { contents: 'lucky' },
+      { contents: 'multi-coins' },
+    ]);
+
+    const mushrooms = refillSurprises(empty, 'power-up', 'mushroom');
+    expect(surprises(mushrooms).slice(0, 3)).toEqual(Array(3).fill({ contents: 'power-up', powerUp: 'mushroom' }));
+
+    const crystals = refillSurprises(mushrooms, 'crystal');
+    expect(surprises(crystals).slice(0, 3)).withContext('o poder sai junto').toEqual(Array(3).fill({ contents: 'crystal' }));
+    expect(refillSurprises(crystals, 'crystal')).withContext('nada para mudar, nada de passo vazio').toBe(crystals);
+
+    const plain = placeObject(starter, 'surprise', 4, 8, nextId());
+    expect(refillSurprises(plain, 'coins')).withContext('sem conteúdo já são moedas').toBe(plain);
+
+    expect(level.objects.filter(isRefillableSurprise).length).toBe(3);
+  });
+
   it('reconhece a peça da paleta pelo tipo e pelas propriedades', () => {
     expect(findEditorPiece({ type: 'door', properties: { pair: 'B' } })?.id).toBe('door-b');
     expect(findEditorPiece({ type: 'surprise', properties: { contents: 'heart' } })?.id).toBe('surprise-heart');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'empty' } })?.id).toBe('surprise-empty');
     expect(findEditorPiece({ type: 'ground' })?.id).toBe('ground');
     expect(findEditorPiece({ type: 'portal' })?.id).toBe('portal');
     expect(findEditorPiece({ type: 'portal', properties: { portalLook: 'castle' } })?.id).toBe('portal-castle');
     expect(findEditorPiece({ type: 'invisible-grass' })?.id).toBe('invisible-grass');
     expect(findEditorPiece({ type: 'skeleton-platform' })?.id).toBe('skeleton-platform');
     expect(findEditorPiece({ type: 'ceiling-spring' })?.id).toBe('ceiling-spring');
+    expect(findEditorPiece({ type: 'on-off-switch' })?.id).toBe('on-off-switch');
+    expect(findEditorPiece({ type: 'red-block' })?.id).toBe('red-block');
+    expect(findEditorPiece({ type: 'blue-block' })?.id).toBe('blue-block');
     expect(findEditorPiece({ type: 'king-cactus' })?.id).toBe('king-cactus');
     expect(findEditorPiece({ type: 'living-pumpkin' })?.id).toBe('living-pumpkin');
     expect(findEditorPiece({ type: 'witch' })?.id).toBe('witch');

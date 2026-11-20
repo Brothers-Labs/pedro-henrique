@@ -21,6 +21,31 @@ describe('CommunicationPage', () => {
     fixture.detectChanges();
   }
 
+  /** Abre a categoria e toca no cartão pelo texto, sem depender da posição. */
+  function clickCardByText(categoryLabel: string, cardText: string): void {
+    const category = Array.from(
+      element.querySelectorAll<HTMLButtonElement>('.board__category'),
+    ).find((candidate) => candidate.textContent?.includes(categoryLabel));
+
+    if (!category) {
+      throw new Error(`Categoria "${categoryLabel}" não encontrada.`);
+    }
+
+    category.click();
+    fixture.detectChanges();
+
+    const card = Array.from(element.querySelectorAll<HTMLButtonElement>('.board__card')).find(
+      (candidate) => candidate.querySelector('.board__card-label')?.textContent?.trim() === cardText,
+    );
+
+    if (!card) {
+      throw new Error(`Cartão "${cardText}" não encontrado em "${categoryLabel}".`);
+    }
+
+    card.click();
+    fixture.detectChanges();
+  }
+
   function clickAction(label: string): void {
     const buttons = Array.from(
       element.querySelectorAll<HTMLButtonElement>('.phrase__actions .button'),
@@ -228,6 +253,27 @@ describe('CommunicationPage', () => {
 
     expect(hasSavedPhrase('Sim.')).toBeFalse();
     expect(hasSavedPhrase('I want water.')).toBeTrue();
+  });
+
+  it('monta "Eu estou jogando bola" com os cartões novos', () => {
+    clickCardByText('Começos', 'Eu estou jogando');
+    clickCardByText('Brincar', 'bola');
+
+    expect(preview()).toBe('Eu estou jogando bola.');
+
+    switchLanguage('English');
+
+    expect(preview()).toBe('I am playing ball.');
+  });
+
+  it('responde "espera um pouquinho" com um toque', () => {
+    clickCardByText('Respostas', 'espera um pouquinho');
+
+    expect(speech.speak).toHaveBeenCalledWith(
+      'espera um pouquinho',
+      jasmine.objectContaining({ language: 'pt-BR' }),
+    );
+    expect(preview()).toBe('Espera um pouquinho.');
   });
 
   it('lembra o idioma escolhido no dispositivo', () => {

@@ -1,5 +1,5 @@
 import { TILE_SIZE } from '../config/physics.config';
-import type { TerrainType } from '../models/level.model';
+import type { SurpriseContent, TerrainType } from '../models/level.model';
 import {
   circle,
   darken,
@@ -223,6 +223,81 @@ export function paintSurprise(context: CanvasRenderingContext2D): void {
   context.strokeText('?', 24, 26);
   context.fillStyle = '#ffffff';
   context.fillText('?', 24, 26);
+}
+
+/**
+ * Selo do canto da surpresa no editor: mostra o que sai dela sem precisar
+ * abrir a peça. Desenhado com formas, e não com emoji, para sair igual em
+ * qualquer aparelho. A vazia fica apagada, com o selo cinza.
+ */
+export function paintSurpriseBadge(
+  context: CanvasRenderingContext2D,
+  contents: Exclude<SurpriseContent, 'lucky' | 'multi-coins'>,
+  isMushroom: boolean,
+): void {
+  const x = 37;
+  const y = 37;
+
+  if (contents === 'empty') {
+    context.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    roundedRect(context, 1.5, 1.5, 45, 45, 6);
+    context.fill();
+  }
+
+  circle(context, x, y, 9.5);
+  fillAndOutline(context, contents === 'empty' ? '#c9d2dc' : '#ffffff', 2.5);
+
+  switch (contents) {
+    case 'coins':
+      circle(context, x, y, 5.5);
+      fillAndOutline(context, '#ffc629', 1.8);
+      context.fillStyle = darken('#ffc629', 0.3);
+      context.fillRect(x - 1, y - 3, 2, 6);
+      return;
+    case 'crystal':
+      context.beginPath();
+      context.moveTo(x, y - 6.5);
+      context.lineTo(x + 5, y - 1);
+      context.lineTo(x, y + 6.5);
+      context.lineTo(x - 5, y - 1);
+      context.closePath();
+      fillAndOutline(context, '#3fd0ff', 1.8);
+      return;
+    case 'heart':
+      context.beginPath();
+      context.moveTo(x, y + 5.5);
+      context.bezierCurveTo(x - 8, y, x - 4.5, y - 7, x, y - 2.5);
+      context.bezierCurveTo(x + 4.5, y - 7, x + 8, y, x, y + 5.5);
+      context.closePath();
+      fillAndOutline(context, '#ff4d6d', 1.8);
+      return;
+    case 'power-up':
+      if (isMushroom) {
+        context.fillStyle = '#fff3dc';
+        context.fillRect(x - 2.5, y, 5, 5.5);
+        context.beginPath();
+        context.arc(x, y + 0.5, 6, Math.PI, 0);
+        context.closePath();
+        fillAndOutline(context, '#e5484d', 1.8);
+        context.fillStyle = '#ffffff';
+        circle(context, x - 2.5, y - 2, 1.4);
+        context.fill();
+        circle(context, x + 2.5, y - 2.5, 1.2);
+        context.fill();
+      } else {
+        star(context, x, y, 6.5, 2.8);
+        fillAndOutline(context, '#ffe066', 1.8);
+      }
+      return;
+    case 'empty':
+      context.strokeStyle = OUTLINE;
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(x - 4, y + 4);
+      context.lineTo(x + 4, y - 4);
+      context.stroke();
+      return;
+  }
 }
 
 /** Mola esticada, pronta para lançar. */

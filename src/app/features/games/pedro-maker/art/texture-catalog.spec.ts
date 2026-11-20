@@ -69,6 +69,28 @@ describe('Catálogo de arte integrado ao Canvas 2D', () => {
     expect(new Set(images).size).toBe(3);
   });
 
+  it('mostra no selo da surpresa o que sai dela: vazia, moedas, cristal, coração, cogumelo ou outro poder', () => {
+    const images = (
+      [
+        { contents: 'empty' },
+        { contents: 'coins' },
+        { contents: 'crystal' },
+        { contents: 'heart' },
+        { contents: 'power-up', powerUp: 'mushroom' },
+        { contents: 'power-up', powerUp: 'star' },
+      ] as const
+    ).map((properties) => paintObjectIcon({ type: 'surprise', properties }, 'vale').toDataURL());
+
+    expect(new Set(images).size).toBe(6);
+    expect(paintObjectIcon({ type: 'surprise' }, 'vale').toDataURL()).withContext('sem conteúdo, o selo das moedas').toBe(images[1]);
+  });
+
+  it('pinta o Bloco ON/OFF, o Vermelho e o Azul cada um com a sua cara', () => {
+    const images = (['on-off-switch', 'red-block', 'blue-block'] as const).map((type) => paintObjectIcon({ type }, 'vale').toDataURL());
+
+    expect(new Set(images).size).toBe(3);
+  });
+
   for (const theme of Object.keys(THEME_PALETTES) as LevelTheme[]) {
     it(`adapta a vegetação e o terreno ao tema ${theme}`, () => {
       for (const type of ['ground', 'stone', 'ice', 'tree', 'bush', 'flower', 'rock', 'grass'] as const) {
