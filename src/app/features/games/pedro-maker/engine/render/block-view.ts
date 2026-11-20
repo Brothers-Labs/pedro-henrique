@@ -27,6 +27,8 @@ const WATER_OPACITY = 0.62;
 const BLOCK_SIZE = 0.98;
 /** O tremido da ponte de esqueletos antes de se desmanchar, como o da tábua frágil. */
 const SKELETON_SHAKE = 0.05;
+/** Bloco colorido apagado: dá para ver onde ele volta, mas fica claro que se atravessa. */
+const GHOST_OPACITY = 0.28;
 
 /** Faces de um bloco: a de cima pode ter desenho próprio, como a grama. */
 interface BlockTiles {
@@ -71,6 +73,12 @@ export class BlockView {
   private readonly notes: BlockMesh;
   private readonly crumbles: BlockMesh;
   private readonly invisibleGrass: BlockMesh;
+  private readonly switchesOn: BlockMesh;
+  private readonly switchesOff: BlockMesh;
+  private readonly redBlocks: BlockMesh;
+  private readonly redGhosts: BlockMesh;
+  private readonly blueBlocks: BlockMesh;
+  private readonly blueGhosts: BlockMesh;
   private readonly lava: InstancedMesh | null;
   private readonly water: InstancedMesh | null;
   /** Para cada célula de água, se ela é a de cima (a que ondula). */
@@ -109,6 +117,13 @@ export class BlockView {
     this.crumbles = this.blockMesh(byKind('crumble'), 'crumble', BLOCK_SIZE, 0.45);
     // Revelada, a grama invisível vira um bloco de grama igual ao do terreno.
     this.invisibleGrass = this.blockMesh(byKind('invisible-grass'), { side: 'grass-side', top: 'grass-top', bottom: 'dirt' }, BLOCK_SIZE);
+    // O interruptor tem uma cara para cada estado; só a do estado atual aparece.
+    this.switchesOn = this.blockMesh(byKind('on-off-switch'), 'switch-on', BLOCK_SIZE);
+    this.switchesOff = this.blockMesh(byKind('on-off-switch'), 'switch-off', BLOCK_SIZE);
+    this.redBlocks = this.blockMesh(byKind('red-block'), 'red-block', BLOCK_SIZE);
+    this.redGhosts = this.ghostMesh(byKind('red-block'), 'red-block');
+    this.blueBlocks = this.blockMesh(byKind('blue-block'), 'blue-block', BLOCK_SIZE);
+    this.blueGhosts = this.ghostMesh(byKind('blue-block'), 'blue-block');
     this.lava = this.buildLava();
     this.waterSurface = this.findWaterSurface();
     this.water = this.buildWater();
@@ -127,6 +142,12 @@ export class BlockView {
     this.updateBlocks(this.notes, now, () => true);
     this.updateBlocks(this.crumbles, now, (block) => !block.isHidden);
     this.updateBlocks(this.invisibleGrass, now, (block) => block.isUsed);
+    this.updateBlocks(this.switchesOn, now, () => this.system.isSwitchOn);
+    this.updateBlocks(this.switchesOff, now, () => !this.system.isSwitchOn);
+    this.updateBlocks(this.redBlocks, now, (block) => !block.isHidden);
+    this.updateBlocks(this.redGhosts, now, (block) => block.isHidden);
+    this.updateBlocks(this.blueBlocks, now, (block) => !block.isHidden);
+    this.updateBlocks(this.blueGhosts, now, (block) => block.isHidden);
     this.updateLava(now);
     this.updateWater(now);
     this.updatePlatforms(now, alpha);
@@ -136,13 +157,18 @@ export class BlockView {
     disposeTree(this.root);
   }
 
-  private blockMesh(blocks: readonly InteractiveBlock[], tile: VoxelTile | BlockTiles, size: number, height = size): BlockMesh {
+  private blockMesh(
+    blocks: readonly InteractiveBlock[],
+    tile: VoxelTile | BlockTiles,
+    size: number,
+    height = size,
+    material = new MeshStandardMaterial({ map: this.atlas.texture, roughness: 0.7 }),
+  ): BlockMesh {
     const tiles: BlockTiles = typeof tile === 'string' ? { side: tile, top: tile, bottom: tile } : tile;
     const side = this.atlas.lookup(tiles.side);
     const top = this.atlas.lookup(tiles.top);
     const bottom = this.atlas.lookup(tiles.bottom);
     const geometry = buildTexturedBoxGeometry(size, height, size, ({ isTop, isBottom }) => (isTop ? top : isBottom ? bottom : side));
-    const material = new MeshStandardMaterial({ map: this.atlas.texture, roughness: 0.7 });
     const mesh = new InstancedMesh(geometry, material, Math.max(1, blocks.length));
 
     mesh.count = blocks.length;
@@ -152,6 +178,24 @@ export class BlockView {
     this.root.add(mesh);
 
     return { mesh, blocks };
+  }
+
+  /** O bloco colorido apagado: translúcido e sem sombra, desenhado depois dos sólidos. */
+  private ghostMesh(blocks: readonly InteractiveBlock[], tile: VoxelTile): BlockMesh {
+    const material = new MeshStandardMaterial({
+      map: this.atlas.texture,
+      roughness: 0.7,
+      transparent: true,
+      opacity: GHOST_OPACITY,
+      depthWrite: false,
+    });
+    const ghost = this.blockMesh(blocks, tile, BLOCK_SIZE, BLOCK_SIZE, material);
+
+    ghost.mesh.castShadow = false;
+    ghost.mesh.receiveShadow = false;
+    ghost.mesh.renderOrder = 1;
+
+    return ghost;
   }
 
   private updateBlocks(target: BlockMesh, now: number, isVisible: (block: InteractiveBlock) => boolean): void {

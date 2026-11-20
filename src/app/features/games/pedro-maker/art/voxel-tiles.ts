@@ -34,7 +34,11 @@ export type VoxelTile =
   | 'note'
   | 'bone'
   | 'mesa-top'
-  | 'mesa-side';
+  | 'mesa-side'
+  | 'switch-on'
+  | 'switch-off'
+  | 'red-block'
+  | 'blue-block';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -60,6 +64,10 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'bone',
   'mesa-top',
   'mesa-side',
+  'switch-on',
+  'switch-off',
+  'red-block',
+  'blue-block',
 ];
 
 /** Blocos por linha no atlas. */
@@ -96,6 +104,21 @@ const MESA_STRATA = [
 
 /** Colcheia: a nota musical do bloco musical. */
 const MUSIC_NOTE = ['...###', '...#.#', '...#.#', '...#..', '...#..', '.###..', '####..', '.##...'] as const;
+
+/** As palavras do bloco ON/OFF, em letras de cinco pixels de altura. */
+const ON_LABEL = ['###.#..#', '#.#.##.#', '#.#.#.##', '#.#.#..#', '###.#..#'] as const;
+const OFF_LABEL = ['###.###.###', '#.#.#...#..', '#.#.##..##.', '#.#.#...#..', '###.#...#..'] as const;
+
+/**
+ * Vermelho e azul em tons fortes e bem diferentes entre si: a criança liga cada
+ * cor do interruptor aos blocos que ela acende.
+ */
+const SWITCH_COLORS = {
+  red: { base: '#e5484d', light: '#ff8a8f', dark: '#8f1d22' },
+  blue: { base: '#3e7bfa', light: '#8fb4ff', dark: '#173f9a' },
+} as const;
+
+type SwitchColor = (typeof SWITCH_COLORS)[keyof typeof SWITCH_COLORS];
 
 const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void>> = {
   'grass-top': ({ set, random, palette }) =>
@@ -260,15 +283,14 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
     fill(set, '#fff8e8');
     frame(set, '#c9a227', 0);
     rivets(set, '#c9a227');
-
-    MUSIC_NOTE.forEach((row, y) => {
-      [...row].forEach((pixel, x) => {
-        if (pixel === '#') {
-          set(x + 4, y + 4, '#2a2350');
-        }
-      });
-    });
+    stamp(set, MUSIC_NOTE, 4, 4, '#2a2350');
   },
+  /** O interruptor aceso em ON, vermelho como os blocos que ele deixa firmes. */
+  'switch-on': ({ set }) => switchFace(set, SWITCH_COLORS.red, ON_LABEL),
+  /** O interruptor em OFF, azul como os blocos que ele deixa firmes. */
+  'switch-off': ({ set }) => switchFace(set, SWITCH_COLORS.blue, OFF_LABEL),
+  'red-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.red),
+  'blue-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.blue),
 };
 
 /** Pinta uma face no ponto (x, y) de um canvas já existente. */
@@ -404,6 +426,50 @@ function questionMark(set: SetPixel, color: string, offset: number): void {
       set(x + 1, y + 1, color);
     });
   });
+}
+
+/** Desenho em texto (`#` pinta, `.` pula) com o canto superior esquerdo em (left, top). */
+function stamp(set: SetPixel, rows: readonly string[], left: number, top: number, color: string): void {
+  rows.forEach((row, y) => {
+    [...row].forEach((pixel, x) => {
+      if (pixel === '#') {
+        set(left + x, top + y, color);
+      }
+    });
+  });
+}
+
+/** Moldura em relevo e a palavra no meio, com sombra: lê-se de longe na tela pequena. */
+function switchFace(set: SetPixel, color: SwitchColor, label: readonly string[]): void {
+  const left = Math.floor((VOXEL_TILE_SIZE - (label[0]?.length ?? 0)) / 2);
+  const top = Math.floor((VOXEL_TILE_SIZE - label.length) / 2);
+
+  fill(set, color.base);
+  frame(set, '#ffffff', 0);
+  frame(set, color.dark, 1);
+  stamp(set, label, left + 1, top + 1, color.dark);
+  stamp(set, label, left, top, '#ffffff');
+}
+
+/** Bloco liso com brilho em cima e à esquerda e sombra embaixo e à direita, como uma peça de montar. */
+function colorBlockFace(set: SetPixel, color: SwitchColor): void {
+  const last = VOXEL_TILE_SIZE - 1;
+
+  fill(set, color.base);
+
+  for (let step = 0; step <= last; step += 1) {
+    set(step, 0, color.light);
+    set(0, step, color.light);
+    set(step, last, color.dark);
+    set(last, step, color.dark);
+  }
+
+  for (let step = 4; step < VOXEL_TILE_SIZE - 4; step += 1) {
+    set(step, 4, color.dark);
+    set(step, last - 4, color.light);
+    set(4, step, color.dark);
+    set(last - 4, step, color.light);
+  }
 }
 
 function rivets(set: SetPixel, color: string): void {

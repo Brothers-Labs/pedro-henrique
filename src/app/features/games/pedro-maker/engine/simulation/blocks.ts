@@ -5,7 +5,7 @@ import type { MakerSoundCue } from '../../models/session.model';
 import type { PhysicsBody, PlatformSurface, WorldArea } from './physics-body';
 import type { Player } from './player';
 import type { Scheduler } from './scheduler';
-import { COLLISION, type TileGrid } from './tile-grid';
+import { COLLISION, type Collision, type TileGrid } from './tile-grid';
 import type { VisualEventQueue } from './visual-events';
 
 export interface BlockHost {
@@ -25,7 +25,20 @@ export interface SpawnExtra {
   readonly crystalIndex?: number;
 }
 
-export type InteractiveKind = 'brick' | 'surprise' | 'spring' | 'crumble' | 'note' | 'invisible-grass' | 'ceiling-spring';
+export type InteractiveKind =
+  | 'brick'
+  | 'surprise'
+  | 'spring'
+  | 'crumble'
+  | 'note'
+  | 'invisible-grass'
+  | 'ceiling-spring'
+  | 'on-off-switch'
+  | 'red-block'
+  | 'blue-block';
+
+/** Os blocos que o interruptor ON/OFF faz aparecer e sumir. */
+export type ColorBlockKind = Extract<InteractiveKind, 'red-block' | 'blue-block'>;
 
 /** Bloco que reage ao Pedro. A tela lê os momentos para animar. */
 export interface InteractiveBlock {
@@ -39,7 +52,7 @@ export interface InteractiveBlock {
   /** Surpresa já aberta, tábua frágil já pisada ou grama invisível que já apareceu. */
   isUsed: boolean;
   isBroken: boolean;
-  /** Plataforma frágil que desabou e ainda não voltou. */
+  /** Plataforma frágil que desabou e ainda não voltou, ou bloco colorido apagado pelo ON/OFF. */
   isHidden: boolean;
   /** Moedas que ainda saem do bloco de moedas. */
   coinsLeft: number;
@@ -109,10 +122,17 @@ const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>
   'note',
   'invisible-grass',
   'ceiling-spring',
+  'on-off-switch',
+  'red-block',
+  'blue-block',
 ]);
 
 function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
   return INTERACTIVE_KINDS.has(type);
+}
+
+function isColorBlockKind(kind: InteractiveKind): kind is ColorBlockKind {
+  return kind === 'red-block' || kind === 'blue-block';
 }
 
 /**
@@ -124,6 +144,8 @@ function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
  * baixo), pisar em cima faz a mola saltar, o bloco musical quicar e a
  * plataforma frágil tremer. O goomba também quica no bloco musical. A grama
  * invisível aparece com qualquer encostada, por cima, por baixo ou de lado.
+ * A cabeçada no bloco ON/OFF troca o interruptor da fase inteira, e os blocos
+ * vermelhos e azuis aparecem ou somem de acordo.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -137,6 +159,12 @@ export class BlockSystem {
 
   private readonly byCell = new Map<number, InteractiveBlock>();
   private readonly waterKeys = new Set<number>();
+  private readonly colorBlocks: InteractiveBlock[] = [];
+  /** A fase começa em ON: os vermelhos firmes e os azuis apagados. */
+  private switchIsOn = true;
+  private switchFlippedAt = Number.NEGATIVE_INFINITY;
+  /** Algum bloco colorido já devia estar firme, mas tem alguém dentro dele. */
+  private hasWaitingColorBlocks = false;
 
   constructor(
     objects: readonly LevelObject[],
@@ -165,6 +193,11 @@ export class BlockSystem {
         this.waterKeys.add(this.key(object.x, object.y));
       }
     }
+  }
+
+  /** Como está o interruptor ON/OFF da fase; a tela lê para acender o bloco certo. */
+  get isSwitchOn(): boolean {
+    return this.switchIsOn;
   }
 
   blockAt(cellX: number, cellY: number): InteractiveBlock | undefined {
@@ -216,9 +249,14 @@ export class BlockSystem {
     this.host.effects.burst('dust', platform.x + platform.width / 2, platform.y, 6);
   }
 
-  /** Cabeçada por baixo: o tijolo quebra, a surpresa abre, a mola do teto lança para baixo. */
+  /** Cabeçada por baixo: o tijolo quebra, a surpresa abre, a mola do teto lança para baixo, o ON/OFF troca. */
   handleHeadHit(player: Player, cellX: number, cellY: number, now: number): void {
     const block = this.blockAt(cellX, cellY);
+
+    if (block?.kind === 'on-off-switch') {
+      this.flipSwitch(block, now);
+      return;
+    }
 
     if (block?.kind === 'ceiling-spring') {
       this.launchDown(player, block, now);
@@ -322,6 +360,35 @@ export class BlockSystem {
     }
   }
 
+  /**
+   * Firma os blocos coloridos que o interruptor acendeu. O que tem alguém
+   * dentro — herói, amigo ou inimigo — espera a área ficar livre: ninguém fica
+   * preso dentro de um bloco.
+   */
+  solidifyWaitingColorBlocks(isOccupied: (area: WorldArea) => boolean): void {
+    if (!this.hasWaitingColorBlocks) {
+      return;
+    }
+
+    let isAnyStillWaiting = false;
+
+    for (const block of this.colorBlocks) {
+      if (!block.isHidden || !this.isColorBlockLit(block)) {
+        continue;
+      }
+
+      if (isOccupied(cellArea(block.cellX, block.cellY))) {
+        isAnyStillWaiting = true;
+        continue;
+      }
+
+      block.isHidden = false;
+      this.grid.setCollision(block.cellX, block.cellY, COLLISION.solid);
+    }
+
+    this.hasWaitingColorBlocks = isAnyStillWaiting;
+  }
+
   /** O inimigo que pousou num bloco musical quica nele, como o herói, só que sem segurar pulo nenhum. */
   bounceEnemyOnNote(body: PhysicsBody, now: number): void {
     if (body.landedRow < 0) {
@@ -406,6 +473,44 @@ export class BlockSystem {
     this.host.effects.shake('leve');
   }
 
+  /**
+   * Troca o interruptor: apaga na hora os blocos coloridos que deixam de valer;
+   * os que acendem ficam para `solidifyWaitingColorBlocks`, que confere se há
+   * alguém no lugar deles.
+   */
+  private flipSwitch(block: InteractiveBlock, now: number): void {
+    block.bumpedAt = now;
+
+    // Dois heróis da turma batendo no mesmo passo trocariam e destrocariam: vale uma troca só.
+    if (now === this.switchFlippedAt) {
+      return;
+    }
+
+    this.switchFlippedAt = now;
+    this.switchIsOn = !this.switchIsOn;
+    this.hasWaitingColorBlocks = true;
+
+    for (const colorBlock of this.colorBlocks) {
+      if (!this.isColorBlockLit(colorBlock)) {
+        colorBlock.isHidden = true;
+        this.grid.setCollision(colorBlock.cellX, colorBlock.cellY, COLLISION.empty);
+      }
+    }
+
+    const x = (block.cellX + 0.5) * TILE_SIZE;
+    const y = block.cellY * TILE_SIZE;
+
+    this.host.playSound('button');
+    this.host.effects.burst('sparkle', x, y, 10);
+    this.host.effects.floatingText(x, y - TILE_SIZE / 2, this.switchIsOn ? 'ON!' : 'OFF!', this.switchIsOn ? '#ff8a8f' : '#8fb4ff');
+    this.host.effects.shake('leve');
+  }
+
+  /** Com ON valem os vermelhos; com OFF, os azuis. */
+  private isColorBlockLit(block: InteractiveBlock): boolean {
+    return (block.kind === 'red-block') === this.switchIsOn;
+  }
+
   private reveal(block: InteractiveBlock): void {
     block.isUsed = true;
     this.host.playSound('secret');
@@ -429,9 +534,14 @@ export class BlockSystem {
       crumbleStartedAt: Number.NEGATIVE_INFINITY,
     };
 
+    if (isColorBlockKind(kind)) {
+      block.isHidden = !this.isColorBlockLit(block);
+      this.colorBlocks.push(block);
+    }
+
     this.interactive.push(block);
     this.byCell.set(this.key(object.x, object.y), block);
-    this.grid.setCollision(object.x, object.y, kind === 'crumble' ? COLLISION.oneWay : COLLISION.solid);
+    this.grid.setCollision(object.x, object.y, initialCollision(block));
   }
 
   /** Sólidos para quem pisa ou esbarra; a área de contato passa um pouco da célula. */
@@ -590,6 +700,19 @@ export class BlockSystem {
   private key(cellX: number, cellY: number): number {
     return cellY * this.grid.width + cellX;
   }
+}
+
+/** A tábua frágil segura só por cima; o bloco colorido apagado se atravessa; os demais são firmes. */
+function initialCollision(block: InteractiveBlock): Collision {
+  if (block.kind === 'crumble') {
+    return COLLISION.oneWay;
+  }
+
+  return block.isHidden ? COLLISION.empty : COLLISION.solid;
+}
+
+function cellArea(cellX: number, cellY: number): WorldArea {
+  return { x: cellX * TILE_SIZE, y: cellY * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE };
 }
 
 function overlapsHazard(body: PhysicsBody, hazard: Hazard): boolean {

@@ -341,6 +341,13 @@ function drawIcon(
     case 'note':
       paintVoxelIcon(context, ICON_SIZE, palette, 'note');
       return;
+    case 'on-off-switch':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'switch-on');
+      return;
+    case 'red-block':
+    case 'blue-block':
+      paintVoxelIcon(context, ICON_SIZE, palette, object.type);
+      return;
     case 'surprise':
       paintSurpriseIcon(context, object.properties?.contents, object.properties?.powerUp, palette);
       return;

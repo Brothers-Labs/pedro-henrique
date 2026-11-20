@@ -56,6 +56,11 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   'invisible-grass': { surface: 'solid', isUnique: false },
   spring: { surface: 'one-way', isUnique: false },
   'ceiling-spring': { surface: 'solid', isUnique: false },
+  'on-off-switch': { surface: 'solid', isUnique: false },
+  // Firmes ou atravessáveis conforme o interruptor: para o validador de alcance,
+  // valem dos dois jeitos — dá para pisar em cima e passar por baixo.
+  'red-block': { surface: 'one-way', isUnique: false },
+  'blue-block': { surface: 'one-way', isUnique: false },
   crumble: { surface: 'one-way', isUnique: false },
   platform: { surface: 'one-way', isUnique: false },
   cloud: { surface: 'one-way', isUnique: false },
@@ -249,6 +254,9 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'climb-chain', category: 'blocos', type: 'climb-chain', label: 'Corrente de Subir' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
+  { id: 'on-off-switch', category: 'blocos', type: 'on-off-switch', label: 'Bloco ON/OFF' },
+  { id: 'red-block', category: 'blocos', type: 'red-block', label: 'Bloco Vermelho' },
+  { id: 'blue-block', category: 'blocos', type: 'blue-block', label: 'Bloco Azul' },
   {
     id: 'surprise-multi-coins',
     category: 'blocos',

@@ -1397,6 +1397,95 @@ describe('Simulação do Pedro Maker', () => {
     });
   });
 
+  describe('Bloco ON/OFF', () => {
+    const ROW = SURFACE - 4;
+    const SWITCH = 10;
+    const RED = 20;
+    const BLUE = 22;
+    const switchLevel = (): LevelBlueprint =>
+      flatLevel().add('on-off-switch', SWITCH, ROW).add('red-block', RED, ROW).add('blue-block', BLUE, ROW).build(META);
+
+    /** Pula de baixo do interruptor até a cabeça bater nele. */
+    const headButtSwitch = (harness: Harness): void => {
+      const player = harness.simulation.player;
+
+      player.placeFeetAt((SWITCH + 0.5) * TILE_SIZE, (ROW + 1) * TILE_SIZE + player.body.height + 2);
+      player.body.vy = -600;
+      run(harness, 0.1);
+    };
+
+    it('começa em ON: o vermelho é firme e o azul se atravessa', () => {
+      const harness = start(switchLevel());
+
+      expect(harness.simulation.blocks.isSwitchOn).toBeTrue();
+      expect(harness.simulation.grid.isSolidCell(RED, ROW)).toBeTrue();
+      expect(harness.simulation.grid.isSolidCell(BLUE, ROW)).toBeFalse();
+      expect(harness.simulation.blocks.blockAt(BLUE, ROW)?.isHidden).toBeTrue();
+      expect(harness.simulation.grid.isSolidCell(SWITCH, ROW)).toBeTrue();
+    });
+
+    it('a cabeçada troca para OFF, e a próxima volta para ON', () => {
+      const harness = start(switchLevel());
+      run(harness, 0.2);
+
+      headButtSwitch(harness);
+
+      expect(harness.simulation.blocks.isSwitchOn).toBeFalse();
+      expect(harness.simulation.grid.isSolidCell(RED, ROW)).toBeFalse();
+      expect(harness.simulation.grid.isSolidCell(BLUE, ROW)).toBeTrue();
+      expect(harness.simulation.blocks.blockAt(RED, ROW)?.isHidden).toBeTrue();
+      expect(harness.events.some((event) => event.type === 'sound' && event.cue === 'button')).toBeTrue();
+
+      run(harness, 1);
+      headButtSwitch(harness);
+
+      expect(harness.simulation.blocks.isSwitchOn).toBeTrue();
+      expect(harness.simulation.grid.isSolidCell(RED, ROW)).toBeTrue();
+      expect(harness.simulation.grid.isSolidCell(BLUE, ROW)).toBeFalse();
+    });
+
+    it('pisar em cima ou encostar de lado não troca', () => {
+      const harness = start(switchLevel());
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt((SWITCH + 0.5) * TILE_SIZE, ROW * TILE_SIZE - 2);
+      run(harness, 0.5);
+
+      expect(bottom(player.body)).toBeCloseTo(ROW * TILE_SIZE, 0);
+      expect(harness.simulation.blocks.isSwitchOn).toBeTrue();
+    });
+
+    it('o bloco que acende com o herói dentro espera ele sair, sem prendê-lo', () => {
+      const harness = start(switchLevel());
+      const player = harness.simulation.player;
+      run(harness, 0.2);
+
+      player.placeFeetAt((BLUE + 0.5) * TILE_SIZE, (ROW + 1) * TILE_SIZE);
+      harness.simulation.blocks.handleHeadHit(player, SWITCH, ROW, harness.simulation.clockMs);
+      harness.simulation.step(IDLE_INPUT);
+
+      expect(harness.simulation.blocks.isSwitchOn).toBeFalse();
+      expect(harness.simulation.grid.isSolidCell(BLUE, ROW)).withContext('o herói ainda está no lugar do bloco').toBeFalse();
+
+      run(harness, 1);
+
+      expect(bottom(player.body)).withContext('o herói caiu até o chão').toBeCloseTo(SURFACE * TILE_SIZE, 0);
+      expect(harness.simulation.grid.isSolidCell(BLUE, ROW)).toBeTrue();
+      expect(harness.simulation.blocks.blockAt(BLUE, ROW)?.isHidden).toBeFalse();
+    });
+
+    it('duas cabeçadas no mesmo passo, de dois heróis da turma, trocam uma vez só', () => {
+      const harness = start(switchLevel());
+      const { blocks, player, clockMs } = harness.simulation;
+
+      blocks.handleHeadHit(player, SWITCH, ROW, clockMs);
+      blocks.handleHeadHit(player, SWITCH, ROW, clockMs);
+
+      expect(blocks.isSwitchOn).toBeFalse();
+    });
+  });
+
   describe('Plataforma de esqueleto', () => {
     const ROW = SURFACE - 3;
     const WALL = 24;
