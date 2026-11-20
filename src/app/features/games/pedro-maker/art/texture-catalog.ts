@@ -521,6 +521,7 @@ function paintSurpriseIcon(
       return;
     default:
       paintSurprise(context);
-      paintSurpriseBadge(context, contents ?? 'coins', powerUp === 'mushroom');
+      // Sem poder escolhido, a surpresa de poder solta o Super Pulo, como no jogo.
+      paintSurpriseBadge(context, contents ?? 'coins', powerUp ?? 'super-jump');
   }
 }

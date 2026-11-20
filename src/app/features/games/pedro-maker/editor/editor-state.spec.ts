@@ -193,6 +193,11 @@ describe('Estado do editor de fases', () => {
     expect(findEditorPiece({ type: 'invisible-grass' })?.id).toBe('invisible-grass');
     expect(findEditorPiece({ type: 'skeleton-platform' })?.id).toBe('skeleton-platform');
     expect(findEditorPiece({ type: 'ceiling-spring' })?.id).toBe('ceiling-spring');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'power-up', powerUp: 'mushroom' } })?.id).toBe('surprise-mushroom');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'power-up', powerUp: 'fire-flower' } })?.id).toBe('surprise-fire-flower');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'power-up', powerUp: 'pedrere-mushroom' } })?.id).toBe(
+      'surprise-pedrere-mushroom',
+    );
     expect(findEditorPiece({ type: 'on-off-switch' })?.id).toBe('on-off-switch');
     expect(findEditorPiece({ type: 'red-block' })?.id).toBe('red-block');
     expect(findEditorPiece({ type: 'blue-block' })?.id).toBe('blue-block');

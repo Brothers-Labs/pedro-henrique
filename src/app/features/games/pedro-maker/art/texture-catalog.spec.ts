@@ -1,6 +1,6 @@
 import { DEFAULT_LOOK, paletteFor } from '../config/character.config';
 import { HEROES } from '../config/hero.config';
-import { OBJECT_BEHAVIOR } from '../config/object-catalog';
+import { OBJECT_BEHAVIOR, SURPRISE_POWER_UPS } from '../config/object-catalog';
 import { TILE_SIZE } from '../config/physics.config';
 import { POWER_UP_KINDS, type LevelObjectType, type LevelTheme } from '../models/level.model';
 import { THEME_PALETTES } from './palettes';
@@ -83,6 +83,14 @@ describe('Catálogo de arte integrado ao Canvas 2D', () => {
 
     expect(new Set(images).size).toBe(6);
     expect(paintObjectIcon({ type: 'surprise' }, 'vale').toDataURL()).withContext('sem conteúdo, o selo das moedas').toBe(images[1]);
+  });
+
+  it('mostra no selo de cada surpresa de poder o próprio poder, sem duas iguais', () => {
+    const images = SURPRISE_POWER_UPS.map((powerUp) =>
+      paintObjectIcon({ type: 'surprise', properties: { contents: 'power-up', powerUp } }, 'vale').toDataURL(),
+    );
+
+    expect(new Set(images).size).toBe(SURPRISE_POWER_UPS.length);
   });
 
   it('pinta o Bloco ON/OFF, o Vermelho e o Azul cada um com a sua cara', () => {

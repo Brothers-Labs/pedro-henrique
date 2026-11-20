@@ -1,4 +1,5 @@
 import { heroDefinition, nextHero } from '../../config/hero.config';
+import { EDITOR_PIECES, SURPRISE_POWER_UPS } from '../../config/object-catalog';
 import { DIFFICULTY_RULES } from '../../config/rules.config';
 import {
   BIG_COIN_VALUE,
@@ -1484,6 +1485,32 @@ describe('Simulação do Pedro Maker', () => {
 
       expect(blocks.isSwitchOn).toBeFalse();
     });
+  });
+
+  describe('Surpresas de poder da aba Cogumelos', () => {
+    const ROW = SURFACE - 4;
+    const powerSurprises = EDITOR_PIECES.filter((piece) => piece.category === 'cogumelos' && piece.properties?.contents === 'power-up');
+
+    it('há uma surpresa para cada poder da lista', () => {
+      expect(powerSurprises.map((piece) => piece.properties?.powerUp)).toEqual([...SURPRISE_POWER_UPS]);
+    });
+
+    for (const piece of powerSurprises) {
+      it(`a cabeçada na ${piece.label} solta esse poder`, () => {
+        const harness = start(flatLevel().add('surprise', 10, ROW, piece.properties).build(META));
+        const player = harness.simulation.player;
+        run(harness, 0.2);
+
+        player.placeFeetAt(10.5 * TILE_SIZE, (ROW + 1) * TILE_SIZE + player.body.height + 2);
+        player.body.vy = -600;
+        run(harness, 0.1);
+
+        const released = harness.simulation.collectibles.items.filter((item) => item.kind === 'power-up');
+
+        expect(harness.simulation.blocks.blockAt(10, ROW)?.isUsed).toBeTrue();
+        expect(released.map((item) => item.powerUp)).toEqual([piece.properties?.powerUp]);
+      });
+    }
   });
 
   describe('Plataforma de esqueleto', () => {
