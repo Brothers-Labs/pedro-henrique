@@ -1,5 +1,5 @@
 import { TILE_SIZE } from '../config/physics.config';
-import type { SurpriseContent, TerrainType } from '../models/level.model';
+import type { PowerUpKind, SurpriseContent, TerrainType } from '../models/level.model';
 import {
   circle,
   darken,
@@ -12,11 +12,14 @@ import {
   star,
   textureNoise,
 } from './canvas';
+import { paintPowerUp, POWER_UP_SIZE } from './item-art';
 import type { ThemePalette } from './palettes';
 import { paintSignText } from './sign-text-art';
 
 /** Semente das manchas da terra: o ícone sai sempre igual. */
 const SOIL_NOISE_SEED = 304;
+/** O poder em miniatura cobre o selo inteiro, um pouco além do círculo branco, para ficar legível. */
+const POWER_UP_BADGE_SIZE = 22;
 
 /** Bloco de terreno solto, com o topo e os dois lados à mostra, como no editor. */
 export function paintTerrainTile(context: CanvasRenderingContext2D, material: TerrainType, palette: ThemePalette): void {
@@ -228,12 +231,13 @@ export function paintSurprise(context: CanvasRenderingContext2D): void {
 /**
  * Selo do canto da surpresa no editor: mostra o que sai dela sem precisar
  * abrir a peça. Desenhado com formas, e não com emoji, para sair igual em
- * qualquer aparelho. A vazia fica apagada, com o selo cinza.
+ * qualquer aparelho. A vazia fica apagada, com o selo cinza. A de poder traz
+ * o próprio poder em miniatura: a Flor de Fogo não se confunde com a Estrela.
  */
 export function paintSurpriseBadge(
   context: CanvasRenderingContext2D,
   contents: Exclude<SurpriseContent, 'lucky' | 'multi-coins'>,
-  isMushroom: boolean,
+  powerUp: PowerUpKind,
 ): void {
   const x = 37;
   const y = 37;
@@ -271,24 +275,16 @@ export function paintSurpriseBadge(
       context.closePath();
       fillAndOutline(context, '#ff4d6d', 1.8);
       return;
-    case 'power-up':
-      if (isMushroom) {
-        context.fillStyle = '#fff3dc';
-        context.fillRect(x - 2.5, y, 5, 5.5);
-        context.beginPath();
-        context.arc(x, y + 0.5, 6, Math.PI, 0);
-        context.closePath();
-        fillAndOutline(context, '#e5484d', 1.8);
-        context.fillStyle = '#ffffff';
-        circle(context, x - 2.5, y - 2, 1.4);
-        context.fill();
-        circle(context, x + 2.5, y - 2.5, 1.2);
-        context.fill();
-      } else {
-        star(context, x, y, 6.5, 2.8);
-        fillAndOutline(context, '#ffe066', 1.8);
-      }
+    case 'power-up': {
+      const scale = POWER_UP_BADGE_SIZE / POWER_UP_SIZE;
+
+      context.save();
+      context.translate(x - POWER_UP_BADGE_SIZE / 2, y - POWER_UP_BADGE_SIZE / 2);
+      context.scale(scale, scale);
+      paintPowerUp(context, powerUp);
+      context.restore();
       return;
+    }
     case 'empty':
       context.strokeStyle = OUTLINE;
       context.lineWidth = 2;
