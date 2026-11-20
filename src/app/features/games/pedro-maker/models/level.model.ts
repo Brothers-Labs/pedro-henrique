@@ -188,6 +188,10 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' 
  * invisível é chão de verdade que não aparece: só se mostra depois que o
  * herói encosta nela. A mola de cabeça pra baixo fica presa no teto: quem
  * bate a cabeça nela é lançado para baixo.
+ *
+ * O bloco ON/OFF é o interruptor da fase, que começa em ON: cada cabeçada por
+ * baixo troca para OFF e de volta para ON. Com ON, os blocos vermelhos são
+ * firmes e os azuis viram só um contorno, que se atravessa; com OFF, ao contrário.
  */
 export type BlockType =
   | 'cannon'
@@ -202,7 +206,10 @@ export type BlockType =
   | 'spikes'
   | 'note'
   | 'invisible-grass'
-  | 'ceiling-spring';
+  | 'ceiling-spring'
+  | 'on-off-switch'
+  | 'red-block'
+  | 'blue-block';
 
 /**
  * Valores das moedas gigantes numeradas, da menor para a maior.
