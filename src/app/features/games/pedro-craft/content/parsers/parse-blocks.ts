@@ -3,6 +3,8 @@ import {
   BLOCK_SHAPES,
   type BlockDefinition,
   type BlockFaces,
+  CIRCUIT_ROLES,
+  type CircuitPart,
   CONTENT_SCHEMA_VERSION,
   type ExplosionSpec,
   type ExplosiveBlock,
@@ -42,6 +44,7 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
   const hardness = block.optionalField('hardness')?.number({ min: 0, max: 60 }) ?? null;
   const explosive = block.optionalField('explosive')?.object() ?? null;
   const portal = block.optionalField('portal')?.object() ?? null;
+  const circuit = block.optionalField('circuit')?.object() ?? null;
 
   return {
     id: block.field('id').id(),
@@ -62,6 +65,8 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
     blastResistant: block.optionalField('blastResistant')?.boolean() ?? false,
     explosive: explosive ? parseExplosive(explosive) : null,
     portal: portal ? parsePortal(portal) : null,
+    circuit: circuit ? parseCircuit(circuit) : null,
+    stacksInto: optionalId(block, 'stacksInto'),
     mapColor: block.field('mapColor').color(),
     textures: parseFaces(block.field('textures').object()),
   };
@@ -73,6 +78,18 @@ function parseExplosive(explosive: JsonObjectReader): ExplosiveBlock {
 
 function parsePortal(portal: JsonObjectReader): PortalBlock {
   return { frame: portal.field('frame').id(), igniters: parseIgniters(portal) };
+}
+
+/** A linha e a porta precisam do outro jeito para trocar; a alavanca não, quem a troca é o herói. */
+function parseCircuit(circuit: JsonObjectReader): CircuitPart {
+  const role = circuit.field('role').oneOf(CIRCUIT_ROLES);
+  const switchesInto = optionalId(circuit, 'switchesInto');
+
+  if ((role === 'source') !== (switchesInto === null)) {
+    circuit.fail(role === 'source' ? 'a alavanca não tem "switchesInto": quem a troca é o "toggleInto"' : 'falta "switchesInto"');
+  }
+
+  return { role, powered: circuit.field('powered').boolean(), switchesInto };
 }
 
 /** Os itens que acendem: a TNT e o portal pedem pelo menos um, para não ficarem impossíveis de acender. */

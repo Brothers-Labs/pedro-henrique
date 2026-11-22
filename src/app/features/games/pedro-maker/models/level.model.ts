@@ -82,7 +82,8 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * faz crescer, flor de fogo, flor de gelo, estrela da invencibilidade e
  * cogumelo de vida. O Cogumelo Gato, o Cogumelo Folha e a Folha do Guaxinim
  * também fazem crescer: com o gato, o herói escala paredes; com a folha, plana
- * segurando o pulo; com o guaxinim, voa um pouquinho e gira o rabo. O Giga
+ * segurando o pulo (só nas fases antigas: o editor não oferece mais); com o
+ * guaxinim, voa um pouquinho e gira o rabo. O Giga
  * Cogumelo deixa o herói gigante por alguns segundos, e o Cogumelo Turbo, bem
  * mais rápido. O Cogumelo Troca-Personagem age na hora: o herói vira o próximo
  * da turma, com o pulo e o freio dele. O Cogumelo Ímã puxa as moedas de longe,
@@ -144,7 +145,10 @@ export function coinMultiplierLabel(kind: CoinMultiplierKind): string {
   return `×${COIN_MULTIPLIERS[kind]}`;
 }
 
-/** Os poderes clássicos, que o Lucky Block sorteia. */
+/**
+ * Os poderes clássicos, que o Lucky Block sorteia. O Cogumelo Folha saiu do
+ * jogo novo: continua só nas fases antigas que já o tinham.
+ */
 export const CLASSIC_POWER_UPS = [
   'mushroom',
   'fire-flower',
@@ -152,7 +156,6 @@ export const CLASSIC_POWER_UPS = [
   'star',
   'one-up',
   'cat-mushroom',
-  'leaf-mushroom',
   'raccoon-leaf',
   'giga-mushroom',
   'turbo-mushroom',

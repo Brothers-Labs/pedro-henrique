@@ -156,6 +156,33 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     expect(world.get(TARGET.x, 4, TARGET.z)).toBe(catalog.blockNumber('door-open'));
   });
 
+  it('o botão de usar liga a alavanca, e a porta encostada nela abre; usar de novo fecha', () => {
+    put('lever');
+    put('door', TARGET.x, 4, TARGET.z + 1);
+    put('door', TARGET.x, 5, TARGET.z + 1);
+    run(1, { secondaryPressed: true });
+
+    expect(world.get(TARGET.x, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('lever-on'));
+    expect(world.get(TARGET.x, 4, TARGET.z + 1)).toBe(catalog.blockNumber('door-open'));
+    expect(world.get(TARGET.x, 5, TARGET.z + 1)).toBe(catalog.blockNumber('door-open'));
+    expect(events).toContain({ type: 'sound', cue: 'button' });
+
+    run(1);
+    run(1, { secondaryPressed: true });
+
+    expect(world.get(TARGET.x, 4, TARGET.z + 1)).toBe(catalog.blockNumber('door'));
+  });
+
+  it('a linha da mochila é colocada no chão firme e gasta uma da pilha', () => {
+    put('stone');
+    put('stone', TARGET.x - 1, 3);
+    simulation.inventory.slots[0] = { item: 'string', count: 3, durability: null };
+    run(1, { secondaryPressed: true });
+
+    expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('string-line'));
+    expect(simulation.inventory.slots[0]?.count).toBe(2);
+  });
+
   it('derruba a tocha quando o chão dela é quebrado', () => {
     world.fill(TARGET.x, 3, TARGET.z, catalog.blockNumber('dirt'));
     put('torch', TARGET.x, 4);

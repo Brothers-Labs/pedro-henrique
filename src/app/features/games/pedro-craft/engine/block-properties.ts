@@ -13,6 +13,7 @@ export const SHAPE_CODE: Readonly<Record<BlockShape, number>> = {
   rail: 7,
   carpet: 8,
   half: 9,
+  wire: 10,
 };
 
 /**
@@ -35,6 +36,10 @@ export class BlockProperties {
   readonly isTransparent: Uint8Array;
   /** A mira para nele; a água e o portal deixam a mira passar, como o ar. */
   readonly isTargetable: Uint8Array;
+  /** Peça de circuito no jeito ligado (alavanca ligada, linha acesa): desenhada com brilho próprio. */
+  readonly isPowered: Uint8Array;
+  /** A linha desenha uma ponta até este vizinho: outra peça de circuito ou a TNT que ela acende. */
+  readonly connectsWire: Uint8Array;
 
   constructor(catalog: CraftCatalog) {
     const count = catalog.blockCount;
@@ -47,6 +52,8 @@ export class BlockProperties {
     this.shape = new Uint8Array(count);
     this.isTransparent = new Uint8Array(count);
     this.isTargetable = new Uint8Array(count);
+    this.isPowered = new Uint8Array(count);
+    this.connectsWire = new Uint8Array(count);
 
     for (let number = 1; number < count; number += 1) {
       const block = catalog.blockAt(number);
@@ -63,6 +70,8 @@ export class BlockProperties {
       this.shape[number] = SHAPE_CODE[block.shape];
       this.isTransparent[number] = block.transparent ? 1 : 0;
       this.isTargetable[number] = block.shape !== 'liquid' && block.portal === null ? 1 : 0;
+      this.isPowered[number] = block.circuit?.powered ? 1 : 0;
+      this.connectsWire[number] = block.circuit !== null || block.explosive !== null ? 1 : 0;
     }
   }
 }

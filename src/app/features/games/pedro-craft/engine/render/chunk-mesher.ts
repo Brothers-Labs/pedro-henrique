@@ -167,7 +167,7 @@ class CellMesher {
         this.cross(writer, block, x, y, z);
         return;
       case SHAPE_CODE.torch:
-        this.box(writer, block, x, y, z, { min: TORCH_BOX.min, max: TORCH_BOX.max }, () => true, 1);
+        this.box(writer, block, x, y, z, { min: TORCH_BOX.min, max: TORCH_BOX.max }, () => true, this.glowOf(block));
         return;
       case SHAPE_CODE.slab:
         this.box(writer, block, x, y, z, { min: [0, 0, 0], max: [1, SLAB_HEIGHT, 1] }, (face) => this.isExposed(face, x, y, z, true));
@@ -184,7 +184,17 @@ class CellMesher {
       case SHAPE_CODE.carpet:
         this.carpet(writer, block, x, y, z);
         return;
+      case SHAPE_CODE.wire:
+        this.wire(writer, block, x, y, z);
+        return;
     }
+  }
+
+  /** Brilho próprio da peça fina: a tocha acesa e a peça de circuito ligada se veem até no escuro. */
+  private glowOf(block: number): number {
+    const { properties } = this.context;
+
+    return properties.light[block] > 0 || properties.isPowered[block] === 1 ? 1 : 0;
   }
 
   /** Tapete: lâmina fina com a beirada à mostra, menos onde encosta noutro tapete, que a esconde. */
@@ -201,9 +211,33 @@ class CellMesher {
    * vizinho só, vira um trilho reto inteiro; com dois de lados vizinhos, vira curva.
    */
   private rail(writer: MeshWriter, block: number, x: number, y: number, z: number): void {
+    this.flatLine(writer, block, x, y, z, railConnections(this.context.world, this.context.properties, x, y, z), 0);
+  }
+
+  /**
+   * Linha do circuito: desenhada como o trilho, até as linhas vizinhas e até a
+   * alavanca, a porta ou a TNT encostada — a criança vê com o que ela está ligada.
+   */
+  private wire(writer: MeshWriter, block: number, x: number, y: number, z: number): void {
+    const { world, properties } = this.context;
+    const connections = RAIL_DIRECTIONS.filter(({ dx, dz }) => properties.connectsWire[world.get(x + dx, y, z + dz)] === 1);
+
+    this.flatLine(writer, block, x, y, z, connections, this.glowOf(block));
+  }
+
+  /** Peça deitada no chão (trilho, linha): uma meia faixa do centro até cada vizinho ligado. */
+  private flatLine(
+    writer: MeshWriter,
+    block: number,
+    x: number,
+    y: number,
+    z: number,
+    connections: readonly RailDirection[],
+    glow: number,
+  ): void {
     const tile = this.context.tiles.tile(block, 'top', 0);
 
-    for (const direction of railSegments(railConnections(this.context.world, this.context.properties, x, y, z))) {
+    for (const direction of lineSegments(connections)) {
       const isAlongX = direction.dx !== 0;
       const forward = direction.dx + direction.dz > 0;
       const [alongMin, alongMax] = forward ? [0.5, 1] : [0, 0.5];
@@ -224,7 +258,7 @@ class CellMesher {
         return [tile.u0 + (tile.u1 - tile.u0) * across, tile.v0 + (tile.v1 - tile.v0) * along];
       });
 
-      writer.quad(corners, uvs, [1, 1, 1, 1], corners.map((corner) => this.lightAt(corner)));
+      writer.quad(corners, uvs, [1, 1, 1, 1], corners.map((corner) => Math.max(glow, this.lightAt(corner))));
     }
   }
 
@@ -434,8 +468,8 @@ class CellMesher {
   }
 }
 
-/** As metades de trilho a desenhar: sem vizinho, o trilho fica reto de norte a sul; com um, segue reto até ele. */
-function railSegments(connections: readonly RailDirection[]): readonly RailDirection[] {
+/** As metades a desenhar: sem vizinho, a peça fica reta de norte a sul; com um, segue reta até ele. */
+function lineSegments(connections: readonly RailDirection[]): readonly RailDirection[] {
   if (connections.length === 0) {
     return [RAIL_DIRECTIONS[0], RAIL_DIRECTIONS[2]];
   }

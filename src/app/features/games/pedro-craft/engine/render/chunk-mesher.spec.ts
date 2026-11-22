@@ -175,6 +175,41 @@ describe('Malha dos chunks do PedroCraft', () => {
     });
   });
 
+  describe('alavanca e linha', () => {
+    it('a alavanca desligada não brilha sozinha; ligada, brilha como a tocha', () => {
+      put('lever', 5, 5, 5);
+
+      expect(Math.max(...mesh().cutout.lights)).toBe(0);
+
+      put('lever-on', 5, 5, 5);
+
+      expect(Math.min(...mesh().cutout.lights)).toBe(1);
+    });
+
+    it('desenha a linha chata no chão e liga até as vizinhas, a alavanca e a TNT, mas não a outros blocos', () => {
+      put('string-line', 5, 5, 5);
+      put('string-line', 6, 5, 5);
+      put('lever', 4, 5, 5);
+      put('tnt', 5, 5, 6);
+      put('stone', 5, 5, 4);
+
+      // A linha do meio liga a leste, a oeste (alavanca) e ao sul (TNT), não à pedra do norte: 3 metades.
+      // A do leste, ligada só à do meio, vira reta: 2 metades. A alavanca é uma caixa fina de 6 faces.
+      // A TNT e a pedra são cubos opacos, de outro passe.
+      expect(faces(mesh().cutout)).toBe(3 + 2 + 6);
+    });
+
+    it('a linha acesa brilha sozinha no escuro, a apagada não', () => {
+      put('string-line', 5, 5, 5);
+
+      expect(Math.max(...mesh().cutout.lights)).toBe(0);
+
+      put('string-line-on', 5, 5, 5);
+
+      expect(Math.min(...mesh().cutout.lights)).toBe(1);
+    });
+  });
+
   describe('tapete', () => {
     const heights = (data: ChunkMeshData): readonly number[] =>
       Array.from({ length: data.positions.length / 3 }, (_, index) => data.positions[index * 3 + 1]);

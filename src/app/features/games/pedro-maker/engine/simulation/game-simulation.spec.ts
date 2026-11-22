@@ -648,10 +648,11 @@ describe('Simulação do Pedro Maker', () => {
     });
   });
 
-  it('o Lucky Block também sorteia a Folha do Guaxinim, o Giga Cogumelo e o Cogumelo Turbo', () => {
+  it('o Lucky Block também sorteia a Folha do Guaxinim, o Giga Cogumelo e o Cogumelo Turbo, mas não o Cogumelo Folha', () => {
     expect(CLASSIC_POWER_UPS).toContain('raccoon-leaf');
     expect(CLASSIC_POWER_UPS).toContain('giga-mushroom');
     expect(CLASSIC_POWER_UPS).toContain('turbo-mushroom');
+    expect(CLASSIC_POWER_UPS as readonly PowerUpKind[]).not.toContain('leaf-mushroom');
   });
 
   describe('Cogumelo Turbo', () => {

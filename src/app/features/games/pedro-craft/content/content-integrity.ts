@@ -91,7 +91,12 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
     if (definition.portal?.frame === definition.id) {
       problems.push({ file: 'blocks', message: `${owner}: o portal não pode ser a própria moldura` });
     }
+
+    block('blocks', owner, definition.stacksInto);
+    block('blocks', owner, definition.circuit?.switchesInto ?? null);
   }
+
+  problems.push(...findStackingProblems(content), ...findCircuitProblems(content));
 
   for (const definition of content.items) {
     const owner = `item "${definition.id}"`;
@@ -198,6 +203,78 @@ export function assertContentIntegrity(content: CraftContent): void {
   if (problems.length > 0) {
     throw new ContentIntegrityError(problems);
   }
+}
+
+/** Só o meio bloco empilha, e os dois juntos fecham um cubo inteiro: o desenho e a colisão continuam batendo. */
+function findStackingProblems(content: CraftContent): readonly IntegrityProblem[] {
+  const blocks = new Map(content.blocks.map((block) => [block.id, block]));
+
+  return content.blocks.flatMap((definition): IntegrityProblem[] => {
+    if (definition.stacksInto === null) {
+      return [];
+    }
+
+    const whole = blocks.get(definition.stacksInto);
+    const owner = `bloco "${definition.id}"`;
+
+    if (definition.shape !== 'half') {
+      return [{ file: 'blocks', message: `${owner}: só um meio bloco (shape "half") empilha em outro igual` }];
+    }
+
+    return whole && whole.shape !== 'cube'
+      ? [{ file: 'blocks', message: `${owner}: dois meios blocos viram um bloco inteiro (shape "cube"), não "${whole.shape}"` }]
+      : [];
+  });
+}
+
+/**
+ * As peças de circuito andam em pares: o bloco troca para o outro jeito e
+ * volta. A linha é sempre a forma `wire`, e a forma `wire` é sempre linha —
+ * é ela que o desenho liga às vizinhas.
+ */
+function findCircuitProblems(content: CraftContent): readonly IntegrityProblem[] {
+  const blocks = new Map(content.blocks.map((block) => [block.id, block]));
+  const problems: IntegrityProblem[] = [];
+
+  for (const definition of content.blocks) {
+    const owner = `bloco "${definition.id}"`;
+    const circuit = definition.circuit;
+    const isWire = circuit?.role === 'wire';
+
+    if ((definition.shape === 'wire') !== isWire) {
+      problems.push({ file: 'blocks', message: `${owner}: a linha do circuito precisa de shape "wire", e só ela usa essa forma` });
+    }
+
+    if (isWire && definition.solid) {
+      problems.push({ file: 'blocks', message: `${owner}: a linha não pode ser sólida, o herói anda por cima dela` });
+    }
+
+    if (!circuit) {
+      continue;
+    }
+
+    const otherId = circuit.role === 'source' ? definition.toggleInto : circuit.switchesInto;
+    const other = otherId ? blocks.get(otherId) : undefined;
+
+    if (circuit.role === 'source' && !otherId) {
+      problems.push({ file: 'blocks', message: `${owner}: a alavanca precisa de "toggleInto" para o herói ligar e desligar` });
+    }
+
+    if (!other) {
+      continue;
+    }
+
+    const pairsBack = (circuit.role === 'source' ? other.toggleInto : other.circuit?.switchesInto) === definition.id;
+
+    if (other.circuit?.role !== circuit.role || other.circuit.powered === circuit.powered || !pairsBack) {
+      problems.push({
+        file: 'blocks',
+        message: `${owner}: "${other.id}" precisa ser o mesmo tipo de peça no outro jeito (ligado ↔ desligado) e voltar para "${definition.id}"`,
+      });
+    }
+  }
+
+  return problems;
 }
 
 /**

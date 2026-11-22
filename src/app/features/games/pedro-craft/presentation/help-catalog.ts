@@ -208,6 +208,14 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
       break;
   }
 
+  if (block.circuit?.role === 'source') {
+    return 'Coloque no chão e use para ligar e desligar. Ligada, ela abre a porta e acende a TNT encostadas nela ou na linha.';
+  }
+
+  if (block.circuit?.role === 'wire') {
+    return 'Coloque no chão, em fila, da alavanca até uma porta ou uma TNT. A linha leva o comando e fica amarela quando está ligada.';
+  }
+
   if (block.light > 0) {
     return 'Ilumina a noite e espanta os inimigos.';
   }

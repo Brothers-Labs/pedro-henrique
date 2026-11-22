@@ -17,7 +17,7 @@
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/id", "not": { "const": "air" } },
         "name": { "type": "string", "minLength": 1, "description": "Nome mostrado na tela, em português." },
-        "shape": { "enum": ["cube", "cross", "liquid", "torch", "fence", "slab", "rail", "carpet", "half"], "description": "carpet: tapete fininho no chão; não pode ser sólido e precisa de chão firme embaixo. half: meio bloco, sólido e com collisionHeight 0.5." },
+        "shape": { "enum": ["cube", "cross", "liquid", "torch", "fence", "slab", "rail", "carpet", "half", "wire"], "description": "carpet: tapete fininho no chão; não pode ser sólido e precisa de chão firme embaixo. half: meio bloco, sólido e com collisionHeight 0.5. wire: a linha do circuito, deitada no chão; só para blocos com circuit.role \"wire\"." },
         "solid": { "type": "boolean" },
         "transparent": { "type": "boolean", "description": "Tem partes vazadas e não esconde as faces dos vizinhos." },
         "hardness": { "type": ["number", "null"], "minimum": 0, "maximum": 60, "description": "Segundos com a mão; null = não quebra." },
@@ -63,6 +63,24 @@
               "description": "Ids dos itens que acendem (o isqueiro). Um item com durabilidade perde um uso a cada portal aceso."
             }
           }
+        },
+        "circuit": {
+          "type": ["object", "null"],
+          "description": "Peça de circuito. source: a alavanca, que o herói troca pelo toggleInto; wire: a linha, que leva o comando; receiver: muda de jeito quando o comando chega (a porta). Uma TNT encostada no comando ligado acende sozinha.",
+          "required": ["role", "powered"],
+          "additionalProperties": false,
+          "properties": {
+            "role": { "enum": ["source", "wire", "receiver"] },
+            "powered": { "type": "boolean", "description": "Este é o jeito ligado (alavanca ligada, linha acesa, porta aberta)." },
+            "switchesInto": {
+              "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }],
+              "description": "Id do mesmo bloco no outro jeito, que volta para este. Obrigatório em wire e receiver; proibido em source."
+            }
+          }
+        },
+        "stacksInto": {
+          "anyOf": [{ "$ref": "common.schema.json#/$defs/id" }, { "type": "null" }],
+          "description": "Só em meio bloco (shape half): outro igual colocado em cima vira este bloco inteiro (shape cube)."
         },
         "mapColor": { "$ref": "common.schema.json#/$defs/color" },
         "textures": {

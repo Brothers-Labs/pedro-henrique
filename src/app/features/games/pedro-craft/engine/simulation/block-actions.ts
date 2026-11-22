@@ -15,7 +15,7 @@ import type { VisualEvent } from './simulation-events';
 const BLAST_DROP_CHANCE = 0.35;
 
 /** Formas que precisam de chão firme embaixo: sem ele, caem junto. */
-const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail, SHAPE_CODE.carpet]);
+const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail, SHAPE_CODE.carpet, SHAPE_CODE.wire]);
 
 export interface BlockActionsContext {
   readonly catalog: CraftCatalog;
@@ -24,10 +24,10 @@ export interface BlockActionsContext {
   readonly drops: ItemDrops;
   readonly random: () => number;
   visual(event: VisualEvent): void;
-  /** Avisado quando um bloco é colocado: alimenta as missões. */
-  placed(block: BlockDefinition): void;
-  /** Avisado quando um bloco sai do mundo: o baú e a fornalha soltam o que guardavam. */
-  removed(x: number, y: number, z: number): void;
+  /** Avisado quando um bloco é colocado: alimenta as missões e liga a peça nova ao circuito. */
+  placed(block: BlockDefinition, x: number, y: number, z: number): void;
+  /** Avisado quando um bloco sai do mundo: o baú e a fornalha soltam o que guardavam, e o circuito se refaz. */
+  removed(x: number, y: number, z: number, block: BlockDefinition): void;
   /** A planta madura da célula foi colhida: devolve a tabela da colheita, ou `null` se não havia o que colher. */
   harvest(x: number, y: number, z: number): string | null;
   /** Corpos que não podem ficar dentro de um bloco novo (o herói, as criaturas). */
@@ -98,7 +98,7 @@ export class BlockActions {
 
     world.set(x, y, z, AIR);
     this.context.visual({ type: 'block-broken', x, y, z, block: number });
-    this.context.removed(x, y, z);
+    this.context.removed(x, y, z, block);
 
     if (block.pairsVertically) {
       this.removePartner(x, y, z, block);
@@ -120,14 +120,45 @@ export class BlockActions {
    * Coloca um bloco na face mirada: o do item da mão, a água do balde.
    *
    * Capim e água são substituíveis: mirar neles coloca o bloco no lugar deles.
+   * Meio bloco colocado no alto de outro igual fecha os dois num bloco inteiro.
    */
   placeBlock(hit: RayHit, block: BlockDefinition): boolean {
     const { world, properties } = this.context;
     const hitIsReplaceable = properties.isReplaceable[world.get(hit.x, hit.y, hit.z)] === 1;
 
+    const whole = this.stackedWhole(hit, block);
+
+    if (whole) {
+      return this.stackHalf(hit.x, hit.y, hit.z, block, whole);
+    }
+
     return hitIsReplaceable
       ? this.putBlock(hit.x, hit.y, hit.z, block)
       : this.putBlock(hit.x + hit.normalX, hit.y + hit.normalY, hit.z + hit.normalZ, block);
+  }
+
+  /** O bloco inteiro que nasce quando a mira está no alto de um meio bloco igual ao da mão; `null` se não for o caso. */
+  private stackedWhole(hit: RayHit, block: BlockDefinition): string | null {
+    const { world, catalog } = this.context;
+    const isOnTopOfTwin = hit.normalY === 1 && world.get(hit.x, hit.y, hit.z) === catalog.blockNumber(block.id);
+
+    return isOnTopOfTwin ? block.stacksInto : null;
+  }
+
+  /**
+   * O meio bloco de baixo vira o bloco inteiro. Quem está em pé no meio bloco
+   * ficaria dentro do bloco inteiro: aí não empilha, como acontece com qualquer
+   * bloco colocado em cima de alguém.
+   */
+  private stackHalf(x: number, y: number, z: number, half: BlockDefinition, whole: string): boolean {
+    if (this.blocksSomeone(x, y, z, 1)) {
+      return false;
+    }
+
+    this.context.world.set(x, y, z, this.context.catalog.blockNumber(whole));
+    this.context.placed(half, x, y, z);
+
+    return true;
   }
 
   /** Planta em cima do solo da célula. Devolve se plantou. */
@@ -174,34 +205,41 @@ export class BlockActions {
       world.set(x, y + 1, z, number);
     }
 
-    this.context.placed(block);
+    this.context.placed(block, x, y, z);
 
     return true;
   }
 
-  /** Abre ou fecha a porta (as duas metades). Devolve se o bloco tinha o que fazer. */
+  /** O herói abre ou fecha a porta, liga ou desliga a alavanca. Devolve se o bloco tinha o que fazer. */
   toggle(x: number, y: number, z: number): boolean {
-    const { world, catalog } = this.context;
-    const block = catalog.blockAt(world.get(x, y, z));
+    const toggleInto = this.context.catalog.blockAt(this.context.world.get(x, y, z))?.toggleInto ?? null;
 
-    if (!block?.toggleInto) {
+    if (!toggleInto) {
       return false;
     }
 
-    const next = catalog.blockNumber(block.toggleInto);
+    this.switchInto(x, y, z, toggleInto);
+
+    return true;
+  }
+
+  /** Troca o bloco da célula por `blockId`; na porta, as duas metades trocam juntas. */
+  switchInto(x: number, y: number, z: number, blockId: string): void {
+    const { world, catalog } = this.context;
     const current = world.get(x, y, z);
+    const next = catalog.blockNumber(blockId);
 
     world.set(x, y, z, next);
 
-    if (block.pairsVertically) {
-      for (const partnerY of [y - 1, y + 1]) {
-        if (world.get(x, partnerY, z) === current) {
-          world.set(x, partnerY, z, next);
-        }
-      }
+    if (!catalog.blockAt(current)?.pairsVertically) {
+      return;
     }
 
-    return true;
+    for (const partnerY of [y - 1, y + 1]) {
+      if (world.get(x, partnerY, z) === current) {
+        world.set(x, partnerY, z, next);
+      }
+    }
   }
 
   /** Solta o que o bloco dá; a planta madura solta a colheita (`harvest`) no lugar do drop de sempre. */
@@ -236,23 +274,21 @@ export class BlockActions {
     }
   }
 
-  /** Planta, tocha, trilho ou tapete que ficou sem chão quebra junto, soltando o que dá. */
+  /** Planta, tocha, alavanca, trilho, linha ou tapete que ficou sem chão quebra junto, soltando o que dá. */
   private breakUnsupported(x: number, y: number, z: number): void {
     const { world, properties, catalog } = this.context;
     const number = world.get(x, y, z);
+    const block = catalog.blockAt(number);
 
-    if (!NEEDS_SUPPORT.has(properties.shape[number]) || this.isSupport(x, y - 1, z)) {
+    if (!block || !NEEDS_SUPPORT.has(properties.shape[number]) || this.isSupport(x, y - 1, z)) {
       return;
     }
 
-    const block = catalog.blockAt(number);
     const harvest = this.context.harvest(x, y, z);
 
     world.set(x, y, z, AIR);
-
-    if (block) {
-      this.dropFrom(block, x, y, z, null, harvest);
-    }
+    this.context.removed(x, y, z, block);
+    this.dropFrom(block, x, y, z, null, harvest);
   }
 
   private itemPlacing(blockId: string): string | null {

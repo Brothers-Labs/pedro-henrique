@@ -30,10 +30,10 @@
       "description": "Face de bloco pintada em código: um padrão de pixels e as cores dele.",
       "properties": {
         "pattern": {
-          "enum": ["speckle", "cobble", "grass-side", "planks", "log-side", "log-top", "leaves", "ore", "bricks", "glass", "farmland", "water", "plant", "crop", "torch", "panel", "rail", "portal"]
+          "enum": ["speckle", "cobble", "grass-side", "planks", "log-side", "log-top", "leaves", "ore", "bricks", "glass", "farmland", "water", "plant", "crop", "torch", "panel", "rail", "portal", "wire"]
         },
         "colors": { "$ref": "#/$defs/colors" },
-        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain", "band"], "description": "band: faixa clara no meio, com três marquinhas (a TNT)." }
+        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain", "band", "lever"], "description": "band: faixa clara no meio, com três marquinhas (a TNT). lever: no padrão torch, a bolinha da alavanca no lugar da chama." }
       }
     },
     "toolType": { "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "shears"] }
