@@ -11,7 +11,7 @@ import type { TextureDetail, TextureSpec } from '../models/content.model';
  * pintor e no README dos dados.
  *
  * Pixel transparente (`null`) só existe nos blocos vazados: folhas, vidro,
- * plantas, tocha, trilho e porta aberta.
+ * plantas, tocha, alavanca, trilho, linha e porta aberta.
  */
 
 export const TILE_SIZE = VOXEL_TILE_SIZE;
@@ -281,8 +281,11 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
     }
   },
 
-  /** [cabo, chama] — desenhada no meio, que é a parte usada pela tocha fina. */
-  torch: ({ set, colors }) => {
+  /**
+   * [cabo, chama] — desenhada no meio, que é a parte usada pela tocha fina.
+   * Com o detalhe `lever` é a alavanca: [cabo, bolinha], a bolinha da cor do jeito dela.
+   */
+  torch: ({ set, colors, detail }) => {
     clear(set);
 
     const flame = at(colors, 1, '#ffcc33');
@@ -290,6 +293,14 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
     for (let y = 6; y < TILE_SIZE; y += 1) {
       set(7, y, colors[0]);
       set(8, y, darken(colors[0], 0.15));
+    }
+
+    if (detail === 'lever') {
+      for (let y = 2; y < 6; y += 1) {
+        set(7, y, y === 2 ? lighten(flame, 0.35) : flame);
+        set(8, y, darken(flame, 0.2));
+      }
+      return;
     }
 
     for (const [x, y, color] of [
@@ -326,6 +337,21 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
       verticalLine(set, left, 0, LAST, lighten(metal, 0.25));
       verticalLine(set, left + 1, 0, LAST, darken(metal, 0.2));
     }
+  },
+
+  /**
+   * [fio, sombra do fio] — um fio de cima a baixo no meio, com o fundo vazado.
+   * Simétrico como o trilho: meia linha mostra a mesma coisa venha de que lado vier.
+   */
+  wire: ({ set, colors }) => {
+    clear(set);
+
+    const shadow = at(colors, 1, darken(colors[0], 0.3));
+
+    verticalLine(set, 6, 0, LAST, shadow);
+    verticalLine(set, 7, 0, LAST, lighten(colors[0], 0.2));
+    verticalLine(set, 8, 0, LAST, colors[0]);
+    verticalLine(set, 9, 0, LAST, shadow);
   },
 
   /** [fundo, moldura, detalhe] — mesa, fornalha, baú, cama e porta. */
@@ -420,6 +446,7 @@ function paintPanelDetail(
     case 'flower':
     case 'grass':
     case 'door-open':
+    case 'lever':
       return;
   }
 }

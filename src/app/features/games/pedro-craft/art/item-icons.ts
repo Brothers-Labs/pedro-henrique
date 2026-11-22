@@ -379,12 +379,12 @@ const HALF_ICON_HEIGHT = 0.5;
 
 /**
  * Bloco inteiro em perspectiva; o tapete e o meio bloco são a mesma peça, só que mais baixos.
- * Planta, tocha, água e trilho ficam de frente, como a criança os reconhece.
+ * Planta, tocha, água, trilho e linha ficam de frente, como a criança os reconhece.
  */
 function paintBlockIcon(context: CanvasRenderingContext2D, block: BlockDefinition, size: number): void {
   const side = tileCanvas(block, 'side');
 
-  if (block.shape === 'cross' || block.shape === 'torch' || block.shape === 'liquid' || block.shape === 'rail') {
+  if (block.shape === 'cross' || block.shape === 'torch' || block.shape === 'liquid' || block.shape === 'rail' || block.shape === 'wire') {
     context.drawImage(side, 0, 0, size, size);
     return;
   }

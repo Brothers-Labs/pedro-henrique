@@ -130,7 +130,7 @@ describe('Conteúdo do PedroCraft', () => {
     });
 
     it('troca 9 barras de ouro por um bloco de ouro e o bloco de volta pelas 9 barras', () => {
-      const toBlock = content.recipes.crafting.find((recipe) => recipe.output.item === 'gold-block');
+      const toBlock = content.recipes.crafting.find((recipe) => recipe.id === 'gold-block');
       const fromBlock = content.recipes.crafting.find((recipe) => recipe.type === 'shapeless' && recipe.ingredients.some((ingredient) => ingredient.item === 'gold-block'));
 
       expect(toBlock?.type === 'shaped' ? toBlock.pattern.join('').length : 0).toBe(9);
@@ -138,24 +138,57 @@ describe('Conteúdo do PedroCraft', () => {
     });
 
     it('troca 9 esmeraldas por um bloco de esmeralda e o bloco de volta pelas 9 esmeraldas', () => {
-      const toBlock = content.recipes.crafting.find((recipe) => recipe.output.item === 'emerald-block');
+      const toBlock = content.recipes.crafting.find((recipe) => recipe.id === 'emerald-block');
       const fromBlock = content.recipes.crafting.find((recipe) => recipe.type === 'shapeless' && recipe.ingredients.some((ingredient) => ingredient.item === 'emerald-block'));
 
       expect(toBlock?.type === 'shaped' ? toBlock.pattern.join('').length : 0).toBe(9);
       expect(fromBlock?.output).toEqual({ item: 'emerald', count: 9 });
     });
 
-    it('3 blocos de diamante viram 6 meios blocos, e 2 meios blocos voltam a ser um bloco', () => {
-      const toHalves = content.recipes.crafting.find((recipe) => recipe.output.item === 'diamond-half');
-      const fromHalves = content.recipes.crafting.find((recipe) => recipe.output.item === 'diamond-block' && recipe.type === 'shapeless');
-      const half = content.blocks.find((block) => block.id === 'diamond-half');
+    for (const material of ['gold', 'diamond', 'emerald', 'netherite'] as const) {
+      it(`3 blocos de ${material} viram 6 meios blocos, e 2 meios blocos voltam a ser o bloco, na mochila e empilhados`, () => {
+        const halfId = `${material}-half`;
+        const wholeId = `${material}-block`;
+        const toHalves = content.recipes.crafting.find((recipe) => recipe.output.item === halfId);
+        const fromHalves = content.recipes.crafting.find((recipe) => recipe.output.item === wholeId && recipe.type === 'shapeless');
+        const half = content.blocks.find((block) => block.id === halfId);
+        const whole = content.blocks.find((block) => block.id === wholeId);
 
-      expect(toHalves ? recipeRequirements(toHalves) : []).toEqual([{ item: 'diamond-block', count: 3 }]);
-      expect(toHalves?.output.count).toBe(6);
-      expect(fromHalves ? recipeRequirements(fromHalves) : []).toEqual([{ item: 'diamond-half', count: 2 }]);
-      expect(half?.shape).toBe('half');
-      expect(half?.collisionHeight).toBe(0.5);
-      expect(half?.minTier).toBe(content.blocks.find((block) => block.id === 'diamond-block')?.minTier);
+        expect(toHalves ? recipeRequirements(toHalves) : []).toEqual([{ item: wholeId, count: 3 }]);
+        expect(toHalves?.output.count).toBe(6);
+        expect(fromHalves ? recipeRequirements(fromHalves) : []).toEqual([{ item: halfId, count: 2 }]);
+        expect(half?.shape).toBe('half');
+        expect(half?.collisionHeight).toBe(0.5);
+        expect(half?.stacksInto).toBe(wholeId);
+        expect(half?.minTier).toBe(whole?.minTier);
+        expect(half?.blastResistant).withContext('aguenta a TNT como o bloco inteiro').toBe(whole?.blastResistant);
+        expect(content.items.find((item) => item.id === halfId)?.places).toBe(halfId);
+      });
+    }
+
+    it('a alavanca sai da mochila com graveto e pedregulho, e liga e desliga como peça que dá o comando', () => {
+      const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'lever');
+      const lever = content.blocks.find((block) => block.id === 'lever');
+      const leverOn = content.blocks.find((block) => block.id === 'lever-on');
+
+      expect(recipe?.station).toBe('hand');
+      expect(recipe ? recipeRequirements(recipe) : []).toEqual(jasmine.arrayWithExactContents([{ item: 'stick', count: 1 }, { item: 'cobblestone', count: 1 }]));
+      expect(lever?.toggleInto).toBe('lever-on');
+      expect(leverOn?.toggleInto).toBe('lever');
+      expect(lever?.circuit).toEqual({ role: 'source', powered: false, switchesInto: null });
+      expect(leverOn?.circuit).toEqual({ role: 'source', powered: true, switchesInto: null });
+      expect(leverOn?.drops).toBe('lever');
+    });
+
+    it('a linha da mochila agora se coloca no chão e leva o comando; a porta obedece a ele', () => {
+      const line = content.blocks.find((block) => block.id === 'string-line');
+
+      expect(content.items.find((item) => item.id === 'string')?.places).toBe('string-line');
+      expect(line?.shape).toBe('wire');
+      expect(line?.solid).toBeFalse();
+      expect(line?.circuit).toEqual({ role: 'wire', powered: false, switchesInto: 'string-line-on' });
+      expect(content.blocks.find((block) => block.id === 'string-line-on')?.drops).toBe('string');
+      expect(content.blocks.find((block) => block.id === 'door')?.circuit).toEqual({ role: 'receiver', powered: false, switchesInto: 'door-open' });
     });
 
     it('o bloco de netherite sai da mesa com diamante, obsidiana e ouro, só quebra com a picareta de diamante e aguenta a TNT', () => {
@@ -458,6 +491,44 @@ describe('Conteúdo do PedroCraft', () => {
       entry(files, 'blocks', 'blocks', 'diamond-half')['collisionHeight'] = 1;
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "diamond-half": um meio bloco precisa ser sólido');
+    });
+
+    it('só o meio bloco empilha, e dois meios blocos viram um cubo inteiro', () => {
+      entry(files, 'blocks', 'blocks', 'stone')['stacksInto'] = 'stone-bricks';
+      entry(files, 'blocks', 'blocks', 'gold-half')['stacksInto'] = 'fence';
+
+      const message = errorOf(() => parseCraftContent(files)).message;
+
+      expect(message).toContain('bloco "stone": só um meio bloco (shape "half") empilha em outro igual');
+      expect(message).toContain('bloco "gold-half": dois meios blocos viram um bloco inteiro (shape "cube"), não "fence"');
+    });
+
+    it('não aceita peça de circuito que não volta para o próprio par', () => {
+      record(entry(files, 'blocks', 'blocks', 'string-line-on')['circuit'])['switchesInto'] = 'door';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('bloco "string-line": "string-line-on" precisa ser o mesmo tipo de peça');
+    });
+
+    it('não aceita a forma de linha fora do circuito, nem alavanca sem par para o herói', () => {
+      delete entry(files, 'blocks', 'blocks', 'string-line')['circuit'];
+      delete entry(files, 'blocks', 'blocks', 'lever')['toggleInto'];
+
+      const message = errorOf(() => parseCraftContent(files)).message;
+
+      expect(message).toContain('bloco "string-line": a linha do circuito precisa de shape "wire"');
+      expect(message).toContain('bloco "lever": a alavanca precisa de "toggleInto"');
+    });
+
+    it('recusa linha sem o outro jeito para onde o circuito a troca', () => {
+      delete record(entry(files, 'blocks', 'blocks', 'string-line')['circuit'])['switchesInto'];
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('falta "switchesInto"');
+    });
+
+    it('recusa alavanca com "switchesInto": quem a troca é o herói', () => {
+      record(entry(files, 'blocks', 'blocks', 'lever')['circuit'])['switchesInto'] = 'lever-on';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('a alavanca não tem "switchesInto"');
     });
 
     it('não aceita TNT que aguenta explosão: a reação em cadeia nunca chegaria nela', () => {

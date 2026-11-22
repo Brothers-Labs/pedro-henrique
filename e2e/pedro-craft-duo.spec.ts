@@ -45,6 +45,9 @@ test('Craft splits the screen for two players with Maker heroes and saves player
   await expect(page.getByRole('button', { name: 'Pegar Boneco Mario', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pegar Meio bloco de diamante', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pegar Bloco de netherite', exact: true })).toBeVisible();
+  for (const item of ['Meio bloco de ouro', 'Meio bloco de esmeralda', 'Meio bloco de netherite', 'Alavanca', 'Linha']) {
+    await expect(page.getByRole('button', { name: `Pegar ${item}`, exact: true })).toBeVisible();
+  }
   await page.screenshot({ path: test.info().outputPath('craft-duo-creative.png') });
   await page.keyboard.press('Escape');
 

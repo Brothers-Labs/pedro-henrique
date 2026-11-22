@@ -402,7 +402,6 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'power-star', category: 'cogumelos', type: 'power-up', label: 'Super Estrela', properties: { powerUp: 'star' } },
   { id: 'power-one-up', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Vida', properties: { powerUp: 'one-up' } },
   { id: 'power-cat-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Gato', properties: { powerUp: 'cat-mushroom' } },
-  { id: 'power-leaf-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Folha', properties: { powerUp: 'leaf-mushroom' } },
   { id: 'power-raccoon-leaf', category: 'cogumelos', type: 'power-up', label: 'Folha do Guaxinim', properties: { powerUp: 'raccoon-leaf' } },
   { id: 'power-giga-mushroom', category: 'cogumelos', type: 'power-up', label: 'Giga Cogumelo', properties: { powerUp: 'giga-mushroom' } },
   {
@@ -537,8 +536,8 @@ export function doorPairColor(pair: string): string {
 
 /**
  * Poderes que o editor oferece: os da paleta. O Super Pulo, o Escudo, o
- * Turbo, o Ímã e a Asa saíram do editor, mas fases antigas com eles continuam
- * funcionando.
+ * Turbo, o Ímã, a Asa e o Cogumelo Folha saíram do editor, mas fases antigas
+ * com eles continuam funcionando.
  */
 export const EDITOR_POWER_UPS: readonly PowerUpKind[] = [
   ...new Set(

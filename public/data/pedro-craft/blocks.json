@@ -249,6 +249,7 @@
       "drops": "door",
       "pairsVertically": true,
       "toggleInto": "door-open",
+      "circuit": { "role": "receiver", "powered": false, "switchesInto": "door-open" },
       "mapColor": "#a8733f",
       "textures": { "all": { "pattern": "panel", "colors": ["#a8733f", "#6b4a2b", "#e0b84a"], "detail": "door" } }
     },
@@ -263,6 +264,7 @@
       "drops": "door",
       "pairsVertically": true,
       "toggleInto": "door",
+      "circuit": { "role": "receiver", "powered": true, "switchesInto": "door" },
       "mapColor": "#a8733f",
       "textures": { "all": { "pattern": "panel", "colors": ["#a8733f", "#6b4a2b", "#e0b84a"], "detail": "door-open" } }
     },
@@ -335,6 +337,21 @@
       "textures": { "all": { "pattern": "panel", "colors": ["#f5c542", "#d9a21f", "#fff1a8"], "detail": "plain" } }
     },
     {
+      "id": "gold-half",
+      "name": "Meio bloco de ouro",
+      "shape": "half",
+      "solid": true,
+      "transparent": true,
+      "hardness": 1.5,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "gold-half",
+      "collisionHeight": 0.5,
+      "stacksInto": "gold-block",
+      "mapColor": "#f5c542",
+      "textures": { "all": { "pattern": "panel", "colors": ["#f5c542", "#d9a21f", "#fff1a8"], "detail": "plain" } }
+    },
+    {
       "id": "iron-block",
       "name": "Bloco de ferro",
       "shape": "cube",
@@ -384,6 +401,7 @@
       "minTier": 3,
       "drops": "diamond-half",
       "collisionHeight": 0.5,
+      "stacksInto": "diamond-block",
       "mapColor": "#5ee6e0",
       "textures": { "all": { "pattern": "panel", "colors": ["#5ee6e0", "#2fb7b1", "#d4fffd"], "detail": "plain" } }
     },
@@ -397,6 +415,22 @@
       "tool": "pickaxe",
       "minTier": 5,
       "drops": "netherite-block",
+      "blastResistant": true,
+      "mapColor": "#3d3a3f",
+      "textures": { "all": { "pattern": "panel", "colors": ["#4a4549", "#2a2629", "#8a7f86"], "detail": "plain" } }
+    },
+    {
+      "id": "netherite-half",
+      "name": "Meio bloco de netherite",
+      "shape": "half",
+      "solid": true,
+      "transparent": true,
+      "hardness": 15,
+      "tool": "pickaxe",
+      "minTier": 5,
+      "drops": "netherite-half",
+      "collisionHeight": 0.5,
+      "stacksInto": "netherite-block",
       "blastResistant": true,
       "mapColor": "#3d3a3f",
       "textures": { "all": { "pattern": "panel", "colors": ["#4a4549", "#2a2629", "#8a7f86"], "detail": "plain" } }
@@ -424,6 +458,21 @@
       "tool": "pickaxe",
       "minTier": 3,
       "drops": "emerald-block",
+      "mapColor": "#2ecc71",
+      "textures": { "all": { "pattern": "panel", "colors": ["#2ecc71", "#1e9e55", "#b9f5cf"], "detail": "plain" } }
+    },
+    {
+      "id": "emerald-half",
+      "name": "Meio bloco de esmeralda",
+      "shape": "half",
+      "solid": true,
+      "transparent": true,
+      "hardness": 2.5,
+      "tool": "pickaxe",
+      "minTier": 3,
+      "drops": "emerald-half",
+      "collisionHeight": 0.5,
+      "stacksInto": "emerald-block",
       "mapColor": "#2ecc71",
       "textures": { "all": { "pattern": "panel", "colors": ["#2ecc71", "#1e9e55", "#b9f5cf"], "detail": "plain" } }
     },
@@ -481,6 +530,56 @@
       "drops": "rail",
       "mapColor": "#9aa1a9",
       "textures": { "all": { "pattern": "rail", "colors": ["#b9c0c8", "#8a5a32"] } }
+    },
+    {
+      "id": "lever",
+      "name": "Alavanca",
+      "shape": "torch",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0.3,
+      "drops": "lever",
+      "toggleInto": "lever-on",
+      "circuit": { "role": "source", "powered": false },
+      "mapColor": "#8a5a32",
+      "textures": { "all": { "pattern": "torch", "colors": ["#8a5a32", "#d93a3a"], "detail": "lever" } }
+    },
+    {
+      "id": "lever-on",
+      "name": "Alavanca ligada",
+      "shape": "torch",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0.3,
+      "drops": "lever",
+      "toggleInto": "lever",
+      "circuit": { "role": "source", "powered": true },
+      "mapColor": "#8a5a32",
+      "textures": { "all": { "pattern": "torch", "colors": ["#8a5a32", "#4caf50"], "detail": "lever" } }
+    },
+    {
+      "id": "string-line",
+      "name": "Linha",
+      "shape": "wire",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "string",
+      "circuit": { "role": "wire", "powered": false, "switchesInto": "string-line-on" },
+      "mapColor": "#f4f4f4",
+      "textures": { "all": { "pattern": "wire", "colors": ["#e8e8e8", "#9e9e9e"] } }
+    },
+    {
+      "id": "string-line-on",
+      "name": "Linha ligada",
+      "shape": "wire",
+      "solid": false,
+      "transparent": true,
+      "hardness": 0,
+      "drops": "string",
+      "circuit": { "role": "wire", "powered": true, "switchesInto": "string-line" },
+      "mapColor": "#ffd23f",
+      "textures": { "all": { "pattern": "wire", "colors": ["#ffd23f", "#e0740d"] } }
     },
     {
       "id": "water",

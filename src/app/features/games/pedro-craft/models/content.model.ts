@@ -46,6 +46,7 @@ export const TEXTURE_PATTERNS = [
   'panel',
   'rail',
   'portal',
+  'wire',
 ] as const;
 
 export type TexturePattern = (typeof TEXTURE_PATTERNS)[number];
@@ -63,6 +64,7 @@ export const TEXTURE_DETAILS = [
   'door-open',
   'plain',
   'band',
+  'lever',
 ] as const;
 
 export type TextureDetail = (typeof TEXTURE_DETAILS)[number];
@@ -87,8 +89,10 @@ export interface TextureSpec {
  * `carpet` é o tapete: uma lâmina fininha deitada no chão, que se atravessa andando.
  * `half` é o meio bloco: a metade de baixo de um bloco, firme para pisar e
  * construir degraus de meia altura.
+ * `wire` é a linha deitada no chão: como o trilho, liga-se sozinha às vizinhas
+ * e leva o comando da alavanca pelo circuito.
  */
-export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail', 'carpet', 'half'] as const;
+export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail', 'carpet', 'half', 'wire'] as const;
 
 export type BlockShape = (typeof BLOCK_SHAPES)[number];
 
@@ -137,6 +141,27 @@ export interface PortalBlock {
   readonly igniters: readonly string[];
 }
 
+/**
+ * O papel do bloco num circuito: `source` dá o comando quando está ligada (a
+ * alavanca, que o herói liga e desliga); `wire` leva o comando adiante (a
+ * linha); `receiver` muda de jeito quando o comando chega (a porta abre).
+ * A TNT não precisa de papel: comando ligado encostado nela acende o pavio.
+ */
+export const CIRCUIT_ROLES = ['source', 'wire', 'receiver'] as const;
+
+export type CircuitRole = (typeof CIRCUIT_ROLES)[number];
+
+export interface CircuitPart {
+  readonly role: CircuitRole;
+  /** Este é o jeito ligado do bloco (alavanca para cima, linha acesa, porta aberta). */
+  readonly powered: boolean;
+  /**
+   * O mesmo bloco no outro jeito, para onde o circuito o troca (linha apagada ↔
+   * acesa, porta fechada ↔ aberta); `null` na alavanca, que só o herói troca.
+   */
+  readonly switchesInto: string | null;
+}
+
 export interface BlockDefinition {
   readonly id: string;
   readonly name: string;
@@ -170,6 +195,10 @@ export interface BlockDefinition {
   readonly explosive: ExplosiveBlock | null;
   /** Bloco que enche o vão da moldura acesa; `null` nos blocos comuns. */
   readonly portal: PortalBlock | null;
+  /** Peça de circuito (alavanca, linha, porta); `null` para o que não liga em nada. */
+  readonly circuit: CircuitPart | null;
+  /** Meio bloco colocado em cima de outro igual: os dois viram este bloco inteiro; `null` para o resto. */
+  readonly stacksInto: string | null;
   /** Cor no mapa visto de cima, usado na miniatura do mundo. */
   readonly mapColor: string;
   readonly textures: BlockFaces;

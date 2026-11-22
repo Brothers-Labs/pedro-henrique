@@ -65,7 +65,12 @@
     { "id": "diamond-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "diamond-block" }], "output": { "item": "diamond", "count": 9 } },
     { "id": "diamond-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "diamond-block" }, "output": { "item": "diamond-half", "count": 6 } },
     { "id": "diamond-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "diamond-half", "count": 2 }], "output": { "item": "diamond-block" } },
+    { "id": "gold-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "gold-block" }, "output": { "item": "gold-half", "count": 6 } },
+    { "id": "gold-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "gold-half", "count": 2 }], "output": { "item": "gold-block" } },
     { "id": "netherite-block", "type": "shaped", "station": "workbench", "pattern": ["DOD", "OGO", "DOD"], "key": { "D": "diamond-block", "O": "obsidian", "G": "gold-block" }, "output": { "item": "netherite-block" } },
+    { "id": "netherite-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "netherite-block" }, "output": { "item": "netherite-half", "count": 6 } },
+    { "id": "netherite-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "netherite-half", "count": 2 }], "output": { "item": "netherite-block" } },
+    { "id": "lever", "type": "shaped", "station": "hand", "pattern": ["S", "C"], "key": { "S": "stick", "C": "cobblestone" }, "output": { "item": "lever" } },
     { "id": "rail", "type": "shaped", "station": "workbench", "pattern": ["I I", "ISI", "I I"], "key": { "I": "iron-ingot", "S": "stick" }, "output": { "item": "rail", "count": 16 } },
     { "id": "train", "type": "shaped", "station": "workbench", "pattern": ["IFI", "III"], "key": { "I": "iron-ingot", "F": "furnace" }, "output": { "item": "train" } },
     { "id": "gold-block", "type": "shaped", "station": "workbench", "pattern": ["GGG", "GGG", "GGG"], "key": { "G": "gold-ingot" }, "output": { "item": "gold-block" } },
@@ -83,6 +88,8 @@
     { "id": "carpet-blue", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "wool", "count": 2 }, { "item": "lapis" }], "output": { "item": "carpet-blue", "count": 3 } },
     { "id": "emerald-block", "type": "shaped", "station": "workbench", "pattern": ["EEE", "EEE", "EEE"], "key": { "E": "emerald" }, "output": { "item": "emerald-block" } },
     { "id": "emerald-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "emerald-block" }], "output": { "item": "emerald", "count": 9 } },
+    { "id": "emerald-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "emerald-block" }, "output": { "item": "emerald-half", "count": 6 } },
+    { "id": "emerald-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "emerald-half", "count": 2 }], "output": { "item": "emerald-block" } },
     { "id": "tnt", "type": "shaped", "station": "workbench", "pattern": ["PSP", "SPS", "PSP"], "key": { "P": "gunpowder", "S": "sand" }, "output": { "item": "tnt" } }
   ],
   "smelting": [

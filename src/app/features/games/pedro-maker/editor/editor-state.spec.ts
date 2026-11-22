@@ -265,6 +265,7 @@ describe('Estado do editor de fases', () => {
     expect(EDITOR_PIECES.some((piece) => piece.properties?.powerUp === 'super-jump')).toBeFalse();
     expect(EDITOR_POWER_UPS).not.toContain('super-jump');
     expect(EDITOR_POWER_UPS).not.toContain('shield');
+    expect(EDITOR_POWER_UPS).withContext('o Cogumelo Folha saiu do editor').not.toContain('leaf-mushroom');
     expect(EDITOR_POWER_UPS).toContain('mushroom');
     expect(EDITOR_POWER_UPS).toContain('swap-mushroom');
     expect(EDITOR_POWER_UPS).toContain('magnet-mushroom');

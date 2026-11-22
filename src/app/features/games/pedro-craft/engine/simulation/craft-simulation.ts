@@ -14,6 +14,7 @@ import type { LookDelta } from '../input/craft-input-reader';
 import { BlockActions } from './block-actions';
 import { breakDurationMs, canHarvest, missingToolHint, rollLoot } from './block-rules';
 import { Calendar } from './calendar';
+import { Circuits } from './circuits';
 import { Combat, type CombatContext } from './combat';
 import { CraftPlayer, type PlayerMining } from './craft-player';
 import { type Creature, type CreatureDifficulty, Creatures, GUARDIAN_CAP, TAME_CAP, yawTowards } from './creatures';
@@ -169,6 +170,7 @@ export class CraftSimulation {
   /** Quem abriu a mochila (ou o baú, a mesa, a fornalha) que está na tela. */
   private screenOwner: CraftPlayer | null = null;
   private readonly actions: BlockActions;
+  private readonly circuits: Circuits;
   private readonly combat: Combat;
   private readonly random: () => number;
   private readonly events: SimulationEvent[] = [];
@@ -310,11 +312,16 @@ export class CraftSimulation {
       drops: this.drops,
       random: this.random,
       visual: (event) => this.visualEvents.push(event),
-      placed: (block) => this.recordGoal({ trigger: 'place', target: block.id, count: 1 }),
-      removed: (x, y, z) => {
+      placed: (block, x, y, z) => {
+        this.recordGoal({ trigger: 'place', target: block.id, count: 1 });
+        this.circuits.placed(block, x, y, z);
+      },
+      removed: (x, y, z, block) => {
         for (const stack of this.screens.remove(this.world.indexOf(x, y, z))) {
           this.drops.spawn(x + 0.5, y + 0.5, z + 0.5, stack, this.random);
         }
+
+        this.circuits.removed(block, x, y, z);
       },
       harvest: (x, y, z) => {
         const harvest = this.farm.harvestAt(x, y, z);
@@ -334,6 +341,12 @@ export class CraftSimulation {
       combat: this.combat,
       event: (event) => this.events.push(event),
       visual: (event) => this.visualEvents.push(event),
+    });
+    this.circuits = new Circuits({
+      catalog: this.catalog,
+      world: this.world,
+      switchInto: (x, y, z, blockId) => this.actions.switchInto(x, y, z, blockId),
+      ignite: (x, y, z) => this.lightFuse(x, y, z),
     });
 
     this.portals = new Portals(this.world, this.catalog);
@@ -1245,6 +1258,7 @@ export class CraftSimulation {
 
     if (target && this.actions.toggle(target.x, target.y, target.z)) {
       this.events.push({ type: 'sound', cue: 'button' });
+      this.circuits.toggled(target.x, target.y, target.z);
       return;
     }
 
@@ -1268,15 +1282,22 @@ export class CraftSimulation {
       return false;
     }
 
-    if (this.explosions.ignite(target.x, target.y, target.z)) {
-      this.events.push({ type: 'sound', cue: 'fireball' });
-      this.events.push({ type: 'hint', text: TNT_LIT_HINT });
-
-      // Só o pavio que acendeu de verdade gasta o isqueiro: a TNT já acesa não come uso.
-      if (held.durability !== null) {
-        this.wearSelected(held);
-      }
+    // Só o pavio que acendeu de verdade gasta o isqueiro: a TNT já acesa não come uso.
+    if (this.lightFuse(target.x, target.y, target.z) && held.durability !== null) {
+      this.wearSelected(held);
     }
+
+    return true;
+  }
+
+  /** Acende o pavio da TNT da célula, pela mão ou pelo circuito, com o aviso de correr. Devolve se acendeu agora. */
+  private lightFuse(x: number, y: number, z: number): boolean {
+    if (!this.explosions.ignite(x, y, z)) {
+      return false;
+    }
+
+    this.events.push({ type: 'sound', cue: 'fireball' });
+    this.events.push({ type: 'hint', text: TNT_LIT_HINT });
 
     return true;
   }
