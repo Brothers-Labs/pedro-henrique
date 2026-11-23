@@ -29,7 +29,9 @@ export function infiniteSupplies(catalog: CraftCatalog): SlotContent[] {
   const isMadeOfExplosives = (item: ItemDefinition): boolean => catalog.content.recipes.crafting.some(recipe =>
     recipe.output.item === item.id && recipeRequirements(recipe).some(requirement => isExplosive(requirement.item)));
   const isOptional = (item: ItemDefinition): boolean => isDecorative(item) || isMadeOfExplosives(item);
-  const resources = catalog.items.filter(item => item.kind === 'material' || item.kind === 'block')
+  // Unbreakable blocks (bedrock) stay in the Creative backpack: only there can they be removed again.
+  const isUnbreakable = (item: ItemDefinition): boolean => item.places !== null && catalog.block(item.places).hardness === null;
+  const resources = catalog.items.filter(item => (item.kind === 'material' || item.kind === 'block') && !isUnbreakable(item))
     .sort((a, b) => Number(isOptional(a)) - Number(isOptional(b)));
   const armor = [...catalog.items.filter(item => item.kind === 'armor')]
     .sort((a, b) => (b.durability ?? 0) - (a.durability ?? 0)).slice(0, 1);

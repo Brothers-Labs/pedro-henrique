@@ -234,6 +234,10 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
     return `Coloque no chão e, para acender, use nela o item ${igniters}. Depois, corra para longe!`;
   }
 
+  if (block.hardness === null) {
+    return 'Nada quebra este bloco: nem picareta, nem TNT. Só no modo Criativo dá para tirar o que você colocou.';
+  }
+
   if (block.blastResistant) {
     return 'Bloco para construir que aguenta explosão.';
   }

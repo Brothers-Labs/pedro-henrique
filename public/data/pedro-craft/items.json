@@ -33,6 +33,7 @@
     { "id": "netherite-half", "name": "Meio bloco de netherite", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "netherite-half" }, "places": "netherite-half" },
     { "id": "emerald-block", "name": "Bloco de esmeralda", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "emerald-block" }, "places": "emerald-block" },
     { "id": "emerald-half", "name": "Meio bloco de esmeralda", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "emerald-half" }, "places": "emerald-half" },
+    { "id": "bedrock", "name": "Rocha-mãe", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "bedrock" }, "places": "bedrock" },
     { "id": "obsidian", "name": "Obsidiana", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "obsidian" }, "places": "obsidian" },
     { "id": "tnt", "name": "TNT", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "tnt" }, "places": "tnt" },
     { "id": "tnt-5x", "name": "TNT 5x", "kind": "block", "maxStack": 64, "icon": { "type": "block", "block": "tnt-5x" }, "places": "tnt-5x" },

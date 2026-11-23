@@ -40,6 +40,7 @@ describe('Modo infinito e baús grandes', () => {
     expect(slots.some(slot => slot?.item === 'golden-armor')).toBeTrue();
     expect(slots.some(slot => slot?.item === 'train')).toBeTrue();
     expect(slots.some(slot => slot?.item === 'wheat-seeds')).toBeTrue();
+    expect(slots.some(slot => slot?.item === 'bedrock')).withContext('a rocha-mãe só sai no Criativo').toBeFalse();
   });
 
   it('o baú do Infinito leva o golem, mas não os bonecos da mochila do Criativo', () => {
