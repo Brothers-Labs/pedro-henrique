@@ -14,6 +14,18 @@ import type { VisualEvent } from './simulation-events';
  */
 const BLAST_DROP_CHANCE = 0.35;
 
+/**
+ * Até este raio, a chance de sempre. Acima dele a chance cai com o volume da
+ * esfera: a TNT gigante solta no máximo tantos itens quanto a explosão deste
+ * raio, e o mundo não trava com milhares de itens pulando no chão.
+ */
+const FULL_DROP_RADIUS = 5;
+
+/** A chance de cada bloco quebrado pela explosão de raio `radius` virar item. */
+export function blastDropChance(radius: number): number {
+  return BLAST_DROP_CHANCE * Math.min(1, (FULL_DROP_RADIUS / radius) ** 3);
+}
+
 /** Formas que precisam de chão firme embaixo: sem ele, caem junto. */
 const NEEDS_SUPPORT: ReadonlySet<number> = new Set([SHAPE_CODE.cross, SHAPE_CODE.torch, SHAPE_CODE.rail, SHAPE_CODE.carpet, SHAPE_CODE.wire]);
 
@@ -62,6 +74,7 @@ export class BlockActions {
     const originX = Math.floor(centerX);
     const originY = Math.floor(centerY);
     const originZ = Math.floor(centerZ);
+    const dropChance = blastDropChance(radius);
 
     for (let offsetY = -reach; offsetY <= reach; offsetY += 1) {
       for (let offsetZ = -reach; offsetZ <= reach; offsetZ += 1) {
@@ -78,7 +91,7 @@ export class BlockActions {
           if (block.explosive) {
             ignite(x, y, z);
           } else {
-            this.breakCell(x, y, z, null, random() < BLAST_DROP_CHANCE);
+            this.breakCell(x, y, z, null, random() < dropChance);
           }
         }
       }

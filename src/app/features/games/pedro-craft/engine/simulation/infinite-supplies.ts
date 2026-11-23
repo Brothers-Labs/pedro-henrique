@@ -1,5 +1,6 @@
 import type { CraftCatalog } from '../../content/craft-catalog';
 import type { ItemDefinition } from '../../models/content.model';
+import { recipeRequirements } from './crafting';
 import { CHEST_SIZE, type SlotContent } from './inventory';
 
 /** Highest tier of each tool family, calculated from content rather than names. */
@@ -19,8 +20,17 @@ export function infiniteSupplies(catalog: CraftCatalog): SlotContent[] {
 
     return decorative.includes(item.id) || shape === 'carpet' || shape === 'half';
   };
+  const isExplosive = (itemId: string): boolean => {
+    const places = catalog.item(itemId).places;
+
+    return places !== null && catalog.block(places).explosive !== null;
+  };
+  // Giant explosives are crafted from the plain TNT already in the chest, so they also wait at the end.
+  const isMadeOfExplosives = (item: ItemDefinition): boolean => catalog.content.recipes.crafting.some(recipe =>
+    recipe.output.item === item.id && recipeRequirements(recipe).some(requirement => isExplosive(requirement.item)));
+  const isOptional = (item: ItemDefinition): boolean => isDecorative(item) || isMadeOfExplosives(item);
   const resources = catalog.items.filter(item => item.kind === 'material' || item.kind === 'block')
-    .sort((a, b) => Number(isDecorative(a)) - Number(isDecorative(b)));
+    .sort((a, b) => Number(isOptional(a)) - Number(isOptional(b)));
   const armor = [...catalog.items.filter(item => item.kind === 'armor')]
     .sort((a, b) => (b.durability ?? 0) - (a.durability ?? 0)).slice(0, 1);
   // Only a guardian may be summoned outside Creative: the other summon items stay in the Creative backpack.

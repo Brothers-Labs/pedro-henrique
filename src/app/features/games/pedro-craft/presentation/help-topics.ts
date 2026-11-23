@@ -343,6 +343,21 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     tip: 'Rocha-mãe, água e obsidiana aguentam a explosão. E a TNT acesa ainda dá para quebrar: o pavio apaga.',
   },
   {
+    id: 'tnt-gigante',
+    emoji: '💥',
+    title: 'TNTs gigantes e bomba nuclear',
+    summary: 'Juntando TNTs, a explosão fica cada vez maior.',
+    steps: [
+      { text: 'Na mesa, 5 TNTs em cruz viram uma TNT 5x.', items: ['tnt', 'tnt-5x'] },
+      { text: '2 TNTs 5x, uma em cima da outra, viram uma TNT 10x.', items: ['tnt-5x', 'tnt-10x'] },
+      { text: 'Continue juntando: 5 de 10x em cruz viram a 50x, 2 de 50x viram a 100x e 5 de 100x em cruz viram a 500x.', items: ['tnt-50x', 'tnt-100x', 'tnt-500x'] },
+      { text: 'A bomba nuclear: 5 TNTs 500x em cruz e 4 blocos de ferro nos cantos.', items: ['tnt-500x', 'iron-block', 'nuclear-bomb'] },
+      { text: 'Acenda com a tocha ou o isqueiro, ou com a alavanca e a linha. O número na TNT mostra a força dela.', items: ['torch', 'flint-and-steel', 'lever'], control: 'use' },
+      { text: 'Corra para bem longe! Quanto mais forte, mais tempo o pavio espera, e maior é o buraco.' },
+    ],
+    tip: 'A bomba nuclear faz uma cratera enorme. Acenda longe da sua casa!',
+  },
+  {
     id: 'isqueiro',
     emoji: '🔥',
     title: 'Isqueiro',

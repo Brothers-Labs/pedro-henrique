@@ -12,7 +12,7 @@
     "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
     "colors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/color" } },
     "fuseMs": { "type": "integer", "minimum": 500, "maximum": 10000, "description": "Espera entre acender e estourar." },
-    "blastRadius": { "type": "number", "minimum": 1, "maximum": 5, "description": "Até onde a explosão alcança, em blocos." },
+    "blastRadius": { "type": "number", "minimum": 1, "maximum": 30, "description": "Até onde a explosão alcança, em blocos. 30 é a bomba nuclear." },
     "blastDamage": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Corações tirados bem no centro; a beirada ainda tira um." },
     "itemAmount": {
       "type": "object",
@@ -33,7 +33,8 @@
           "enum": ["speckle", "cobble", "grass-side", "planks", "log-side", "log-top", "leaves", "ore", "bricks", "glass", "farmland", "water", "plant", "crop", "torch", "panel", "rail", "portal", "wire"]
         },
         "colors": { "$ref": "#/$defs/colors" },
-        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain", "band", "lever"], "description": "band: faixa clara no meio, com três marquinhas (a TNT). lever: no padrão torch, a bolinha da alavanca no lugar da chama." }
+        "detail": { "enum": ["sapling", "flower", "grass", "grid", "oven", "latch", "pillow", "door", "door-open", "plain", "band", "lever", "radiation"], "description": "band: faixa clara no meio, com três marquinhas (a TNT). lever: no padrão torch, a bolinha da alavanca no lugar da chama. radiation: no padrão panel, o símbolo de radiação (a bomba nuclear)." },
+        "label": { "type": "string", "pattern": "^[0-9]{1,3}$", "description": "Só com o detail band: o número pintado no lugar das marquinhas, como a força da TNT gigante." }
       }
     },
     "toolType": { "enum": ["pickaxe", "axe", "shovel", "hoe", "sword", "shears"] }

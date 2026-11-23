@@ -2,7 +2,7 @@ import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import { loadTestCatalog } from '../../testing/craft-test-content';
 import { VoxelWorld } from '../../world/voxel-world';
 import { BlockProperties } from '../block-properties';
-import { BlockActions } from './block-actions';
+import { BlockActions, blastDropChance } from './block-actions';
 import { ItemDrops } from './item-drops';
 import { PhysicsBody } from './physics-body';
 import type { RayHit } from './raycast';
@@ -138,6 +138,53 @@ describe('Ações nos blocos do PedroCraft', () => {
 
       expect([at(3, 1, 3), at(3, 2, 3), at(3, 3, 3)]).toEqual(['door-open', 'door-open', 'stone']);
       expect(world.get(3, 4, 3)).toBe(AIR);
+    });
+  });
+
+  describe('explosão', () => {
+    it('a explosão pequena solta itens com a chance de sempre; a gigante, cada vez menos, pelo volume', () => {
+      expect(blastDropChance(3)).toBe(blastDropChance(5));
+      expect(blastDropChance(10)).toBeCloseTo(blastDropChance(5) / 8, 10);
+      expect(blastDropChance(30)).toBeGreaterThan(0);
+    });
+
+    it('a bomba nuclear abre a cratera inteira, mas solta só os itens de uma explosão pequena', () => {
+      const big = new VoxelWorld(64, 64, 40);
+      const bigDrops = new ItemDrops();
+      // Terra solta item sem ferramenta; a pedra pediria a picareta.
+      const dirt = catalog.blockNumber('dirt');
+      const radius = catalog.block('nuclear-bomb').explosive?.radius ?? 0;
+      let seed = 7;
+      const blaster = new BlockActions({
+        catalog,
+        world: big,
+        properties: new BlockProperties(catalog),
+        drops: bigDrops,
+        random: () => {
+          seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+          return seed / 4294967296;
+        },
+        visual: () => undefined,
+        placed: () => undefined,
+        removed: () => undefined,
+        harvest: () => null,
+        bodies: () => [],
+      });
+
+      for (let y = 0; y < big.height; y += 1) {
+        for (let z = 0; z < big.depth; z += 1) {
+          for (let x = 0; x < big.width; x += 1) {
+            big.fill(x, y, z, dirt);
+          }
+        }
+      }
+
+      blaster.blast(32, 20, 32, radius, () => undefined);
+
+      expect(big.get(32 + radius - 1, 20, 32)).withContext('perto da borda da cratera').toBe(AIR);
+      expect(big.get(32 + radius + 1, 20, 32)).withContext('logo depois da borda').toBe(dirt);
+      expect(bigDrops.list.length).toBeGreaterThan(0);
+      expect(bigDrops.list.length).toBeLessThan(Math.ceil(blastDropChance(5) * (4 / 3) * Math.PI * 5 ** 3 * 1.5));
     });
   });
 });

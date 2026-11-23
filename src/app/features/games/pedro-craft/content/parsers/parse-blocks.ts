@@ -11,6 +11,7 @@ import {
   type PortalBlock,
   TEXTURE_DETAILS,
   TEXTURE_PATTERNS,
+  type TextureDetail,
   type TextureSpec,
   TOOL_TYPES,
 } from '../../models/content.model';
@@ -25,8 +26,11 @@ const MAX_LIGHT = 15;
 const MIN_FUSE_MS = 500;
 const MAX_FUSE_MS = 10_000;
 
-/** Raio maior apagaria um pedaço grande demais do mundo de uma vez. */
-const MAX_BLAST_RADIUS = 5;
+/** A bomba nuclear: o raio dela abre uma cratera de mais da metade do mundo, e ainda sobra borda. */
+const MAX_BLAST_RADIUS = 30;
+
+/** Até três algarismos cabem na faixa da TNT: "500". */
+const TEXTURE_LABEL = /^\d{1,3}$/;
 
 export function parseBlocks(value: unknown): readonly BlockDefinition[] {
   const root = JsonReader.root('blocks', value).object();
@@ -130,9 +134,29 @@ function parseFaces(textures: JsonObjectReader): BlockFaces {
 }
 
 export function parseTexture(texture: JsonObjectReader): TextureSpec {
+  const detail = texture.optionalField('detail')?.oneOf(TEXTURE_DETAILS) ?? null;
+
   return {
     pattern: texture.field('pattern').oneOf(TEXTURE_PATTERNS),
     colors: colorList(texture.field('colors')),
-    detail: texture.optionalField('detail')?.oneOf(TEXTURE_DETAILS) ?? null,
+    detail,
+    label: parseLabel(texture, detail),
   };
+}
+
+/** O número só tem onde ser pintado na faixa da TNT. */
+function parseLabel(texture: JsonObjectReader, detail: TextureDetail | null): string | null {
+  const label = texture.optionalField('label');
+
+  if (!label) {
+    return null;
+  }
+
+  if (detail !== 'band') {
+    return texture.fail('"label" só vale com o "detail" "band"');
+  }
+
+  const text = label.string();
+
+  return TEXTURE_LABEL.test(text) ? text : label.fail('use de 1 a 3 algarismos, como "500"');
 }
