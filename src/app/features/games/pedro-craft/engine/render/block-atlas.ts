@@ -1,7 +1,7 @@
 import { CanvasTexture, NearestFilter, SRGBColorSpace } from 'three';
 
 import { context2d, createCanvas } from '../../../pedro-maker/art/canvas';
-import { paintTile, TILE_SIZE } from '../../art/craft-tiles';
+import { paintTile, textureKey, TILE_SIZE } from '../../art/craft-tiles';
 import type { CraftCatalog } from '../../content/craft-catalog';
 import type { TextureSpec } from '../../models/content.model';
 import type { FaceKind, TileSource, TileUv } from './chunk-mesher';
@@ -44,7 +44,7 @@ export class BlockAtlas implements TileSource {
     const recipes: TileRecipe[] = [];
     const indexByKey = new Map<string, number>();
     const register = (spec: TextureSpec, growth = 1): number => {
-      const key = `${spec.pattern}|${spec.colors.join()}|${spec.detail ?? ''}|${growth}`;
+      const key = `${textureKey(spec)}|${growth}`;
       const known = indexByKey.get(key);
 
       if (known !== undefined) {

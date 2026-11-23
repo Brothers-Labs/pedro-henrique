@@ -65,6 +65,7 @@ export const TEXTURE_DETAILS = [
   'plain',
   'band',
   'lever',
+  'radiation',
 ] as const;
 
 export type TextureDetail = (typeof TEXTURE_DETAILS)[number];
@@ -80,6 +81,8 @@ export interface TextureSpec {
   /** Pelo menos uma cor; o que cada posição significa depende do padrão. */
   readonly colors: readonly string[];
   readonly detail: TextureDetail | null;
+  /** Número pintado na faixa (`band`): a força da TNT gigante, para a criança ler no bloco. */
+  readonly label: string | null;
 }
 
 /* Blocos ---------------------------------------------------------------------------- */

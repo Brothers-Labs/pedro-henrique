@@ -520,6 +520,98 @@
       }
     },
     {
+      "id": "tnt-5x",
+      "name": "TNT 5x",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt-5x",
+      "explosive": { "fuseMs": 4000, "radius": 5, "damage": 5, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#ef7d1a",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#ef7d1a", "#9c4d0c", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#ef7d1a", "#9c4d0c", "#f4f1e8"], "detail": "band", "label": "5" },
+        "bottom": { "pattern": "panel", "colors": ["#ef7d1a", "#9c4d0c", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
+      "id": "tnt-10x",
+      "name": "TNT 10x",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt-10x",
+      "explosive": { "fuseMs": 5000, "radius": 6.5, "damage": 6, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#e8c21c",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#e8c21c", "#8f7410", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#e8c21c", "#8f7410", "#f4f1e8"], "detail": "band", "label": "10" },
+        "bottom": { "pattern": "panel", "colors": ["#e8c21c", "#8f7410", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
+      "id": "tnt-50x",
+      "name": "TNT 50x",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt-50x",
+      "explosive": { "fuseMs": 6000, "radius": 11, "damage": 7, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#3fa34d",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#3fa34d", "#22622b", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#3fa34d", "#22622b", "#f4f1e8"], "detail": "band", "label": "50" },
+        "bottom": { "pattern": "panel", "colors": ["#3fa34d", "#22622b", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
+      "id": "tnt-100x",
+      "name": "TNT 100x",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt-100x",
+      "explosive": { "fuseMs": 7000, "radius": 14, "damage": 8, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#2f6fd6",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#2f6fd6", "#1c427f", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#2f6fd6", "#1c427f", "#f4f1e8"], "detail": "band", "label": "100" },
+        "bottom": { "pattern": "panel", "colors": ["#2f6fd6", "#1c427f", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
+      "id": "tnt-500x",
+      "name": "TNT 500x",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "tnt-500x",
+      "explosive": { "fuseMs": 9000, "radius": 24, "damage": 9, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#8a3fd1",
+      "textures": {
+        "top": { "pattern": "panel", "colors": ["#8a3fd1", "#51227f", "#3d3d3d"], "detail": "plain" },
+        "side": { "pattern": "panel", "colors": ["#8a3fd1", "#51227f", "#f4f1e8"], "detail": "band", "label": "500" },
+        "bottom": { "pattern": "panel", "colors": ["#8a3fd1", "#51227f", "#3d3d3d"], "detail": "plain" }
+      }
+    },
+    {
+      "id": "nuclear-bomb",
+      "name": "Bomba nuclear",
+      "shape": "cube",
+      "solid": true,
+      "transparent": false,
+      "hardness": 0,
+      "drops": "nuclear-bomb",
+      "explosive": { "fuseMs": 10000, "radius": 30, "damage": 10, "breaksBlocks": true, "igniters": ["torch", "flint-and-steel"] },
+      "mapColor": "#f2c418",
+      "textures": { "all": { "pattern": "panel", "colors": ["#f2c418", "#1f1f1f", "#1f1f1f"], "detail": "radiation" } }
+    },
+    {
       "id": "rail",
       "name": "Trilho",
       "shape": "rail",

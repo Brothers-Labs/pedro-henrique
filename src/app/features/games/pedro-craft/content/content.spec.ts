@@ -166,6 +166,52 @@ describe('Conteúdo do PedroCraft', () => {
       });
     }
 
+    it('as TNTs gigantes são feitas da anterior, estouram cada vez mais longe e esperam mais para dar tempo de correr', () => {
+      const chain = ['tnt', 'tnt-5x', 'tnt-10x', 'tnt-50x', 'tnt-100x', 'tnt-500x', 'nuclear-bomb'];
+      const explosives = chain.map((id) => content.blocks.find((block) => block.id === id)?.explosive ?? null);
+
+      chain.slice(1).forEach((id, index) => {
+        const previous = explosives[index];
+        const current = explosives[index + 1];
+        const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === id);
+
+        expect(recipe?.station).withContext(id).toBe('workbench');
+        expect(recipe ? recipeRequirements(recipe).map((requirement) => requirement.item) : []).withContext(id).toContain(chain[index]);
+        expect(current?.breaksBlocks).withContext(id).toBeTrue();
+        expect(current?.radius).withContext(id).toBeGreaterThan(previous?.radius ?? Infinity);
+        expect(current?.fuseMs).withContext(id).toBeGreaterThanOrEqual(previous?.fuseMs ?? Infinity);
+        expect(current?.damage).withContext(id).toBeGreaterThanOrEqual(previous?.damage ?? Infinity);
+        expect(content.items.find((item) => item.id === id)?.places).withContext(id).toBe(id);
+      });
+    });
+
+    it('o número na faixa da TNT gigante é quantas TNTs ela tem dentro', () => {
+      const tntInside = (id: string): number => {
+        const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === id);
+
+        if (id === 'tnt' || !recipe) {
+          return id === 'tnt' ? 1 : 0;
+        }
+
+        return recipeRequirements(recipe).reduce((total, requirement) => total + requirement.count * tntInside(requirement.item), 0);
+      };
+
+      for (const id of ['tnt-5x', 'tnt-10x', 'tnt-50x', 'tnt-100x', 'tnt-500x']) {
+        const block = content.blocks.find((candidate) => candidate.id === id);
+
+        expect(block?.textures.side.label).withContext(id).toBe(String(tntInside(id)));
+        expect(block?.name).withContext(id).toBe(`TNT ${tntInside(id)}x`);
+      }
+    });
+
+    it('a bomba nuclear é a explosão mais forte do jogo, com o símbolo de radiação', () => {
+      const bomb = content.blocks.find((block) => block.id === 'nuclear-bomb');
+      const strongest = Math.max(...content.blocks.map((block) => block.explosive?.radius ?? 0));
+
+      expect(bomb?.explosive?.radius).toBe(strongest);
+      expect([bomb?.textures.top.detail, bomb?.textures.side.detail]).toEqual(['radiation', 'radiation']);
+    });
+
     it('a alavanca sai da mochila com graveto e pedregulho, e liga e desliga como peça que dá o comando', () => {
       const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'lever');
       const lever = content.blocks.find((block) => block.id === 'lever');
@@ -424,6 +470,24 @@ describe('Conteúdo do PedroCraft', () => {
       list(house['layers'])[0] = ['ZZZZZZZ', 'PPPPPPP', 'PPPPPPP', 'PPPPPPP', 'PPPPPPP', 'PPPPPPP', 'PPPPPPP'];
 
       expect(errorOf(() => parseCraftContent(files)).message).toContain('a letra "Z" da construção');
+    });
+
+    it('recusa número pintado fora da faixa da TNT', () => {
+      record(record(entry(files, 'blocks', 'blocks', 'tnt-5x')['textures'])['top'])['label'] = '5';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('"label" só vale com o "detail" "band"');
+    });
+
+    it('recusa número da faixa que não cabe ou não é número', () => {
+      record(record(entry(files, 'blocks', 'blocks', 'tnt-5x')['textures'])['side'])['label'] = '5x';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('use de 1 a 3 algarismos');
+    });
+
+    it('recusa explosão maior que a da bomba nuclear', () => {
+      record(entry(files, 'blocks', 'blocks', 'nuclear-bomb')['explosive'])['radius'] = 31;
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('explosive.radius: deve ser no máximo 30');
     });
 
     it('recusa missão de dormir com alvo', () => {

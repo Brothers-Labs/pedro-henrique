@@ -90,7 +90,13 @@
     { "id": "emerald-from-block", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "emerald-block" }], "output": { "item": "emerald", "count": 9 } },
     { "id": "emerald-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "emerald-block" }, "output": { "item": "emerald-half", "count": 6 } },
     { "id": "emerald-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "emerald-half", "count": 2 }], "output": { "item": "emerald-block" } },
-    { "id": "tnt", "type": "shaped", "station": "workbench", "pattern": ["PSP", "SPS", "PSP"], "key": { "P": "gunpowder", "S": "sand" }, "output": { "item": "tnt" } }
+    { "id": "tnt", "type": "shaped", "station": "workbench", "pattern": ["PSP", "SPS", "PSP"], "key": { "P": "gunpowder", "S": "sand" }, "output": { "item": "tnt" } },
+    { "id": "tnt-5x", "type": "shaped", "station": "workbench", "pattern": [" T ", "TTT", " T "], "key": { "T": "tnt" }, "output": { "item": "tnt-5x" } },
+    { "id": "tnt-10x", "type": "shaped", "station": "workbench", "pattern": ["T", "T"], "key": { "T": "tnt-5x" }, "output": { "item": "tnt-10x" } },
+    { "id": "tnt-50x", "type": "shaped", "station": "workbench", "pattern": [" T ", "TTT", " T "], "key": { "T": "tnt-10x" }, "output": { "item": "tnt-50x" } },
+    { "id": "tnt-100x", "type": "shaped", "station": "workbench", "pattern": ["T", "T"], "key": { "T": "tnt-50x" }, "output": { "item": "tnt-100x" } },
+    { "id": "tnt-500x", "type": "shaped", "station": "workbench", "pattern": [" T ", "TTT", " T "], "key": { "T": "tnt-100x" }, "output": { "item": "tnt-500x" } },
+    { "id": "nuclear-bomb", "type": "shaped", "station": "workbench", "pattern": ["ITI", "TTT", "ITI"], "key": { "T": "tnt-500x", "I": "iron-block" }, "output": { "item": "nuclear-bomb" } }
   ],
   "smelting": [
     { "id": "smelt-glass", "input": "sand", "output": { "item": "glass" }, "timeMs": 4000 },

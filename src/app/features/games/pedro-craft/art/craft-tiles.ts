@@ -26,6 +26,7 @@ interface PainterContext {
   readonly random: () => number;
   readonly colors: readonly string[];
   readonly detail: TextureDetail | null;
+  readonly label: string | null;
   /** Crescimento de 0 a 1, usado só pelas plantações. */
   readonly growth: number;
 }
@@ -355,7 +356,7 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
   },
 
   /** [fundo, moldura, detalhe] — mesa, fornalha, baú, cama e porta. */
-  panel: ({ set, solid, random, colors, detail }) => {
+  panel: ({ set, solid, random, colors, detail, label }) => {
     const [base, border] = [colors[0], at(colors, 1, darken(colors[0], 0.35))];
     const accent = at(colors, 2, border);
 
@@ -368,7 +369,7 @@ const PAINTERS: Readonly<Record<TextureSpec['pattern'], (context: PainterContext
 
     speckle(solid, random, base, [darken(base, 0.06), lighten(base, 0.05)], 0.25);
     frame(solid, border, 0);
-    paintPanelDetail(solid, random, detail, base, border, accent);
+    paintPanelDetail(solid, random, detail, label, base, border, accent);
   },
 };
 
@@ -376,6 +377,7 @@ function paintPanelDetail(
   solid: SetPixel,
   random: () => number,
   detail: TextureDetail | null,
+  label: string | null,
   base: string,
   border: string,
   accent: string,
@@ -427,18 +429,21 @@ function paintPanelDetail(
       solid(11, 7, accent);
       return;
     case 'band':
-      // A faixa clara no meio, com três marquinhas escuras: a cara de TNT, sem precisar escrever.
-      for (let y = 6; y < 10; y += 1) {
-        for (let x = 1; x < LAST; x += 1) {
-          solid(x, y, accent);
-        }
+      if (label) {
+        paintLabeledBand(solid, label, border, accent);
+        return;
       }
+      // A faixa clara no meio, com três marquinhas escuras: a cara de TNT, sem precisar escrever.
+      paintBand(solid, 6, 10, accent);
       for (const left of [3, 7, 11]) {
         for (let y = 7; y < 9; y += 1) {
           solid(left, y, border);
           solid(left + 1, y, border);
         }
       }
+      return;
+    case 'radiation':
+      paintRadiation(solid, accent);
       return;
     case 'plain':
     case null:
@@ -449,6 +454,76 @@ function paintPanelDetail(
     case 'lever':
       return;
   }
+}
+
+/** Algarismos de 3 × 5 pixels, linha por linha: `#` é pixel pintado. */
+const DIGITS: Readonly<Record<string, readonly string[]>> = {
+  '0': ['###', '#.#', '#.#', '#.#', '###'],
+  '1': ['.#.', '##.', '.#.', '.#.', '###'],
+  '2': ['###', '..#', '###', '#..', '###'],
+  '3': ['###', '..#', '.##', '..#', '###'],
+  '4': ['#.#', '#.#', '###', '..#', '..#'],
+  '5': ['###', '#..', '###', '..#', '###'],
+  '6': ['###', '#..', '###', '#.#', '###'],
+  '7': ['###', '..#', '.#.', '.#.', '.#.'],
+  '8': ['###', '#.#', '###', '#.#', '###'],
+  '9': ['###', '#.#', '###', '..#', '###'],
+};
+
+const DIGIT_WIDTH = 3;
+const DIGIT_TOP = 6;
+
+function paintBand(solid: SetPixel, top: number, bottom: number, color: string): void {
+  for (let y = top; y < bottom; y += 1) {
+    for (let x = 1; x < LAST; x += 1) {
+      solid(x, y, color);
+    }
+  }
+}
+
+/** A faixa mais larga, com o número no meio: "5", "50", "500" — a força escrita na própria TNT. */
+function paintLabeledBand(solid: SetPixel, label: string, ink: string, band: string): void {
+  const width = label.length * (DIGIT_WIDTH + 1) - 1;
+  const left = Math.floor((TILE_SIZE - width) / 2);
+
+  paintBand(solid, DIGIT_TOP - 1, DIGIT_TOP + 6, band);
+  [...label].forEach((digit, index) => {
+    DIGITS[digit].forEach((row, rowIndex) => {
+      [...row].forEach((pixel, column) => {
+        if (pixel === '#') {
+          solid(left + index * (DIGIT_WIDTH + 1) + column, DIGIT_TOP + rowIndex, ink);
+        }
+      });
+    });
+  });
+}
+
+/** O símbolo de radiação: a bolinha no meio e três pás, uma para cima e duas para baixo. */
+function paintRadiation(solid: SetPixel, ink: string): void {
+  const center = (TILE_SIZE - 1) / 2;
+  const bladeAngles = [-90, 30, 150];
+
+  for (let y = 1; y < LAST; y += 1) {
+    for (let x = 1; x < LAST; x += 1) {
+      const distance = Math.hypot(x - center, y - center);
+      const angle = (Math.atan2(y - center, x - center) * 180) / Math.PI;
+      const isOnBlade = bladeAngles.some((blade) => Math.abs(((angle - blade + 540) % 360) - 180) <= 30);
+
+      if (distance <= 1.6 || (distance >= 2.6 && distance <= 6.4 && isOnBlade)) {
+        solid(x, y, ink);
+      }
+    }
+  }
+}
+
+/**
+ * A chave de uma face: duas faces com a mesma chave são pintadas iguais e
+ * dividem o mesmo lugar no atlas.
+ */
+export function textureKey(spec: TextureSpec): string {
+  const key = `${spec.pattern}|${spec.colors.join()}|${spec.detail ?? ''}`;
+
+  return spec.label === null ? key : `${key}|${spec.label}`;
 }
 
 /**
@@ -476,11 +551,11 @@ export function paintTile(
     context.fillRect(originX + x, originY + y, 1, 1);
   };
 
-  PAINTERS[spec.pattern]({ set, solid: set, random, colors: spec.colors, detail: spec.detail, growth });
+  PAINTERS[spec.pattern]({ set, solid: set, random, colors: spec.colors, detail: spec.detail, label: spec.label, growth });
 }
 
 function seedOf(spec: TextureSpec): number {
-  const text = `${spec.pattern}|${spec.colors.join()}|${spec.detail ?? ''}`;
+  const text = textureKey(spec);
   let hash = 2166136261;
 
   for (let index = 0; index < text.length; index += 1) {
