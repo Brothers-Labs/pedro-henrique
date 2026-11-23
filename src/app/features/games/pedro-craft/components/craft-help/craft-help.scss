@@ -1,6 +1,9 @@
 @use 'mixins' as *;
 @use '../../../pedro-maker/maker' as maker;
 
+/** Toda palavra da ajuda é preta: o contraste mais forte para a criança ler sozinha. */
+$text: #000000;
+
 :host {
   position: absolute;
   inset: 0;
@@ -14,6 +17,7 @@
   @include maker.panel(#f6efe2);
 
   display: grid;
+  color: $text;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0.6rem;
   width: min(48rem, 100%);
@@ -31,7 +35,7 @@
 .sheet__title {
   flex: 1 1 10rem;
   font-size: var(--text-xl);
-  color: maker.$ink;
+  color: $text;
 }
 
 .sheet__button,
@@ -56,7 +60,7 @@
   margin-bottom: 0.75rem;
   font-size: var(--text-lg);
   font-weight: 700;
-  color: maker.$ink;
+  color: $text;
 }
 
 .tip {
@@ -89,6 +93,8 @@
   & {
     padding: 0.7rem 0.9rem;
     background: #ffffff;
+    color: $text;
+    text-shadow: none;
   }
 
   &--list {
@@ -142,7 +148,7 @@
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 800;
-  color: maker.$ink;
+  color: $text;
 }
 
 .step__body {
@@ -153,7 +159,7 @@
 .step__text {
   font-size: var(--text-lg);
   font-weight: 700;
-  color: maker.$ink;
+  color: $text;
 }
 
 .figures {
@@ -182,7 +188,7 @@
   font-size: var(--text-xs, 0.75rem);
   font-weight: 700;
   text-align: center;
-  color: #4b4470;
+  color: $text;
 }
 
 .gesture {
@@ -194,7 +200,10 @@
 .gesture__chip {
   @include maker.pill;
 
-  font-size: var(--text-sm);
+  & {
+    color: $text;
+    font-size: var(--text-sm);
+  }
 }
 
 .rows,
@@ -216,7 +225,7 @@
   border: 3px solid maker.$ink;
   border-radius: 1rem;
   background: #ffffff;
-  color: maker.$ink;
+  color: $text;
 }
 
 .row__result,
@@ -272,6 +281,6 @@
   font-weight: 600;
 
   &--obtain {
-    color: #2f6b3a;
+    color: $text;
   }
 }
