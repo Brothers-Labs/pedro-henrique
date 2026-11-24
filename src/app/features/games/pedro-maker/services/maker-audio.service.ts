@@ -72,6 +72,8 @@ const CUES: Readonly<Record<MakerSoundCue, Cue>> = {
   freeze: { tones: [tone(1568, 0, 0.12, 'triangle', 0.1, 784), tone(2093, 0.08, 0.18, 'sine', 0.06)], noise: { duration: 0.08, gain: 0.03 } },
   slide: { tones: [tone(880, 0, 0.5, 'sine', 0.12, 330)] },
   tailSpin: { tones: [tone(300, 0, 0.16, 'triangle', 0.1, 700)], noise: { duration: 0.1, gain: 0.05 } },
+  bubble: { tones: [tone(520, 0, 0.12, 'sine', 0.09, 1040), tone(780, 0.06, 0.1, 'sine', 0.06, 1300)] },
+  explosion: { tones: [tone(150, 0, 0.42, 'sawtooth', 0.12, 45)], noise: { duration: 0.38, gain: 0.14 } },
 };
 
 /** Escala pentatônica maior: qualquer combinação dessas notas soa bem. */

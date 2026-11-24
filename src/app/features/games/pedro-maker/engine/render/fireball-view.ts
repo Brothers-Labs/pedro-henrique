@@ -1,12 +1,14 @@
 import { Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 
-import { FIREBALL_PHYSICS } from '../../config/physics.config';
+import { BUBBLE_PHYSICS, FIREBALL_PHYSICS } from '../../config/physics.config';
 import type { BallElement, FireballSystem } from '../simulation/fireballs';
 import { disposeTree } from './dispose';
 import { box, buildBoxesGeometry } from './voxel-geometry';
 import type { WorldSpace } from './world-space';
 
 const SPIN_RATE = 1 / 70;
+/** A bolha deixa ver através dela. */
+const BUBBLE_OPACITY = 0.6;
 
 interface BallLook {
   readonly shell: string;
@@ -17,13 +19,15 @@ interface BallLook {
 const LOOKS: Readonly<Record<BallElement, BallLook>> = {
   fire: { shell: '#ff6a1f', core: '#ffd23f', emissive: '#ff8a1f' },
   ice: { shell: '#7fd8ff', core: '#ffffff', emissive: '#3fb8ff' },
+  bubble: { shell: '#bdf3ff', core: '#ffffff', emissive: '#5fd4ff' },
 };
 
-const ELEMENTS: readonly BallElement[] = ['fire', 'ice'];
+const ELEMENTS: readonly BallElement[] = ['fire', 'ice', 'bubble'];
 
 /**
- * Bolas de fogo e de gelo em 3D: um cubinho brilhante girando, numa malha
- * instanciada por elemento, do tamanho do máximo de bolas no ar.
+ * Bolas de fogo, de gelo e bolhas em 3D: um cubinho brilhante girando, numa
+ * malha instanciada por elemento, do tamanho do máximo de bolas no ar. A bolha
+ * é meio transparente e bem maior.
  */
 export class FireballView {
   readonly root = new Group();
@@ -46,6 +50,7 @@ export class FireballView {
     this.meshes = {
       fire: this.ballMesh(LOOKS.fire, size),
       ice: this.ballMesh(LOOKS.ice, size),
+      bubble: this.ballMesh(LOOKS.bubble, space.length(BUBBLE_PHYSICS.size), BUBBLE_OPACITY),
     };
   }
 
@@ -77,12 +82,18 @@ export class FireballView {
     disposeTree(this.root);
   }
 
-  private ballMesh(look: BallLook, size: number): InstancedMesh {
+  private ballMesh(look: BallLook, size: number, opacity = 1): InstancedMesh {
     const geometry = buildBoxesGeometry([
       box(0, 0, 0, size, size, size, look.shell),
       box(0, 0, 0, size * 0.6, size * 0.6, size * 1.05, look.core),
     ]);
-    const material = new MeshStandardMaterial({ vertexColors: true, emissive: look.emissive, emissiveIntensity: 0.9 });
+    const material = new MeshStandardMaterial({
+      vertexColors: true,
+      emissive: look.emissive,
+      emissiveIntensity: 0.9,
+      transparent: opacity < 1,
+      opacity,
+    });
     const mesh = new InstancedMesh(geometry, material, FIREBALL_PHYSICS.maxAlive);
 
     mesh.count = 0;

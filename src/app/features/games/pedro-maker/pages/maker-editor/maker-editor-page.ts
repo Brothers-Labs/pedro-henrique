@@ -25,8 +25,10 @@ import {
   EDITOR_THEMES,
   type EditorCategoryId,
   type EditorPiece,
+  editorPieceLabel,
   editorPiecesIn,
   findEditorPiece,
+  isRetiredPiece,
   POWER_UP_LABELS,
   THEME_LABELS,
 } from '../../config/object-catalog';
@@ -112,11 +114,21 @@ const SURPRISE_CHOICES: readonly SurpriseChoice[] = [
   { id: 'coins', emoji: '🪙', label: 'Moedas', contents: 'coins' },
   { id: 'crystal', emoji: '💎', label: 'Cristal', contents: 'crystal' },
   { id: 'mushroom', emoji: '🍄', label: 'Cogumelo', contents: 'power-up', powerUp: 'mushroom' },
-  { id: 'heart', emoji: '❤️', label: 'Coração', contents: 'heart' },
   { id: 'power-up', emoji: '⭐', label: 'Outro poder', contents: 'power-up', powerUp: 'star' },
   { id: 'lucky', emoji: '🍀', label: 'Sorte', contents: 'lucky' },
   { id: 'multi-coins', emoji: '🧱', label: 'Várias moedas', contents: 'multi-coins' },
 ];
+
+/**
+ * O coração saiu do editor: o botão só aparece na surpresa de uma fase antiga
+ * que já solta coração, para o inspetor não mentir sobre ela.
+ */
+const LEGACY_HEART_CHOICE: SurpriseChoice = { id: 'heart', emoji: '❤️', label: 'Coração', contents: 'heart' };
+
+/** Botões do "o que sai do bloco" para esta surpresa. */
+function surpriseChoicesFor(properties: LevelObjectProperties | undefined): readonly SurpriseChoice[] {
+  return properties?.contents === 'heart' ? [...SURPRISE_CHOICES, LEGACY_HEART_CHOICE] : SURPRISE_CHOICES;
+}
 
 /** Os botões de "todas as surpresas": tirar tudo, ou encher de moedas, cristais ou cogumelos. */
 const SURPRISE_FILL_CHOICES: readonly SurpriseChoice[] = [
@@ -209,7 +221,7 @@ export class MakerEditorPage {
     ...SCREEN_MODES.map((id) => ({ id, emoji: SCREEN_LOOKS[id].emoji, label: SCREEN_LOOKS[id].label, description: SCREEN_LOOKS[id].description })),
   ];
   protected readonly themes = EDITOR_THEMES.map((theme) => ({ id: theme, ...THEME_LABELS[theme] }));
-  protected readonly surpriseChoices = SURPRISE_CHOICES;
+  protected readonly surpriseChoicesFor = surpriseChoicesFor;
   protected readonly surpriseFillChoices = SURPRISE_FILL_CHOICES;
   protected readonly surpriseChoiceOf = surpriseChoiceOf;
   protected readonly doorPairColor = doorPairColor;
@@ -283,7 +295,7 @@ export class MakerEditorPage {
   protected readonly selectedLabel = computed(() => {
     const object = this.selectedObject();
 
-    return object ? (findEditorPiece(object)?.label ?? object.type) : '';
+    return object ? editorPieceLabel(object) : '';
   });
 
   protected readonly testStars = computed(() => {
@@ -537,6 +549,12 @@ export class MakerEditorPage {
     }
 
     const object = objectAt(this.level(), cell.x, cell.y);
+
+    if (object && isRetiredPiece(object)) {
+      this.showNotice(`🚫 ${editorPieceLabel(object)} saiu do editor: não dá para copiar.`);
+      return;
+    }
+
     const piece = object ? findEditorPiece(object) : undefined;
 
     if (!piece) {

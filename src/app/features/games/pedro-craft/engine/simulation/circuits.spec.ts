@@ -203,6 +203,64 @@ describe('Circuitos do PedroCraft: alavanca, linha, porta e TNT', () => {
     expect(ignited).toEqual([`2,${FLOOR},5`]);
   });
 
+  it('a linha sobe a parede: a alavanca no chão acende a linha da parede e abre a porta lá em cima', () => {
+    // Paredão de pedra em x = 5; a porta fica num degrau de pedra do outro lado da linha, em y = 4 e 5.
+    for (const y of [1, 2, 3, 4]) {
+      world.set(5, y, 5, catalog.blockNumber('stone'));
+    }
+
+    place('lever', 3);
+    place('string-line', 4);
+
+    for (const y of [2, 3, 4]) {
+      place('string-line-wall-east', 4, y);
+    }
+
+    place('door', 3, 4);
+    world.set(3, 3, 5, catalog.blockNumber('stone'));
+
+    flip(3);
+
+    expect([at(4, 1, 5), at(4, 2, 5), at(4, 3, 5), at(4, 4, 5)]).toEqual([
+      'string-line-on',
+      'string-line-wall-east-on',
+      'string-line-wall-east-on',
+      'string-line-wall-east-on',
+    ]);
+    expect(at(3, 4, 5)).toBe('door-open');
+
+    flip(3);
+
+    expect(at(4, 4, 5)).toBe('string-line-wall-east');
+    expect(at(3, 4, 5)).toBe('door');
+  });
+
+  it('a lâmpada encostada na linha acende com a alavanca e apaga quando ela desliga', () => {
+    place('lever', 1);
+    place('string-line', 2);
+    place('lamp', 3);
+
+    flip(1);
+
+    expect(at(3, FLOOR, 5)).toBe('lamp-on');
+
+    flip(1);
+
+    expect(at(3, FLOOR, 5)).toBe('lamp');
+  });
+
+  it('a lâmpada colocada encostada numa linha acesa já acende, e apaga quando a linha sai', () => {
+    place('lever-on', 1);
+    place('string-line', 2);
+    place('lamp', 3);
+
+    expect(at(3, FLOOR, 5)).toBe('lamp-on');
+
+    remove(2);
+
+    expect(at(3, FLOOR, 5)).toBe('lamp');
+  });
+
   it('a linha não atravessa um bloco comum: a porta do outro lado não abre', () => {
     place('lever', 1);
     place('string-line', 2);

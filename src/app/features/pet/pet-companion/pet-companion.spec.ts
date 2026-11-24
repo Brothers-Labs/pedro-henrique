@@ -63,6 +63,8 @@ describe('PetCompanion', () => {
   });
 
   it('abre uma exceção para a sequência longa', () => {
+    // A fala é sorteada: sem fixar o sorteio, a segunda podia repetir a primeira por acaso.
+    spyOn(Math, 'random').and.returnValues(0, 0.999);
     pets.choose('dragao', 'Foguinho');
 
     answer(true, 1);

@@ -8,7 +8,7 @@ test('Maker empties every surprise and fills them with coins, crystals or mushro
   const grid = page.getByRole('application', { name: /Grade da fase/ });
 
   await page.getByRole('tab', { name: 'Blocos', exact: true }).click();
-  for (const [label, x] of [['Surpresa', 176], ['Surpresa ❤️', 240], ['Surpresa Vazia', 304]] as const) {
+  for (const [label, x] of [['Surpresa', 176], ['Surpresa 💎', 240], ['Surpresa Vazia', 304]] as const) {
     const piece = page.getByRole('button', { name: label, exact: true });
     await piece.click();
     await expect(piece).toHaveAttribute('aria-pressed', 'true');

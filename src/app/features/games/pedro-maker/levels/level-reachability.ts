@@ -1,4 +1,4 @@
-import { OBJECT_BEHAVIOR } from '../config/object-catalog';
+import { CRUSHER_WIDTH_CELLS, isCrusherType, OBJECT_BEHAVIOR } from '../config/object-catalog';
 import { GRAVITY, PLAYER_PHYSICS, TILE_SIZE, VALIDATION_PHYSICS } from '../config/physics.config';
 import { isGiantCoinType, type LevelBlueprint, type LevelObject } from '../models/level.model';
 import { skeletonWallColumn } from './skeleton-platform';
@@ -100,9 +100,12 @@ function buildGrid(blueprint: LevelBlueprint): Grid {
   const hasLever = blueprint.objects.some((object) => object.type === 'lever');
 
   for (const object of blueprint.objects) {
-    if (object.type === 'crusher') {
-      if (!hasLever) {
-        mark(object.x, object.y, Surface.Solid);
+    // A prensa parada lá em cima é parede, a não ser que uma alavanca a levante; a larga ocupa três blocos.
+    if (isCrusherType(object.type)) {
+      const halfWidth = Math.floor(CRUSHER_WIDTH_CELLS[object.type] / 2);
+
+      for (let column = object.x - halfWidth; column <= object.x + halfWidth && !hasLever; column += 1) {
+        mark(column, object.y, Surface.Solid);
       }
 
       continue;

@@ -120,6 +120,62 @@ describe('Ações nos blocos do PedroCraft', () => {
       expect(drops.list.map((drop) => drop.stack.item)).toContain('string');
     });
 
+    it('mirando o lado de um bloco firme, a linha fica colada na parede, de qualquer lado', () => {
+      put('stone', 4, 2, 4);
+
+      const sides = [
+        { normal: { x: -1, y: 0, z: 0 }, x: 3, z: 4, id: 'string-line-wall-east' },
+        { normal: { x: 1, y: 0, z: 0 }, x: 5, z: 4, id: 'string-line-wall-west' },
+        { normal: { x: 0, y: 0, z: -1 }, x: 4, z: 3, id: 'string-line-wall-south' },
+        { normal: { x: 0, y: 0, z: 1 }, x: 4, z: 5, id: 'string-line-wall-north' },
+      ] as const;
+
+      for (const { normal, x, z, id } of sides) {
+        expect(actions.placeBlock(aimAt(4, 2, 4, normal), catalog.block('string-line'))).withContext(id).toBeTrue();
+        expect(at(x, 2, z)).withContext('no ar, sem chão embaixo').toBe(id);
+      }
+
+      expect(placed).toEqual(sides.map((side) => side.id));
+    });
+
+    it('no lado de um vidro a linha não cola na parede: vai para o chão, como antes', () => {
+      put('glass', 4, 1, 4);
+
+      expect(actions.placeBlock(aimAt(4, 1, 4, FROM_WEST), catalog.block('string-line'))).toBeTrue();
+      expect(at(3, 1, 4)).toBe('string-line');
+    });
+
+    it('mirando o alto de um bloco, a linha continua deitada no chão', () => {
+      put('stone', 4, 1, 4);
+
+      expect(actions.placeBlock(aimAt(4, 1, 4, FROM_ABOVE), catalog.block('string-line'))).toBeTrue();
+      expect(at(4, 2, 4)).toBe('string-line');
+    });
+
+    it('a linha da parede cai junto com o bloco que a segura e devolve a linha; a do chão ao lado fica', () => {
+      put('dirt', 4, 2, 4);
+      put('string-line-wall-east-on', 3, 2, 4);
+      put('stone', 5, 1, 4);
+      put('string-line', 5, 2, 4);
+
+      actions.breakBlock(4, 2, 4, null);
+
+      expect(at(3, 2, 4)).toBe('air');
+      expect(at(5, 2, 4)).withContext('a linha do chão continua de pé').toBe('string-line');
+      expect(removed).toEqual(['dirt', 'string-line-wall-east-on']);
+      expect(drops.list.map((drop) => drop.stack.item)).toContain('string');
+    });
+
+    it('a linha da parede não depende do chão: quebrar o bloco de baixo não a derruba', () => {
+      put('stone', 4, 2, 4);
+      put('dirt', 3, 1, 4);
+      put('string-line-wall-east', 3, 2, 4);
+
+      actions.breakBlock(3, 1, 4, null);
+
+      expect(at(3, 2, 4)).toBe('string-line-wall-east');
+    });
+
     it('a alavanca liga e desliga como a porta', () => {
       put('lever', 3, 1, 3);
 

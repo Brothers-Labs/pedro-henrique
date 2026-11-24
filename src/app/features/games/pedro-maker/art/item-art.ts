@@ -136,6 +136,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
   'pedrere-mushroom': '#ffb92e',
+  'extra-life-mushroom': '#3ddc6b',
+  'bubble-flower': '#3fc5f0',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -215,6 +217,13 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
       break;
     case 'pedrere-mushroom':
       paintPedrereMushroom(context, color);
+      break;
+    case 'extra-life-mushroom':
+      paintExtraLifeMushroom(context, color);
+      break;
+    case 'bubble-flower':
+      paintFlower(context, color, '#e0fbff');
+      paintBubbles(context);
       break;
   }
 
@@ -579,7 +588,31 @@ function paintPedrereMushroom(context: CanvasRenderingContext2D, color: string):
   fillAndOutline(context, PEDRERE_CAP, 2);
 }
 
-/** Flor de fogo ou de gelo: pétalas em anéis sobre um caule com folhas. */
+/** Cogumelo verde com a faixa "1UP" embaixo: a vida a mais se lê de longe. */
+function paintExtraLifeMushroom(context: CanvasRenderingContext2D, color: string): void {
+  paintMushroom(context, color);
+  roundedRect(context, 8, 27, 24, 10, 3);
+  fillAndOutline(context, '#ffffff', 2);
+  context.fillStyle = darken(color, 0.45);
+  context.font = 'bold 9px "Baloo 2", "Trebuchet MS", sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('1UP', 20, 32.5);
+}
+
+/** Bolhinhas saindo da Flor de Bolha. */
+function paintBubbles(context: CanvasRenderingContext2D): void {
+  for (const [x, y, radius] of [[31, 9, 3.5], [34, 17, 2.2], [27, 4, 1.8]] as const) {
+    circle(context, x, y, radius);
+    context.fillStyle = 'rgba(224, 251, 255, 0.85)';
+    context.fill();
+    context.strokeStyle = '#1b8fb8';
+    context.lineWidth = 1.5;
+    context.stroke();
+  }
+}
+
+/** Flor de fogo, de gelo ou de bolha: pétalas em anéis sobre um caule com folhas. */
 function paintFlower(context: CanvasRenderingContext2D, color: string, ring: string): void {
   context.strokeStyle = OUTLINE;
   context.lineWidth = 5;

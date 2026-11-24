@@ -84,11 +84,14 @@ export const POWER_UP_DURATION_MS = {
   mushroom: 0,
   'fire-flower': 0,
   'ice-flower': 0,
+  'bubble-flower': 0,
   'cat-mushroom': 0,
   'leaf-mushroom': 0,
   'raccoon-leaf': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
+  /** O Cogumelo 1UP também age na hora: um coração a mais no placar. */
+  'extra-life-mushroom': 0,
   /** O troca-personagem também age na hora: o herói vira outro. */
   'swap-mushroom': 0,
   /** O Cogumelo Pedrerê também: o herói vira o Pedro do Pedro Pedrerê na hora. */
@@ -211,6 +214,33 @@ export const FIREBALL_PHYSICS = {
 export const ICEBALL_PHYSICS = {
   speed: 430,
   bounceVelocity: 300,
+} as const;
+
+/**
+ * Bolhas da Flor de Bolha: sem gravidade, voam reto e devagar, passam por
+ * cima dos buracos e da água e duram mais que as bolas, para a criança ver a
+ * bolha chegando no inimigo. São grandes e flutuam rente ao chão de onde
+ * saíram: pegam até o slime, que é baixinho.
+ */
+export const BUBBLE_PHYSICS = {
+  size: 40,
+  /** Folga entre o pé do herói e a bolha que sai: ela não raspa no chão. */
+  groundGap: 8,
+  speed: 300,
+  bounceVelocity: 0,
+  lifeMs: 2200,
+  /** Sobe e desce de leve enquanto voa: quanto, em pixels por segundo. */
+  bobVelocity: 70,
+  /** Uma onda a cada tantos milissegundos. */
+  bobPeriodMs: 600,
+} as const;
+
+/**
+ * Cogumelo 1UP: cada um dá um coração a mais, que passa do máximo da fase.
+ * Há um teto, para o placar continuar cabendo na tela.
+ */
+export const EXTRA_LIFE = {
+  maxExtraHearts: 5,
 } as const;
 
 /** Quanto tempo um inimigo atingido pelo gelo fica congelado antes de derreter. */

@@ -249,7 +249,7 @@
           @case ('surprise') {
             <div class="selection__row" role="group" aria-label="O que sai do bloco">
               <span>O que sai do bloco:</span>
-              @for (choice of surpriseChoices; track choice.id) {
+              @for (choice of surpriseChoicesFor(object.properties); track choice.id) {
                 <button
                   type="button"
                   class="tool"

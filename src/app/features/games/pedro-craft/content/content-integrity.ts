@@ -94,9 +94,10 @@ export function findIntegrityProblems(content: CraftContent): readonly Integrity
 
     block('blocks', owner, definition.stacksInto);
     block('blocks', owner, definition.circuit?.switchesInto ?? null);
+    Object.values(definition.wallVariants ?? {}).forEach((variant) => block('blocks', owner, variant));
   }
 
-  problems.push(...findStackingProblems(content), ...findCircuitProblems(content));
+  problems.push(...findStackingProblems(content), ...findCircuitProblems(content), ...findWallProblems(content));
 
   for (const definition of content.items) {
     const owner = `item "${definition.id}"`;
@@ -271,6 +272,46 @@ function findCircuitProblems(content: CraftContent): readonly IntegrityProblem[]
         file: 'blocks',
         message: `${owner}: "${other.id}" precisa ser o mesmo tipo de peça no outro jeito (ligado ↔ desligado) e voltar para "${definition.id}"`,
       });
+    }
+  }
+
+  return problems;
+}
+
+/**
+ * Só a linha cola na parede. Cada bloco de `wallVariants` precisa estar colado
+ * na parede daquele lado, e o jeito ligado e o desligado de uma linha da parede
+ * ficam na mesma parede: o circuito troca o bloco sem a linha pular de lugar.
+ */
+function findWallProblems(content: CraftContent): readonly IntegrityProblem[] {
+  const blocks = new Map(content.blocks.map((block) => [block.id, block]));
+  const problems: IntegrityProblem[] = [];
+
+  for (const definition of content.blocks) {
+    const owner = `bloco "${definition.id}"`;
+    const isWire = definition.circuit?.role === 'wire';
+
+    if ((definition.attachedTo !== null || definition.wallVariants !== null) && !isWire) {
+      problems.push({ file: 'blocks', message: `${owner}: só a linha do circuito ("attachedTo", "wallVariants") cola na parede` });
+    }
+
+    if (definition.attachedTo !== null && definition.wallVariants !== null) {
+      problems.push({ file: 'blocks', message: `${owner}: a linha já colada na parede não tem "wallVariants"` });
+    }
+
+    for (const [side, variantId] of Object.entries(definition.wallVariants ?? {})) {
+      const variant = blocks.get(variantId);
+
+      if (variant && variant.attachedTo !== side) {
+        problems.push({ file: 'blocks', message: `${owner}: "${variantId}" precisa ter "attachedTo": "${side}"` });
+      }
+    }
+
+    const otherId = isWire ? definition.circuit?.switchesInto : null;
+    const other = otherId ? blocks.get(otherId) : undefined;
+
+    if (other && other.attachedTo !== definition.attachedTo) {
+      problems.push({ file: 'blocks', message: `${owner}: "${other.id}" precisa ficar colado na mesma parede` });
     }
   }
 

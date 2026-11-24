@@ -213,7 +213,11 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
   }
 
   if (block.circuit?.role === 'wire') {
-    return 'Coloque no chão, em fila, da alavanca até uma porta ou uma TNT. A linha leva o comando e fica amarela quando está ligada.';
+    return 'Coloque no chão ou na parede, em fila, da alavanca até uma porta, uma lâmpada ou uma TNT. A linha leva o comando e fica amarela quando está ligada.';
+  }
+
+  if (block.circuit?.role === 'receiver' && block.toggleInto === null) {
+    return 'Coloque encostada na linha ou na alavanca: quando o comando chega, ela acende e ilumina a noite.';
   }
 
   if (block.light > 0) {

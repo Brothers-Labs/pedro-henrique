@@ -173,13 +173,13 @@ describe('Simulação do PedroCraft: colher e construir', () => {
     expect(world.get(TARGET.x, 4, TARGET.z + 1)).toBe(catalog.blockNumber('door'));
   });
 
-  it('a linha da mochila é colocada no chão firme e gasta uma da pilha', () => {
+  it('a linha da mochila mirada no lado da pedra cola na parede dela e gasta uma da pilha', () => {
     put('stone');
     put('stone', TARGET.x - 1, 3);
     simulation.inventory.slots[0] = { item: 'string', count: 3, durability: null };
     run(1, { secondaryPressed: true });
 
-    expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('string-line'));
+    expect(world.get(TARGET.x - 1, TARGET.y, TARGET.z)).toBe(catalog.blockNumber('string-line-wall-east'));
     expect(simulation.inventory.slots[0]?.count).toBe(2);
   });
 

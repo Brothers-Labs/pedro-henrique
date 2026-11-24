@@ -1,7 +1,7 @@
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
 import type { BlockDefinition, ItemDefinition } from '../../models/content.model';
 import type { VoxelWorld } from '../../world/voxel-world';
-import { type BlockProperties, SHAPE_CODE } from '../block-properties';
+import { type BlockProperties, SHAPE_CODE, wallOffsetOf, WALL_OFFSETS, wallSideAt } from '../block-properties';
 import { canHarvest, rollLoot } from './block-rules';
 import type { ItemDrops } from './item-drops';
 import type { PhysicsBody } from './physics-body';
@@ -122,6 +122,11 @@ export class BlockActions {
     }
 
     this.breakUnsupported(x, y + 1, z);
+
+    // A linha colada na parede deste bloco perde o que a segura.
+    for (const { dx, dz } of Object.values(WALL_OFFSETS)) {
+      this.breakUnsupported(x - dx, y, z - dz);
+    }
   }
 
   /** Coloca o bloco do item da mão na face mirada. Devolve se colocou. */
@@ -134,6 +139,7 @@ export class BlockActions {
    *
    * Capim e água são substituíveis: mirar neles coloca o bloco no lugar deles.
    * Meio bloco colocado no alto de outro igual fecha os dois num bloco inteiro.
+   * A linha mirada no lado de um bloco firme fica colada nele, na parede.
    */
   placeBlock(hit: RayHit, block: BlockDefinition): boolean {
     const { world, properties } = this.context;
@@ -143,6 +149,12 @@ export class BlockActions {
 
     if (whole) {
       return this.stackHalf(hit.x, hit.y, hit.z, block, whole);
+    }
+
+    const onWall = hitIsReplaceable ? null : this.wallVariant(hit, block);
+
+    if (onWall) {
+      return this.putBlock(hit.x + hit.normalX, hit.y, hit.z + hit.normalZ, onWall);
     }
 
     return hitIsReplaceable
@@ -156,6 +168,21 @@ export class BlockActions {
     const isOnTopOfTwin = hit.normalY === 1 && world.get(hit.x, hit.y, hit.z) === catalog.blockNumber(block.id);
 
     return isOnTopOfTwin ? block.stacksInto : null;
+  }
+
+  /**
+   * O bloco colado na parede mirada, quando a mira está no lado de um bloco
+   * firme e o bloco da mão tem versão de parede; `null` nos outros casos — no
+   * lado de um vidro ou de uma cerca, a linha vai para o chão, como antes.
+   */
+  private wallVariant(hit: RayHit, block: BlockDefinition): BlockDefinition | null {
+    const side = hit.normalY === 0 ? wallSideAt(-hit.normalX, -hit.normalZ) : null;
+
+    if (!side || !block.wallVariants || !this.isSupport(hit.x, hit.y, hit.z)) {
+      return null;
+    }
+
+    return this.context.catalog.block(block.wallVariants[side]);
   }
 
   /**
@@ -204,7 +231,7 @@ export class BlockActions {
       return false;
     }
 
-    if (NEEDS_SUPPORT.has(properties.shape[number]) && !this.isSupport(x, y - 1, z)) {
+    if (!this.isSupported(x, y, z, number)) {
       return false;
     }
 
@@ -287,13 +314,13 @@ export class BlockActions {
     }
   }
 
-  /** Planta, tocha, alavanca, trilho, linha ou tapete que ficou sem chão quebra junto, soltando o que dá. */
+  /** Planta, tocha, alavanca, trilho, linha ou tapete que ficou sem chão (ou sem parede) quebra junto, soltando o que dá. */
   private breakUnsupported(x: number, y: number, z: number): void {
-    const { world, properties, catalog } = this.context;
+    const { world, catalog } = this.context;
     const number = world.get(x, y, z);
     const block = catalog.blockAt(number);
 
-    if (!block || !NEEDS_SUPPORT.has(properties.shape[number]) || this.isSupport(x, y - 1, z)) {
+    if (!block || this.isSupported(x, y, z, number)) {
       return;
     }
 
@@ -313,6 +340,18 @@ export class BlockActions {
     const current = world.get(x, y, z);
 
     return world.contains(x, y, z) && (current === AIR || properties.isReplaceable[current] === 1);
+  }
+
+  /** O bloco `number` fica de pé na célula: a peça de parede precisa da parede dela; as do chão, de chão firme. */
+  private isSupported(x: number, y: number, z: number, number: number): boolean {
+    const { properties } = this.context;
+    const wall = wallOffsetOf(properties.wallSide[number]);
+
+    if (wall) {
+      return this.isSupport(x + wall.dx, y, z + wall.dz);
+    }
+
+    return !NEEDS_SUPPORT.has(properties.shape[number]) || this.isSupport(x, y - 1, z);
   }
 
   private isSupport(x: number, y: number, z: number): boolean {

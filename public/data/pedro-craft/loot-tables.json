@@ -51,6 +51,7 @@
     { "id": "nuclear-bomb", "entries": [{ "item": "nuclear-bomb" }] },
     { "id": "rail", "entries": [{ "item": "rail" }] },
     { "id": "lever", "entries": [{ "item": "lever" }] },
+    { "id": "lamp", "entries": [{ "item": "lamp" }] },
     { "id": "string", "entries": [{ "item": "string" }] },
     { "id": "wool", "entries": [{ "item": "wool" }] },
     { "id": "carpet-white", "entries": [{ "item": "carpet-white" }] },

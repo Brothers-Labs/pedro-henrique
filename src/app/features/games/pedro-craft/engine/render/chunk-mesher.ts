@@ -1,6 +1,6 @@
 import { AIR } from '../../content/craft-catalog';
 import type { VoxelWorld } from '../../world/voxel-world';
-import { type BlockProperties, SHAPE_CODE } from '../block-properties';
+import { type BlockProperties, SHAPE_CODE, type WallOffset, wallOffsetOf } from '../block-properties';
 import { RAIL_DIRECTIONS, type RailDirection, railConnections } from '../rails';
 
 /**
@@ -116,6 +116,9 @@ const CROSS_INSET = 0.15;
 const RAIL_HEIGHT = 1 / 16;
 const RAIL_CROSSING_LIFT = 1 / 256;
 
+/** A linha da parede fica um fio afastada do bloco: rente a ele, as duas faces brigariam pelo mesmo plano. */
+const WALL_LINE_GAP = 1 / 16;
+
 /** O tapete tem a espessura do trilho: deitado no chão, quase não muda a altura dos pés. */
 const CARPET_BOX = { min: [0, 0, 0], max: [1, 1 / 16, 1] } as const;
 
@@ -220,9 +223,62 @@ class CellMesher {
    */
   private wire(writer: MeshWriter, block: number, x: number, y: number, z: number): void {
     const { world, properties } = this.context;
+    const wall = wallOffsetOf(properties.wallSide[block]);
+
+    if (wall) {
+      this.wallLine(writer, block, x, y, z, wall);
+      return;
+    }
+
     const connections = RAIL_DIRECTIONS.filter(({ dx, dz }) => properties.connectsWire[world.get(x + dx, y, z + dz)] === 1);
 
     this.flatLine(writer, block, x, y, z, connections, this.glowOf(block));
+  }
+
+  /**
+   * Linha colada na parede: em pé, rente ao bloco que a segura, com uma meia
+   * faixa até cada peça encostada em cima, embaixo e dos dois lados ao longo
+   * da parede. Sozinha, fica reta de baixo para cima.
+   *
+   * Reaproveita as metades do chão: no plano da parede, `dx` é o passo ao
+   * longo dela e `dz` = −1 é para cima.
+   */
+  private wallLine(writer: MeshWriter, block: number, x: number, y: number, z: number, wall: WallOffset): void {
+    const { world, properties } = this.context;
+    const runsAlongX = wall.dz !== 0;
+    const connects = (step: number, rise: number): boolean =>
+      properties.connectsWire[world.get(x + (runsAlongX ? step : 0), y + rise, z + (runsAlongX ? 0 : step))] === 1;
+    const connections = RAIL_DIRECTIONS.filter(({ dx, dz }) => connects(dx, -dz));
+    const tile = this.context.tiles.tile(block, 'side', 0);
+    const glow = this.glowOf(block);
+    const wallDirection = wall.dx + wall.dz;
+
+    for (const direction of lineSegments(connections)) {
+      const isAlongWall = direction.dx !== 0;
+      const forward = isAlongWall ? direction.dx > 0 : direction.dz < 0;
+      const [alongMin, alongMax] = forward ? [0.5, 1] : [0, 0.5];
+      const [minA, maxA] = isAlongWall ? [alongMin, alongMax] : [0, 1];
+      const [minB, maxB] = isAlongWall ? [0, 1] : [alongMin, alongMax];
+      // As metades ao longo da parede saem mais um fio: no cruzamento, não brigam com as de pé.
+      const gap = WALL_LINE_GAP + (isAlongWall ? RAIL_CROSSING_LIFT : 0);
+      const depth = wallDirection > 0 ? 1 - gap : gap;
+      const local: readonly (readonly [number, number])[] = [
+        [minA, minB],
+        [maxA, minB],
+        [maxA, maxB],
+        [minA, maxB],
+      ];
+      const corners: Vector[] = local.map(([along, up]) =>
+        runsAlongX ? ([x + along, y + up, z + depth] as const) : ([x + depth, y + up, z + along] as const),
+      );
+      const uvs = local.flatMap(([along, up]) => {
+        const [across, lengthwise] = isAlongWall ? [up, along] : [along, up];
+
+        return [tile.u0 + (tile.u1 - tile.u0) * across, tile.v0 + (tile.v1 - tile.v0) * lengthwise];
+      });
+
+      writer.quad(corners, uvs, [0.9, 0.9, 0.9, 0.9], corners.map((corner) => Math.max(glow, this.lightAt(corner))));
+    }
   }
 
   /** Peça deitada no chão (trilho, linha): uma meia faixa do centro até cada vizinho ligado. */

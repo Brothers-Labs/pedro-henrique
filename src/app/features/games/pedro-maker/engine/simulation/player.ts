@@ -49,6 +49,7 @@ const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>([
   'mushroom',
   'fire-flower',
   'ice-flower',
+  'bubble-flower',
   'cat-mushroom',
   'leaf-mushroom',
   'raccoon-leaf',
@@ -61,6 +62,7 @@ const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>([
 export const SUIT_POWER_UPS = [
   'fire-flower',
   'ice-flower',
+  'bubble-flower',
   'cat-mushroom',
   'leaf-mushroom',
   'raccoon-leaf',
@@ -72,6 +74,7 @@ const SUIT_SET: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(SUIT_POWER_UPS);
 const FLOWER_ELEMENTS = [
   ['fire-flower', 'fire'],
   ['ice-flower', 'ice'],
+  ['bubble-flower', 'bubble'],
 ] as const satisfies readonly (readonly [PowerUpKind, BallElement])[];
 
 /** Tamanho da caixa de colisão em relação à normal, na largura e na altura. */
@@ -239,7 +242,7 @@ export class Player {
     return this.timedPowerUps.has('star') || this.timedPowerUps.has('giga-mushroom');
   }
 
-  /** O que o botão de ação lança: fogo, gelo ou nada, conforme a flor. */
+  /** O que o botão de ação lança: fogo, gelo, bolha ou nada, conforme a flor. */
   get flowerElement(): BallElement | null {
     return FLOWER_ELEMENTS.find(([flower]) => this.protections.has(flower))?.[1] ?? null;
   }
