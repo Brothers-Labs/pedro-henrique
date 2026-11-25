@@ -35,6 +35,8 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   chain: '#8d96a8',
   lever: '#e5484d',
   crusher: '#4a5163',
+  'wide-crusher': '#4a5163',
+  'fire-trap': '#ff6a1f',
   'climb-chain': '#b9c0cf',
   'on-off-switch': '#ff8a8f',
   'red-block': '#e5484d',
@@ -62,6 +64,7 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   'king-cactus': '#e8505b',
   'living-pumpkin': '#e8505b',
   witch: '#e8505b',
+  'walking-bomb': '#e8505b',
   boss: '#e8505b',
 };
 

@@ -199,6 +199,38 @@ describe('Malha dos chunks do PedroCraft', () => {
       expect(faces(mesh().cutout)).toBe(3 + 2 + 6);
     });
 
+    it('desenha a linha da parede em pé, rente ao bloco que a segura, sem deitar no chão', () => {
+      put('stone', 6, 5, 5);
+      put('string-line-wall-east', 5, 5, 5);
+
+      const { cutout } = mesh();
+      const xs = [0, 3, 6, 9].map((offset) => cutout.positions[offset]);
+      const ys = [1, 4, 7, 10].map((offset) => cutout.positions[offset]);
+
+      // Sozinha, fica reta de baixo para cima: duas metades.
+      expect(faces(cutout)).toBe(2);
+      expect(xs.every((x) => x === 6 - 1 / 16)).withContext('rente à parede do leste').toBeTrue();
+      expect(Math.max(...ys) - Math.min(...ys)).withContext('em pé').toBeGreaterThan(0);
+    });
+
+    it('a linha da parede liga às vizinhas de cima, de baixo e dos lados ao longo da parede', () => {
+      for (const z of [4, 5, 6]) {
+        put('stone', 6, 5, z);
+      }
+
+      put('string-line-wall-east', 5, 5, 5);
+      put('string-line-wall-east', 5, 6, 5);
+      put('string-line-wall-east', 5, 5, 4);
+      put('string-line', 5, 4, 5);
+      put('lamp', 4, 5, 5);
+
+      const counts = (): number => faces(mesh().cutout);
+
+      // A do meio: em cima, embaixo (a linha do chão) e ao norte: 3 metades. A lâmpada, de frente, não conta.
+      // A de cima e a do norte, ligadas só à do meio: 2 metades cada. A do chão, sem vizinha de lado: reta, 2.
+      expect(counts()).toBe(3 + 2 + 2 + 2);
+    });
+
     it('a linha acesa brilha sozinha no escuro, a apagada não', () => {
       put('string-line', 5, 5, 5);
 

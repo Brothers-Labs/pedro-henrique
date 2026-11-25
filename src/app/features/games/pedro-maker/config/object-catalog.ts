@@ -9,6 +9,7 @@ import {
   type LevelObjectType,
   type LevelTheme,
   perGiantCoin,
+  POWER_UP_KINDS,
   type PowerUpKind,
 } from '../models/level.model';
 import { BIG_COIN_VALUE, HUGE_COIN_VALUE } from './physics.config';
@@ -40,6 +41,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   pipe: { surface: 'solid', isUnique: false },
   cannon: { surface: 'solid', isUnique: false },
   'fire-bar': { surface: 'solid', isUnique: false },
+  'fire-trap': { surface: 'solid', isUnique: false },
   'p-switch': { surface: 'none', isUnique: false },
   // Porta trancada e corrente são firmes no jogo, mas o validador de alcance
   // conta com a chave e a alavanca: para ele, o caminho por elas fica aberto.
@@ -49,6 +51,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   lever: { surface: 'none', isUnique: false },
   // A prensa não é terreno: a simulação cuida da colisão dela enquanto desce e sobe.
   crusher: { surface: 'none', isUnique: false },
+  'wide-crusher': { surface: 'none', isUnique: false },
   'climb-chain': { surface: 'none', isUnique: false },
   brick: { surface: 'solid', isUnique: false },
   surprise: { surface: 'solid', isUnique: false },
@@ -90,6 +93,7 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   'king-cactus': { surface: 'none', isUnique: false },
   'living-pumpkin': { surface: 'none', isUnique: false },
   witch: { surface: 'none', isUnique: false },
+  'walking-bomb': { surface: 'none', isUnique: false },
   boss: { surface: 'none', isUnique: true },
   coin: { surface: 'none', isUnique: false },
   'big-coin': { surface: 'none', isUnique: false },
@@ -126,6 +130,21 @@ export const OBJECT_BEHAVIOR: Readonly<Record<LevelObjectType, ObjectBehavior>> 
   hint: { surface: 'none', isUnique: false },
   'mascot-tip': { surface: 'none', isUnique: false },
 };
+
+/**
+ * Largura de cada prensa esmagadora, em blocos. A larga é posta pelo bloco do
+ * meio e ocupa também um de cada lado.
+ */
+export const CRUSHER_WIDTH_CELLS = {
+  crusher: 1,
+  'wide-crusher': 3,
+} as const satisfies Partial<Record<LevelObjectType, number>>;
+
+export type CrusherType = keyof typeof CRUSHER_WIDTH_CELLS;
+
+export function isCrusherType(type: LevelObjectType): type is CrusherType {
+  return type in CRUSHER_WIDTH_CELLS;
+}
 
 export type EditorCategoryId =
   | 'terreno'
@@ -244,19 +263,26 @@ export const POWER_UP_LABELS = {
   'reverse-mushroom': { label: 'Cogumelo Reverso', emoji: '🙃' },
   'mini-mushroom': { label: 'Cogumelo de Encolher', emoji: '🐜' },
   'pedrere-mushroom': { label: 'Cogumelo Pedrerê', emoji: '🤸' },
+  'extra-life-mushroom': { label: 'Cogumelo 1UP', emoji: '🆙' },
+  'bubble-flower': { label: 'Flor de Bolha', emoji: '🫧' },
   'coin-x2': { label: 'Moeda ×2', emoji: '🪙' },
   'coin-x4': { label: 'Moeda ×4', emoji: '🪙' },
   'coin-x1000': { label: 'Moeda ×1000', emoji: '🪙' },
   'coin-x9999': { label: 'Moeda ×9999', emoji: '🪙' },
 } as const satisfies Readonly<Record<PowerUpKind, { readonly label: string; readonly emoji: string }>>;
 
-/** Poderes que têm um bloco surpresa próprio na aba Cogumelos: a cabeçada solta aquele poder. */
+/**
+ * Poderes que têm um bloco surpresa próprio na aba Cogumelos: a cabeçada solta
+ * aquele poder. A Surpresa Cogumelo Vida saiu do editor; fases antigas com ela
+ * continuam abrindo, porque a peça é só um bloco surpresa com aquele poder.
+ */
 export const SURPRISE_POWER_UPS = [
   'mushroom',
   'fire-flower',
   'star',
-  'one-up',
+  'extra-life-mushroom',
   'ice-flower',
+  'bubble-flower',
   'cat-mushroom',
   'raccoon-leaf',
   'giga-mushroom',
@@ -309,6 +335,8 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'chain', category: 'blocos', type: 'chain', label: 'Corrente' },
   { id: 'lever', category: 'blocos', type: 'lever', label: 'Alavanca' },
   { id: 'crusher', category: 'blocos', type: 'crusher', label: 'Prensa Esmagadora' },
+  { id: 'wide-crusher', category: 'blocos', type: 'wide-crusher', label: 'Prensa Esmagadora Larga' },
+  { id: 'fire-trap', category: 'blocos', type: 'fire-trap', label: 'Armadilha de Fogo' },
   { id: 'climb-chain', category: 'blocos', type: 'climb-chain', label: 'Corrente de Subir' },
   { id: 'pipe', category: 'blocos', type: 'pipe', label: 'Cano' },
   { id: 'note', category: 'blocos', type: 'note', label: 'Bloco Musical' },
@@ -323,7 +351,6 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
     properties: { contents: 'multi-coins' },
   },
   { id: 'surprise-coins', category: 'blocos', type: 'surprise', label: 'Surpresa', properties: { contents: 'coins' } },
-  { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
   { id: 'surprise-crystal', category: 'blocos', type: 'surprise', label: 'Surpresa 💎', properties: { contents: 'crystal' } },
   { id: 'surprise-empty', category: 'blocos', type: 'surprise', label: 'Surpresa Vazia', properties: { contents: 'empty' } },
 
@@ -347,6 +374,7 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'king-cactus', category: 'inimigos', type: 'king-cactus', label: 'Rei Cacto' },
   { id: 'living-pumpkin', category: 'inimigos', type: 'living-pumpkin', label: 'Abóbora Viva' },
   { id: 'witch', category: 'inimigos', type: 'witch', label: 'Bruxa' },
+  { id: 'walking-bomb', category: 'inimigos', type: 'walking-bomb', label: 'Bomb-omb' },
 
   { id: 'coin', category: 'itens', type: 'coin', label: 'Moeda' },
   { id: 'mega-coin', category: 'itens', type: 'mega-coin', label: 'Moeda Gigantesca' },
@@ -354,7 +382,6 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   ...COIN_MULTIPLIER_PIECES,
   { id: 'key', category: 'itens', type: 'key', label: 'Chave' },
   { id: 'crystal', category: 'itens', type: 'crystal', label: 'Cristal' },
-  { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
   { id: 'coin-chest', category: 'itens', type: 'coin-chest', label: 'Baú de Moedas' },
 
   { id: 'platform', category: 'plataformas', type: 'platform', label: 'Plataforma' },
@@ -400,7 +427,20 @@ export const EDITOR_PIECES: readonly EditorPiece[] = [
   { id: 'power-fire-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Fogo', properties: { powerUp: 'fire-flower' } },
   { id: 'power-ice-flower', category: 'cogumelos', type: 'power-up', label: 'Flor de Gelo', properties: { powerUp: 'ice-flower' } },
   { id: 'power-star', category: 'cogumelos', type: 'power-up', label: 'Super Estrela', properties: { powerUp: 'star' } },
-  { id: 'power-one-up', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Vida', properties: { powerUp: 'one-up' } },
+  {
+    id: 'power-extra-life-mushroom',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Cogumelo 1UP',
+    properties: { powerUp: 'extra-life-mushroom' },
+  },
+  {
+    id: 'power-bubble-flower',
+    category: 'cogumelos',
+    type: 'power-up',
+    label: 'Flor de Bolha',
+    properties: { powerUp: 'bubble-flower' },
+  },
   { id: 'power-cat-mushroom', category: 'cogumelos', type: 'power-up', label: 'Cogumelo Gato', properties: { powerUp: 'cat-mushroom' } },
   { id: 'power-raccoon-leaf', category: 'cogumelos', type: 'power-up', label: 'Folha do Guaxinim', properties: { powerUp: 'raccoon-leaf' } },
   { id: 'power-giga-mushroom', category: 'cogumelos', type: 'power-up', label: 'Giga Cogumelo', properties: { powerUp: 'giga-mushroom' } },
@@ -488,25 +528,29 @@ export function editorPiecesIn(category: EditorCategoryId): readonly EditorPiece
   return PIECES_BY_CATEGORY.get(category) ?? [];
 }
 
+type PlacedPiece = Pick<LevelObject, 'type' | 'properties'>;
+
 /**
  * Peça da paleta que corresponde a uma peça já colocada na fase.
  *
  * O mesmo tipo pode ter várias peças (Porta A e Porta B, surpresa de moedas e
- * de coração): vale a que tem as mesmas propriedades, da mais específica para
+ * de cristal): vale a que tem as mesmas propriedades, da mais específica para
  * a mais geral — o castelo final não pode passar por portal comum só porque a
  * peça do portal não tem propriedade nenhuma. Sem nenhuma igual, a primeira do
  * tipo.
  */
-export function findEditorPiece(object: Pick<LevelObject, 'type' | 'properties'>): EditorPiece | undefined {
-  const sameType = EDITOR_PIECES.filter((piece) => piece.type === object.type);
+export function findEditorPiece(object: PlacedPiece): EditorPiece | undefined {
+  return matchingPiece(EDITOR_PIECES, object) ?? EDITOR_PIECES.find((piece) => piece.type === object.type);
+}
+
+/** A peça da lista com o mesmo tipo e as mesmas propriedades, da mais específica para a mais geral. */
+function matchingPiece(pieces: readonly EditorPiece[], object: PlacedPiece): EditorPiece | undefined {
   const properties = object.properties ?? {};
   const propertyCount = (piece: EditorPiece): number => Object.keys(piece.properties ?? {}).length;
-  const mostSpecificFirst = [...sameType].sort((first, second) => propertyCount(second) - propertyCount(first));
+  const mostSpecificFirst = pieces.filter((piece) => piece.type === object.type).sort((first, second) => propertyCount(second) - propertyCount(first));
 
-  return (
-    mostSpecificFirst.find((piece) =>
-      Object.entries(piece.properties ?? {}).every(([key, value]) => properties[key as keyof LevelObjectProperties] === value),
-    ) ?? sameType[0]
+  return mostSpecificFirst.find((piece) =>
+    Object.entries(piece.properties ?? {}).every(([key, value]) => properties[key as keyof LevelObjectProperties] === value),
   );
 }
 
@@ -536,14 +580,49 @@ export function doorPairColor(pair: string): string {
 
 /**
  * Poderes que o editor oferece: os da paleta. O Super Pulo, o Escudo, o
- * Turbo, o Ímã, a Asa e o Cogumelo Folha saíram do editor, mas fases antigas
- * com eles continuam funcionando.
+ * Turbo, o Ímã, a Asa, o Cogumelo Folha e o Cogumelo Vida saíram do editor,
+ * mas fases antigas com eles continuam funcionando.
  */
 export const EDITOR_POWER_UPS: readonly PowerUpKind[] = [
   ...new Set(
     EDITOR_PIECES.flatMap((piece) => (piece.type === 'power-up' && piece.properties?.powerUp ? [piece.properties.powerUp] : [])),
   ),
 ];
+
+/**
+ * Peças que saíram da paleta, mas continuam nas fases antigas: o editor ainda
+ * sabe o nome delas. Não aparecem nas abas nem vão para o pincel.
+ */
+const RETIRED_PIECES: readonly EditorPiece[] = [
+  { id: 'heart', category: 'itens', type: 'heart', label: 'Coração' },
+  { id: 'surprise-heart', category: 'blocos', type: 'surprise', label: 'Surpresa ❤️', properties: { contents: 'heart' } },
+  {
+    id: 'surprise-one-up',
+    category: 'cogumelos',
+    type: 'surprise',
+    label: 'Surpresa Cogumelo Vida',
+    properties: { contents: 'power-up', powerUp: 'one-up' },
+  },
+  ...POWER_UP_KINDS.filter((kind) => !EDITOR_POWER_UPS.includes(kind)).map((kind): EditorPiece => ({
+    id: `power-${kind}`,
+    category: 'cogumelos',
+    type: 'power-up',
+    label: POWER_UP_LABELS[kind].label,
+    properties: { powerUp: kind },
+  })),
+];
+
+/** A peça colocada saiu da paleta: só existe em fase antiga. */
+export function isRetiredPiece(object: PlacedPiece): boolean {
+  return !matchingPiece(EDITOR_PIECES, object) && Boolean(matchingPiece(RETIRED_PIECES, object));
+}
+
+/** Nome da peça colocada, como a criança lê no editor — também o das peças que saíram da paleta. */
+export function editorPieceLabel(object: PlacedPiece): string {
+  const piece = matchingPiece(EDITOR_PIECES, object) ?? matchingPiece(RETIRED_PIECES, object) ?? findEditorPiece(object);
+
+  return piece?.label ?? object.type;
+}
 
 export const THEME_LABELS: Readonly<Record<LevelTheme, { readonly label: string; readonly emoji: string }>> = {
   vale: { label: 'Vale', emoji: '🌳' },

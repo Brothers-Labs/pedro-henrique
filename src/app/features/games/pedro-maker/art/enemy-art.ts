@@ -35,6 +35,7 @@ const ENEMY_PAINTERS: Readonly<Record<EnemyKind, Painter>> = {
   'king-cactus': paintKingCactus,
   'living-pumpkin': paintLivingPumpkin,
   witch: paintWitch,
+  'walking-bomb': paintWalkingBomb,
 };
 
 export function paintEnemyIcon(context: CanvasRenderingContext2D, kind: EnemyKind): void {
@@ -355,6 +356,42 @@ function paintBee(context: CanvasRenderingContext2D): void {
   context.fill();
 
   eye(context, 35, 27, 3.4, 0.3);
+}
+
+/** Bomb-omb: bomba preta redonda de pezinhos, com a chave de corda nas costas e o pavio aceso em cima. */
+function paintWalkingBomb(context: CanvasRenderingContext2D): void {
+  const shell = '#2b2d42';
+
+  for (const footX of [16, 32]) {
+    ellipse(context, footX, 44, 7, 3.5);
+    fillAndOutline(context, '#f2a541', 2);
+  }
+
+  // Chave de corda, saindo de trás da bomba.
+  roundedRect(context, 38, 22, 6, 4, 1.5);
+  fillAndOutline(context, '#c9ccd6', 2);
+  roundedRect(context, 41, 14, 5, 20, 2);
+  fillAndOutline(context, '#c9ccd6', 2);
+
+  circle(context, 24, 28, 15);
+  fillAndOutline(context, shell);
+  shine(context, 17, 20, 5, 3);
+
+  // Bocal e pavio torto, com a faísca na ponta.
+  roundedRect(context, 20, 9, 8, 5, 1.5);
+  fillAndOutline(context, '#8d96a8', 2);
+  context.strokeStyle = '#a8763e';
+  context.lineWidth = 2.5;
+  context.beginPath();
+  context.moveTo(24, 9);
+  context.quadraticCurveTo(26, 4, 30, 4);
+  context.stroke();
+  circle(context, 31, 3.5, 2.8);
+  context.fillStyle = '#ffd23f';
+  context.fill();
+
+  eye(context, 20, 27, 4, 0);
+  eye(context, 28, 27, 4, 0);
 }
 
 function paintGoomba(context: CanvasRenderingContext2D): void {

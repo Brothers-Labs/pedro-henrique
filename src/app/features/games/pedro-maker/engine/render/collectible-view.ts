@@ -63,6 +63,8 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'reverse-mushroom': '#20c997',
   'mini-mushroom': '#4361ee',
   'pedrere-mushroom': '#ffb92e',
+  'extra-life-mushroom': '#3ddc6b',
+  'bubble-flower': '#3fc5f0',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -531,6 +533,10 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return scaleParts(mushroomParts(POWER_UP_COLORS['mini-mushroom']), 0.6);
     case 'pedrere-mushroom':
       return [...mushroomParts(POWER_UP_COLORS['pedrere-mushroom']), ...pedrereCapParts()];
+    case 'extra-life-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['extra-life-mushroom']), ...plusSignParts()];
+    case 'bubble-flower':
+      return [...flowerParts(POWER_UP_COLORS['bubble-flower'], '#e0fbff'), ...bubbleParts()];
     default:
       return null;
   }
@@ -646,6 +652,20 @@ function pedrereCapParts(): readonly VoxelBox[] {
     box(0, 0.28, 0.2, 0.28, 0.04, 0.14, cap),
     box(0, 0.39, 0, 0.06, 0.02, 0.06, '#ff9c99'),
   ];
+}
+
+/** Um "+" dourado flutuando em cima do chapéu: o Cogumelo 1UP dá uma vida a mais. */
+function plusSignParts(): readonly VoxelBox[] {
+  const gold = '#ffd23f';
+
+  return [box(0, 0.42, 0, 0.22, 0.07, 0.07, gold), box(0, 0.42, 0, 0.07, 0.22, 0.07, gold)];
+}
+
+/** Bolhinhas transparentes de cubo em volta da Flor de Bolha. */
+function bubbleParts(): readonly VoxelBox[] {
+  const bubble = '#c9f6ff';
+
+  return [box(0.3, 0.3, 0, 0.12, 0.12, 0.12, bubble), box(0.38, 0.12, 0, 0.08, 0.08, 0.08, bubble), box(-0.32, 0.24, 0, 0.09, 0.09, 0.09, bubble)];
 }
 
 /** Duas setinhas douradas, uma de cada lado do chapéu, apontando em sentidos opostos: troca. */

@@ -21,6 +21,8 @@ export interface EnemyPose {
   readonly isMoving: boolean;
   /** O Bolão tremendo antes do bote. */
   readonly isWindingUp: boolean;
+  /** A Bomb-omb com o pavio aceso, prestes a explodir. */
+  readonly isFuseLit: boolean;
   /** Onde fica a estaca da corrente, em blocos, a partir dos pés do inimigo; `null` sem corrente. */
   readonly tether: { readonly x: number; readonly y: number } | null;
 }
@@ -69,7 +71,8 @@ export class EnemyMaterials {
  * com o nariz para a frente, o thwomp treme de raiva e o Rei Slime quica como
  * o slime. O Bolão treme antes do bote e arrasta a corrente presa na estaca,
  * que fica no chão enquanto ele vai e volta. Os peixes nadam de perfil
- * abanando o rabo, e o saltador some na água entre um pulo e outro.
+ * abanando o rabo, e o saltador some na água entre um pulo e outro. A
+ * Bomb-omb marcha como o goomba e, com o pavio aceso, incha e treme.
  * Congelado, para dentro de um bloco de gelo. Derrotado, achata e some.
  */
 export class EnemyModel {
@@ -242,6 +245,19 @@ export class EnemyModel {
         // Na vassoura, sobe e desce e inclina de leve, como quem voa de verdade.
         this.body.position.y = Math.sin(time * 3) * 0.04;
         this.body.rotation.z = Math.sin(time * 2) * 0.08;
+        return;
+      case 'walking-bomb':
+        // Pavio aceso: incha e desincha tremendo, cada vez mais rápido — hora de correr.
+        if (pose.isFuseLit) {
+          const pulse = 1 + Math.abs(Math.sin(time * 18)) * 0.12;
+
+          this.body.scale.set(pulse, pulse, pulse);
+          this.body.rotation.z = Math.sin(time * 50) * 0.08;
+          return;
+        }
+
+        this.body.scale.setScalar(1);
+        this.body.rotation.z = pose.isMoving ? Math.sin(time * 12) * 0.1 : 0;
         return;
       case 'iron-ball':
         // Rola na direção do bote e treme forte no aviso, para dar tempo de fugir.
@@ -487,6 +503,24 @@ const PARTS: Readonly<Record<EnemyKind, readonly VoxelBox[]>> = {
     box(-0.12, 0.56, 0, 0.12, 0.14, 0.12, '#ffb020'),
     box(0.1, 0.6, 0.04, 0.1, 0.12, 0.1, '#ffd23f'),
     ...eyes(0.3, 0.255, 0.1, 0.1),
+  ],
+  'walking-bomb': [
+    box(-0.16, 0.05, 0.04, 0.2, 0.1, 0.26, '#f2a541'),
+    box(0.16, 0.05, 0.04, 0.2, 0.1, 0.26, '#f2a541'),
+    // Corpo redondo de cubos: três caixas cruzadas fazem a bola preta.
+    box(0, 0.4, 0, 0.64, 0.5, 0.5, '#2b2d42'),
+    box(0, 0.4, 0, 0.52, 0.62, 0.5, '#2b2d42'),
+    box(0, 0.4, 0, 0.52, 0.5, 0.58, '#2b2d42'),
+    box(-0.16, 0.55, 0.291, 0.1, 0.08, 0.01, '#5a5f7a'),
+    // Bocal de metal, pavio e a faísca na ponta.
+    box(0, 0.74, 0, 0.2, 0.08, 0.2, '#8d96a8'),
+    box(0.03, 0.82, 0, 0.05, 0.1, 0.05, '#a8763e'),
+    box(0.06, 0.9, 0, 0.08, 0.08, 0.08, '#ffd23f'),
+    // Chave de corda nas costas.
+    box(0, 0.42, -0.33, 0.06, 0.06, 0.1, '#c9ccd6'),
+    box(0, 0.42, -0.4, 0.34, 0.08, 0.05, '#c9ccd6'),
+    box(0, 0.42, -0.4, 0.08, 0.24, 0.05, '#c9ccd6'),
+    ...eyes(0.42, 0.291, 0.11, 0.1),
   ],
   goomba: [
     box(-0.17, 0.05, 0.04, 0.2, 0.1, 0.26, '#2a1a10'),

@@ -17,6 +17,7 @@ const STAR_GLOW = 0.65;
 const FLOWER_GLOW = 0.22;
 const FIRE_COLOR = '#ff5a1f';
 const ICE_COLOR = '#3fb8ff';
+const BUBBLE_COLOR = '#5fd4ff';
 const CAT_COLOR = '#ff9f1a';
 const CAT_STRIPE = '#c86a00';
 const LEAF_COLOR = '#2f9e44';
@@ -54,6 +55,7 @@ export interface PedroPose {
   readonly hasStar: boolean;
   readonly hasFireFlower: boolean;
   readonly hasIceFlower: boolean;
+  readonly hasBubbleFlower: boolean;
   readonly hasCatSuit: boolean;
   readonly hasLeafSuit: boolean;
   /** Subindo uma parede com o Cogumelo Gato. */
@@ -264,8 +266,8 @@ export class PedroModel {
     } else if (pose.isTall) {
       emissive.set(TALL_COLOR);
       this.material.emissiveIntensity = TALL_GLOW;
-    } else if (pose.hasFireFlower || pose.hasIceFlower) {
-      emissive.set(pose.hasFireFlower ? FIRE_COLOR : ICE_COLOR);
+    } else if (pose.hasFireFlower || pose.hasIceFlower || pose.hasBubbleFlower) {
+      emissive.set(flowerColor(pose));
       this.material.emissiveIntensity = FLOWER_GLOW;
     } else {
       this.material.emissiveIntensity = 0;
@@ -511,4 +513,13 @@ export class PedroModel {
 /** Altura do ponto mais alto das peças: o topo da cabeça (ou do boné) de cada herói. */
 function topOf(parts: readonly VoxelBox[]): number {
   return Math.max(...parts.map((part) => part.y + part.height / 2));
+}
+
+/** O brilho do traje de flor: laranja no fogo, azul no gelo, azul-claro na bolha. */
+function flowerColor(pose: PedroPose): string {
+  if (pose.hasFireFlower) {
+    return FIRE_COLOR;
+  }
+
+  return pose.hasIceFlower ? ICE_COLOR : BUBBLE_COLOR;
 }

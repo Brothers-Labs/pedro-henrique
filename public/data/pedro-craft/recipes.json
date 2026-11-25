@@ -71,6 +71,7 @@
     { "id": "netherite-half", "type": "shaped", "station": "workbench", "pattern": ["BBB"], "key": { "B": "netherite-block" }, "output": { "item": "netherite-half", "count": 6 } },
     { "id": "netherite-block-from-halves", "type": "shapeless", "station": "hand", "ingredients": [{ "item": "netherite-half", "count": 2 }], "output": { "item": "netherite-block" } },
     { "id": "lever", "type": "shaped", "station": "hand", "pattern": ["S", "C"], "key": { "S": "stick", "C": "cobblestone" }, "output": { "item": "lever" } },
+    { "id": "lamp", "type": "shaped", "station": "workbench", "pattern": [" G ", "GTG", " G "], "key": { "G": "glass", "T": "torch" }, "output": { "item": "lamp" } },
     { "id": "rail", "type": "shaped", "station": "workbench", "pattern": ["I I", "ISI", "I I"], "key": { "I": "iron-ingot", "S": "stick" }, "output": { "item": "rail", "count": 16 } },
     { "id": "train", "type": "shaped", "station": "workbench", "pattern": ["IFI", "III"], "key": { "I": "iron-ingot", "F": "furnace" }, "output": { "item": "train" } },
     { "id": "gold-block", "type": "shaped", "station": "workbench", "pattern": ["GGG", "GGG", "GGG"], "key": { "G": "gold-ingot" }, "output": { "item": "gold-block" } },

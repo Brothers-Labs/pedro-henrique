@@ -1,6 +1,8 @@
 import { heroDefinition, nextHero } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import {
+  BUBBLE_PHYSICS,
+  EXTRA_LIFE,
   GIGA_PHYSICS,
   MAGNET_MUSHROOM_RADIUS,
   MAGNET_RADIUS,
@@ -29,12 +31,13 @@ import { IDLE_INPUT, type InputSnapshot } from '../input/input-snapshot';
 import { BlockSystem, type BlockHost, type SpawnExtra } from './blocks';
 import { CannonSystem } from './cannons';
 import { ClimbChainSystem } from './climb-chains';
-import { CrusherSystem } from './crushers';
+import { crusherCenterX, CrusherSystem } from './crushers';
 import { FireBarSystem } from './fire-bars';
+import { FireTrapSystem } from './fire-traps';
 import { type PSwitchHost, PSwitchSystem } from './p-switch';
 import { Boss, type BossHost } from './boss';
 import { type Collectible, CollectibleSystem, type CollectibleHost, coinValue, MEGA_COIN } from './collectibles';
-import { Enemy, ENEMY_DEFEAT_MS } from './enemy';
+import { Enemy, ENEMY_DEFEAT_MS, WALKING_BOMB } from './enemy';
 import { type BallElement, type Fireball, FireballSystem } from './fireballs';
 import { type LockHost, LockSystem } from './locks';
 import {
@@ -71,6 +74,7 @@ const BOSS_WAKE_DISTANCE = 11;
 const ACTION_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'fire-flower': 'para soltar bolas de fogo!',
   'ice-flower': 'para soltar bolas de gelo!',
+  'bubble-flower': 'para soprar bolhas! Elas voam reto e prendem os inimigos.',
   'raccoon-leaf': 'para girar o rabo! E segure o pulo no ar para voar.',
 };
 
@@ -88,6 +92,13 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'coin-x9999': 'Moeda ×9999! A mais forte de todas: cada moeda vale 9999!',
   'mini-mushroom': 'Você ficou pequenininho! Passe pelos buraquinhos e pule bem levinho!',
   'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
+};
+
+/** O som de cada bola lançada pelas flores. */
+const BALL_SOUNDS: Readonly<Record<BallElement, MakerSoundCue>> = {
+  fire: 'fireball',
+  ice: 'iceball',
+  bubble: 'bubble',
 };
 
 /** Amigos que entram junto com o Jogador 1: o Jogador 2 e o Jogador 3. */
@@ -171,6 +182,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   readonly slides: SlideSystem;
   readonly cannons: CannonSystem;
   readonly fireBars: FireBarSystem;
+  readonly fireTraps: FireTrapSystem;
   readonly pSwitches: PSwitchSystem;
   readonly locks: LockSystem;
   readonly crushers: CrusherSystem;
@@ -187,6 +199,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   private readonly random: SeededRandom;
   private runTimeMs = 0;
   private hearts: number;
+  /** Corações a mais dos Cogumelos 1UP pegos nesta partida, além do máximo da fase. */
+  private extraHearts = 0;
   private currentHero: HeroId;
   private coins = 0;
   private readonly coinsTotal: number;
@@ -225,6 +239,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.createEnemies(blueprint.objects);
     this.cannons = new CannonSystem(blueprint.objects);
     this.fireBars = new FireBarSystem(blueprint.objects);
+    this.fireTraps = new FireTrapSystem(blueprint.objects, this.grid);
     this.pSwitches = new PSwitchSystem(blueprint.objects, this.grid, this.blocks, this.collectibles, this);
     this.locks = new LockSystem(blueprint.objects, this.grid, this);
     // Depois das portas e correntes: a prensa desce só até o primeiro bloco firme embaixo dela.
@@ -301,14 +316,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.triggers.update(this.clockMs, centerX(body), centerY(body), input.actionPressed);
     this.checkHazards();
     this.checkFireBars();
+    this.checkFireTraps();
     this.checkPartners();
   }
 
   /* Comandos vindos da tela ------------------------------------------------------ */
 
-  /** Volta ao último checkpoint com os corações cheios. */
+  /** Volta ao último checkpoint com os corações cheios — os do Cogumelo 1UP também. */
   retryFromCheckpoint(): void {
-    this.hearts = this.options.rules.hearts;
+    this.hearts = this.maxHearts;
     this.isDefeated = false;
     this.player.clearPowerUps();
     this.player.placeFeetAt(this.respawnX, this.respawnY);
@@ -453,6 +469,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         body.previousY = body.y;
       }
 
+      if (enemy.takeExplosion(this.clockMs)) {
+        this.explodeBomb(enemy);
+        continue;
+      }
+
       if (!this.player.isActive || this.clockMs < enemy.harmlessUntil || !overlaps(playerBody, body)) {
         continue;
       }
@@ -490,9 +511,10 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     const body = player.body;
     const x = centerX(body) + player.facing * body.width;
-    const y = centerY(body) - 6;
+    // A bolha sai rente ao chão, para pegar até os inimigos baixinhos; as bolas, da mão.
+    const y = element === 'bubble' ? bottom(body) - BUBBLE_PHYSICS.size / 2 - BUBBLE_PHYSICS.groundGap : centerY(body) - 6;
 
-    this.playSound(element === 'ice' ? 'iceball' : 'fireball');
+    this.playSound(BALL_SOUNDS[element]);
 
     // Colado na parede, a bola nasceria dentro do bloco e o atravessaria: ela se desfaz ali mesmo.
     if (this.grid.isSolidCell(cellOf(x), cellOf(y))) {
@@ -553,7 +575,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     for (const fireball of [...this.fireballs.fireballs]) {
       const body = fireball.body;
 
-      if (this.blocks.isWaterAtPoint(centerX(body), centerY(body))) {
+      // A água apaga o fogo e o gelo; a bolha passa por ela.
+      if (fireball.element !== 'bubble' && this.blocks.isWaterAtPoint(centerX(body), centerY(body))) {
         this.fireballs.remove(fireball);
         this.effects.burst('bubble', centerX(body), centerY(body), 6);
         continue;
@@ -574,13 +597,24 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.effects.burst(fireball.element, centerX(fireball.body), centerY(fireball.body), 6);
   }
 
-  /** O fogo derrota; o gelo congela. A bolinha de lava resiste aos dois. */
+  /**
+   * O fogo derrota (e acende o pavio da Bomb-omb); o gelo congela; a bolha
+   * prende o inimigo e estoura com ele. A bolinha de lava resiste ao fogo e ao
+   * gelo; o ferro da bala, do thwomp e do Bolão não cabe na bolha.
+   */
   private hitWithBall(enemy: Enemy, element: BallElement): void {
     if (element === 'fire') {
-      if (!enemy.isFireproof) {
+      if (enemy.explodesWhenStomped) {
+        this.lightBomb(enemy);
+      } else if (!enemy.isFireproof) {
         this.defeatEnemy(enemy);
       }
 
+      return;
+    }
+
+    if (element === 'bubble') {
+      this.trapInBubble(enemy);
       return;
     }
 
@@ -589,6 +623,20 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       this.playSound('freeze');
       this.effects.burst('ice', centerX(enemy.body), centerY(enemy.body), 12);
     }
+  }
+
+  private trapInBubble(enemy: Enemy): void {
+    const x = centerX(enemy.body);
+    const y = centerY(enemy.body);
+
+    this.effects.burst('bubble', x, y, 14);
+
+    if (enemy.isFireproof && enemy.kind !== 'lava-bubble') {
+      return;
+    }
+
+    this.defeatEnemy(enemy);
+    this.effects.floatingText(x, y - 30, '🫧 PRESO NA BOLHA!', '#a5f3fc');
   }
 
   private updateBoss(seconds: number): void {
@@ -640,9 +688,9 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         continue;
       }
 
-      const x = (crusher.cellX + 0.5) * TILE_SIZE;
+      const x = crusherCenterX(crusher);
 
-      this.effects.burst('dust', x, (crusher.cellY + crusher.dropCells + 1) * TILE_SIZE, 10);
+      this.effects.burst('dust', x, (crusher.cellY + crusher.dropCells + 1) * TILE_SIZE, 10 * crusher.widthCells);
 
       if (Math.abs(x - centerX(playerBody)) < CRUSHER_SHAKE_DISTANCE) {
         this.effects.shake('leve');
@@ -660,7 +708,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       const crusher = this.crushers.crushing(now, playerBody);
 
       if (crusher) {
-        this.hurtPlayer((crusher.cellX + 0.5) * TILE_SIZE);
+        this.hurtPlayer(crusherCenterX(crusher));
       }
     }
   }
@@ -675,6 +723,19 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     if (bar) {
       this.hurtPlayer(bar.x);
+    }
+  }
+
+  /** A coluna de fogo da armadilha queima como o bastão de fogo; apagada, a armadilha é só um bloco. */
+  private checkFireTraps(): void {
+    if (!this.player.isActive || !this.fireTraps.hasTraps) {
+      return;
+    }
+
+    const trap = this.fireTraps.touching(this.clockMs, this.player.body);
+
+    if (trap) {
+      this.hurtPlayer((trap.cellX + 0.5) * TILE_SIZE);
     }
   }
 
@@ -753,6 +814,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         this.blocks.touchesHazard(body) ||
         Boolean(this.blocks.spikesTouching(body)) ||
         Boolean(this.fireBars.touching(now, body)) ||
+        Boolean(this.fireTraps.touching(now, body)) ||
         Boolean(this.crushers.crushing(now, body)) ||
         this.partnerMeetsEnemies(partner) ||
         this.partnerMeetsBoss(partner);
@@ -801,7 +863,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       }
 
       if (isStomp && enemy.canBeStomped) {
-        this.defeatEnemy(enemy);
+        this.stompEnemy(enemy);
         partner.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
         continue;
       }
@@ -872,7 +934,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
 
     if (isStomp && enemy.canBeStomped) {
-      this.defeatEnemy(enemy);
+      this.stompEnemy(enemy);
       this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
       return;
     }
@@ -894,6 +956,63 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     if (isStomp) {
       this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
+    }
+  }
+
+  /** O pisão derruba o inimigo; na Bomb-omb, acende o pavio. */
+  private stompEnemy(enemy: Enemy): void {
+    if (enemy.explodesWhenStomped) {
+      this.lightBomb(enemy);
+      return;
+    }
+
+    this.defeatEnemy(enemy);
+  }
+
+  private lightBomb(bomb: Enemy): void {
+    if (!bomb.lightFuse(this.clockMs)) {
+      return;
+    }
+
+    this.playSound('button');
+    this.effects.burst('fire', centerX(bomb.body), bomb.body.y, 6);
+    this.effects.floatingText(centerX(bomb.body), bomb.body.y - 24, '💣 CORRE!', '#ffb703');
+  }
+
+  /**
+   * O pavio da Bomb-omb acabou: a explosão quebra os tijolos e derruba os
+   * inimigos em volta, e machuca o herói que ficou perto. O amigo pego na
+   * explosão volta para perto do Jogador 1, como em qualquer perigo.
+   */
+  private explodeBomb(bomb: Enemy): void {
+    const x = centerX(bomb.body);
+    const y = centerY(bomb.body);
+    const radius = WALKING_BOMB.blastRadius;
+    const blast: WorldArea = { x: x - radius, y: y - radius, width: radius * 2, height: radius * 2 };
+    // Filtra antes de derrotar: o Rei Slime derrotado solta slimes novos, que não levam a mesma explosão.
+    const caught = this.enemies.filter((enemy) => enemy !== bomb && !enemy.isDefeated && !enemy.isHidden && overlaps(blast, enemy.body));
+
+    this.defeatEnemy(bomb);
+    this.playSound('explosion');
+    this.effects.burst('fire', x, y, 30);
+    this.effects.burst('poof', x, y, 20);
+    this.effects.shake('forte');
+    this.effects.floatingText(x, y - 40, '💥 BUM!', '#ff8a1f');
+    this.blocks.breakBricksIn(blast);
+    this.pSwitches.breakBricksIn(blast);
+
+    for (const enemy of caught) {
+      this.defeatEnemy(enemy);
+    }
+
+    if (this.player.isActive && overlaps(this.player.body, blast)) {
+      this.hurtPlayer(x);
+    }
+
+    for (const partner of this.partners) {
+      if (partner.isActive && !partner.isInvincible(this.clockMs) && overlaps(partner.body, blast)) {
+        this.bringPartnerBack(partner);
+      }
     }
   }
 
@@ -1150,7 +1269,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         this.emit({ type: 'mascot', text: 'Uau! Você encontrou um cristal!' });
         break;
       case 'heart':
-        this.hearts = Math.min(this.options.rules.hearts, this.hearts + 1);
+        this.hearts = Math.min(this.maxHearts, this.hearts + 1);
         this.playSound('powerup');
         this.effects.floatingText(x, y - 30, '❤️ +1', '#ff8fa3');
         break;
@@ -1245,7 +1364,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     }
 
     for (const crusher of this.crushers.crushers) {
-      this.effects.floatingText((crusher.cellX + 0.5) * TILE_SIZE, crusher.cellY * TILE_SIZE - TILE_SIZE / 2, '⬆️ SUBIU!', '#ffe066');
+      this.effects.floatingText(crusherCenterX(crusher), crusher.cellY * TILE_SIZE - TILE_SIZE / 2, '⬆️ SUBIU!', '#ffe066');
     }
 
     this.playSound('secret');
@@ -1332,10 +1451,15 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.playSound('powerup');
     this.effects.burst('sparkle', x, y, 16);
 
-    // O cogumelo de vida não fica com o Pedro: enche os corações na hora.
+    // O cogumelo de vida (das fases antigas) não fica com o Pedro: enche os corações na hora.
     if (kind === 'one-up') {
-      this.hearts = this.options.rules.hearts;
+      this.hearts = this.maxHearts;
       this.effects.floatingText(x, y - 30, '💚 VIDA CHEIA!', '#8ce99a');
+      return;
+    }
+
+    if (kind === 'extra-life-mushroom') {
+      this.gainExtraLife(x, y);
       return;
     }
 
@@ -1367,6 +1491,22 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (movementTip) {
       this.emit({ type: 'mascot', text: movementTip });
     }
+  }
+
+  /**
+   * Cogumelo 1UP: um coração a mais, além do máximo da fase, até o teto de
+   * `EXTRA_LIFE`. No teto, o cogumelo ainda devolve um coração perdido.
+   */
+  private gainExtraLife(x: number, y: number): void {
+    this.extraHearts = Math.min(EXTRA_LIFE.maxExtraHearts, this.extraHearts + 1);
+    this.hearts = Math.min(this.maxHearts, this.hearts + 1);
+    this.effects.burst('confetti', x, y, 20);
+    this.effects.floatingText(x, y - 30, '🆙 1UP! +1 VIDA', '#7ed957');
+  }
+
+  /** Corações cheios desta partida: os da fase mais os do Cogumelo 1UP. */
+  private get maxHearts(): number {
+    return this.options.rules.hearts + this.extraHearts;
   }
 
   /** O troca-personagem não fica com o herói: na hora ele vira o próximo da turma, com os poderes que já tinha. */
@@ -1405,7 +1545,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       type: 'hud',
       hud: {
         hearts: this.hearts,
-        maxHearts: this.options.rules.hearts,
+        maxHearts: this.maxHearts,
         coins: this.coins,
         crystalsFound: this.crystalsFound.filter(Boolean).length,
         crystalsTotal: this.crystalsFound.length,

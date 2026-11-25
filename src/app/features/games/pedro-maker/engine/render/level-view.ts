@@ -14,6 +14,7 @@ import { BlockView } from './block-view';
 import { CameraRig } from './camera-rig';
 import { CollectibleView } from './collectible-view';
 import { FireBarView } from './fire-bar-view';
+import { FireTrapView } from './fire-trap-view';
 import { PSwitchView } from './p-switch-view';
 import { FireballView } from './fireball-view';
 import { LabelLayer, type WorldLabel } from './label-layer';
@@ -85,6 +86,7 @@ export class LevelView {
   private collectibles: CollectibleView | null = null;
   private fireballs: FireballView | null = null;
   private fireBars: FireBarView | null = null;
+  private fireTraps: FireTrapView | null = null;
   private pSwitches: PSwitchView | null = null;
   private locks: LockView | null = null;
   private machines: MachineView | null = null;
@@ -158,8 +160,9 @@ export class LevelView {
         this.machines = new MachineView(simulation.crushers, simulation.climbChains, simulation.grid, this.space);
         this.fireballs = new FireballView(simulation.fireballs, this.space);
         this.fireBars = new FireBarView(simulation.fireBars, this.space);
+        this.fireTraps = new FireTrapView(simulation.fireTraps, this.space);
         this.talkingFlowers = new TalkingFlowerView(simulation.triggers.flowers, this.space);
-        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.talkingFlowers.root, this.pSwitches.root, this.locks.root, this.machines.root);
+        scene.add(this.blocks.root, this.collectibles.root, this.fireballs.root, this.fireBars.root, this.fireTraps.root, this.talkingFlowers.root, this.pSwitches.root, this.locks.root, this.machines.root);
       },
       () => {
         this.props = new PropView(blueprint.objects, simulation.triggers, this.space, palette, blueprint.theme);
@@ -252,6 +255,7 @@ export class LevelView {
     this.collectibles?.update(now);
     this.fireballs?.update(now, alpha);
     this.fireBars?.update(now);
+    this.fireTraps?.update(now);
     this.pSwitches?.update(now);
     this.locks?.update(now);
     this.machines?.update(now);
@@ -283,6 +287,7 @@ export class LevelView {
     this.collectibles?.dispose();
     this.fireballs?.dispose();
     this.fireBars?.dispose();
+    this.fireTraps?.dispose();
     this.pSwitches?.dispose();
     this.locks?.dispose();
     this.machines?.dispose();
@@ -412,6 +417,7 @@ export class LevelView {
           emergence: enemy.emergence,
           isMoving: Math.abs(enemy.body.vx) > 1,
           isWindingUp: enemy.isWindingUp,
+          isFuseLit: enemy.isFuseLit,
           tether: anchor
             ? { x: this.space.x(anchor.x) - model.root.position.x, y: this.space.y(anchor.y) - model.root.position.y }
             : null,
@@ -596,6 +602,7 @@ function poseOf(player: Player, now: number): PedroPose {
     hasStar: player.hasPowerUp('star'),
     hasFireFlower: player.hasPowerUp('fire-flower'),
     hasIceFlower: player.hasPowerUp('ice-flower'),
+    hasBubbleFlower: player.hasPowerUp('bubble-flower'),
     hasCatSuit: player.hasPowerUp('cat-mushroom'),
     hasLeafSuit: player.hasPowerUp('leaf-mushroom'),
     isClimbing: player.isClimbing,

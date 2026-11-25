@@ -37,6 +37,7 @@ const PROFILES: Readonly<Record<EnemyKind, EnemyProfile>> = {
   'king-cactus': { speed: 35, bodyWidth: 50, bodyHeight: 58, flies: false, isStompable: false, isFireproof: false },
   'living-pumpkin': { speed: 60, bodyWidth: 34, bodyHeight: 30, flies: false, isStompable: true, isFireproof: false },
   witch: { speed: 80, bodyWidth: 34, bodyHeight: 34, flies: true, isStompable: true, isFireproof: false },
+  'walking-bomb': { speed: 50, bodyWidth: 32, bodyHeight: 32, flies: false, isStompable: true, isFireproof: false },
 };
 
 /** Distância que o robô patrulha para cada lado do ponto de partida. */
@@ -78,6 +79,15 @@ const CACTUS_SPROUT_INTERVAL_MS = 4000;
 /** A abóbora viva anda pulando: um pulinho baixo a cada intervalo, sempre no chão. */
 const PUMPKIN_HOP_VELOCITY = 520;
 const PUMPKIN_HOP_INTERVAL_MS = 900;
+
+/**
+ * Bomb-omb: tempo do pavio aceso até a explosão, e o alcance dela a partir do
+ * centro da bomba. Dá tempo de a criança pisar e sair correndo.
+ */
+export const WALKING_BOMB = {
+  fuseMs: 1600,
+  blastRadius: TILE_SIZE * 1.8,
+} as const;
 
 /** Um salto para fora do líquido: tempo mergulhado, tempo no ar e a altura do arco. */
 interface LeapProfile {
@@ -166,6 +176,10 @@ export const ENEMY_DEFEAT_MS = 280;
  * patrulha devagar, não se pisa e, de tempos em tempos, solta um espinhudo; a abóbora viva patrulha aos pulinhos; e a
  * bruxa voa de vassoura de um lado para o outro, subindo e descendo.
  *
+ * A Bomb-omb patrulha como o goomba. Pisada (ou atingida pelo fogo), não cai:
+ * acende o pavio, para e pisca; com o pavio aceso não machuca quem encosta.
+ * Quando o pavio acaba, a partida faz a explosão.
+ *
  * Atingido pela Flor de Gelo, qualquer um vira um bloco de gelo parado, que
  * não machuca e quebra com um pisão; depois de um tempo, derrete e volta.
  */
@@ -200,6 +214,9 @@ export class Enemy {
   private lungeTarget: WorldPoint = { x: 0, y: 0 };
   private nextSproutAt: number | null = null;
   private hasSprout = false;
+  /** Quando a Bomb-omb acendeu o pavio; `null` enquanto apagado. */
+  private fuseLitAt: number | null = null;
+  private hasExploded = false;
 
   constructor(
     readonly id: number,
@@ -258,7 +275,17 @@ export class Enemy {
   }
 
   get isHarmful(): boolean {
-    return !this.isDefeated && !this.isHidden && !this.isFrozen;
+    return !this.isDefeated && !this.isHidden && !this.isFrozen && !this.isFuseLit;
+  }
+
+  /** A Bomb-omb não cai com o pisão: acende o pavio. */
+  get explodesWhenStomped(): boolean {
+    return this.kind === 'walking-bomb';
+  }
+
+  /** Pavio aceso: a tela faz a bomba piscar. */
+  get isFuseLit(): boolean {
+    return this.fuseLitAt !== null;
   }
 
   /** O goomba, o cogumelo que anda, quica no bloco musical; preso no gelo, não. */
@@ -338,7 +365,38 @@ export class Enemy {
       case 'iron-ball':
         this.strainAtChain(now, targetX, targetY);
         return;
+      case 'walking-bomb':
+        if (this.isFuseLit) {
+          this.standStill();
+        } else {
+          this.patrolLedges();
+        }
+
+        return;
     }
+  }
+
+  /** Acende o pavio da Bomb-omb, que para onde está. Diz se acendeu agora (um pavio aceso não reacende). */
+  lightFuse(now: number): boolean {
+    if (!this.explodesWhenStomped || this.isFuseLit || this.isDefeated) {
+      return false;
+    }
+
+    this.fuseLitAt = now;
+    this.standStill();
+
+    return true;
+  }
+
+  /** Verdadeiro uma única vez, quando o pavio da Bomb-omb acaba: a partida faz a explosão. */
+  takeExplosion(now: number): boolean {
+    if (this.fuseLitAt === null || this.hasExploded || this.isDefeated || now - this.fuseLitAt < WALKING_BOMB.fuseMs) {
+      return false;
+    }
+
+    this.hasExploded = true;
+
+    return true;
   }
 
   /** Verdadeiro uma única vez a cada pancada do thwomp no chão, para a partida tremer a tela. */

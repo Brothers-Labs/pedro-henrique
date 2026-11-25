@@ -2,6 +2,8 @@ import { circle, fillAndOutline, roundedRect, shine } from './canvas';
 
 /** Chave, corrente, alavanca, prensa e corrente de subir ocupam o quadrado de um bloco: 48 por 48. */
 export const LOCK_ART_SIZE = 48;
+/** A Prensa Esmagadora Larga tem três blocos no jogo; no ícone, o dobro da largura já se lê de longe. */
+export const WIDE_CRUSHER_ART_WIDTH = LOCK_ART_SIZE * 2;
 /** A porta com cadeado tem dois blocos de altura, como as outras portas. */
 export const LOCKED_DOOR_WIDTH = 48;
 export const LOCKED_DOOR_HEIGHT = 96;
@@ -112,32 +114,44 @@ export function paintLever(context: CanvasRenderingContext2D): void {
 
 /** Prensa Esmagadora: haste de aço saindo do alto, cabeça de ferro de olhos bravos, faixa de cuidado e dentes embaixo. */
 export function paintCrusher(context: CanvasRenderingContext2D): void {
-  roundedRect(context, 20, 0, 8, 9, 1.5);
-  fillAndOutline(context, STEEL, 2);
+  paintCrusherOfWidth(context, LOCK_ART_SIZE);
+}
 
-  roundedRect(context, 3, 8, 42, 30, 4);
+/** Prensa Esmagadora Larga: a mesma cabeça de ferro, comprida, presa por duas hastes. */
+export function paintWideCrusher(context: CanvasRenderingContext2D): void {
+  paintCrusherOfWidth(context, WIDE_CRUSHER_ART_WIDTH);
+}
+
+/** Cabeça da prensa com `width` pixels de largura: hastes, olhos bravos, faixa de cuidado e dentes. */
+function paintCrusherOfWidth(context: CanvasRenderingContext2D, width: number): void {
+  const middle = width / 2;
+  const shafts = width === LOCK_ART_SIZE ? [middle] : [16, width - 16];
+
+  for (const x of shafts) {
+    roundedRect(context, x - 4, 0, 8, 9, 1.5);
+    fillAndOutline(context, STEEL, 2);
+  }
+
+  roundedRect(context, 3, 8, width - 6, 30, 4);
   fillAndOutline(context, DARK_STEEL, 3);
 
   // Olhos bravos.
-  for (const x of [15, 33]) {
+  for (const x of [middle - 9, middle + 9]) {
     roundedRect(context, x - 5, 15, 10, 7, 2);
     fillAndOutline(context, '#ffffff', 1.5);
     context.fillStyle = '#1a1a2e';
     context.fillRect(x - 2, 17, 4, 4);
+    context.fillRect(x - 6, 12, 11, 2.5);
   }
 
-  context.fillStyle = '#1a1a2e';
-  context.fillRect(9, 12, 11, 2.5);
-  context.fillRect(28, 12, 11, 2.5);
-
   // Faixa amarela e preta de cuidado.
-  for (let stripe = 0; stripe < 6; stripe += 1) {
+  for (let stripe = 0; stripe < Math.floor((width - 12) / 6); stripe += 1) {
     context.fillStyle = stripe % 2 === 0 ? GOLD : '#1a1a2e';
     context.fillRect(6 + stripe * 6, 27, 6, 7);
   }
 
   // Dentes de aço.
-  for (let tooth = 0; tooth < 5; tooth += 1) {
+  for (let tooth = 0; tooth < Math.floor((width - 8) / 8); tooth += 1) {
     const x = 6 + tooth * 8;
 
     context.beginPath();

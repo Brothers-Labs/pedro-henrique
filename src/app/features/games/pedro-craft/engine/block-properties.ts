@@ -1,5 +1,5 @@
 import type { CraftCatalog } from '../content/craft-catalog';
-import type { BlockShape } from '../models/content.model';
+import { type BlockShape, WALL_SIDES, type WallSide } from '../models/content.model';
 import type { VoxelWorld } from '../world/voxel-world';
 
 /** Forma do bloco como número, para caber num `Uint8Array`; 0 é o ar. */
@@ -15,6 +15,32 @@ export const SHAPE_CODE: Readonly<Record<BlockShape, number>> = {
   half: 9,
   wire: 10,
 };
+
+/** Um passo de lado, até o vizinho em x ou em z. */
+export interface WallOffset {
+  readonly dx: number;
+  readonly dz: number;
+}
+
+/** Onde fica a parede de cada lado: o passo da célula da peça até o bloco que a segura. */
+export const WALL_OFFSETS: Readonly<Record<WallSide, WallOffset>> = {
+  north: { dx: 0, dz: -1 },
+  east: { dx: 1, dz: 0 },
+  south: { dx: 0, dz: 1 },
+  west: { dx: -1, dz: 0 },
+};
+
+/** O lado cuja parede fica a um passo de (`dx`, `dz`); `null` se o passo não é de lado. */
+export function wallSideAt(dx: number, dz: number): WallSide | null {
+  return WALL_SIDES.find((side) => WALL_OFFSETS[side].dx === dx && WALL_OFFSETS[side].dz === dz) ?? null;
+}
+
+/** O passo até a parede da peça pelo código de `BlockProperties.wallSide`; `null` para a peça do chão. */
+export function wallOffsetOf(code: number): WallOffset | null {
+  const side = WALL_SIDES[code - 1];
+
+  return side ? WALL_OFFSETS[side] : null;
+}
 
 /**
  * Propriedades dos blocos em vetores indexados pelo número interno.
@@ -40,6 +66,8 @@ export class BlockProperties {
   readonly isPowered: Uint8Array;
   /** A linha desenha uma ponta até este vizinho: outra peça de circuito ou a TNT que ela acende. */
   readonly connectsWire: Uint8Array;
+  /** Parede em que a peça está colada: 0 é o chão; de 1 em diante, a posição em `WALL_SIDES` mais um. */
+  readonly wallSide: Uint8Array;
 
   constructor(catalog: CraftCatalog) {
     const count = catalog.blockCount;
@@ -54,6 +82,7 @@ export class BlockProperties {
     this.isTargetable = new Uint8Array(count);
     this.isPowered = new Uint8Array(count);
     this.connectsWire = new Uint8Array(count);
+    this.wallSide = new Uint8Array(count);
 
     for (let number = 1; number < count; number += 1) {
       const block = catalog.blockAt(number);
@@ -72,6 +101,7 @@ export class BlockProperties {
       this.isTargetable[number] = block.shape !== 'liquid' && block.portal === null ? 1 : 0;
       this.isPowered[number] = block.circuit?.powered ? 1 : 0;
       this.connectsWire[number] = block.circuit !== null || block.explosive !== null ? 1 : 0;
+      this.wallSide[number] = block.attachedTo === null ? 0 : WALL_SIDES.indexOf(block.attachedTo) + 1;
     }
   }
 }

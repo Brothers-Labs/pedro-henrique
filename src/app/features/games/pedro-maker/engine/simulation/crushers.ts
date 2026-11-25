@@ -1,3 +1,4 @@
+import { CRUSHER_WIDTH_CELLS, isCrusherType } from '../../config/object-catalog';
 import { TILE_SIZE } from '../../config/physics.config';
 import type { LevelObject } from '../../models/level.model';
 import { overlaps, type WorldArea } from './physics-body';
@@ -30,10 +31,12 @@ export type CrusherPhase = 'rest' | 'fall' | 'down' | 'rise' | 'raised';
 
 export interface Crusher {
   readonly id: number;
-  /** Célula onde a prensa foi posta: é a casa dela, lá em cima. */
+  /** Coluna da esquerda e linha da casa da prensa, lá em cima. */
   readonly cellX: number;
   readonly cellY: number;
-  /** Quantos blocos vazios há embaixo dela até o chão (limitado por `maxDropCells`). */
+  /** Quantos blocos de largura: 1 na prensa comum, 3 na larga. */
+  readonly widthCells: number;
+  /** Quantos blocos vazios há embaixo dela até o chão, na coluna mais rasa (limitado por `maxDropCells`). */
   readonly dropCells: number;
   /** Prensas lado a lado não descem juntas: cada uma começa num ponto do ciclo. */
   readonly cycleOffsetMs: number;
@@ -61,6 +64,9 @@ export interface CrusherState {
  *
  * Uma alavanca puxada levanta todas as prensas de vez, e elas não descem mais:
  * o caminho embaixo fica livre.
+ *
+ * A Prensa Esmagadora Larga é a mesma prensa com três blocos de largura: desce
+ * só até o chão mais alto embaixo dela, para nunca atravessar um bloco.
  */
 export class CrusherSystem {
   readonly crushers: Crusher[] = [];
@@ -70,15 +76,19 @@ export class CrusherSystem {
     private readonly grid: TileGrid,
   ) {
     for (const object of objects) {
-      if (object.type !== 'crusher') {
+      if (!isCrusherType(object.type)) {
         continue;
       }
 
+      const widthCells = CRUSHER_WIDTH_CELLS[object.type];
+      const cellX = object.x - Math.floor(widthCells / 2);
+
       this.crushers.push({
         id: this.crushers.length + 1,
-        cellX: object.x,
+        cellX,
         cellY: object.y,
-        dropCells: countDrop(grid, object.x, object.y),
+        widthCells,
+        dropCells: countDrop(grid, cellX, object.y, widthCells),
         cycleOffsetMs: (this.crushers.length * 700) % CRUSHER_CYCLE_MS,
         isRaised: false,
         raisedAt: 0,
@@ -137,7 +147,7 @@ export class CrusherSystem {
   headArea(crusher: Crusher, now: number): WorldArea {
     const { offsetPx } = this.stateOf(crusher, now);
 
-    return { x: crusher.cellX * TILE_SIZE, y: crusher.cellY * TILE_SIZE + offsetPx, width: TILE_SIZE, height: TILE_SIZE };
+    return { x: crusher.cellX * TILE_SIZE, y: crusher.cellY * TILE_SIZE + offsetPx, width: crusher.widthCells * TILE_SIZE, height: TILE_SIZE };
   }
 
   /** A prensa que está esmagando este corpo agora; `null` se nenhuma. */
@@ -178,14 +188,13 @@ export class CrusherSystem {
         continue;
       }
 
-      const home: WorldArea = { x: crusher.cellX * TILE_SIZE, y: crusher.cellY * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE };
+      const home: WorldArea = { x: crusher.cellX * TILE_SIZE, y: crusher.cellY * TILE_SIZE, width: crusher.widthCells * TILE_SIZE, height: TILE_SIZE };
 
       if (shouldBeSolid && bodies.some((body) => overlaps(body, home))) {
         continue;
       }
 
-      crusher.isHomeSolid = shouldBeSolid;
-      this.grid.setCollision(crusher.cellX, crusher.cellY, shouldBeSolid ? COLLISION.solid : COLLISION.empty);
+      this.setHomeSolid(crusher, shouldBeSolid);
     }
   }
 
@@ -204,20 +213,46 @@ export class CrusherSystem {
       raised += 1;
 
       if (crusher.isHomeSolid) {
-        crusher.isHomeSolid = false;
-        this.grid.setCollision(crusher.cellX, crusher.cellY, COLLISION.empty);
+        this.setHomeSolid(crusher, false);
       }
     }
 
     return raised;
   }
+
+  private setHomeSolid(crusher: Crusher, isSolid: boolean): void {
+    crusher.isHomeSolid = isSolid;
+
+    for (let column = crusher.cellX; column < crusher.cellX + crusher.widthCells; column += 1) {
+      if (this.grid.contains(column, crusher.cellY)) {
+        this.grid.setCollision(column, crusher.cellY, isSolid ? COLLISION.solid : COLLISION.empty);
+      }
+    }
+  }
 }
 
-/** Blocos vazios embaixo da prensa até o primeiro firme (ou o fundo da fase). */
-function countDrop(grid: TileGrid, cellX: number, cellY: number): number {
+/** Centro da prensa na horizontal, em pixels do mundo. */
+export function crusherCenterX(crusher: Crusher): number {
+  return (crusher.cellX + crusher.widthCells / 2) * TILE_SIZE;
+}
+
+/**
+ * Blocos vazios embaixo da prensa até o primeiro firme (ou o fundo da fase),
+ * na coluna mais rasa: a prensa larga para no chão mais alto embaixo dela.
+ */
+function countDrop(grid: TileGrid, cellX: number, cellY: number, widthCells: number): number {
+  const isFree = (row: number): boolean => {
+    for (let column = cellX; column < cellX + widthCells; column += 1) {
+      if (!grid.contains(column, row) || grid.collisionAt(column, row) !== COLLISION.empty) {
+        return false;
+      }
+    }
+
+    return true;
+  };
   let drop = 0;
 
-  while (drop < CRUSHER.maxDropCells && grid.contains(cellX, cellY + drop + 1) && grid.collisionAt(cellX, cellY + drop + 1) === COLLISION.empty) {
+  while (drop < CRUSHER.maxDropCells && isFree(cellY + drop + 1)) {
     drop += 1;
   }
 

@@ -213,7 +213,11 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
   }
 
   if (block.circuit?.role === 'wire') {
-    return 'Coloque no chão, em fila, da alavanca até uma porta ou uma TNT. A linha leva o comando e fica amarela quando está ligada.';
+    return 'Coloque no chão ou na parede, em fila, da alavanca até uma porta, uma lâmpada ou uma TNT. A linha leva o comando e fica amarela quando está ligada.';
+  }
+
+  if (block.circuit?.role === 'receiver' && block.toggleInto === null) {
+    return 'Coloque encostada na linha ou na alavanca: quando o comando chega, ela acende e ilumina a noite.';
   }
 
   if (block.light > 0) {
@@ -232,6 +236,10 @@ function blockSentence(blockId: string, catalog: CraftCatalog): string {
     const igniters = ALTERNATIVES.format(block.explosive.igniters.map((igniter) => catalog.item(igniter).name.toLowerCase()));
 
     return `Coloque no chão e, para acender, use nela o item ${igniters}. Depois, corra para longe!`;
+  }
+
+  if (block.hardness === null) {
+    return 'Nada quebra este bloco: nem picareta, nem TNT. Só no modo Criativo dá para tirar o que você colocou.';
   }
 
   if (block.blastResistant) {

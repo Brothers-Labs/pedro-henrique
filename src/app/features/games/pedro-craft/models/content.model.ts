@@ -92,8 +92,9 @@ export interface TextureSpec {
  * `carpet` é o tapete: uma lâmina fininha deitada no chão, que se atravessa andando.
  * `half` é o meio bloco: a metade de baixo de um bloco, firme para pisar e
  * construir degraus de meia altura.
- * `wire` é a linha deitada no chão: como o trilho, liga-se sozinha às vizinhas
- * e leva o comando da alavanca pelo circuito.
+ * `wire` é a linha do circuito: deitada no chão, liga-se sozinha às vizinhas
+ * como o trilho e leva o comando da alavanca; com `attachedTo`, fica colada
+ * na parede.
  */
 export const BLOCK_SHAPES = ['cube', 'cross', 'liquid', 'torch', 'fence', 'slab', 'rail', 'carpet', 'half', 'wire'] as const;
 
@@ -165,6 +166,14 @@ export interface CircuitPart {
   readonly switchesInto: string | null;
 }
 
+/**
+ * O lado da célula onde fica a parede em que a peça está colada: `north` é o
+ * vizinho em z − 1, `south` em z + 1, `east` em x + 1 e `west` em x − 1.
+ */
+export const WALL_SIDES = ['north', 'east', 'south', 'west'] as const;
+
+export type WallSide = (typeof WALL_SIDES)[number];
+
 export interface BlockDefinition {
   readonly id: string;
   readonly name: string;
@@ -202,6 +211,13 @@ export interface BlockDefinition {
   readonly circuit: CircuitPart | null;
   /** Meio bloco colocado em cima de outro igual: os dois viram este bloco inteiro; `null` para o resto. */
   readonly stacksInto: string | null;
+  /** A peça está colada na parede deste lado da célula, e não deitada no chão; `null` para o resto. */
+  readonly attachedTo: WallSide | null;
+  /**
+   * O mesmo bloco colado em cada parede: mirando o lado de um bloco, coloca-se
+   * este em vez do bloco do chão; `null` para o que só vai no chão.
+   */
+  readonly wallVariants: Readonly<Record<WallSide, string>> | null;
   /** Cor no mapa visto de cima, usado na miniatura do mundo. */
   readonly mapColor: string;
   readonly textures: BlockFaces;

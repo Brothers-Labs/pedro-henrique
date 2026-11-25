@@ -136,8 +136,10 @@ import {
   paintKey,
   paintLever,
   paintLockedDoor,
+  paintWideCrusher,
+  WIDE_CRUSHER_ART_WIDTH,
 } from './lock-art';
-import { PATH_ART_SIZE, paintFireBar, paintPSwitch, paintTalkingFlower, paintWarpPipe } from './path-art';
+import { PATH_ART_SIZE, paintFireBar, paintFireTrap, paintPSwitch, paintTalkingFlower, paintWarpPipe } from './path-art';
 
 /* Ícones do editor ------------------------------------------------------------- */
 
@@ -308,6 +310,9 @@ function drawIcon(
     case 'fire-bar':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintFireBar);
       return;
+    case 'fire-trap':
+      fit(PATH_ART_SIZE, PATH_ART_SIZE, paintFireTrap);
+      return;
     case 'warp-pipe':
       fit(PATH_ART_SIZE, PATH_ART_SIZE, paintWarpPipe);
       return;
@@ -328,6 +333,9 @@ function drawIcon(
       return;
     case 'crusher':
       fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintCrusher);
+      return;
+    case 'wide-crusher':
+      fit(WIDE_CRUSHER_ART_WIDTH, LOCK_ART_SIZE, paintWideCrusher);
       return;
     case 'climb-chain':
       fit(LOCK_ART_SIZE, LOCK_ART_SIZE, paintClimbChain);
@@ -389,6 +397,7 @@ function drawIcon(
     case 'king-cactus':
     case 'living-pumpkin':
     case 'witch':
+    case 'walking-bomb':
       paintEnemyIcon(context, object.type);
       return;
     case 'boss':

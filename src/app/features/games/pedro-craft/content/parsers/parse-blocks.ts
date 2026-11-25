@@ -14,6 +14,8 @@ import {
   type TextureDetail,
   type TextureSpec,
   TOOL_TYPES,
+  WALL_SIDES,
+  type WallSide,
 } from '../../models/content.model';
 import { colorList, ensureUniqueIds, JsonReader, type JsonObjectReader, optionalId, readSchemaVersion } from '../json-reader';
 
@@ -49,6 +51,7 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
   const explosive = block.optionalField('explosive')?.object() ?? null;
   const portal = block.optionalField('portal')?.object() ?? null;
   const circuit = block.optionalField('circuit')?.object() ?? null;
+  const wallVariants = block.optionalField('wallVariants')?.object() ?? null;
 
   return {
     id: block.field('id').id(),
@@ -71,6 +74,8 @@ function parseBlock(block: JsonObjectReader): BlockDefinition {
     portal: portal ? parsePortal(portal) : null,
     circuit: circuit ? parseCircuit(circuit) : null,
     stacksInto: optionalId(block, 'stacksInto'),
+    attachedTo: block.optionalField('attachedTo')?.oneOf(WALL_SIDES) ?? null,
+    wallVariants: wallVariants ? parseWallVariants(wallVariants) : null,
     mapColor: block.field('mapColor').color(),
     textures: parseFaces(block.field('textures').object()),
   };
@@ -94,6 +99,16 @@ function parseCircuit(circuit: JsonObjectReader): CircuitPart {
   }
 
   return { role, powered: circuit.field('powered').boolean(), switchesInto };
+}
+
+/** Um bloco para cada parede: sem um dos lados, a peça não poderia ser colada naquela parede. */
+function parseWallVariants(variants: JsonObjectReader): Readonly<Record<WallSide, string>> {
+  return {
+    north: variants.field('north').id(),
+    east: variants.field('east').id(),
+    south: variants.field('south').id(),
+    west: variants.field('west').id(),
+  };
 }
 
 /** Os itens que acendem: a TNT e o portal pedem pelo menos um, para não ficarem impossíveis de acender. */

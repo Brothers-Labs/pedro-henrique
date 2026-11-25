@@ -2,7 +2,7 @@ import { SeededRandom } from '../../../pedro-maker/levels/seeded-random';
 import type { HeroId } from '../../../pedro-maker/models/progress.model';
 import { STEP_MS } from '../../config/craft-physics.config';
 import { AIR, type CraftCatalog } from '../../content/craft-catalog';
-import type { BucketStats, CreatureDefinition, ItemDefinition, VehicleStats } from '../../models/content.model';
+import type { BlockDefinition, BucketStats, CreatureDefinition, ItemDefinition, VehicleStats } from '../../models/content.model';
 import type { CraftDifficulty } from '../../models/craft-settings.model';
 import type { GameMode } from '../../models/world-save.model';
 import type { SpawnPoint } from '../../world/world-generator';
@@ -1068,7 +1068,8 @@ export class CraftSimulation {
     const tool = this.selectedItem?.tool ?? null;
     const naturalMs = block ? breakDurationMs(block, tool) : null;
     // No Criativo, tudo que quebra quebra na hora.
-    const durationMs = naturalMs !== null && this.mode === 'creative' ? CREATIVE_BREAK_MS : naturalMs;
+    const breaksInCreative = naturalMs !== null || (block !== null && this.isPlacedBedrock(block, target.y));
+    const durationMs = this.mode === 'creative' && breaksInCreative ? CREATIVE_BREAK_MS : naturalMs;
 
     if (!block || durationMs === null) {
       return null;
@@ -1083,6 +1084,14 @@ export class CraftSimulation {
     }
 
     return { x: target.x, y: target.y, z: target.z, elapsedMs: 0, durationMs };
+  }
+
+  /**
+   * A rocha-mãe que o herói colocou com a mochila do Criativo: ali ela sai,
+   * para ninguém ficar preso. A do fundo do mundo segura o chão e nunca quebra.
+   */
+  private isPlacedBedrock(block: BlockDefinition, y: number): boolean {
+    return block.id === this.catalog.world.blocks.bedrock && y > 0;
   }
 
   private finishMining(mining: MiningState): void {

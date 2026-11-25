@@ -43,6 +43,10 @@ export type LevelTheme =
  * Os do Dia das Bruxas: o Rei Cacto, grandão de coroa e espinhos, que não se
  * pisa e solta espinhudos; a abóbora viva, que anda aos pulinhos; e a bruxa
  * de vassoura.
+ *
+ * A Bomb-omb é a bombinha que anda: pisada, acende o pavio, para e, um
+ * instante depois, explode — quebra os tijolos e derruba quem estiver perto,
+ * inclusive o herói que não se afastou.
  */
 export const ENEMY_KINDS = [
   'slime',
@@ -65,6 +69,7 @@ export const ENEMY_KINDS = [
   'king-cactus',
   'living-pumpkin',
   'witch',
+  'walking-bomb',
 ] as const;
 
 export type EnemyKind = (typeof ENEMY_KINDS)[number];
@@ -93,6 +98,12 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * ele passa nos buraquinhos e pula um pouco mais alto. As moedas de
  * multiplicação (×2, ×4, ×1000 e ×9999) fazem cada moeda pega valer mais por
  * alguns segundos.
+ *
+ * O Cogumelo 1UP dá uma vida a mais: um coração extra no placar, além do
+ * máximo da fase. A Flor de Bolha é um traje como as outras flores: o botão de
+ * ação sopra bolhas que flutuam reto, sem cair nos buracos, e prendem o
+ * inimigo que tocam. O Cogumelo Vida, que enchia os corações, saiu do editor:
+ * continua só nas fases antigas que já o tinham.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -120,6 +131,8 @@ export const POWER_UP_KINDS = [
   'coin-x4',
   'coin-x1000',
   'coin-x9999',
+  'extra-life-mushroom',
+  'bubble-flower',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
@@ -146,15 +159,16 @@ export function coinMultiplierLabel(kind: CoinMultiplierKind): string {
 }
 
 /**
- * Os poderes clássicos, que o Lucky Block sorteia. O Cogumelo Folha saiu do
- * jogo novo: continua só nas fases antigas que já o tinham.
+ * Os poderes clássicos, que o Lucky Block sorteia. O Cogumelo Folha e o
+ * Cogumelo Vida saíram do jogo novo: continuam só nas fases antigas que já os
+ * tinham. No lugar do Cogumelo Vida, o Lucky Block sorteia o Cogumelo 1UP.
  */
 export const CLASSIC_POWER_UPS = [
   'mushroom',
   'fire-flower',
   'ice-flower',
   'star',
-  'one-up',
+  'extra-life-mushroom',
   'cat-mushroom',
   'raccoon-leaf',
   'giga-mushroom',
@@ -365,8 +379,16 @@ export type LevelObjectType =
    * da fase faz a prensa subir e ficar lá em cima, com o caminho livre.
    */
   | 'crusher'
+  /** Prensa Esmagadora Larga: a mesma prensa, com três blocos de largura; a peça marca o bloco do meio. */
+  | 'wide-crusher'
   /** Corrente de Subir: corrente pendurada; segurando o pulo, qualquer herói sobe por ela. */
   | 'climb-chain'
+  /**
+   * Armadilha de Fogo: bloco de pedra com uma boca em cima que, de tempos em
+   * tempos, solta uma coluna de fogo para o alto. Antes de acender, solta
+   * fumacinha: dá para ver e esperar.
+   */
+  | 'fire-trap'
   | EnemyKind
   | 'boss'
   | ItemType

@@ -237,6 +237,41 @@ describe('Conteúdo do PedroCraft', () => {
       expect(content.blocks.find((block) => block.id === 'door')?.circuit).toEqual({ role: 'receiver', powered: false, switchesInto: 'door-open' });
     });
 
+    it('a linha tem uma versão colada em cada parede, apagada e acesa, que devolve a linha', () => {
+      const line = content.blocks.find((block) => block.id === 'string-line');
+      const sides = ['north', 'east', 'south', 'west'] as const;
+
+      expect(line?.attachedTo).toBeNull();
+
+      for (const side of sides) {
+        const wallId = line?.wallVariants?.[side] ?? '';
+        const wall = content.blocks.find((block) => block.id === wallId);
+        const lit = content.blocks.find((block) => block.id === wall?.circuit?.switchesInto);
+
+        expect(wall?.attachedTo).withContext(side).toBe(side);
+        expect(wall?.shape).withContext(side).toBe('wire');
+        expect(wall?.drops).withContext(side).toBe('string');
+        expect(lit?.attachedTo).withContext(side).toBe(side);
+        expect(lit?.circuit?.powered).withContext(side).toBeTrue();
+      }
+    });
+
+    it('a lâmpada sai da mesa com vidro e tocha, e acende com o comando do circuito', () => {
+      const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'lamp');
+      const lamp = content.blocks.find((block) => block.id === 'lamp');
+      const lampOn = content.blocks.find((block) => block.id === 'lamp-on');
+
+      expect(recipe?.station).toBe('workbench');
+      expect(recipe ? recipeRequirements(recipe) : []).toEqual(jasmine.arrayWithExactContents([{ item: 'glass', count: 4 }, { item: 'torch', count: 1 }]));
+      expect(content.items.find((item) => item.id === 'lamp')?.places).toBe('lamp');
+      expect(lamp?.circuit).toEqual({ role: 'receiver', powered: false, switchesInto: 'lamp-on' });
+      expect(lampOn?.circuit).toEqual({ role: 'receiver', powered: true, switchesInto: 'lamp' });
+      expect(lamp?.light).toBe(0);
+      expect(lampOn?.light).toBe(15);
+      expect(lampOn?.drops).toBe('lamp');
+      expect(lamp?.toggleInto).withContext('só o circuito acende a lâmpada').toBeNull();
+    });
+
     it('o bloco de netherite sai da mesa com diamante, obsidiana e ouro, só quebra com a picareta de diamante e aguenta a TNT', () => {
       const recipe = content.recipes.crafting.find((candidate) => candidate.output.item === 'netherite-block');
       const netherite = content.blocks.find((block) => block.id === 'netherite-block');
@@ -581,6 +616,30 @@ describe('Conteúdo do PedroCraft', () => {
 
       expect(message).toContain('bloco "string-line": a linha do circuito precisa de shape "wire"');
       expect(message).toContain('bloco "lever": a alavanca precisa de "toggleInto"');
+    });
+
+    it('só a linha cola na parede, e cada versão de parede fica no lado certo', () => {
+      entry(files, 'blocks', 'blocks', 'torch')['attachedTo'] = 'north';
+      record(entry(files, 'blocks', 'blocks', 'string-line')['wallVariants'])['east'] = 'string-line-wall-west';
+
+      const message = errorOf(() => parseCraftContent(files)).message;
+
+      expect(message).toContain('bloco "torch": só a linha do circuito ("attachedTo", "wallVariants") cola na parede');
+      expect(message).toContain('bloco "string-line": "string-line-wall-west" precisa ter "attachedTo": "east"');
+    });
+
+    it('a linha da parede acesa fica na mesma parede da apagada', () => {
+      entry(files, 'blocks', 'blocks', 'string-line-wall-north-on')['attachedTo'] = 'south';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain(
+        'bloco "string-line-wall-north": "string-line-wall-north-on" precisa ficar colado na mesma parede',
+      );
+    });
+
+    it('recusa parede que não existe', () => {
+      entry(files, 'blocks', 'blocks', 'string-line-wall-north')['attachedTo'] = 'up';
+
+      expect(errorOf(() => parseCraftContent(files)).message).toContain('attachedTo');
     });
 
     it('recusa linha sem o outro jeito para onde o circuito a troca', () => {

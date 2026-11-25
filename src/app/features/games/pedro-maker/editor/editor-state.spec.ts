@@ -7,7 +7,9 @@ import {
   EDITOR_CATEGORIES,
   EDITOR_PIECES,
   EDITOR_POWER_UPS,
+  editorPieceLabel,
   findEditorPiece,
+  isRetiredPiece,
 } from '../config/object-catalog';
 import {
   cellsInRect,
@@ -185,7 +187,7 @@ describe('Estado do editor de fases', () => {
 
   it('reconhece a peça da paleta pelo tipo e pelas propriedades', () => {
     expect(findEditorPiece({ type: 'door', properties: { pair: 'B' } })?.id).toBe('door-b');
-    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'heart' } })?.id).toBe('surprise-heart');
+    expect(findEditorPiece({ type: 'surprise', properties: { contents: 'crystal' } })?.id).toBe('surprise-crystal');
     expect(findEditorPiece({ type: 'surprise', properties: { contents: 'empty' } })?.id).toBe('surprise-empty');
     expect(findEditorPiece({ type: 'ground' })?.id).toBe('ground');
     expect(findEditorPiece({ type: 'portal' })?.id).toBe('portal');
@@ -273,12 +275,59 @@ describe('Estado do editor de fases', () => {
     expect(EDITOR_POWER_UPS).toContain('reverse-mushroom');
     expect(EDITOR_POWER_UPS).toContain('mini-mushroom');
     expect(EDITOR_POWER_UPS).toContain('pedrere-mushroom');
+    expect(EDITOR_POWER_UPS).toContain('extra-life-mushroom');
+    expect(EDITOR_POWER_UPS).toContain('bubble-flower');
+    expect(EDITOR_POWER_UPS).withContext('o Cogumelo Vida saiu do editor').not.toContain('one-up');
     for (const kind of ['coin-x2', 'coin-x4', 'coin-x1000', 'coin-x9999'] as const) {
       expect(EDITOR_POWER_UPS).toContain(kind);
       expect(findEditorPiece({ type: 'power-up', properties: { powerUp: kind } })?.category).withContext('fica com as moedas').toBe('itens');
     }
     // Toda categoria que sobrou tem peça.
     expect(EDITOR_CATEGORIES.every((category) => EDITOR_PIECES.some((piece) => piece.category === category.id))).toBeTrue();
+  });
+
+  it('tirou da paleta o Coração, a Surpresa ❤️, o Cogumelo Vida e a Surpresa Cogumelo Vida', () => {
+    const labels = EDITOR_PIECES.map((piece) => piece.label);
+
+    for (const label of ['Coração', 'Surpresa ❤️', 'Cogumelo Vida', 'Surpresa Cogumelo Vida']) {
+      expect(labels).withContext(label).not.toContain(label);
+    }
+
+    expect(EDITOR_PIECES.some((piece) => piece.type === 'heart')).toBeFalse();
+    expect(EDITOR_PIECES.some((piece) => piece.properties?.contents === 'heart')).toBeFalse();
+    expect(EDITOR_PIECES.some((piece) => piece.properties?.powerUp === 'one-up')).toBeFalse();
+  });
+
+  it('numa fase antiga, as peças que saíram da paleta continuam com o nome certo e não se copiam', () => {
+    const retired = [
+      [{ type: 'heart' }, 'Coração'],
+      [{ type: 'surprise', properties: { contents: 'heart' } }, 'Surpresa ❤️'],
+      [{ type: 'power-up', properties: { powerUp: 'one-up' } }, 'Cogumelo Vida'],
+      [{ type: 'surprise', properties: { contents: 'power-up', powerUp: 'one-up' } }, 'Surpresa Cogumelo Vida'],
+      [{ type: 'power-up', properties: { powerUp: 'leaf-mushroom' } }, 'Cogumelo Folha'],
+    ] as const;
+
+    for (const [object, label] of retired) {
+      expect(editorPieceLabel(object)).toBe(label);
+      expect(isRetiredPiece(object)).withContext(label).toBeTrue();
+    }
+
+    expect(editorPieceLabel({ type: 'power-up', properties: { powerUp: 'extra-life-mushroom' } })).toBe('Cogumelo 1UP');
+    expect(isRetiredPiece({ type: 'surprise', properties: { contents: 'power-up', powerUp: 'bubble-flower' } })).toBeFalse();
+    expect(isRetiredPiece({ type: 'surprise', properties: { contents: 'coins' } })).toBeFalse();
+  });
+
+  it('as peças novas estão na aba certa', () => {
+    const categoryOf = (label: string) => EDITOR_PIECES.find((piece) => piece.label === label)?.category;
+
+    expect(categoryOf('Armadilha de Fogo')).toBe('blocos');
+    expect(categoryOf('Prensa Esmagadora Larga')).toBe('blocos');
+    expect(categoryOf('Bomb-omb')).toBe('inimigos');
+    expect(categoryOf('Cogumelo 1UP')).toBe('cogumelos');
+    expect(categoryOf('Flor de Bolha')).toBe('cogumelos');
+    expect(categoryOf('Surpresa Cogumelo 1UP')).toBe('cogumelos');
+    expect(categoryOf('Surpresa Flor de Bolha')).toBe('cogumelos');
+    expect(findEditorPiece({ type: 'wide-crusher' })?.label).toBe('Prensa Esmagadora Larga');
   });
 
   it('corta o que sobra ao diminuir a fase e respeita os limites de largura', () => {

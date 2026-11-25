@@ -1,8 +1,8 @@
-import { Group, Mesh, MeshStandardMaterial } from 'three';
+import { type BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
 
 import { TILE_SIZE } from '../../config/physics.config';
 import type { ClimbChainSystem } from '../simulation/climb-chains';
-import type { CrusherSystem } from '../simulation/crushers';
+import { crusherCenterX, type CrusherSystem } from '../simulation/crushers';
 import type { TileGrid } from '../simulation/tile-grid';
 import { disposeTree } from './dispose';
 import { box, buildBoxesGeometry, type VoxelBox } from './voxel-geometry';
@@ -20,12 +20,14 @@ const MAX_SHAFT_CELLS = 8;
 
 /**
  * Cabeça da prensa: bloco de ferro com faixa amarela e preta de "cuidado",
- * rebites e dentes embaixo. Pés (os dentes) em y = 0, um bloco de altura.
+ * rebites e dentes embaixo. Pés (os dentes) em y = 0, um bloco de altura e
+ * `widthCells` de largura: a larga tem a faixa e os dentes de ponta a ponta.
  */
-function crusherHeadParts(): readonly VoxelBox[] {
+function crusherHeadParts(widthCells: number): readonly VoxelBox[] {
+  const halfWidth = widthCells / 2;
   const parts: VoxelBox[] = [
-    box(0, 0.56, 0, 0.96, 0.8, 0.8, IRON),
-    box(0, 0.98, 0, 0.7, 0.06, 0.6, DARK_IRON),
+    box(0, 0.56, 0, widthCells - 0.04, 0.8, 0.8, IRON),
+    box(0, 0.98, 0, widthCells - 0.3, 0.06, 0.6, DARK_IRON),
     // Olhos bravos, para a criança entender que é perigo.
     box(-0.2, 0.66, 0.41, 0.16, 0.12, 0.02, '#ffffff'),
     box(0.2, 0.66, 0.41, 0.16, 0.12, 0.02, '#ffffff'),
@@ -36,20 +38,20 @@ function crusherHeadParts(): readonly VoxelBox[] {
   ];
 
   // Faixa de cuidado, amarela e preta, logo acima dos dentes.
-  for (let stripe = 0; stripe < 6; stripe += 1) {
-    parts.push(box(-0.4 + stripe * 0.16, 0.26, 0.405, 0.16, 0.14, 0.02, stripe % 2 === 0 ? HAZARD_YELLOW : '#1a1a2e'));
+  for (let stripe = 0; stripe < 6 * widthCells; stripe += 1) {
+    parts.push(box(-halfWidth + 0.1 + stripe * 0.16, 0.26, 0.405, 0.16, 0.14, 0.02, stripe % 2 === 0 ? HAZARD_YELLOW : '#1a1a2e'));
   }
 
   // Rebites nos cantos.
-  for (const x of [-0.38, 0.38]) {
+  for (const x of [-halfWidth + 0.12, halfWidth - 0.12]) {
     for (const y of [0.42, 0.88]) {
       parts.push(box(x, y, 0.41, 0.07, 0.07, 0.03, LIGHT_STEEL));
     }
   }
 
   // Dentes de aço embaixo.
-  for (let tooth = 0; tooth < 5; tooth += 1) {
-    parts.push(box(-0.38 + tooth * 0.19, 0.08, 0, 0.12, 0.16, 0.7, STEEL));
+  for (let tooth = 0; tooth < 5 * widthCells; tooth += 1) {
+    parts.push(box(-halfWidth + 0.12 + tooth * 0.19, 0.08, 0, 0.12, 0.16, 0.7, STEEL));
   }
 
   return parts;
@@ -90,7 +92,8 @@ function climbChainLinkParts(cx: number, cy: number, isTop: boolean): VoxelBox[]
 
 interface CrusherModel {
   readonly head: Group;
-  readonly shaft: Mesh;
+  /** As hastes, esticadas juntas: uma na prensa comum, uma em cada ponta na larga. */
+  readonly shaft: Group;
   /** Onde a haste começa: o teto acima da prensa, em blocos do mundo 3D. */
   readonly ceilingY: number;
 }
@@ -117,22 +120,33 @@ export class MachineView {
     this.root.name = 'maquinas';
 
     if (crushers.crushers.length > 0) {
-      const headGeometry = buildBoxesGeometry(crusherHeadParts());
+      const headGeometries = new Map<number, BufferGeometry>();
       const shaftGeometry = buildBoxesGeometry(crusherShaftParts());
 
       for (const crusher of crushers.crushers) {
+        const { widthCells } = crusher;
+        const headGeometry = headGeometries.get(widthCells) ?? buildBoxesGeometry(crusherHeadParts(widthCells));
         const head = new Group();
         const headMesh = new Mesh(headGeometry, this.material);
-        const shaft = new Mesh(shaftGeometry, this.material);
+        const shaft = new Group();
 
+        headGeometries.set(widthCells, headGeometry);
         headMesh.castShadow = true;
         headMesh.receiveShadow = true;
-        shaft.castShadow = true;
         head.add(headMesh);
-        head.position.x = space.x((crusher.cellX + 0.5) * TILE_SIZE);
+
+        for (const offset of shaftOffsets(widthCells)) {
+          const shaftMesh = new Mesh(shaftGeometry, this.material);
+
+          shaftMesh.position.x = offset;
+          shaftMesh.castShadow = true;
+          shaft.add(shaftMesh);
+        }
+
+        head.position.x = space.x(crusherCenterX(crusher));
         shaft.position.x = head.position.x;
         this.root.add(head, shaft);
-        this.crusherModels.set(crusher.id, { head, shaft, ceilingY: space.y(ceilingRow(grid, crusher.cellX, crusher.cellY) * TILE_SIZE) });
+        this.crusherModels.set(crusher.id, { head, shaft, ceilingY: space.y(ceilingRow(grid, crusher.cellX + Math.floor(widthCells / 2), crusher.cellY) * TILE_SIZE) });
       }
     }
 
@@ -176,6 +190,11 @@ export class MachineView {
     disposeTree(this.root);
     this.material.dispose();
   }
+}
+
+/** Onde fica cada haste, a partir do centro da cabeça: no meio da comum e perto das pontas da larga. */
+function shaftOffsets(widthCells: number): readonly number[] {
+  return widthCells === 1 ? [0] : [-(widthCells / 2 - 0.5), widthCells / 2 - 0.5];
 }
 
 /**

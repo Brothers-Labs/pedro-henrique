@@ -30,7 +30,9 @@ export type MakerSoundCue =
   | 'iceball'
   | 'freeze'
   | 'slide'
-  | 'tailSpin';
+  | 'tailSpin'
+  | 'bubble'
+  | 'explosion';
 
 export interface HudState {
   readonly hearts: number;

@@ -5,8 +5,9 @@ const POWER_SURPRISE_LABELS = [
   'Surpresa Super Cogumelo',
   'Surpresa Flor de Fogo',
   'Surpresa Super Estrela',
-  'Surpresa Cogumelo Vida',
+  'Surpresa Cogumelo 1UP',
   'Surpresa Flor de Gelo',
+  'Surpresa Flor de Bolha',
   'Surpresa Cogumelo Gato',
   'Surpresa Folha do Guaxinim',
   'Surpresa Giga Cogumelo',
@@ -28,6 +29,7 @@ test('Maker offers a surprise block for every power in the Mushrooms tab, saves 
   for (const label of POWER_SURPRISE_LABELS) {
     await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
   }
+  await expect(page.getByRole('button', { name: 'Surpresa Cogumelo Vida', exact: true })).toHaveCount(0);
 
   for (const [label, x] of [['Surpresa Flor de Fogo', 176], ['Surpresa Cogumelo Pedrerê', 240]] as const) {
     const piece = page.getByRole('button', { name: label, exact: true });

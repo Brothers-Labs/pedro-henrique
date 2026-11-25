@@ -1,6 +1,6 @@
 import { circle, eye, fillAndOutline, roundedRect, shine, smile } from './canvas';
 
-/** Os três desenhos ocupam o quadrado de um bloco, como o canhão: 48 por 48. */
+/** Os desenhos ocupam o quadrado de um bloco, como o canhão: 48 por 48. */
 export const PATH_ART_SIZE = 48;
 
 /** Cano mágico: tubo verde com a boca larga em cima e a entrada escura. */
@@ -67,6 +67,38 @@ export function paintFireBar(context: CanvasRenderingContext2D): void {
   }
 
   shine(context, 10, 29, 3, 2);
+}
+
+/** Armadilha de Fogo: bloco de pedra escura com a grade de ferro em cima e a labareda subindo dela. */
+export function paintFireTrap(context: CanvasRenderingContext2D): void {
+  context.beginPath();
+  context.moveTo(14, 26);
+  context.quadraticCurveTo(10, 12, 20, 2);
+  context.quadraticCurveTo(22, 12, 26, 8);
+  context.quadraticCurveTo(30, 4, 30, 0);
+  context.quadraticCurveTo(40, 12, 34, 26);
+  context.closePath();
+  fillAndOutline(context, '#ff6a1f', 2);
+  context.beginPath();
+  context.moveTo(19, 26);
+  context.quadraticCurveTo(17, 18, 23, 12);
+  context.quadraticCurveTo(26, 18, 29, 15);
+  context.quadraticCurveTo(32, 20, 29, 26);
+  context.closePath();
+  context.fillStyle = '#ffd23f';
+  context.fill();
+
+  roundedRect(context, 4, 26, 40, 20, 3);
+  fillAndOutline(context, '#4a3a36', 3);
+  roundedRect(context, 10, 23, 28, 6, 2);
+  fillAndOutline(context, '#2b2d42', 2);
+  context.fillStyle = '#8d96a8';
+
+  for (const x of [16, 23, 30]) {
+    context.fillRect(x, 23.5, 2.5, 5);
+  }
+
+  shine(context, 10, 33, 3, 2);
 }
 
 /** Botão P: corpo azul com tampa clara, a letra P branca no meio e a base escura no chão. */
