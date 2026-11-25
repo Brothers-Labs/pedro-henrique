@@ -194,9 +194,10 @@ export type PlatformAxis = 'horizontal' | 'vertical';
  * O cano é terreno também: bloqueia por todos os lados e, empilhado, vira o
  * cano verde clássico — a boca aparece sozinha no bloco de cima. A montanha
  * do deserto é arenito em listras, com areia por cima: empilhada, vira os
- * paredões vermelhos dos cânions.
+ * paredões vermelhos dos cânions. O bloco arco-íris é firme como a pedra e
+ * pintado com as sete cores, do vermelho ao violeta.
  */
-export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' | 'desert-mountain';
+export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' | 'desert-mountain' | 'rainbow-block';
 
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
@@ -204,7 +205,8 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' 
  * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele. A grama
  * invisível é chão de verdade que não aparece: só se mostra depois que o
  * herói encosta nela. A mola de cabeça pra baixo fica presa no teto: quem
- * bate a cabeça nela é lançado para baixo.
+ * bate a cabeça nela é lançado para baixo. A ponte arco-íris é de mão única,
+ * como a nuvem: as sete cores em cima de um fiapo de nuvem.
  *
  * O bloco ON/OFF é o interruptor da fase, que começa em ON: cada cabeçada por
  * baixo troca para OFF e de volta para ON. Com ON, os blocos vermelhos são
@@ -218,6 +220,7 @@ export type BlockType =
   | 'crumble'
   | 'platform'
   | 'cloud'
+  | 'rainbow-bridge'
   | 'lava'
   | 'water'
   | 'spikes'

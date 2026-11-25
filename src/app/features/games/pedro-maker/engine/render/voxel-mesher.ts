@@ -111,6 +111,8 @@ export function tileFor(material: TerrainMaterial, face: FaceDirection, isTopExp
     case 'sand':
     case 'wood':
     case 'cloud':
+    case 'rainbow-block':
+    case 'rainbow-bridge':
       return material;
   }
 }

@@ -38,7 +38,9 @@ export type VoxelTile =
   | 'switch-on'
   | 'switch-off'
   | 'red-block'
-  | 'blue-block';
+  | 'blue-block'
+  | 'rainbow-block'
+  | 'rainbow-bridge';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -68,6 +70,8 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'switch-off',
   'red-block',
   'blue-block',
+  'rainbow-block',
+  'rainbow-bridge',
 ];
 
 /** Blocos por linha no atlas. */
@@ -119,6 +123,9 @@ const SWITCH_COLORS = {
 } as const;
 
 type SwitchColor = (typeof SWITCH_COLORS)[keyof typeof SWITCH_COLORS];
+
+/** As sete cores do arco-íris, de cima para baixo, como aparecem no céu. */
+const RAINBOW_STRIPES = ['#ff4d4d', '#ff9a2e', '#ffd93b', '#4cc94a', '#3fa3f5', '#5b5fd6', '#a45be0'] as const;
 
 const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void>> = {
   'grass-top': ({ set, random, palette }) =>
@@ -291,6 +298,23 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
   'switch-off': ({ set }) => switchFace(set, SWITCH_COLORS.blue, OFF_LABEL),
   'red-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.red),
   'blue-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.blue),
+  /** Sete faixas de dois pixels com brilho em cima: empilhados, os blocos repetem o arco-íris. */
+  'rainbow-block': ({ set }) => {
+    rainbowStripes(set, 1, 2);
+    frame(set, '#2a2350', 0);
+  },
+  /** O arco-íris fininho por cima de um fiapo de nuvem: parece a nuvem, mas colorida. */
+  'rainbow-bridge': ({ set, random }) => {
+    fill(set, '#ffffff');
+    rainbowStripes(set, 0, 1);
+
+    // A barriga da nuvem, no mesmo azulzinho da Nuvem comum, logo embaixo das cores.
+    for (let y = RAINBOW_STRIPES.length + 1; y < VOXEL_TILE_SIZE; y += 1) {
+      for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+        set(x, y, random() < 0.5 ? '#e3f1ff' : '#d3e8fb');
+      }
+    }
+  },
 };
 
 /** Pinta uma face no ponto (x, y) de um canvas já existente. */
@@ -470,6 +494,19 @@ function colorBlockFace(set: SetPixel, color: SwitchColor): void {
     set(4, step, color.dark);
     set(last - 4, step, color.light);
   }
+}
+
+/** Faixas do arco-íris, a partir da linha `top`, cada uma com `height` pixels e um risco claro em cima. */
+function rainbowStripes(set: SetPixel, top: number, height: number): void {
+  RAINBOW_STRIPES.forEach((color, index) => {
+    const firstRow = top + index * height;
+
+    for (let row = firstRow; row < firstRow + height; row += 1) {
+      for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+        set(x, row, row === firstRow && height > 1 ? lighten(color, 0.2) : color);
+      }
+    }
+  });
 }
 
 function rivets(set: SetPixel, color: string): void {

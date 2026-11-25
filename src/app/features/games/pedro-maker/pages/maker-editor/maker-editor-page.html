@@ -100,6 +100,7 @@
           class="category"
           [class.category--active]="category() === entry.id"
           [attr.aria-selected]="category() === entry.id"
+          [style.--tab-color]="rainbowSwatches[entry.color]"
           (click)="chooseCategory(entry.id)"
         >
           <span aria-hidden="true">{{ entry.emoji }}</span> {{ entry.label }}

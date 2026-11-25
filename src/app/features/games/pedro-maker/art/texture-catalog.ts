@@ -287,7 +287,9 @@ function drawIcon(
       paintVoxelIcon(context, ICON_SIZE, palette, 'mesa-side', 'mesa-top');
       return;
     case 'cloud':
-      paintVoxelIcon(context, ICON_SIZE, palette, 'cloud');
+    case 'rainbow-block':
+    case 'rainbow-bridge':
+      paintVoxelIcon(context, ICON_SIZE, palette, object.type);
       return;
     case 'platform':
       paintPlatformTile(context, palette);
