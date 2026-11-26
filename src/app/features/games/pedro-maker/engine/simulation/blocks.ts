@@ -1,4 +1,4 @@
-import { MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
+import { MULTI_COIN_BLOCK_COUNT, PLAYER_PHYSICS, POW_BLOCK, SURPRISE_COIN_COUNT, TILE_SIZE } from '../../config/physics.config';
 import { SKELETON_PLATFORM_CELLS, skeletonWallColumn } from '../../levels/skeleton-platform';
 import type { LevelObject, LevelObjectType, PlatformAxis, PowerUpKind, SurpriseContent } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
@@ -18,6 +18,8 @@ export interface BlockHost {
   spawnCollectible(kind: 'heart' | 'crystal' | 'power-up', x: number, y: number, extra: SpawnExtra): void;
   /** Sorteio do Lucky Block; quem tem o dado é a partida, para a mesma fase sortear igual. */
   pickLuckyPowerUp(): PowerUpKind;
+  /** O bloco POW foi batido no ponto (x, y): quem conhece os inimigos é a partida. */
+  onPowBlock(x: number, y: number): void;
 }
 
 export interface SpawnExtra {
@@ -35,7 +37,9 @@ export type InteractiveKind =
   | 'ceiling-spring'
   | 'on-off-switch'
   | 'red-block'
-  | 'blue-block';
+  | 'blue-block'
+  | 'pow-block'
+  | 'exclamation-block';
 
 /** Os blocos que o interruptor ON/OFF faz aparecer e sumir. */
 export type ColorBlockKind = Extract<InteractiveKind, 'red-block' | 'blue-block'>;
@@ -56,6 +60,8 @@ export interface InteractiveBlock {
   isHidden: boolean;
   /** Moedas que ainda saem do bloco de moedas. */
   coinsLeft: number;
+  /** Batidas que o bloco POW ainda aguenta; a tela encolhe o bloco a cada uma. */
+  hitsLeft: number;
   /** Última cabeçada ou impulso de mola, para o pulinho do bloco na tela. */
   bumpedAt: number;
   crumbleStartedAt: number;
@@ -125,7 +131,12 @@ const INTERACTIVE_KINDS: ReadonlySet<LevelObjectType> = new Set<LevelObjectType>
   'on-off-switch',
   'red-block',
   'blue-block',
+  'pow-block',
+  'exclamation-block',
 ]);
+
+/** O bloco ! guarda sempre o Chapéu de Voar, como a caixa vermelha dos jogos clássicos. */
+const EXCLAMATION_BLOCK_POWER_UP: PowerUpKind = 'wing-cap';
 
 function isInteractiveKind(type: LevelObjectType): type is InteractiveKind {
   return INTERACTIVE_KINDS.has(type);
@@ -145,7 +156,9 @@ function isColorBlockKind(kind: InteractiveKind): kind is ColorBlockKind {
  * plataforma frágil tremer. O goomba também quica no bloco musical. A grama
  * invisível aparece com qualquer encostada, por cima, por baixo ou de lado.
  * A cabeçada no bloco ON/OFF troca o interruptor da fase inteira, e os blocos
- * vermelhos e azuis aparecem ou somem de acordo.
+ * vermelhos e azuis aparecem ou somem de acordo. A do bloco POW derruba os
+ * inimigos da tela, e a do bloco ! solta o Chapéu de Voar. A martelada do
+ * Martelo Gigante vale como cabeçada em todos eles.
  */
 export class BlockSystem {
   readonly interactive: InteractiveBlock[] = [];
@@ -249,51 +262,43 @@ export class BlockSystem {
     this.host.effects.burst('dust', platform.x + platform.width / 2, platform.y, 6);
   }
 
-  /** Cabeçada por baixo: o tijolo quebra, a surpresa abre, a mola do teto lança para baixo, o ON/OFF troca. */
+  /**
+   * Cabeçada por baixo: o tijolo quebra, a surpresa abre, a mola do teto lança
+   * para baixo, o ON/OFF troca e o POW derruba os inimigos.
+   */
   handleHeadHit(player: Player, cellX: number, cellY: number, now: number): void {
     const block = this.blockAt(cellX, cellY);
-
-    if (block?.kind === 'on-off-switch') {
-      this.flipSwitch(block, now);
-      return;
-    }
 
     if (block?.kind === 'ceiling-spring') {
       this.launchDown(player, block, now);
       return;
     }
 
-    if (block?.kind === 'note') {
-      block.bumpedAt = now;
-      this.playNoteOf(block);
-      return;
+    if (block) {
+      this.strike(block, now);
     }
+  }
 
-    if (!block || block.isBroken || block.isHidden || (block.kind !== 'brick' && block.kind !== 'surprise')) {
-      return;
+  /**
+   * A martelada do Martelo Gigante vale como uma cabeçada em cada bloco que
+   * alcança — menos na mola do teto, que só lança quem bate a cabeça nela.
+   */
+  strikeBlocksIn(area: WorldArea, now: number): void {
+    const firstColumn = Math.floor(area.x / TILE_SIZE);
+    const lastColumn = Math.ceil((area.x + area.width) / TILE_SIZE) - 1;
+    const firstRow = Math.floor(area.y / TILE_SIZE);
+    const lastRow = Math.ceil((area.y + area.height) / TILE_SIZE) - 1;
+
+    for (let row = firstRow; row <= lastRow; row += 1) {
+      for (let column = firstColumn; column <= lastColumn; column += 1) {
+        // Fora da grade a chave da célula cairia numa célula de verdade do outro lado.
+        const block = this.grid.contains(column, row) ? this.blockAt(column, row) : undefined;
+
+        if (block && block.kind !== 'ceiling-spring') {
+          this.strike(block, now);
+        }
+      }
     }
-
-    if (block.kind === 'brick') {
-      this.breakBrick(block);
-      return;
-    }
-
-    const centerX = (block.cellX + 0.5) * TILE_SIZE;
-    const centerY = (block.cellY + 0.5) * TILE_SIZE;
-
-    block.bumpedAt = now;
-
-    if (block.isUsed) {
-      return;
-    }
-
-    if (block.contents === 'multi-coins') {
-      this.releaseOneCoin(block, centerX, centerY - TILE_SIZE);
-      return;
-    }
-
-    block.isUsed = true;
-    this.releaseContents(block, centerX, centerY - TILE_SIZE);
   }
 
   /** Quebra de uma vez os tijolos que a área alcança: o rabo do guaxinim ou o herói gigante. */
@@ -465,6 +470,83 @@ export class BlockSystem {
     this.host.effects.burst('sparkle', platform.x + platform.width / 2, platform.y, 10);
   }
 
+  /** O bloco levou uma batida, de cabeça ou de martelo. */
+  private strike(block: InteractiveBlock, now: number): void {
+    if (block.isBroken || block.isHidden) {
+      return;
+    }
+
+    switch (block.kind) {
+      case 'on-off-switch':
+        this.flipSwitch(block, now);
+        return;
+      case 'note':
+        block.bumpedAt = now;
+        this.playNoteOf(block);
+        return;
+      case 'brick':
+        this.breakBrick(block);
+        return;
+      case 'pow-block':
+        this.hitPowBlock(block, now);
+        return;
+      case 'surprise':
+      case 'exclamation-block':
+        this.openSurprise(block, now);
+        return;
+      default:
+        return;
+    }
+  }
+
+  /** A surpresa (e o bloco !) solta o que guarda; o bloco de moedas solta uma moeda por batida. */
+  private openSurprise(block: InteractiveBlock, now: number): void {
+    const centerX = (block.cellX + 0.5) * TILE_SIZE;
+    const centerY = (block.cellY + 0.5) * TILE_SIZE;
+
+    block.bumpedAt = now;
+
+    if (block.isUsed) {
+      return;
+    }
+
+    if (block.contents === 'multi-coins') {
+      this.releaseOneCoin(block, centerX, centerY - TILE_SIZE);
+      return;
+    }
+
+    block.isUsed = true;
+    this.releaseContents(block, centerX, centerY - TILE_SIZE);
+  }
+
+  /**
+   * O POW treme a fase inteira: cada batida derruba os inimigos da tela e gasta
+   * uma das três. Na última, o bloco some e a casa fica livre.
+   */
+  private hitPowBlock(block: InteractiveBlock, now: number): void {
+    // Dois heróis da turma batendo no mesmo passo gastariam duas batidas de uma vez: vale uma.
+    if (block.bumpedAt === now) {
+      return;
+    }
+
+    const x = (block.cellX + 0.5) * TILE_SIZE;
+    const y = (block.cellY + 0.5) * TILE_SIZE;
+
+    block.bumpedAt = now;
+    block.hitsLeft -= 1;
+    this.host.playSound('pow');
+    this.host.effects.shake('forte');
+    this.host.effects.burst('poof', x, y, 16);
+    this.host.effects.floatingText(x, y - TILE_SIZE, '💥 POW!', '#74c0fc');
+    this.host.onPowBlock(x, y);
+
+    if (block.hitsLeft <= 0) {
+      block.isBroken = true;
+      this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
+      this.host.effects.burst('sparkle', x, y, 12);
+    }
+  }
+
   private breakBrick(block: InteractiveBlock): void {
     block.isBroken = true;
     this.grid.setCollision(block.cellX, block.cellY, COLLISION.empty);
@@ -523,13 +605,13 @@ export class BlockSystem {
       kind,
       cellX: object.x,
       cellY: object.y,
-      contents: object.properties?.contents ?? (kind === 'surprise' ? 'coins' : undefined),
-      powerUp: object.properties?.powerUp,
+      ...blockContents(object, kind),
       crystalIndex,
       isUsed: false,
       isBroken: false,
       isHidden: false,
       coinsLeft: object.properties?.contents === 'multi-coins' ? MULTI_COIN_BLOCK_COUNT : 0,
+      hitsLeft: kind === 'pow-block' ? POW_BLOCK.hits : 0,
       bumpedAt: Number.NEGATIVE_INFINITY,
       crumbleStartedAt: Number.NEGATIVE_INFINITY,
     };
@@ -700,6 +782,18 @@ export class BlockSystem {
   private key(cellX: number, cellY: number): number {
     return cellY * this.grid.width + cellX;
   }
+}
+
+/** O que o bloco guarda: a surpresa sem nada escolhido tem moedas; o bloco !, o Chapéu de Voar. */
+function blockContents(object: LevelObject, kind: InteractiveKind): Pick<InteractiveBlock, 'contents' | 'powerUp'> {
+  if (kind === 'exclamation-block') {
+    return { contents: 'power-up', powerUp: EXCLAMATION_BLOCK_POWER_UP };
+  }
+
+  return {
+    contents: object.properties?.contents ?? (kind === 'surprise' ? 'coins' : undefined),
+    powerUp: object.properties?.powerUp,
+  };
 }
 
 /** A tábua frágil segura só por cima; o bloco colorido apagado se atravessa; os demais são firmes. */

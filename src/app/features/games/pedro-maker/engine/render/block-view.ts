@@ -1,7 +1,7 @@
 import { Color, Group, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 
 import type { VoxelTile } from '../../art/voxel-tiles';
-import { TILE_SIZE } from '../../config/physics.config';
+import { POW_BLOCK, TILE_SIZE } from '../../config/physics.config';
 import {
   type BlockSystem,
   type InteractiveBlock,
@@ -29,6 +29,8 @@ const BLOCK_SIZE = 0.98;
 const SKELETON_SHAKE = 0.05;
 /** Bloco colorido apagado: dá para ver onde ele volta, mas fica claro que se atravessa. */
 const GHOST_OPACITY = 0.28;
+/** Altura do POW na última batida que ainda aguenta: cada batida o deixa mais achatado. */
+const POW_LAST_HIT_HEIGHT = 0.4;
 
 /** Faces de um bloco: a de cima pode ter desenho próprio, como a grama. */
 interface BlockTiles {
@@ -79,6 +81,8 @@ export class BlockView {
   private readonly redGhosts: BlockMesh;
   private readonly blueBlocks: BlockMesh;
   private readonly blueGhosts: BlockMesh;
+  private readonly powBlocks: BlockMesh;
+  private readonly exclamationBlocks: BlockMesh;
   private readonly lava: InstancedMesh | null;
   private readonly water: InstancedMesh | null;
   /** Para cada célula de água, se ela é a de cima (a que ondula). */
@@ -110,7 +114,12 @@ export class BlockView {
     this.surprises = this.blockMesh(surpriseBlocks.filter(isPlainSurprise), 'surprise', BLOCK_SIZE);
     this.luckyBlocks = this.blockMesh(surpriseBlocks.filter(isLucky), 'lucky', BLOCK_SIZE);
     this.multiCoinBlocks = this.blockMesh(surpriseBlocks.filter(isMultiCoin), 'brick', BLOCK_SIZE);
-    this.usedSurprises = this.blockMesh(surpriseBlocks, 'surprise-used', BLOCK_SIZE);
+    const exclamationBlocks = byKind('exclamation-block');
+
+    // Aberto, o bloco ! fica igual a uma surpresa vazia.
+    this.usedSurprises = this.blockMesh([...surpriseBlocks, ...exclamationBlocks], 'surprise-used', BLOCK_SIZE);
+    this.exclamationBlocks = this.blockMesh(exclamationBlocks, 'exclamation', BLOCK_SIZE);
+    this.powBlocks = this.blockMesh(byKind('pow-block'), 'pow', BLOCK_SIZE);
     this.springs = this.blockMesh(byKind('spring'), 'spring', 0.9);
     this.ceilingSprings = this.blockMesh(byKind('ceiling-spring'), 'spring', 0.9);
     this.notes = this.blockMesh(byKind('note'), 'note', BLOCK_SIZE);
@@ -148,6 +157,8 @@ export class BlockView {
     this.updateBlocks(this.redGhosts, now, (block) => block.isHidden);
     this.updateBlocks(this.blueBlocks, now, (block) => !block.isHidden);
     this.updateBlocks(this.blueGhosts, now, (block) => block.isHidden);
+    this.updateBlocks(this.exclamationBlocks, now, (block) => !block.isUsed);
+    this.updateBlocks(this.powBlocks, now, (block) => !block.isBroken);
     this.updateLava(now);
     this.updateWater(now);
     this.updatePlatforms(now, alpha);
@@ -216,9 +227,13 @@ export class BlockView {
       // A tábua frágil fica no alto da célula; os demais, no meio dela.
       const baseY = this.space.y((block.cellY + (isCrumble ? 0.23 : 0.5)) * TILE_SIZE);
       const springDrop = isSpring ? (1 - squash) * 0.45 : 0;
+      // O POW achata a cada batida, com a base no chão da célula.
+      const flatten = powHeight(block);
+      const height = squash * flatten;
+      const powDrop = ((1 - flatten) * BLOCK_SIZE) / 2;
 
-      this.position.set(block.cellX + 0.5 + shake, baseY + lift - springDrop * squashTowards, 0);
-      this.scale.set(visible ? 1 : 0, visible ? squash : 0, visible ? 1 : 0);
+      this.position.set(block.cellX + 0.5 + shake, baseY + lift - springDrop * squashTowards - powDrop, 0);
+      this.scale.set(visible ? 1 : 0, visible ? height : 0, visible ? 1 : 0);
       this.matrix.compose(this.position, this.rotation, this.scale);
       target.mesh.setMatrixAt(index, this.matrix);
     });
@@ -393,6 +408,17 @@ export class BlockView {
 
     mesh.instanceMatrix.needsUpdate = true;
   }
+}
+
+/** Altura do POW, de 1 (inteiro) até `POW_LAST_HIT_HEIGHT` (só uma batida a mais); os outros blocos não achatam. */
+function powHeight(block: InteractiveBlock): number {
+  if (block.kind !== 'pow-block') {
+    return 1;
+  }
+
+  const spentHits = POW_BLOCK.hits - block.hitsLeft;
+
+  return 1 - ((1 - POW_LAST_HIT_HEIGHT) * spentHits) / Math.max(1, POW_BLOCK.hits - 1);
 }
 
 function segmentsOf(platform: MovingPlatform): number {

@@ -1,5 +1,5 @@
 import { coinMultiplierLabel, isCoinMultiplier, type PowerUpKind } from '../models/level.model';
-import { circle, darken, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
+import { circle, darken, ellipse, fillAndOutline, lighten, OUTLINE, roundedRect, shine, star } from './canvas';
 
 export const COIN_SIZE = 32;
 export const BIG_COIN_SIZE = 40;
@@ -138,6 +138,12 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'pedrere-mushroom': '#ffb92e',
   'extra-life-mushroom': '#3ddc6b',
   'bubble-flower': '#3fc5f0',
+  'propeller-mushroom': '#339af0',
+  boot: '#40c057',
+  'wing-cap': '#e8343a',
+  hammer: '#adb5bd',
+  'penguin-suit': '#364fc7',
+  'double-cherry': '#e03131',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -224,6 +230,26 @@ export function paintPowerUp(context: CanvasRenderingContext2D, kind: PowerUpKin
     case 'bubble-flower':
       paintFlower(context, color, '#e0fbff');
       paintBubbles(context);
+      break;
+    case 'propeller-mushroom':
+      paintMushroom(context, color);
+      paintPropeller(context);
+      break;
+    case 'boot':
+      paintBoot(context, color);
+      break;
+    case 'wing-cap':
+      paintWingCap(context, color);
+      break;
+    case 'hammer':
+      paintHammer(context, color);
+      break;
+    case 'penguin-suit':
+      paintPenguinHood(context, color);
+      break;
+    case 'double-cherry':
+      paintMushroom(context, color);
+      paintCherries(context);
       break;
   }
 
@@ -641,6 +667,108 @@ function paintFlower(context: CanvasRenderingContext2D, color: string, ring: str
 }
 
 /** Estrela de cinco pontas com olhinhos: a invencibilidade. */
+/** Hélice de duas pás amarelas no alto do chapéu, presa num eixo curto. */
+function paintPropeller(context: CanvasRenderingContext2D): void {
+  context.fillStyle = OUTLINE;
+  context.fillRect(18.5, 3, 3, 5);
+
+  for (const side of [-1, 1] as const) {
+    ellipse(context, 20 + side * 7, 3.5, 7, 2.5);
+    fillAndOutline(context, '#ffd43b', 1.5);
+  }
+}
+
+/** Bota de cano alto, com a sola escura embaixo e a borda clara em cima. */
+function paintBoot(context: CanvasRenderingContext2D, color: string): void {
+  context.beginPath();
+  context.moveTo(13, 8);
+  context.lineTo(24, 8);
+  context.lineTo(24, 20);
+  context.quadraticCurveTo(33, 21, 33, 27);
+  context.lineTo(33, 30);
+  context.lineTo(10, 30);
+  context.lineTo(10, 24);
+  context.quadraticCurveTo(13, 22, 13, 16);
+  context.closePath();
+  fillAndOutline(context, color, 2.5);
+  roundedRect(context, 9, 28, 25, 5, 1.5);
+  fillAndOutline(context, darken(color, 0.4), 2);
+  roundedRect(context, 12, 7, 13, 4, 1.5);
+  fillAndOutline(context, lighten(color, 0.4), 2);
+}
+
+/** Boné com uma asinha branca de cada lado: o chapéu que voa. */
+function paintWingCap(context: CanvasRenderingContext2D, color: string): void {
+  for (const side of [-1, 1] as const) {
+    context.beginPath();
+    context.moveTo(20 + side * 8, 15);
+    context.quadraticCurveTo(20 + side * 19, 6, 20 + side * 17, 17);
+    context.quadraticCurveTo(20 + side * 15, 22, 20 + side * 8, 21);
+    context.closePath();
+    fillAndOutline(context, '#ffffff', 2);
+  }
+
+  context.beginPath();
+  context.moveTo(10, 24);
+  context.quadraticCurveTo(10, 9, 20, 9);
+  context.quadraticCurveTo(30, 9, 30, 24);
+  context.closePath();
+  fillAndOutline(context, color, 2.5);
+  roundedRect(context, 8, 22, 26, 5, 2);
+  fillAndOutline(context, darken(color, 0.2), 2.5);
+  circle(context, 20, 16, 3.5);
+  context.fillStyle = '#ffffff';
+  context.fill();
+}
+
+/** Martelo deitado em diagonal: cabo de madeira e uma cabeça de ferro bem grande. */
+function paintHammer(context: CanvasRenderingContext2D, color: string): void {
+  context.save();
+  context.translate(20, 21);
+  context.rotate(-Math.PI / 5);
+  roundedRect(context, -2.5, -4, 5, 17, 2);
+  fillAndOutline(context, '#a0642d', 2.5);
+  roundedRect(context, -11, -13, 22, 10, 2.5);
+  fillAndOutline(context, color, 2.5);
+  context.fillStyle = darken(color, 0.3);
+  context.fillRect(-2, -12, 4, 8);
+  context.restore();
+}
+
+/** Capuz de pinguim: a cabeça escura, o rosto branco, os olhinhos e o bico laranja. */
+function paintPenguinHood(context: CanvasRenderingContext2D, color: string): void {
+  circle(context, 20, 19, 12);
+  fillAndOutline(context, color, 2.5);
+  ellipse(context, 20, 22, 8, 7);
+  fillAndOutline(context, '#ffffff', 2);
+  context.fillStyle = OUTLINE;
+  context.fillRect(16, 18, 2, 3);
+  context.fillRect(22, 18, 2, 3);
+  context.beginPath();
+  context.moveTo(17.5, 23);
+  context.lineTo(22.5, 23);
+  context.lineTo(20, 26.5);
+  context.closePath();
+  fillAndOutline(context, '#ff922b', 1.5);
+}
+
+/** Duas cerejas penduradas num cabinho só, em cima do chapéu do cogumelo. */
+function paintCherries(context: CanvasRenderingContext2D): void {
+  context.strokeStyle = '#2b8a3e';
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(25, 1.5);
+  context.quadraticCurveTo(28, 5, 26.5, 9);
+  context.moveTo(25, 1.5);
+  context.quadraticCurveTo(32, 3, 33, 9);
+  context.stroke();
+
+  for (const x of [26.5, 33] as const) {
+    circle(context, x, 11, 3.5);
+    fillAndOutline(context, '#c92a2a', 1.5);
+  }
+}
+
 function paintPowerStar(context: CanvasRenderingContext2D, color: string): void {
   star(context, 20, 21, 15, 7);
   fillAndOutline(context, color, 2.5);

@@ -104,6 +104,14 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * ação sopra bolhas que flutuam reto, sem cair nos buracos, e prendem o
  * inimigo que tocam. O Cogumelo Vida, que enchia os corações, saiu do editor:
  * continua só nas fases antigas que já o tinham.
+ *
+ * Mais quatro trajes: o Cogumelo de Voar tem uma hélice, que o botão de ação
+ * gira e lança o herói lá para cima; com a Bota, espinho não machuca e o pisão
+ * derruba até quem não se pisa; o Martelo Gigante dá marteladas na frente, que
+ * derrubam qualquer inimigo e acionam os blocos; e a Roupa de Pinguim lança
+ * gelo, não escorrega no gelo e nada ligeiro. O Chapéu de Voar deixa voar à
+ * vontade por alguns segundos, segurando o pulo. O Cogumelo Cereja age na
+ * hora: aparece um clone do herói, que obedece aos mesmos botões.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -133,6 +141,12 @@ export const POWER_UP_KINDS = [
   'coin-x9999',
   'extra-life-mushroom',
   'bubble-flower',
+  'propeller-mushroom',
+  'boot',
+  'wing-cap',
+  'hammer',
+  'penguin-suit',
+  'double-cherry',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
@@ -211,6 +225,10 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' 
  * O bloco ON/OFF é o interruptor da fase, que começa em ON: cada cabeçada por
  * baixo troca para OFF e de volta para ON. Com ON, os blocos vermelhos são
  * firmes e os azuis viram só um contorno, que se atravessa; com OFF, ao contrário.
+ *
+ * O bloco POW, batido por baixo, derruba todos os inimigos da tela; aguenta
+ * três batidas, encolhendo a cada uma, e some. O bloco ! guarda o Chapéu de
+ * Voar: a cabeçada o solta, e o bloco fica vazio.
  */
 export type BlockType =
   | 'cannon'
@@ -229,7 +247,9 @@ export type BlockType =
   | 'ceiling-spring'
   | 'on-off-switch'
   | 'red-block'
-  | 'blue-block';
+  | 'blue-block'
+  | 'pow-block'
+  | 'exclamation-block';
 
 /**
  * Valores das moedas gigantes numeradas, da menor para a maior.

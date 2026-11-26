@@ -3,6 +3,7 @@ import {
   EDITOR_PIECES,
   EDITOR_TABS,
   editorPiecesIn,
+  EDITOR_POWER_UPS,
   findEditorPiece,
   OBJECT_BEHAVIOR,
   RAINBOW_COLORS,
@@ -60,7 +61,7 @@ describe('Ordem de arco-íris do editor do Pedro Maker', () => {
   it('abre cada aba pela cor mais quente que ela tem', () => {
     expect(editorPiecesIn('terreno').map((piece) => piece.label).slice(0, 3)).toEqual(['Bloco Arco-Íris', 'Lava', 'Madeira']);
     expect(editorPiecesIn('inimigos')[0].label).toBe('Peixe Saltador');
-    expect(editorPiecesIn('cogumelos').map((piece) => piece.label).slice(0, 3)).toEqual(['Cogumelo Ímã', 'Giga Cogumelo', 'Super Cogumelo']);
+    expect(editorPiecesIn('cogumelos').map((piece) => piece.label).slice(0, 3)).toEqual(['Chapéu de Voar', 'Cogumelo Cereja', 'Cogumelo Ímã']);
     expect(editorPiecesIn('bandeiras').map((piece) => piece.label)).toEqual(['Checkpoint', 'Bandeira Final']);
   });
 
@@ -101,6 +102,28 @@ describe('Bloco Arco-Íris e Ponte Arco-Íris, as peças novas do Pedro Maker', 
     expect(findEditorPiece({ type: 'rainbow-bridge' })).toEqual(jasmine.objectContaining({ category: 'plataformas', label: 'Ponte Arco-Íris' }));
     expect(OBJECT_BEHAVIOR['rainbow-block']).toEqual({ surface: 'solid', isUnique: false });
     expect(OBJECT_BEHAVIOR['rainbow-bridge']).toEqual({ surface: 'one-way', isUnique: false });
+  });
+});
+
+describe('Bloco POW, Bloco ! e os poderes novos do Pedro Maker', () => {
+  it('põe os dois blocos firmes na aba Blocos', () => {
+    expect(findEditorPiece({ type: 'pow-block' })).toEqual(jasmine.objectContaining({ category: 'blocos', label: 'Bloco POW' }));
+    expect(findEditorPiece({ type: 'exclamation-block' })).toEqual(jasmine.objectContaining({ category: 'blocos', label: 'Bloco !' }));
+    expect(OBJECT_BEHAVIOR['pow-block']).toEqual({ surface: 'solid', isUnique: false });
+    expect(OBJECT_BEHAVIOR['exclamation-block']).toEqual({ surface: 'solid', isUnique: false });
+  });
+
+  it('põe cada poder novo na aba Cogumelos, com a surpresa dele', () => {
+    const labels = editorPiecesIn('cogumelos').map((piece) => piece.label);
+
+    for (const label of ['Cogumelo de Voar', 'Bota', 'Chapéu de Voar', 'Martelo Gigante', 'Roupa de Pinguim', 'Cogumelo Cereja']) {
+      expect(labels).withContext(label).toContain(label);
+      expect(labels).withContext(`Surpresa ${label}`).toContain(`Surpresa ${label}`);
+    }
+
+    expect(EDITOR_POWER_UPS).toEqual(
+      jasmine.arrayContaining(['propeller-mushroom', 'boot', 'wing-cap', 'hammer', 'penguin-suit', 'double-cherry']),
+    );
   });
 });
 

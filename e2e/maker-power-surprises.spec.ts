@@ -17,6 +17,12 @@ const POWER_SURPRISE_LABELS = [
   'Surpresa Cogumelo Alto',
   'Surpresa Cogumelo de Encolher',
   'Surpresa Cogumelo Pedrerê',
+  'Surpresa Cogumelo de Voar',
+  'Surpresa Bota',
+  'Surpresa Chapéu de Voar',
+  'Surpresa Martelo Gigante',
+  'Surpresa Roupa de Pinguim',
+  'Surpresa Cogumelo Cereja',
 ] as const;
 
 test('Maker offers a surprise block for every power in the Mushrooms tab, saves them and plays the level', async ({ page }) => {

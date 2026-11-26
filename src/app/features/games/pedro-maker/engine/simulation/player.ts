@@ -2,16 +2,20 @@ import type { HeroAbilities } from '../../config/hero.config';
 import {
   CAT_SUIT_PHYSICS,
   GIGA_PHYSICS,
+  HAMMER_PHYSICS,
   LEAF_SUIT_PHYSICS,
+  PENGUIN_SUIT_PHYSICS,
   PLAYER_PHYSICS,
   POWER_UP_DURATION_MS,
   POWER_UP_WARNING_MS,
+  PROPELLER_SUIT_PHYSICS,
   RACCOON_SUIT_PHYSICS,
   SLIDE_PHYSICS,
   SWIM_PHYSICS,
   MINI_MUSHROOM_PHYSICS,
   TALL_MUSHROOM_PHYSICS,
   TURBO_MUSHROOM_PHYSICS,
+  WING_CAP_PHYSICS,
 } from '../../config/physics.config';
 import type { PowerUpKind } from '../../models/level.model';
 import type { MakerSoundCue } from '../../models/session.model';
@@ -53,6 +57,10 @@ const PROTECTIVE_POWER_UPS: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>([
   'cat-mushroom',
   'leaf-mushroom',
   'raccoon-leaf',
+  'propeller-mushroom',
+  'boot',
+  'hammer',
+  'penguin-suit',
 ]);
 
 /**
@@ -66,15 +74,20 @@ export const SUIT_POWER_UPS = [
   'cat-mushroom',
   'leaf-mushroom',
   'raccoon-leaf',
+  'propeller-mushroom',
+  'boot',
+  'hammer',
+  'penguin-suit',
 ] as const satisfies readonly PowerUpKind[];
 
 const SUIT_SET: ReadonlySet<PowerUpKind> = new Set<PowerUpKind>(SUIT_POWER_UPS);
 
-/** Cada flor lança o seu elemento; pegar uma troca a outra. */
+/** Cada flor lança o seu elemento; pegar uma troca a outra. A Roupa de Pinguim lança gelo, como a Flor de Gelo. */
 const FLOWER_ELEMENTS = [
   ['fire-flower', 'fire'],
   ['ice-flower', 'ice'],
   ['bubble-flower', 'bubble'],
+  ['penguin-suit', 'ice'],
 ] as const satisfies readonly (readonly [PowerUpKind, BallElement])[];
 
 /** Tamanho da caixa de colisão em relação à normal, na largura e na altura. */
@@ -126,6 +139,8 @@ const RUN_DUST_SPEED = 200;
  * giro de rabo com a Folha do Guaxinim, o corpo gigante do Giga Cogumelo,
  * a disparada do Cogumelo Turbo, o corpo comprido do Cogumelo Alto, os
  * comandos trocados do Cogumelo Reverso, o corpinho do Cogumelo de Encolher,
+ * a hélice do Cogumelo de Voar, o voo do Chapéu de Voar, a martelada do
+ * Martelo Gigante, o pinguim que não escorrega e nada ligeiro,
  * braçadas na água, a descida no escorregador
  * e a piscada de invencibilidade depois de um toque.
  *
@@ -166,6 +181,10 @@ export class Player {
   private flying = false;
   private tailSpinStartedAt = Number.NEGATIVE_INFINITY;
   private lastTurboTrailAt = Number.NEGATIVE_INFINITY;
+  private propellerLaunchedAt = Number.NEGATIVE_INFINITY;
+  private hasUsedPropeller = false;
+  private spinningDown = false;
+  private hammerSwungAt = Number.NEGATIVE_INFINITY;
 
   constructor(
     feetX: number,
@@ -217,9 +236,14 @@ export class Player {
     return this.gliding;
   }
 
-  /** Subindo no ar com a Folha do Guaxinim. */
+  /** Subindo no ar com a Folha do Guaxinim ou com o Chapéu de Voar. */
   get isFlying(): boolean {
     return this.flying;
+  }
+
+  /** Caindo devagar com a hélice do Cogumelo de Voar girando. */
+  get isSpinningDown(): boolean {
+    return this.spinningDown;
   }
 
   /** Com o corpo dobrado do Giga Cogumelo. */
@@ -249,6 +273,18 @@ export class Player {
 
   isSpinningTail(now: number): boolean {
     return now - this.tailSpinStartedAt < RACCOON_SUIT_PHYSICS.tailSpinMs;
+  }
+
+  /** A hélice acabou de lançar o herói: no desenho, ela gira rápido. */
+  isLaunchingPropeller(now: number): boolean {
+    return now - this.propellerLaunchedAt < PROPELLER_SUIT_PHYSICS.spinMs;
+  }
+
+  /** Quanto da martelada já foi, de 0 (martelo lá em cima) a 1 (no chão); `null` sem martelada. */
+  hammerSwingProgress(now: number): number | null {
+    const elapsed = now - this.hammerSwungAt;
+
+    return elapsed >= 0 && elapsed < HAMMER_PHYSICS.swingMs ? elapsed / HAMMER_PHYSICS.swingMs : null;
   }
 
   /** Nos últimos segundos de um poder com tempo (o Giga, o Turbo, o Ímã, o Alto, o Reverso ou o de Encolher) o herói pisca, para avisar que vai acabar. */
@@ -289,6 +325,7 @@ export class Player {
     this.onClimbChain = false;
     this.gliding = false;
     this.flying = false;
+    this.spinningDown = false;
 
     if (!this.isActive) {
       return;
@@ -303,6 +340,7 @@ export class Player {
       this.hasUsedDoubleJump = false;
       this.climbTimeLeftMs = CAT_SUIT_PHYSICS.climbMs;
       this.flightTimeLeftMs = RACCOON_SUIT_PHYSICS.flightMs;
+      this.rechargePropeller(now);
     }
 
     if (this.slideRide) {
@@ -312,9 +350,12 @@ export class Player {
       return;
     }
 
+    // O pinguim não escorrega: no gelo, ele anda e freia como no chão.
+    const slipsOnIce = surroundings.isOnIce && !this.protections.has('penguin-suit');
+
     this.handleWater(surroundings.isInWater);
     this.handleLanding(grounded);
-    this.moveHorizontally(deltaMs / 1000, input, grounded, surroundings.isOnIce);
+    this.moveHorizontally(deltaMs / 1000, input, grounded, slipsOnIce);
     this.kickUpDust(now, grounded);
     this.leaveTurboTrail(now);
 
@@ -322,9 +363,10 @@ export class Player {
       this.handleSwim(input, surroundings.isAtWaterSurface);
     } else if (surroundings.climbChain && this.climbChain(now, input, grounded, surroundings.climbChain)) {
       // A corrente cuidou da subida (ou do pulo para fora dela) neste passo.
-    } else if (!this.climbWall(deltaMs, input, grounded) && !this.fly(now, deltaMs, input, grounded)) {
+    } else if (!this.climbWall(deltaMs, input, grounded) && !this.fly(now, deltaMs, input, grounded) && !this.soar(now, input, grounded)) {
       this.handleJump(now, input, grounded);
       this.glide(input, grounded);
+      this.spinDown(input, grounded);
     }
 
     this.updateMode(now, grounded);
@@ -392,6 +434,40 @@ export class Player {
     }
 
     this.tailSpinStartedAt = now;
+
+    return true;
+  }
+
+  /**
+   * Cogumelo de Voar: a hélice lança o herói para cima, do chão ou do ar, uma
+   * vez por pulo. O lançamento não é cortado ao soltar o pulo: é a hélice que
+   * empurra, e não as pernas.
+   */
+  launchPropeller(now: number): boolean {
+    if (!this.isActive || this.hasUsedPropeller || this.isInWater || !this.protections.has('propeller-mushroom')) {
+      return false;
+    }
+
+    this.stopSliding();
+    this.hasUsedPropeller = true;
+    this.propellerLaunchedAt = now;
+    this.body.vy = -PROPELLER_SUIT_PHYSICS.launchVelocity;
+    this.body.riding = null;
+    this.isJumpCut = true;
+    this.lastGroundedAt = Number.NEGATIVE_INFINITY;
+
+    return true;
+  }
+
+  /** Martelo Gigante: começa uma martelada, se o martelo já descansou da anterior. */
+  startHammerSwing(now: number): boolean {
+    const isResting = now - this.hammerSwungAt < HAMMER_PHYSICS.cooldownMs;
+
+    if (!this.isActive || isResting || !this.protections.has('hammer')) {
+      return false;
+    }
+
+    this.hammerSwungAt = now;
 
     return true;
   }
@@ -643,6 +719,59 @@ export class Player {
   }
 
   /**
+   * Chapéu de Voar: no ar e segurando o pulo, o herói sobe sem fôlego que
+   * acabe, enquanto o chapéu durar; soltando o pulo, ele plana. Como na Folha
+   * do Guaxinim, o voo só assume quando o pulo já perdeu força. Verdadeiro
+   * quando o voo cuidou do movimento deste passo.
+   */
+  private soar(now: number, input: InputSnapshot, grounded: boolean): boolean {
+    if (grounded || !this.timedPowerUps.has('wing-cap') || now - this.lastGroundedAt <= PLAYER_PHYSICS.coyoteTimeMs) {
+      return false;
+    }
+
+    if (!input.jumpHeld) {
+      if (this.body.vy > 0) {
+        this.gliding = true;
+        this.body.maxFallSpeed = WING_CAP_PHYSICS.glideFallSpeed;
+        this.body.vy = Math.min(this.body.vy, WING_CAP_PHYSICS.glideFallSpeed);
+      }
+
+      return false;
+    }
+
+    if (this.body.vy < -WING_CAP_PHYSICS.flySpeed) {
+      return false;
+    }
+
+    this.body.vy = -WING_CAP_PHYSICS.flySpeed;
+    this.body.riding = null;
+    this.flying = true;
+
+    return true;
+  }
+
+  /** Cogumelo de Voar: caindo com o pulo apertado, a hélice gira e a queda fica lenta. */
+  private spinDown(input: InputSnapshot, grounded: boolean): void {
+    if (grounded || !input.jumpHeld || this.body.vy <= 0 || !this.protections.has('propeller-mushroom')) {
+      return;
+    }
+
+    this.spinningDown = true;
+    this.body.maxFallSpeed = PROPELLER_SUIT_PHYSICS.spinFallSpeed;
+    this.body.vy = Math.min(this.body.vy, PROPELLER_SUIT_PHYSICS.spinFallSpeed);
+  }
+
+  /**
+   * A hélice recarrega no chão. Logo depois do lançamento o corpo ainda conta
+   * como no chão por um passo: a recarga espera ele sair de verdade.
+   */
+  private rechargePropeller(now: number): void {
+    if (now - this.propellerLaunchedAt > PLAYER_PHYSICS.coyoteTimeMs) {
+      this.hasUsedPropeller = false;
+    }
+  }
+
+  /**
    * Giga Cogumelo, Cogumelo Alto e Cogumelo de Encolher: a caixa de colisão
    * muda de tamanho com os pés no mesmo lugar. Encolher é sempre seguro: a
    * caixa menor fica dentro da maior, que já estava livre. Crescer só acontece
@@ -737,7 +866,8 @@ export class Player {
       return;
     }
 
-    const velocity = isAtSurface ? this.jumpVelocity() * SWIM_PHYSICS.leapMultiplier : SWIM_PHYSICS.strokeVelocity;
+    const stroke = SWIM_PHYSICS.strokeVelocity * (this.protections.has('penguin-suit') ? PENGUIN_SUIT_PHYSICS.strokeMultiplier : 1);
+    const velocity = isAtSurface ? this.jumpVelocity() * SWIM_PHYSICS.leapMultiplier : stroke;
 
     this.jump(velocity);
     this.isJumpCut = true;
@@ -747,9 +877,10 @@ export class Player {
   private moveHorizontally(seconds: number, input: InputSnapshot, grounded: boolean, isOnIce: boolean): void {
     const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     const hasTurboMushroom = this.timedPowerUps.has('turbo-mushroom');
-    const swim = this.isInWater ? SWIM_PHYSICS.speedMultiplier : 1;
     const weakLegs = this.isTall ? TALL_MUSHROOM_PHYSICS.speedMultiplier : 1;
-    const topSpeed = (input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed) * this.speedMultiplier() * swim * weakLegs;
+    const wingPush = !grounded && this.timedPowerUps.has('wing-cap') ? WING_CAP_PHYSICS.airSpeedMultiplier : 1;
+    const baseSpeed = input.run ? PLAYER_PHYSICS.runSpeed : PLAYER_PHYSICS.walkSpeed;
+    const topSpeed = baseSpeed * this.speedMultiplier() * this.swimSpeedMultiplier() * weakLegs * wingPush;
 
     let rate: number;
 
@@ -779,6 +910,15 @@ export class Player {
     }
 
     return { ...input, left: input.right, right: input.left };
+  }
+
+  /** Na água todo mundo nada devagar, menos o pinguim, que é dela. */
+  private swimSpeedMultiplier(): number {
+    if (!this.isInWater) {
+      return 1;
+    }
+
+    return this.protections.has('penguin-suit') ? PENGUIN_SUIT_PHYSICS.swimSpeedMultiplier : SWIM_PHYSICS.speedMultiplier;
   }
 
   /** Os dois turbos não se somam: vale o mais forte, para o herói não sair voando da tela. */

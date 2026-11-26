@@ -358,6 +358,12 @@ function drawIcon(
     case 'blue-block':
       paintVoxelIcon(context, ICON_SIZE, palette, object.type);
       return;
+    case 'pow-block':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'pow');
+      return;
+    case 'exclamation-block':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'exclamation');
+      return;
     case 'surprise':
       paintSurpriseIcon(context, object.properties?.contents, object.properties?.powerUp, palette);
       return;

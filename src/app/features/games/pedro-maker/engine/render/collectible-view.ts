@@ -65,6 +65,12 @@ const POWER_UP_COLORS: Readonly<Record<PowerUpKind, string>> = {
   'pedrere-mushroom': '#ffb92e',
   'extra-life-mushroom': '#3ddc6b',
   'bubble-flower': '#3fc5f0',
+  'propeller-mushroom': '#339af0',
+  boot: '#40c057',
+  'wing-cap': '#e8343a',
+  hammer: '#adb5bd',
+  'penguin-suit': '#364fc7',
+  'double-cherry': '#e03131',
   ...COIN_MULTIPLIER_COLORS,
 };
 
@@ -537,6 +543,18 @@ function classicPowerUpParts(kind: PowerUpKind): readonly VoxelBox[] | null {
       return [...mushroomParts(POWER_UP_COLORS['extra-life-mushroom']), ...plusSignParts()];
     case 'bubble-flower':
       return [...flowerParts(POWER_UP_COLORS['bubble-flower'], '#e0fbff'), ...bubbleParts()];
+    case 'propeller-mushroom':
+      return [...mushroomParts(POWER_UP_COLORS['propeller-mushroom']), ...propellerParts()];
+    case 'boot':
+      return bootParts(POWER_UP_COLORS.boot);
+    case 'wing-cap':
+      return wingCapParts(POWER_UP_COLORS['wing-cap']);
+    case 'hammer':
+      return hammerParts(POWER_UP_COLORS.hammer);
+    case 'penguin-suit':
+      return penguinHoodParts(POWER_UP_COLORS['penguin-suit']);
+    case 'double-cherry':
+      return [...mushroomParts(POWER_UP_COLORS['double-cherry']), ...cherryParts()];
     default:
       return null;
   }
@@ -666,6 +684,66 @@ function bubbleParts(): readonly VoxelBox[] {
   const bubble = '#c9f6ff';
 
   return [box(0.3, 0.3, 0, 0.12, 0.12, 0.12, bubble), box(0.38, 0.12, 0, 0.08, 0.08, 0.08, bubble), box(-0.32, 0.24, 0, 0.09, 0.09, 0.09, bubble)];
+}
+
+/** Hélice de duas pás amarelas num eixo curto, em cima do chapéu. */
+function propellerParts(): readonly VoxelBox[] {
+  return [box(0, 0.3, 0, 0.05, 0.12, 0.05, '#2a2350'), box(0, 0.37, 0, 0.66, 0.03, 0.12, '#ffd43b')];
+}
+
+/** Bota de cano alto, com o bico para a frente, a sola escura e a borda clara em cima. */
+function bootParts(color: string): readonly VoxelBox[] {
+  return [
+    box(-0.07, 0.07, 0, 0.26, 0.36, 0.28, color),
+    box(0.06, -0.17, 0, 0.48, 0.16, 0.3, color),
+    box(0.06, -0.27, 0, 0.52, 0.05, 0.32, '#1e5128'),
+    box(-0.07, 0.27, 0, 0.3, 0.05, 0.32, '#b2f2bb'),
+  ];
+}
+
+/** Boné com uma asinha branca de cada lado e o emblema branco na frente. */
+function wingCapParts(color: string): readonly VoxelBox[] {
+  return [
+    box(0, 0, 0, 0.44, 0.22, 0.44, color),
+    box(0, 0.14, 0, 0.3, 0.08, 0.3, color),
+    box(0, -0.09, 0.2, 0.44, 0.04, 0.2, color),
+    box(0, 0.03, 0.221, 0.1, 0.1, 0.01, '#ffffff'),
+    ...[-1, 1].flatMap((side) => [
+      box(side * 0.32, 0.06, 0, 0.22, 0.14, 0.04, '#ffffff'),
+      box(side * 0.44, 0.14, 0, 0.14, 0.1, 0.04, '#e7f5ff'),
+    ]),
+  ];
+}
+
+/** Martelo de pé: o cabo de madeira e a cabeça de ferro, larga, com uma faixa no meio. */
+function hammerParts(color: string): readonly VoxelBox[] {
+  return [
+    box(0, -0.12, 0, 0.07, 0.46, 0.07, '#a0642d'),
+    box(0, 0.17, 0, 0.52, 0.22, 0.26, color),
+    box(0, 0.17, 0.131, 0.08, 0.22, 0.01, '#868e96'),
+  ];
+}
+
+/** Capuz de pinguim: a cabeça escura, o rosto branco com olhinhos e o bico laranja. */
+function penguinHoodParts(color: string): readonly VoxelBox[] {
+  const eye = '#2a2350';
+
+  return [
+    box(0, 0, 0, 0.44, 0.44, 0.36, color),
+    box(0, -0.03, 0.181, 0.3, 0.28, 0.01, '#ffffff'),
+    box(-0.07, 0.03, 0.186, 0.04, 0.06, 0.01, eye),
+    box(0.07, 0.03, 0.186, 0.04, 0.06, 0.01, eye),
+    box(0, -0.08, 0.21, 0.08, 0.06, 0.06, '#ff922b'),
+  ];
+}
+
+/** Duas cerejas num cabinho só, penduradas em cima do chapéu do cogumelo. */
+function cherryParts(): readonly VoxelBox[] {
+  return [
+    box(0.13, 0.4, 0, 0.03, 0.14, 0.03, '#2b8a3e'),
+    box(0.06, 0.32, 0, 0.12, 0.12, 0.12, '#c92a2a'),
+    box(0.2, 0.32, 0, 0.12, 0.12, 0.12, '#c92a2a'),
+  ];
 }
 
 /** Duas setinhas douradas, uma de cada lado do chapéu, apontando em sentidos opostos: troca. */

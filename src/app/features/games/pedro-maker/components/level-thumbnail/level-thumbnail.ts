@@ -30,6 +30,8 @@ const COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   'on-off-switch': '#ff8a8f',
   'red-block': '#e5484d',
   'blue-block': '#3e7bfa',
+  'pow-block': '#4dabf7',
+  'exclamation-block': '#e5484d',
   coin: '#ffe066',
   'big-coin': '#ffc629',
   'huge-coin': '#ffc629',

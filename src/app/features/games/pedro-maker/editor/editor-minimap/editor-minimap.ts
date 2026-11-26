@@ -41,6 +41,8 @@ const MARKER_COLORS: Readonly<Partial<Record<LevelObjectType, string>>> = {
   'on-off-switch': '#ff8a8f',
   'red-block': '#e5484d',
   'blue-block': '#3e7bfa',
+  'pow-block': '#4dabf7',
+  'exclamation-block': '#e5484d',
   lava: '#ff6a00',
   water: '#2f9be8',
   spikes: '#c9cfdd',

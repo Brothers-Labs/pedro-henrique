@@ -74,6 +74,9 @@ const CUES: Readonly<Record<MakerSoundCue, Cue>> = {
   tailSpin: { tones: [tone(300, 0, 0.16, 'triangle', 0.1, 700)], noise: { duration: 0.1, gain: 0.05 } },
   bubble: { tones: [tone(520, 0, 0.12, 'sine', 0.09, 1040), tone(780, 0.06, 0.1, 'sine', 0.06, 1300)] },
   explosion: { tones: [tone(150, 0, 0.42, 'sawtooth', 0.12, 45)], noise: { duration: 0.38, gain: 0.14 } },
+  pow: { tones: [tone(98, 0, 0.3, 'square', 0.12, 196), tone(392, 0.04, 0.2, 'triangle', 0.1, 784)], noise: { duration: 0.3, gain: 0.16 } },
+  hammer: { tones: [tone(180, 0, 0.12, 'square', 0.1, 260)], noise: { duration: 0.12, gain: 0.12 } },
+  propeller: { tones: [tone(420, 0, 0.3, 'sawtooth', 0.05, 980), tone(620, 0.1, 0.24, 'triangle', 0.06, 1240)] },
 };
 
 /** Escala pentatônica maior: qualquer combinação dessas notas soa bem. */

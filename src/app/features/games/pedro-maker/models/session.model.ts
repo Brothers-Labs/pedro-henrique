@@ -32,7 +32,10 @@ export type MakerSoundCue =
   | 'slide'
   | 'tailSpin'
   | 'bubble'
-  | 'explosion';
+  | 'explosion'
+  | 'pow'
+  | 'hammer'
+  | 'propeller';
 
 export interface HudState {
   readonly hearts: number;
