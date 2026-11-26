@@ -97,8 +97,14 @@ test.describe('Maker palette on a landscape tablet', () => {
 
   test('an upward swipe over the pieces scrolls the side column', async ({ page }) => {
     const start = await centerOf(await openEnemies(page));
+    const pieces = await page.locator('.palette__pieces').boundingBox();
+    if (!pieces) {
+      throw new Error('The palette pieces are not visible.');
+    }
+    // The finger has to land on the pieces: a touch below the list never reaches the area that scrolls.
+    const from = { x: start.x, y: Math.min(start.y + 300, pieces.y + pieces.height - 10) };
 
-    await swipe(page, { x: start.x, y: start.y + 300 }, start);
+    await swipe(page, from, start);
 
     await expect.poll(() => paletteScroll(page)).toBeGreaterThan(0);
   });
