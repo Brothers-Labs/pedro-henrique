@@ -10,6 +10,10 @@ test('Sprunks puts characters on stage, plays their action and keeps custom char
   await expect(page.getByText('Zabumba entrou na banda!')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Pipoca \(/ })).toHaveCount(0);
 
+  await page.getByRole('button', { name: /^Solzão \(/ }).click();
+  await expect(page.getByText('Solzão entrou na banda!')).toBeVisible();
+  await expect(stage.locator('.stage__sparkle')).toHaveCount(2);
+
   const bolao = page.getByRole('button', { name: /^Bolão \(/ });
   await bolao.click();
   await stage.getByRole('button', { name: 'Bolão: fazer a ação especial' }).click();
@@ -20,6 +24,8 @@ test('Sprunks puts characters on stage, plays their action and keeps custom char
   await page.getByRole('button', { name: 'Fone com antenas', exact: true }).click();
   await page.getByRole('button', { name: 'Capa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Capa', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Bravos', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Bravos', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Criar boneco' }).click();
   await expect(stage.getByText('Trovão')).toBeVisible();
 

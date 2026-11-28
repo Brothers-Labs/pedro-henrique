@@ -12,9 +12,11 @@
 
   <section class="stage" aria-label="Palco da banda" [style.--beat]="beatDuration">
     <ul class="stage__slots">
-      @for (entry of stageEntries(); track entry.index) {
+      <!-- O rastreio inclui o boneco: quem chega num lugar já ocupado também aparece com brilho. -->
+      @for (entry of stageEntries(); track entry.index + ':' + (entry.character?.id ?? '')) {
         <li class="stage__slot">
           @if (entry.character; as character) {
+            <span class="stage__sparkle" aria-hidden="true">✨</span>
             <button
               type="button"
               class="stage__actor"
