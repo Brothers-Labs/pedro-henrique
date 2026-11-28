@@ -286,6 +286,7 @@ function hiddenBrick(id: number, coin: Collectible): InteractiveBlock {
     isBroken: false,
     isHidden: true,
     coinsLeft: 0,
+    hitsLeft: 0,
     bumpedAt: Number.NEGATIVE_INFINITY,
     crumbleStartedAt: Number.NEGATIVE_INFINITY,
   };

@@ -2,15 +2,19 @@ import { heroDefinition, nextHero } from '../../config/hero.config';
 import { POWER_UP_LABELS } from '../../config/object-catalog';
 import {
   BUBBLE_PHYSICS,
+  DOUBLE_CHERRY,
   EXTRA_LIFE,
   GIGA_PHYSICS,
+  HAMMER_PHYSICS,
   MAGNET_MUSHROOM_RADIUS,
   MAGNET_RADIUS,
   PLAYER_PHYSICS,
+  POW_BLOCK,
   POWER_UP_DURATION_MS,
   RACCOON_SUIT_PHYSICS,
   SURPRISE_COIN_COUNT,
   TILE_SIZE,
+  VIEW_HEIGHT,
 } from '../../config/physics.config';
 import { SeededRandom, seedFromText } from '../../levels/seeded-random';
 import {
@@ -76,6 +80,9 @@ const ACTION_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'ice-flower': 'para soltar bolas de gelo!',
   'bubble-flower': 'para soprar bolhas! Elas voam reto e prendem os inimigos.',
   'raccoon-leaf': 'para girar o rabo! E segure o pulo no ar para voar.',
+  'propeller-mushroom': 'para girar a hélice e subir bem alto! Segure o pulo para descer devagar.',
+  hammer: 'para dar marteladas! Elas derrubam qualquer inimigo e batem nos blocos.',
+  'penguin-suit': 'para soltar bolas de gelo! No gelo o pinguim não escorrega, e na água ele nada ligeiro.',
 };
 
 /** Dica do mascote para os poderes que mudam o jeito de se mexer. */
@@ -92,6 +99,8 @@ const MOVEMENT_TIPS: Readonly<Partial<Record<PowerUpKind, string>>> = {
   'coin-x9999': 'Moeda ×9999! A mais forte de todas: cada moeda vale 9999!',
   'mini-mushroom': 'Você ficou pequenininho! Passe pelos buraquinhos e pule bem levinho!',
   'tall-mushroom': 'Você ficou bem alto! Alcança lá em cima, mas o músculo é fraco: o pulo fica baixinho.',
+  'wing-cap': 'Chapéu de Voar! Segure o pulo no ar para voar à vontade, e solte para planar!',
+  boot: 'Com a Bota, os espinhos não machucam e o pisão derruba até o espinhudo!',
 };
 
 /** O som de cada bola lançada pelas flores. */
@@ -176,6 +185,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
    * Portas, bandeiras e o portal são com o Jogador 1, que leva a turma.
    */
   readonly partners: readonly Player[];
+  /**
+   * Clones do Cogumelo Cereja: apertam os mesmos botões do Jogador 1, pisam
+   * nos inimigos, batem nos blocos e pegam moedas para a turma. Não têm poder
+   * nenhum nem coração: quem se machuca, cai ou fica para trás some num estalo.
+   */
+  readonly clones: Player[] = [];
   readonly blocks: BlockSystem;
   readonly collectibles: CollectibleSystem;
   readonly triggers: TriggerSystem;
@@ -295,10 +310,13 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       this.catchSlide();
       this.throwBall(input);
       this.spinTail(input);
+      this.launchPropeller(input);
+      this.swingHammer(input);
       this.crushBricksAsGiant();
     }
 
     this.stepPartners(partnerInputs, seconds);
+    this.stepClones(input, seconds);
 
     this.cannons.update(this.clockMs, centerX(body), (x, y, direction) => {
       const bullet = this.addEnemy('bullet', x, y, 1, true);
@@ -318,6 +336,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.checkFireBars();
     this.checkFireTraps();
     this.checkPartners();
+    this.checkClones();
   }
 
   /* Comandos vindos da tela ------------------------------------------------------ */
@@ -330,6 +349,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.player.placeFeetAt(this.respawnX, this.respawnY);
     this.player.revive(this.clockMs, this.options.rules.invincibilityMs);
     this.gatherPartners(this.respawnX, this.respawnY);
+    this.dismissClones();
     this.effects.flash();
     this.emitHud();
   }
@@ -433,10 +453,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     this.blocks.solidifyWaitingColorBlocks(this.isAnyoneIn);
   }
 
-  /** Função fixa, e não criada a cada passo: herói, amigo ou inimigo ocupando a área. */
+  /** Função fixa, e não criada a cada passo: herói, amigo, clone ou inimigo ocupando a área. */
   private readonly isAnyoneIn = (area: WorldArea): boolean =>
     (this.player.isActive && overlaps(this.player.body, area)) ||
     this.partners.some((partner) => partner.isActive && overlaps(partner.body, area)) ||
+    this.clones.some((clone) => overlaps(clone.body, area)) ||
     this.enemies.some((enemy) => !enemy.isDefeated && overlaps(enemy.body, area));
 
   private updateEnemies(seconds: number): void {
@@ -546,6 +567,56 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     for (const enemy of targets) {
       this.defeatEnemy(enemy);
+    }
+  }
+
+  /** Com o Cogumelo de Voar, o botão de ação gira a hélice e lança o herói para cima. */
+  private launchPropeller(input: InputSnapshot): void {
+    const player = this.player;
+
+    if (!input.actionPressed || this.triggers.nearDoor || !player.launchPropeller(this.clockMs)) {
+      return;
+    }
+
+    const body = player.body;
+
+    this.playSound('propeller');
+    this.effects.burst('dust', centerX(body), bottom(body), 10);
+    this.effects.burst('sparkle', centerX(body), body.y, 6);
+  }
+
+  /**
+   * Com o Martelo Gigante, o botão de ação dá uma martelada na frente do
+   * herói: derruba qualquer inimigo ao alcance — até os que não se pisam nem se
+   * apagam com fogo; na Bomb-omb, acende o pavio —, acerta o chefão e bate nos
+   * blocos como uma cabeçada.
+   */
+  private swingHammer(input: InputSnapshot): void {
+    const player = this.player;
+    const now = this.clockMs;
+
+    if (!input.actionPressed || this.triggers.nearDoor || !player.startHammerSwing(now)) {
+      return;
+    }
+
+    const area = hammerArea(player);
+    // Filtra antes de derrotar: o Rei Slime derrotado solta slimes novos, que não levam a mesma martelada.
+    const targets = this.enemies.filter((enemy) => !enemy.isDefeated && !enemy.isHidden && overlaps(area, enemy.body));
+
+    this.playSound('hammer');
+    this.effects.burst('dust', area.x + area.width / 2, area.y + area.height, 10);
+    this.effects.shake('leve');
+    this.blocks.strikeBlocksIn(area, now);
+    this.pSwitches.breakBricksIn(area);
+
+    for (const enemy of targets) {
+      this.stompEnemy(enemy);
+    }
+
+    const boss = this.boss;
+
+    if (boss?.isAwake && overlaps(area, boss.body)) {
+      boss.takeHit(now);
     }
   }
 
@@ -681,7 +752,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const playerBody = this.player.body;
     const livingEnemies = this.enemies.filter((enemy) => !enemy.isDefeated);
 
-    this.crushers.update(now, [playerBody, ...this.partners.map((partner) => partner.body), ...livingEnemies.map((enemy) => enemy.body)]);
+    this.crushers.update(now, [
+      playerBody,
+      ...this.partners.map((partner) => partner.body),
+      ...this.clones.map((clone) => clone.body),
+      ...livingEnemies.map((enemy) => enemy.body),
+    ]);
 
     for (const crusher of this.crushers.crushers) {
       if (!this.crushers.slammedBetween(crusher, now - STEP_MS, now)) {
@@ -749,7 +825,8 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     const fellOut = player.body.y > this.grid.heightPx + TILE_SIZE;
 
     if (!fellOut && !this.blocks.touchesHazard(player.body)) {
-      const spikes = this.blocks.spikesTouching(player.body);
+      // Com a Bota, pisar e esbarrar nos espinhos não machuca.
+      const spikes = player.hasPowerUp('boot') ? undefined : this.blocks.spikesTouching(player.body);
 
       if (spikes) {
         this.hurtPlayer(spikes.x + spikes.width / 2);
@@ -763,6 +840,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     if (!this.isDefeated) {
       player.placeFeetAt(this.respawnX, this.respawnY);
       player.revive(this.clockMs, this.options.rules.invincibilityMs);
+      this.dismissClones();
       this.effects.flash();
     }
   }
@@ -792,37 +870,35 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
    * Jogador 1, piscando como quem acabou de voltar ao checkpoint.
    */
   private checkPartners(): void {
-    const now = this.clockMs;
-
     for (const partner of this.partners) {
-      if (!partner.isActive) {
-        continue;
-      }
-
-      const body = partner.body;
-
-      if (this.isPartnerLost(body)) {
-        this.bringPartnerBack(partner);
-        continue;
-      }
-
-      if (partner.isInvincible(now)) {
-        continue;
-      }
-
-      const isHurt =
-        this.blocks.touchesHazard(body) ||
-        Boolean(this.blocks.spikesTouching(body)) ||
-        Boolean(this.fireBars.touching(now, body)) ||
-        Boolean(this.fireTraps.touching(now, body)) ||
-        Boolean(this.crushers.crushing(now, body)) ||
-        this.partnerMeetsEnemies(partner) ||
-        this.partnerMeetsBoss(partner);
-
-      if (isHurt) {
+      if (partner.isActive && (this.isPartnerLost(partner.body) || this.isTeammateHurt(partner))) {
         this.bringPartnerBack(partner);
       }
     }
+  }
+
+  /**
+   * Um amigo ou clone encostou num perigo neste passo: lava, espinho, fogo,
+   * prensa, inimigo de lado ou chefão bravo. Piscando, nada o machuca. O pisão
+   * nos inimigos e no chefão cansado já é contado aqui.
+   */
+  private isTeammateHurt(teammate: Player): boolean {
+    const now = this.clockMs;
+    const body = teammate.body;
+
+    if (teammate.isInvincible(now)) {
+      return false;
+    }
+
+    return (
+      this.blocks.touchesHazard(body) ||
+      Boolean(this.blocks.spikesTouching(body)) ||
+      Boolean(this.fireBars.touching(now, body)) ||
+      Boolean(this.fireTraps.touching(now, body)) ||
+      Boolean(this.crushers.crushing(now, body)) ||
+      this.partnerMeetsEnemies(teammate) ||
+      this.partnerMeetsBoss(teammate)
+    );
   }
 
   /** Caiu da fase ou ficou longe demais do Jogador 1, fora da câmera. */
@@ -862,7 +938,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
         continue;
       }
 
-      if (isStomp && enemy.canBeStomped) {
+      if (isStomp && canStomp(partner, enemy)) {
         this.stompEnemy(enemy);
         partner.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
         continue;
@@ -912,12 +988,95 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
    */
   private gatherPartners(feetX: number, feetY: number): void {
     this.partners.forEach((partner, index) => {
-      const body = partner.body;
-      const x = feetX - (index + 1) * PARTNER_GAP;
-      const spot: WorldArea = { x: x - body.width / 2, y: feetY - body.height, width: body.width, height: body.height };
-
-      partner.placeFeetAt(spot.x >= 0 && this.hasRoomFor(spot) ? x : feetX, feetY);
+      partner.placeFeetAt(this.feetXBeside(partner.body, feetX, feetY, -(index + 1) * PARTNER_GAP), feetY);
       partner.revive(this.clockMs, 0);
+    });
+  }
+
+  /**
+   * Onde pôr os pés de um herói a `offset` pixels de `feetX`: ali, se o corpo
+   * dele couber; se não couber (uma parede, a borda da fase), no próprio `feetX`.
+   */
+  private feetXBeside(body: PhysicsBody, feetX: number, feetY: number, offset: number): number {
+    const x = feetX + offset;
+    const spot: WorldArea = { x: x - body.width / 2, y: feetY - body.height, width: body.width, height: body.height };
+
+    return spot.x >= 0 && this.hasRoomFor(spot) ? x : feetX;
+  }
+
+  /* Clones do Cogumelo Cereja ---------------------------------------------------------- */
+
+  /** Cada clone obedece aos botões do Jogador 1, bate nos blocos e pega o que é da turma. */
+  private stepClones(input: InputSnapshot, seconds: number): void {
+    for (const clone of this.clones) {
+      const body = clone.body;
+
+      clone.control(this.clockMs, STEP_MS, input, this.surroundingsOf(body));
+      stepBody(body, this.world, seconds, true);
+      this.reactToPlayerCollisions(clone);
+      this.catchSlide(clone);
+      this.collectibles.update(0, centerX(body), centerY(body), 0, isTeamCollectible);
+    }
+  }
+
+  /** O clone que se machuca, cai ou fica para trás some num estalo de fumaça; não volta. */
+  private checkClones(): void {
+    // Cópia: o clone some da lista no meio da conta.
+    for (const clone of [...this.clones]) {
+      if (this.isPartnerLost(clone.body) || this.isTeammateHurt(clone)) {
+        this.removeClone(clone);
+      }
+    }
+  }
+
+  /**
+   * Cogumelo Cereja: um clone aparece ao lado do Jogador 1, olhando para o
+   * mesmo lado, até o teto de clones. Nasce piscando, para não se machucar
+   * no mesmo instante em que aparece.
+   */
+  private spawnClone(x: number, y: number): void {
+    if (this.clones.length >= DOUBLE_CHERRY.maxClones) {
+      this.effects.floatingText(x, y - 30, '🍒 JÁ TEM CLONE DEMAIS!', '#ffc9c9');
+      return;
+    }
+
+    const leader = this.player;
+    const feetY = bottom(leader.body);
+    const clone = new Player(centerX(leader.body), feetY, this, heroDefinition(this.currentHero).abilities);
+    const offset = -leader.facing * DOUBLE_CHERRY.spawnGap * (this.clones.length + 1);
+
+    clone.placeFeetAt(this.feetXBeside(clone.body, centerX(leader.body), feetY, offset), feetY);
+    clone.facing = leader.facing;
+    clone.revive(this.clockMs, this.options.rules.invincibilityMs);
+    this.clones.push(clone);
+    this.effects.burst('sparkle', centerX(clone.body), centerY(clone.body), 16);
+    this.effects.floatingText(x, y - 30, '🍒 CLONE!', '#ff6b6b');
+
+    if (this.clones.length === 1) {
+      this.emit({ type: 'mascot', text: 'Cogumelo Cereja! Apareceu um clone seu: ele faz tudo o que você fizer!' });
+    }
+  }
+
+  private removeClone(clone: Player): void {
+    const index = this.clones.indexOf(clone);
+
+    if (index >= 0) {
+      this.clones.splice(index, 1);
+      this.effects.burst('poof', centerX(clone.body), centerY(clone.body), 12);
+    }
+  }
+
+  /** Na volta ao checkpoint os clones vão embora: o Cogumelo Cereja tem de ser pego de novo. */
+  private dismissClones(): void {
+    for (const clone of [...this.clones]) {
+      this.removeClone(clone);
+    }
+  }
+
+  /** Pela porta ou pelo cano, os clones passam juntos com o Jogador 1. */
+  private gatherClones(feetX: number, feetY: number): void {
+    this.clones.forEach((clone, index) => {
+      clone.placeFeetAt(this.feetXBeside(clone.body, feetX, feetY, -this.player.facing * DOUBLE_CHERRY.spawnGap * (index + 1)), feetY);
     });
   }
 
@@ -933,7 +1092,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return;
     }
 
-    if (isStomp && enemy.canBeStomped) {
+    if (isStomp && canStomp(this.player, enemy)) {
       this.stompEnemy(enemy);
       this.player.bounce(PLAYER_PHYSICS.stompBounceVelocity, true);
       return;
@@ -1012,6 +1171,12 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     for (const partner of this.partners) {
       if (partner.isActive && !partner.isInvincible(this.clockMs) && overlaps(partner.body, blast)) {
         this.bringPartnerBack(partner);
+      }
+    }
+
+    for (const clone of [...this.clones]) {
+      if (!clone.isInvincible(this.clockMs) && overlaps(clone.body, blast)) {
+        this.removeClone(clone);
       }
     }
   }
@@ -1226,6 +1391,26 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
     return this.random.pick(CLASSIC_POWER_UPS);
   }
 
+  /**
+   * O bloco POW treme a tela: todos os inimigos à vista caem de uma vez — os
+   * que voam também, para a criança ver a tela limpinha. Os escondidos no cano
+   * ficam, e a Bomb-omb cai sem explodir.
+   */
+  onPowBlock(x: number, y: number): void {
+    // Filtra antes de derrotar: o Rei Slime derrotado solta slimes novos, que não levam o mesmo POW.
+    const onScreen = this.enemies.filter(
+      (enemy) =>
+        !enemy.isDefeated &&
+        !enemy.isHidden &&
+        Math.abs(centerX(enemy.body) - x) <= POW_BLOCK.reach &&
+        Math.abs(centerY(enemy.body) - y) <= VIEW_HEIGHT,
+    );
+
+    for (const enemy of onScreen) {
+      this.defeatEnemy(enemy);
+    }
+  }
+
   onCollected(item: Collectible): void {
     const { x, y } = item;
 
@@ -1299,6 +1484,7 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     this.player.placeFeetAt(destinationFeetX, destinationFeetY);
     this.gatherPartners(destinationFeetX, destinationFeetY);
+    this.gatherClones(destinationFeetX, destinationFeetY);
   }
 
   onGoldenDoorOpened(x: number, y: number): void {
@@ -1473,6 +1659,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
       return;
     }
 
+    if (kind === 'double-cherry') {
+      this.spawnClone(x, y);
+      return;
+    }
+
     this.player.grantPowerUp(kind, this.clockMs);
 
     const { emoji, label } = POWER_UP_LABELS[kind];
@@ -1524,6 +1715,11 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
 
     this.currentHero = hero.id;
     this.player.changeAbilities(hero.abilities);
+
+    // O clone é uma cópia do herói em cena: troca junto com ele.
+    for (const clone of this.clones) {
+      clone.changeAbilities(hero.abilities);
+    }
     this.effects.burst('sparkle', x, y, 24);
     this.effects.floatingText(x, y - 30, `${emoji} VIROU ${hero.name.toUpperCase()}!`, '#e2c6ff');
     this.emit({ type: 'mascot', text: `Agora você é ${hero.name}!` });
@@ -1569,6 +1765,25 @@ export class GameSimulation implements PlayerHost, BlockHost, CollectibleHost, T
   private emit(event: GameSessionEvent): void {
     this.options.listener(event);
   }
+}
+
+/** O pisão derruba quem se pisa; com a Bota, também o espinhudo, a planta e os outros que não se pisam. */
+function canStomp(player: Player, enemy: Enemy): boolean {
+  return enemy.canBeStomped || (player.hasPowerUp('boot') && !enemy.isHidden);
+}
+
+/** Onde a martelada pega: na frente do herói, para o lado em que ele olha, da altura da cabeça até os pés. */
+function hammerArea(player: Player): WorldArea {
+  const body = player.body;
+  const { reach, headroom } = HAMMER_PHYSICS;
+
+  return {
+    x: player.facing === 1 ? body.x + body.width : body.x - reach,
+    y: body.y - headroom,
+    width: reach,
+    // Um pixel acima dos pés: a linha do chão embaixo do herói não entra na conta.
+    height: body.height + headroom - 1,
+  };
 }
 
 /** Índice de cada cristal, na ordem em que aparece na planta da fase. */

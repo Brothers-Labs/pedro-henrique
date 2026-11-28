@@ -41,6 +41,22 @@ const REVERSE_GLOW = 0.3;
 const REVERSE_COLOR = '#20c997';
 const MINI_GLOW = 0.3;
 const MINI_COLOR = '#6b8cff';
+const PROPELLER_COLOR = '#339af0';
+const PROPELLER_BLADE = '#ffd43b';
+/** Giros por segundo da hélice: devagar parada, rápido no lançamento e na descida. */
+const PROPELLER_IDLE_RATE = 3;
+const PROPELLER_SPIN_RATE = 26;
+const BOOT_COLOR = '#40c057';
+const BOOT_SOLE = '#1e5128';
+const WING_CAP_COLOR = '#e8343a';
+const HAMMER_IRON = '#adb5bd';
+const HAMMER_BAND = '#868e96';
+const HAMMER_WOOD = '#a0642d';
+/** O braço do martelo vai de lá de cima (atrás da cabeça) até a frente, embaixo. */
+const HAMMER_RAISED = -3;
+const HAMMER_LOWERED = -0.6;
+const PENGUIN_COLOR = '#364fc7';
+const PENGUIN_BEAK = '#ff922b';
 
 /** Estado do Pedro que o modelo precisa para se mexer. */
 export interface PedroPose {
@@ -90,6 +106,15 @@ export interface PedroPose {
   readonly isMini: boolean;
   /** Últimos segundos do Cogumelo de Encolher: o brilho azul pisca. */
   readonly isMiniEnding: boolean;
+  readonly hasPropellerSuit: boolean;
+  /** A hélice acabou de lançar o herói ou segura a descida: gira rápido. */
+  readonly isPropellerSpinning: boolean;
+  readonly hasBoot: boolean;
+  readonly hasWingCap: boolean;
+  readonly hasHammer: boolean;
+  /** Quanto da martelada já foi, de 0 a 1; nulo sem martelada. */
+  readonly hammerSwingProgress: number | null;
+  readonly hasPenguinSuit: boolean;
 }
 
 /**
@@ -114,6 +139,14 @@ export class PedroModel {
   private readonly leaf: Group;
   private readonly raccoonSuit: Group;
   private readonly raccoonTail: Group;
+  private readonly propellerSuit: Group;
+  private readonly propellerBlades: Group;
+  /** Uma bota em cada perna: andam junto com elas. */
+  private readonly boots: readonly Mesh[];
+  private readonly wingCap: Group;
+  /** O martelo vai na mão direita: o braço é que dá a martelada. */
+  private readonly hammer: Mesh;
+  private readonly penguinSuit: Group;
   private readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
 
   private heading = Math.PI / 2 - TURN_TOWARD_CAMERA;
@@ -141,7 +174,25 @@ export class PedroModel {
     this.leaf = this.buildLeaf(headTop);
     this.raccoonTail = this.buildRaccoonTail(parts.hipY);
     this.raccoonSuit = this.buildRaccoonSuit(headTop, this.raccoonTail);
-    this.body.add(this.leftArm, this.rightArm, this.leftLeg, this.rightLeg, this.wings, this.catSuit, this.leaf, this.raccoonSuit);
+    this.propellerBlades = this.buildPropellerBlades();
+    this.propellerSuit = this.buildPropellerSuit(headTop, this.propellerBlades);
+    this.boots = [this.leftLeg, this.rightLeg].map((leg) => this.buildBoot(leg, parts.hipY));
+    this.wingCap = this.buildWingCap(headTop);
+    this.hammer = this.buildHammer(this.rightArm);
+    this.penguinSuit = this.buildPenguinSuit(headTop);
+    this.body.add(
+      this.leftArm,
+      this.rightArm,
+      this.leftLeg,
+      this.rightLeg,
+      this.wings,
+      this.catSuit,
+      this.leaf,
+      this.raccoonSuit,
+      this.propellerSuit,
+      this.wingCap,
+      this.penguinSuit,
+    );
 
     this.shield = new Mesh(
       new SphereGeometry(0.95, 20, 14),
@@ -159,6 +210,15 @@ export class PedroModel {
     this.catSuit.visible = pose.hasCatSuit;
     this.leaf.visible = pose.hasLeafSuit;
     this.raccoonSuit.visible = pose.hasRaccoonSuit;
+    this.propellerSuit.visible = pose.hasPropellerSuit;
+    this.wingCap.visible = pose.hasWingCap;
+    this.hammer.visible = pose.hasHammer;
+    this.penguinSuit.visible = pose.hasPenguinSuit;
+
+    for (const boot of this.boots) {
+      boot.visible = pose.hasBoot;
+    }
+
     this.shield.rotation.y = now / 600;
 
     this.turn(pose, deltaSeconds);
@@ -401,6 +461,110 @@ export class PedroModel {
       this.rightArm.rotation.set(0, 0, 1.5);
       this.leaf.rotation.y += LEAF_SPIN_RATE * deltaSeconds;
     }
+
+    if (pose.hasPropellerSuit) {
+      this.propellerBlades.rotation.y += (pose.isPropellerSpinning ? PROPELLER_SPIN_RATE : PROPELLER_IDLE_RATE) * deltaSeconds;
+    }
+
+    if (pose.isPropellerSpinning) {
+      // Os braços para cima, segurando a hélice, como quem é puxado por ela.
+      this.leftArm.rotation.set(0, 0, -2.7);
+      this.rightArm.rotation.set(0, 0, 2.7);
+    }
+
+    if (pose.hammerSwingProgress !== null) {
+      // Começa devagar lá em cima e despenca: o peso do martelo.
+      const fall = pose.hammerSwingProgress * pose.hammerSwingProgress;
+
+      this.rightArm.rotation.set(MathUtils.lerp(HAMMER_RAISED, HAMMER_LOWERED, fall), 0, 0);
+    }
+  }
+
+  /** O alto da cabeça com a hélice: um chapeuzinho azul, o eixo e as duas pás, que giram sozinhas. */
+  private buildPropellerSuit(headTop: number, blades: Group): Group {
+    const suit = new Group();
+
+    suit.position.y = headTop;
+    suit.add(this.mesh([box(0, 0.02, 0, 0.34, 0.05, 0.34, PROPELLER_COLOR), box(0, 0.08, 0, 0.05, 0.1, 0.05, '#2a2350')]), blades);
+    suit.visible = false;
+
+    return suit;
+  }
+
+  private buildPropellerBlades(): Group {
+    const blades = new Group();
+
+    blades.position.y = 0.13;
+    blades.add(this.mesh([box(0, 0, 0, 0.74, 0.03, 0.12, PROPELLER_BLADE), box(0, 0.001, 0, 0.12, 0.03, 0.74, PROPELLER_BLADE)]));
+
+    return blades;
+  }
+
+  /** Bota de cano alto por cima do tênis, presa na perna: anda e pula junto com ela. */
+  private buildBoot(leg: Group, hipY: number): Mesh {
+    const footY = -hipY;
+    const boot = this.mesh([
+      box(0, footY + 0.12, 0.03, 0.24, 0.24, 0.28, BOOT_COLOR),
+      box(0, footY + 0.26, 0.03, 0.26, 0.04, 0.3, '#b2f2bb'),
+      box(0, footY + 0.01, 0.06, 0.26, 0.04, 0.34, BOOT_SOLE),
+    ]);
+
+    boot.visible = false;
+    leg.add(boot);
+
+    return boot;
+  }
+
+  /** Boné vermelho por cima do boné de sempre, com uma asinha branca de cada lado. */
+  private buildWingCap(headTop: number): Group {
+    const cap = new Group();
+
+    cap.position.y = headTop;
+    cap.add(
+      this.mesh([
+        box(0, 0.02, 0, 0.54, 0.12, 0.5, WING_CAP_COLOR),
+        box(0, 0.1, 0, 0.36, 0.06, 0.36, WING_CAP_COLOR),
+        box(0, 0.04, 0.252, 0.12, 0.08, 0.01, '#ffffff'),
+        ...[-1, 1].flatMap((side) => [
+          box(side * 0.34, 0.04, -0.04, 0.16, 0.12, 0.04, '#ffffff'),
+          box(side * 0.44, 0.12, -0.04, 0.12, 0.1, 0.04, '#e7f5ff'),
+        ]),
+      ]),
+    );
+    cap.visible = false;
+
+    return cap;
+  }
+
+  /** Martelo na mão direita: o cabo sai para a frente e a cabeça de ferro fica em pé na ponta. */
+  private buildHammer(arm: Group): Mesh {
+    const hammer = this.mesh([
+      box(0, -0.34, 0.2, 0.06, 0.06, 0.34, HAMMER_WOOD),
+      box(0, -0.34, 0.42, 0.26, 0.4, 0.26, HAMMER_IRON),
+      box(0, -0.34, 0.42, 0.27, 0.08, 0.27, HAMMER_BAND),
+    ]);
+
+    hammer.visible = false;
+    arm.add(hammer);
+
+    return hammer;
+  }
+
+  /** Capuz de pinguim que deixa o rosto à mostra, com o bico laranja em cima, e a barriga branca. */
+  private buildPenguinSuit(headTop: number): Group {
+    const suit = new Group();
+
+    suit.add(
+      this.mesh([
+        box(0, headTop - 0.24, -0.05, 0.54, 0.56, 0.42, PENGUIN_COLOR),
+        box(0, headTop + 0.04, 0.17, 0.12, 0.06, 0.1, PENGUIN_BEAK),
+        box(0, 0.64, 0, 0.55, 0.46, 0.32, PENGUIN_COLOR),
+        box(0, 0.62, 0.161, 0.36, 0.36, 0.01, '#ffffff'),
+      ]),
+    );
+    suit.visible = false;
+
+    return suit;
   }
 
   /** Orelhas pontudas no alto da cabeça e o rabo listrado saindo das costas, na altura do quadril. */

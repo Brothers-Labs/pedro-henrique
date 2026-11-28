@@ -287,7 +287,9 @@ function drawIcon(
       paintVoxelIcon(context, ICON_SIZE, palette, 'mesa-side', 'mesa-top');
       return;
     case 'cloud':
-      paintVoxelIcon(context, ICON_SIZE, palette, 'cloud');
+    case 'rainbow-block':
+    case 'rainbow-bridge':
+      paintVoxelIcon(context, ICON_SIZE, palette, object.type);
       return;
     case 'platform':
       paintPlatformTile(context, palette);
@@ -355,6 +357,12 @@ function drawIcon(
     case 'red-block':
     case 'blue-block':
       paintVoxelIcon(context, ICON_SIZE, palette, object.type);
+      return;
+    case 'pow-block':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'pow');
+      return;
+    case 'exclamation-block':
+      paintVoxelIcon(context, ICON_SIZE, palette, 'exclamation');
       return;
     case 'surprise':
       paintSurpriseIcon(context, object.properties?.contents, object.properties?.powerUp, palette);

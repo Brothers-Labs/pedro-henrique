@@ -79,7 +79,9 @@ export const POWER_UP_DURATION_MS = {
   'coin-x4': 15000,
   'coin-x1000': 15000,
   'coin-x9999': 15000,
-  /** Escudo, cogumelos e flores duram até proteger de um toque. */
+  /** Voar à vontade cansa a fase: doze segundos bastam para atravessar um buraco grande. */
+  'wing-cap': 12000,
+  /** Escudo, cogumelos, flores e trajes duram até proteger de um toque. */
   shield: 0,
   mushroom: 0,
   'fire-flower': 0,
@@ -88,6 +90,10 @@ export const POWER_UP_DURATION_MS = {
   'cat-mushroom': 0,
   'leaf-mushroom': 0,
   'raccoon-leaf': 0,
+  'propeller-mushroom': 0,
+  boot: 0,
+  hammer: 0,
+  'penguin-suit': 0,
   /** O cogumelo de vida age na hora: enche os corações. */
   'one-up': 0,
   /** O Cogumelo 1UP também age na hora: um coração a mais no placar. */
@@ -96,6 +102,8 @@ export const POWER_UP_DURATION_MS = {
   'swap-mushroom': 0,
   /** O Cogumelo Pedrerê também: o herói vira o Pedro do Pedro Pedrerê na hora. */
   'pedrere-mushroom': 0,
+  /** O Cogumelo Cereja também: o clone aparece na hora e fica até se machucar. */
+  'double-cherry': 0,
 } as const;
 
 /**
@@ -144,6 +152,68 @@ export const RACCOON_SUIT_PHYSICS = {
   tailSpinCooldownMs: 450,
   /** Quanto o rabo alcança além da caixa do herói, para cada lado. */
   tailReach: 40,
+} as const;
+
+/**
+ * Cogumelo de Voar: o botão de ação gira a hélice e lança o herói para cima,
+ * uns seis blocos. Uma vez por pulo: a hélice só recarrega no chão. Na descida,
+ * segurando o pulo, a hélice gira devagar e o herói cai como um helicóptero.
+ */
+export const PROPELLER_SUIT_PHYSICS = {
+  launchVelocity: 1050,
+  spinFallSpeed: 130,
+  /** Quanto tempo a hélice gira rápido depois do lançamento, no desenho. */
+  spinMs: 600,
+} as const;
+
+/**
+ * Chapéu de Voar: enquanto dura, segurar o pulo no ar faz o herói subir, sem
+ * fôlego que acabe; soltando, ele plana devagar. A asa também empurra para a
+ * frente: voando, o herói é um pouco mais rápido.
+ */
+export const WING_CAP_PHYSICS = {
+  flySpeed: 340,
+  glideFallSpeed: 140,
+  airSpeedMultiplier: 1.2,
+} as const;
+
+/**
+ * Martelo Gigante: o botão de ação dá uma martelada na frente do herói. Ela
+ * derruba qualquer inimigo e aciona os blocos ao alcance, como uma cabeçada.
+ */
+export const HAMMER_PHYSICS = {
+  /** Quanto a martelada alcança à frente da caixa do herói. */
+  reach: 52,
+  /**
+   * Um tantinho acima da caixa, para pegar o bloco na altura da cabeça. Para
+   * baixo, só até os pés: o tijolo do chão em que o herói pisa fica, e ele não afunda.
+   */
+  headroom: 10,
+  swingMs: 260,
+  /** Espera entre uma martelada e outra: o martelo é pesado. */
+  cooldownMs: 420,
+} as const;
+
+/** Roupa de Pinguim: na água, o pinguim nada ligeiro e cada braçada vai mais longe. */
+export const PENGUIN_SUIT_PHYSICS = {
+  swimSpeedMultiplier: 1.1,
+  strokeMultiplier: 1.3,
+} as const;
+
+/**
+ * Cogumelo Cereja: cada um traz um clone do herói, que aperta os mesmos
+ * botões. Há um teto, para a tela não virar uma multidão.
+ */
+export const DOUBLE_CHERRY = {
+  maxClones: 3,
+  /** Distância entre o herói e o clone que aparece, em pixels: um do lado do outro. */
+  spawnGap: TILE_SIZE * 0.8,
+} as const;
+
+/** Bloco POW: quantas batidas aguenta, e até onde derruba os inimigos, para cada lado. */
+export const POW_BLOCK = {
+  hits: 3,
+  reach: VIEW_WIDTH * 0.6,
 } as const;
 
 /** Nos últimos segundos do Giga e dos cogumelos com tempo o herói pisca, avisando que o efeito vai acabar. */

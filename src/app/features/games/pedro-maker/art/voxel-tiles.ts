@@ -38,7 +38,11 @@ export type VoxelTile =
   | 'switch-on'
   | 'switch-off'
   | 'red-block'
-  | 'blue-block';
+  | 'blue-block'
+  | 'rainbow-block'
+  | 'rainbow-bridge'
+  | 'pow'
+  | 'exclamation';
 
 export const VOXEL_TILES: readonly VoxelTile[] = [
   'grass-top',
@@ -68,6 +72,10 @@ export const VOXEL_TILES: readonly VoxelTile[] = [
   'switch-off',
   'red-block',
   'blue-block',
+  'rainbow-block',
+  'rainbow-bridge',
+  'pow',
+  'exclamation',
 ];
 
 /** Blocos por linha no atlas. */
@@ -109,6 +117,12 @@ const MUSIC_NOTE = ['...###', '...#.#', '...#.#', '...#..', '...#..', '.###..', 
 const ON_LABEL = ['###.#..#', '#.#.##.#', '#.#.#.##', '#.#.#..#', '###.#..#'] as const;
 const OFF_LABEL = ['###.###.###', '#.#.#...#..', '#.#.##..##.', '#.#.#...#..', '###.#...#..'] as const;
 
+/** A palavra do bloco POW, também em letras de cinco pixels. */
+const POW_LABEL = ['###.###.#...#', '#.#.#.#.#...#', '###.#.#.#.#.#', '#...#.#.##.##', '#...###.#...#'] as const;
+
+/** O "!" grosso do bloco !, de dois pixels de largura, com o pingo separado embaixo. */
+const EXCLAMATION_LABEL = ['##', '##', '##', '##', '##', '..', '##'] as const;
+
 /**
  * Vermelho e azul em tons fortes e bem diferentes entre si: a criança liga cada
  * cor do interruptor aos blocos que ela acende.
@@ -118,7 +132,19 @@ const SWITCH_COLORS = {
   blue: { base: '#3e7bfa', light: '#8fb4ff', dark: '#173f9a' },
 } as const;
 
-type SwitchColor = (typeof SWITCH_COLORS)[keyof typeof SWITCH_COLORS];
+/** Cor de uma face com relevo: a base, o brilho e a sombra. */
+interface FaceColor {
+  readonly base: string;
+  readonly light: string;
+  readonly dark: string;
+}
+
+/** O POW é azul-claro, diferente do azul do interruptor; o bloco ! é vermelho-cereja. */
+const POW_COLOR: FaceColor = { base: '#4dabf7', light: '#a5d8ff', dark: '#1864ab' };
+const EXCLAMATION_COLOR: FaceColor = { base: '#e03131', light: '#ff8787', dark: '#7a1414' };
+
+/** As sete cores do arco-íris, de cima para baixo, como aparecem no céu. */
+const RAINBOW_STRIPES = ['#ff4d4d', '#ff9a2e', '#ffd93b', '#4cc94a', '#3fa3f5', '#5b5fd6', '#a45be0'] as const;
 
 const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void>> = {
   'grass-top': ({ set, random, palette }) =>
@@ -291,6 +317,25 @@ const PAINTERS: Readonly<Record<VoxelTile, (context: TilePainterContext) => void
   'switch-off': ({ set }) => switchFace(set, SWITCH_COLORS.blue, OFF_LABEL),
   'red-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.red),
   'blue-block': ({ set }) => colorBlockFace(set, SWITCH_COLORS.blue),
+  pow: ({ set }) => switchFace(set, POW_COLOR, POW_LABEL),
+  exclamation: ({ set }) => switchFace(set, EXCLAMATION_COLOR, EXCLAMATION_LABEL),
+  /** Sete faixas de dois pixels com brilho em cima: empilhados, os blocos repetem o arco-íris. */
+  'rainbow-block': ({ set }) => {
+    rainbowStripes(set, 1, 2);
+    frame(set, '#2a2350', 0);
+  },
+  /** O arco-íris fininho por cima de um fiapo de nuvem: parece a nuvem, mas colorida. */
+  'rainbow-bridge': ({ set, random }) => {
+    fill(set, '#ffffff');
+    rainbowStripes(set, 0, 1);
+
+    // A barriga da nuvem, no mesmo azulzinho da Nuvem comum, logo embaixo das cores.
+    for (let y = RAINBOW_STRIPES.length + 1; y < VOXEL_TILE_SIZE; y += 1) {
+      for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+        set(x, y, random() < 0.5 ? '#e3f1ff' : '#d3e8fb');
+      }
+    }
+  },
 };
 
 /** Pinta uma face no ponto (x, y) de um canvas já existente. */
@@ -440,7 +485,7 @@ function stamp(set: SetPixel, rows: readonly string[], left: number, top: number
 }
 
 /** Moldura em relevo e a palavra no meio, com sombra: lê-se de longe na tela pequena. */
-function switchFace(set: SetPixel, color: SwitchColor, label: readonly string[]): void {
+function switchFace(set: SetPixel, color: FaceColor, label: readonly string[]): void {
   const left = Math.floor((VOXEL_TILE_SIZE - (label[0]?.length ?? 0)) / 2);
   const top = Math.floor((VOXEL_TILE_SIZE - label.length) / 2);
 
@@ -452,7 +497,7 @@ function switchFace(set: SetPixel, color: SwitchColor, label: readonly string[])
 }
 
 /** Bloco liso com brilho em cima e à esquerda e sombra embaixo e à direita, como uma peça de montar. */
-function colorBlockFace(set: SetPixel, color: SwitchColor): void {
+function colorBlockFace(set: SetPixel, color: FaceColor): void {
   const last = VOXEL_TILE_SIZE - 1;
 
   fill(set, color.base);
@@ -470,6 +515,19 @@ function colorBlockFace(set: SetPixel, color: SwitchColor): void {
     set(4, step, color.dark);
     set(last - 4, step, color.light);
   }
+}
+
+/** Faixas do arco-íris, a partir da linha `top`, cada uma com `height` pixels e um risco claro em cima. */
+function rainbowStripes(set: SetPixel, top: number, height: number): void {
+  RAINBOW_STRIPES.forEach((color, index) => {
+    const firstRow = top + index * height;
+
+    for (let row = firstRow; row < firstRow + height; row += 1) {
+      for (let x = 0; x < VOXEL_TILE_SIZE; x += 1) {
+        set(x, row, row === firstRow && height > 1 ? lighten(color, 0.2) : color);
+      }
+    }
+  });
 }
 
 function rivets(set: SetPixel, color: string): void {

@@ -63,7 +63,7 @@ async function expectDragToPlaceSlime(page: Page, levelName: string): Promise<vo
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
   await page.getByRole('tab', { name: 'Inimigos', exact: true }).click();
   const grid = await centerOf(page.getByRole('application', { name: /Grade da fase/ }));
-  // The pieces are in alphabetical order, so the slime sits near the end of the row.
+  // The pieces are in rainbow order, so the green slime sits in the middle of the row.
   const slimeButton = page.getByRole('button', { name: 'Slime', exact: true });
   await slimeButton.scrollIntoViewIfNeeded();
   const slime = await centerOf(slimeButton);
@@ -97,8 +97,14 @@ test.describe('Maker palette on a landscape tablet', () => {
 
   test('an upward swipe over the pieces scrolls the side column', async ({ page }) => {
     const start = await centerOf(await openEnemies(page));
+    const pieces = await page.locator('.palette__pieces').boundingBox();
+    if (!pieces) {
+      throw new Error('The palette pieces are not visible.');
+    }
+    // The finger has to land on the pieces: a touch below the list never reaches the area that scrolls.
+    const from = { x: start.x, y: Math.min(start.y + 300, pieces.y + pieces.height - 10) };
 
-    await swipe(page, { x: start.x, y: start.y + 300 }, start);
+    await swipe(page, from, start);
 
     await expect.poll(() => paletteScroll(page)).toBeGreaterThan(0);
   });

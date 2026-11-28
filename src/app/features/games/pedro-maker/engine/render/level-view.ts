@@ -95,6 +95,8 @@ export class LevelView {
   private pedro: PedroModel | null = null;
   /** Os amigos do Jogador 1, na ordem da simulação. */
   private readonly partnerModels: PedroModel[] = [];
+  /** Um modelo por clone do Cogumelo Cereja, criado quando ele aparece e descartado quando ele some. */
+  private readonly cloneModels = new Map<Player, PedroModel>();
   /** "J1", "J2" e "J3": só aparecem com mais de um jogador. */
   private readonly playerTags: WorldLabel[] = [];
   /** Herói que o modelo em cena mostra; muda quando o Cogumelo Troca-Personagem age. */
@@ -247,6 +249,7 @@ export class LevelView {
 
     this.stage.playerLight?.position.set(playerX, playerY + 1.6, 2.2);
     this.syncPartners(alpha, deltaSeconds, now);
+    this.syncClones(alpha, deltaSeconds, now);
     this.placePlayerTag(0, pedro);
 
     this.syncEnemies(alpha, deltaSeconds, now);
@@ -299,6 +302,8 @@ export class LevelView {
       model.dispose();
     }
 
+    this.disposeCloneModels();
+
     this.particles?.dispose();
     this.bossModel?.dispose();
 
@@ -334,6 +339,47 @@ export class LevelView {
     });
   }
 
+  /** Cada clone com o desenho do herói em cena; o clone que sumiu leva o modelo junto. */
+  private syncClones(alpha: number, deltaSeconds: number, now: number): void {
+    const clones = this.simulation.clones;
+
+    for (const [clone, model] of this.cloneModels) {
+      if (!clones.includes(clone)) {
+        model.root.removeFromParent();
+        model.dispose();
+        this.cloneModels.delete(clone);
+      }
+    }
+
+    for (const clone of clones) {
+      let model = this.cloneModels.get(clone);
+
+      if (!model) {
+        model = new PedroModel(swappedPalette(this.options.character, this.pedroHero));
+        this.cloneModels.set(clone, model);
+        this.stage.scene.add(model.root);
+      }
+
+      const body = clone.body;
+
+      model.update(poseOf(clone, now), deltaSeconds, now);
+      model.root.position.set(
+        this.space.x(lerp(body.previousX, body.x, alpha) + body.width / 2),
+        this.space.y(lerp(body.previousY, body.y, alpha) + body.height),
+        0,
+      );
+    }
+  }
+
+  private disposeCloneModels(): void {
+    for (const model of this.cloneModels.values()) {
+      model.root.removeFromParent();
+      model.dispose();
+    }
+
+    this.cloneModels.clear();
+  }
+
   /** A plaquinha acompanha a cabeça do herói; `index` 0 é o Jogador 1. */
   private placePlayerTag(index: number, model: PedroModel): void {
     const tag = this.playerTags[index];
@@ -359,6 +405,8 @@ export class LevelView {
     this.stage.scene.add(next.root);
     this.pedro = next;
     this.pedroHero = hero;
+    // Os clones copiam o herói em cena: os modelos voltam no próximo quadro, com o desenho novo.
+    this.disposeCloneModels();
   }
 
   private playEffects(events: readonly VisualEvent[], now: number): void {
@@ -622,6 +670,13 @@ function poseOf(player: Player, now: number): PedroPose {
     isMini: player.isMini,
     isMiniEnding: player.isMini && player.isPowerUpEnding('mini-mushroom', now),
     isTallEnding: player.isTall && player.isPowerUpEnding('tall-mushroom', now),
+    hasPropellerSuit: player.hasPowerUp('propeller-mushroom'),
+    isPropellerSpinning: player.isLaunchingPropeller(now) || player.isSpinningDown,
+    hasBoot: player.hasPowerUp('boot'),
+    hasWingCap: player.hasPowerUp('wing-cap'),
+    hasHammer: player.hasPowerUp('hammer'),
+    hammerSwingProgress: player.hammerSwingProgress(now),
+    hasPenguinSuit: player.hasPowerUp('penguin-suit'),
   };
 }
 

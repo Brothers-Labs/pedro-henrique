@@ -104,6 +104,14 @@ export function isEnemyKind(type: string): type is EnemyKind {
  * ação sopra bolhas que flutuam reto, sem cair nos buracos, e prendem o
  * inimigo que tocam. O Cogumelo Vida, que enchia os corações, saiu do editor:
  * continua só nas fases antigas que já o tinham.
+ *
+ * Mais quatro trajes: o Cogumelo de Voar tem uma hélice, que o botão de ação
+ * gira e lança o herói lá para cima; com a Bota, espinho não machuca e o pisão
+ * derruba até quem não se pisa; o Martelo Gigante dá marteladas na frente, que
+ * derrubam qualquer inimigo e acionam os blocos; e a Roupa de Pinguim lança
+ * gelo, não escorrega no gelo e nada ligeiro. O Chapéu de Voar deixa voar à
+ * vontade por alguns segundos, segurando o pulo. O Cogumelo Cereja age na
+ * hora: aparece um clone do herói, que obedece aos mesmos botões.
  */
 export const POWER_UP_KINDS = [
   'super-jump',
@@ -133,6 +141,12 @@ export const POWER_UP_KINDS = [
   'coin-x9999',
   'extra-life-mushroom',
   'bubble-flower',
+  'propeller-mushroom',
+  'boot',
+  'wing-cap',
+  'hammer',
+  'penguin-suit',
+  'double-cherry',
 ] as const;
 
 export type PowerUpKind = (typeof POWER_UP_KINDS)[number];
@@ -194,9 +208,10 @@ export type PlatformAxis = 'horizontal' | 'vertical';
  * O cano é terreno também: bloqueia por todos os lados e, empilhado, vira o
  * cano verde clássico — a boca aparece sozinha no bloco de cima. A montanha
  * do deserto é arenito em listras, com areia por cima: empilhada, vira os
- * paredões vermelhos dos cânions.
+ * paredões vermelhos dos cânions. O bloco arco-íris é firme como a pedra e
+ * pintado com as sete cores, do vermelho ao violeta.
  */
-export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' | 'desert-mountain';
+export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' | 'desert-mountain' | 'rainbow-block';
 
 /**
  * A nuvem é uma plataforma de mão única: segura quem cai de cima. A água não
@@ -204,11 +219,16 @@ export type TerrainType = 'ground' | 'stone' | 'ice' | 'sand' | 'wood' | 'pipe' 
  * quem encosta. O bloco musical é sólido e faz quicar quem pisa nele. A grama
  * invisível é chão de verdade que não aparece: só se mostra depois que o
  * herói encosta nela. A mola de cabeça pra baixo fica presa no teto: quem
- * bate a cabeça nela é lançado para baixo.
+ * bate a cabeça nela é lançado para baixo. A ponte arco-íris é de mão única,
+ * como a nuvem: as sete cores em cima de um fiapo de nuvem.
  *
  * O bloco ON/OFF é o interruptor da fase, que começa em ON: cada cabeçada por
  * baixo troca para OFF e de volta para ON. Com ON, os blocos vermelhos são
  * firmes e os azuis viram só um contorno, que se atravessa; com OFF, ao contrário.
+ *
+ * O bloco POW, batido por baixo, derruba todos os inimigos da tela; aguenta
+ * três batidas, encolhendo a cada uma, e some. O bloco ! guarda o Chapéu de
+ * Voar: a cabeçada o solta, e o bloco fica vazio.
  */
 export type BlockType =
   | 'cannon'
@@ -218,6 +238,7 @@ export type BlockType =
   | 'crumble'
   | 'platform'
   | 'cloud'
+  | 'rainbow-bridge'
   | 'lava'
   | 'water'
   | 'spikes'
@@ -226,7 +247,9 @@ export type BlockType =
   | 'ceiling-spring'
   | 'on-off-switch'
   | 'red-block'
-  | 'blue-block';
+  | 'blue-block'
+  | 'pow-block'
+  | 'exclamation-block';
 
 /**
  * Valores das moedas gigantes numeradas, da menor para a maior.

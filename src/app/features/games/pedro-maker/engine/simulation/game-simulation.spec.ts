@@ -206,6 +206,24 @@ describe('Simulação do Pedro Maker', () => {
     expect(bottom(harness.simulation.player.body)).toBeCloseTo((SURFACE - 3) * TILE_SIZE, 3);
   });
 
+  it('passa por baixo da ponte arco-íris e pousa em cima dela, como na nuvem', () => {
+    const harness = start(flatLevel().row('rainbow-bridge', 1, SURFACE - 3, 4).build(META));
+    run(harness, 0.2);
+
+    jump(harness, 0.6);
+    run(harness, 1);
+
+    expect(bottom(harness.simulation.player.body)).toBeCloseTo((SURFACE - 3) * TILE_SIZE, 3);
+    expect(harness.simulation.grid.materialAt(1, SURFACE - 3)).toBe('rainbow-bridge');
+  });
+
+  it('trata o bloco arco-íris como terreno firme', () => {
+    const harness = start(flatLevel().add('rainbow-block', 3, SURFACE - 1).build(META));
+
+    expect(harness.simulation.grid.isSolidCell(3, SURFACE - 1)).toBeTrue();
+    expect(harness.simulation.grid.materialAt(3, SURFACE - 1)).toBe('rainbow-block');
+  });
+
   it('quebra o tijolo com uma cabeçada', () => {
     const harness = start(flatLevel().add('brick', 2, SURFACE - 3).build(META));
     run(harness, 0.2);

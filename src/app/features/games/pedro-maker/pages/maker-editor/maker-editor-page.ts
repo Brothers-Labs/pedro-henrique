@@ -30,6 +30,7 @@ import {
   findEditorPiece,
   isRetiredPiece,
   POWER_UP_LABELS,
+  RAINBOW_SWATCHES,
   THEME_LABELS,
 } from '../../config/object-catalog';
 import { DIFFICULTY_ORDER } from '../../config/rules.config';
@@ -213,8 +214,9 @@ export class MakerEditorPage {
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly tools = TOOLS;
-  /** Abas da paleta em ordem alfabética, com a aba Telas no meio delas, pela letra. */
+  /** Abas da paleta em ordem de arco-íris, cada uma pintada com a sua cor; a aba Telas fica no fim. */
   protected readonly categories = EDITOR_TABS;
+  protected readonly rainbowSwatches = RAINBOW_SWATCHES;
   /** A aba Telas: "a de quem joga" e as seis telas, do NES ao 4K. */
   protected readonly screenChoices: readonly ScreenChoice[] = [
     { id: null, emoji: '⚙️', label: 'Quem joga escolhe', description: 'Cada um joga na tela dos próprios ajustes' },
@@ -242,7 +244,7 @@ export class MakerEditorPage {
   protected readonly tool = signal<EditorTool>('pincel');
   /** Aba aberta na paleta: uma categoria de peças ou a aba Telas, que escolhe a tela da fase. */
   protected readonly category = signal<EditorCategoryId | 'telas'>('terreno');
-  /** Começa na Grama, a peça mais usada, mesmo com a aba Terreno em ordem alfabética. */
+  /** Começa na Grama, a peça mais usada, mesmo com a aba Terreno em ordem de arco-íris. */
   protected readonly piece = signal<EditorPiece>(EDITOR_PIECES[0]);
   protected readonly zoom = signal(1);
   protected readonly selected = signal<GridCell | null>(null);

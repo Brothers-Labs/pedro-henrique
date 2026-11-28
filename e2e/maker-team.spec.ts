@@ -16,10 +16,10 @@ test('Maker picks three players like Craft, sorts the editor tabs and pieces, an
 
   await page.goto('/jogos/pedro-maker/criar');
   await expect(page.getByRole('tab')).toHaveText([
-    /Bandeiras/, /Blocos/, /Cogumelos/, /Decoração/, /Inimigos/, /Itens/, /Plataformas/, /Portais/, /Telas/, /Terreno/,
+    /Cogumelos/, /Blocos/, /Terreno/, /Itens/, /Decoração/, /Portais/, /Plataformas/, /Inimigos/, /Bandeiras/, /Telas/,
   ]);
   await page.getByRole('tab', { name: 'Inimigos', exact: true }).click();
-  await expect(page.locator('.palette__pieces .piece').first()).toHaveAccessibleName('Abelha');
+  await expect(page.locator('.palette__pieces .piece').first()).toHaveAccessibleName('Peixe Saltador');
 
   await page.getByRole('textbox', { name: 'Nome da fase' }).fill('Fase da Turma');
   await page.getByRole('textbox', { name: 'Nome da fase' }).press('Tab');
