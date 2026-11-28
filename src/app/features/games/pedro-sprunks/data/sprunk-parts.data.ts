@@ -27,6 +27,25 @@ export const SPRUNK_ACCESSORY_LABELS: Readonly<Record<SprunkAccessory, string>> 
   bow: 'Laço',
   'bunny-ears': 'Orelhas de coelho',
   'top-hat': 'Cartola',
+  cymbal: 'Prato',
+  robot: 'Cabeça de robô',
+  'flower-hair': 'Cabelo com flores',
+  'tall-ears': 'Orelhas no topo',
+  'big-spikes': 'Espinhos grandes',
+  'wacky-ears': 'Orelhas malucas',
+  'tree-crown': 'Copa de árvore',
+  'antenna-ears': 'Orelhas com antenas',
+  fedora: 'Chapéu',
+  monitor: 'Computador',
+  'cat-whiskers': 'Orelhas e bigodes de gato',
+  'bunny-bow': 'Orelhas de coelho com laço',
+  hood: 'Capuz',
+  microwave: 'Micro-ondas',
+  'emergency-phone': 'Telefone de emergência',
+  'ice-crystals': 'Cristais de gelo',
+  'ice-cream': 'Sorvete',
+  door: 'Porta',
+  'letter-cap': 'Boné com P',
 };
 
 export const SPRUNK_EYES_LABELS: Readonly<Record<SprunkEyes, string>> = {
@@ -36,6 +55,8 @@ export const SPRUNK_EYES_LABELS: Readonly<Record<SprunkEyes, string>> = {
   shades: 'Óculos escuros',
   star: 'Estrelas',
   glow: 'Brilhando',
+  angry: 'Bravos',
+  crazy: 'Malucos',
 };
 
 export const SPRUNK_COSTUME_LABELS: Readonly<Record<SprunkCostume, string>> = {
@@ -47,6 +68,7 @@ export const SPRUNK_COSTUME_LABELS: Readonly<Record<SprunkCostume, string>> = {
   overalls: 'Jardineira',
   stripes: 'Listras',
   skeleton: 'Esqueleto',
+  drum: 'Bateria',
 };
 
 /** O avanço na corrente é só da bola de ferro, então não entra no criador. */

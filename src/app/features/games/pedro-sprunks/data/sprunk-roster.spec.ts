@@ -1,6 +1,7 @@
 import { isDarkColor } from '../components/sprunk-figure/sprunk-figure';
 import { isSprunkAccessory, isSprunkCostume, isSprunkEyes } from './sprunk-parts.data';
 import { SPRUNK_ROSTER } from './sprunk-roster.data';
+import { SPRUNK_CATEGORY_LABELS, sprunkSound } from './sprunk-sounds.data';
 
 const CLASSIC_ROSTER = SPRUNK_ROSTER.filter((character) => character.shape === 'classic');
 
@@ -13,9 +14,19 @@ describe('Banda do Pedro Sprunks', () => {
     }
   });
 
-  it('fantasia todos os bonecos de molde, deixando a bola de ferro como é', () => {
+  it('fantasia todos os bonecos de molde e deixa sem fantasia quem não tem corpo de pino', () => {
+    const withoutPinBody = SPRUNK_ROSTER.filter((character) => character.shape !== 'classic');
+
     expect(CLASSIC_ROSTER.every((character) => character.costume !== 'none')).toBeTrue();
-    expect(SPRUNK_ROSTER.find((character) => character.shape === 'iron-ball')?.costume).toBe('none');
+    expect(withoutPinBody.map((character) => character.shape).sort()).toEqual(['head', 'iron-ball']);
+    expect(withoutPinBody.every((character) => character.costume === 'none')).toBeTrue();
+  });
+
+  it('segue a ordem da paleta: batidas, efeitos, melodias e vozes', () => {
+    const categoryOrder = Object.keys(SPRUNK_CATEGORY_LABELS);
+    const positions = SPRUNK_ROSTER.map((character) => categoryOrder.indexOf(sprunkSound(character.soundId).category));
+
+    expect(positions).toEqual([...positions].sort((first, second) => first - second));
   });
 
   it('mistura a turma do dia com a turma da noite, de corpo escuro e olhos brilhando', () => {

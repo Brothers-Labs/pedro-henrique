@@ -14,6 +14,7 @@ export type SprunkVoice =
   | 'kick'
   | 'snare'
   | 'hat'
+  | 'cymbal'
   | 'clap'
   | 'tom'
   | 'shaker'
@@ -65,13 +66,32 @@ export type SprunkAccessory =
   | 'cap'
   | 'bow'
   | 'bunny-ears'
-  | 'top-hat';
+  | 'top-hat'
+  | 'cymbal'
+  | 'robot'
+  | 'flower-hair'
+  | 'tall-ears'
+  | 'big-spikes'
+  | 'wacky-ears'
+  | 'tree-crown'
+  | 'antenna-ears'
+  | 'fedora'
+  | 'monitor'
+  | 'cat-whiskers'
+  | 'bunny-bow'
+  | 'hood'
+  | 'microwave'
+  | 'emergency-phone'
+  | 'ice-crystals'
+  | 'ice-cream'
+  | 'door'
+  | 'letter-cap';
 
 /** `glow` são os olhos acesos da turma da noite, que brilham no escuro. */
-export type SprunkEyes = 'sleepy' | 'round' | 'happy' | 'shades' | 'star' | 'glow';
+export type SprunkEyes = 'sleepy' | 'round' | 'happy' | 'shades' | 'star' | 'glow' | 'angry' | 'crazy';
 
 /** Fantasia vestida no corpo; a cabeça fica por conta do acessório. */
-export type SprunkCostume = 'none' | 'bowtie' | 'tie' | 'scarf' | 'cape' | 'overalls' | 'stripes' | 'skeleton';
+export type SprunkCostume = 'none' | 'bowtie' | 'tie' | 'scarf' | 'cape' | 'overalls' | 'stripes' | 'skeleton' | 'drum';
 
 /** O que o boneco faz quando é tocado no palco. */
 export type SprunkAction = 'jump' | 'spin' | 'shake' | 'stretch' | 'lunge';
@@ -81,9 +101,10 @@ export type SprunkCustomAction = Exclude<SprunkAction, 'lunge'>;
 
 /**
  * Formato do corpo. A bola de ferro presa na corrente tem desenho e ação
- * próprios, por isso é um formato e não um acessório.
+ * próprios, por isso é um formato e não um acessório. A cabeça sozinha, sem
+ * corpo, flutua no palco como um sol.
  */
-export type SprunkShape = 'classic' | 'iron-ball';
+export type SprunkShape = 'classic' | 'iron-ball' | 'head';
 
 export interface SprunkCharacter {
   readonly id: string;

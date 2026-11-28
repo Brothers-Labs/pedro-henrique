@@ -31,21 +31,23 @@
       @if (accessoryLayer() === 'back') {
         <ng-container [ngTemplateOutlet]="accessory" />
       }
-      @if (costumeLayer() === 'back') {
-        <ng-container [ngTemplateOutlet]="costume" />
-      }
-      <path
-        class="figure__body"
-        d="M40 104 Q38 150 32 196 L88 196 Q82 150 80 104 Z"
-        [attr.fill]="current.color"
-      />
-      @if (costumeLayer() === 'body') {
-        <ng-container [ngTemplateOutlet]="costume" />
+      @if (hasBody()) {
+        @if (costumeLayer() === 'back') {
+          <ng-container [ngTemplateOutlet]="costume" />
+        }
+        <path
+          class="figure__body"
+          d="M40 104 Q38 150 32 196 L88 196 Q82 150 80 104 Z"
+          [attr.fill]="current.color"
+        />
+        @if (costumeLayer() === 'body') {
+          <ng-container [ngTemplateOutlet]="costume" />
+        }
       }
       <circle class="figure__head" cx="60" cy="78" r="38" [attr.fill]="current.color" />
       <ellipse cx="46" cy="58" rx="10" ry="6" fill="#ffffff" opacity="0.3" />
       <ng-container [ngTemplateOutlet]="face" />
-      @if (costumeLayer() === 'neck') {
+      @if (hasBody() && costumeLayer() === 'neck') {
         <ng-container [ngTemplateOutlet]="costume" />
       }
       @if (accessoryLayer() === 'front') {
@@ -91,6 +93,20 @@
         <circle cx="74" cy="76" r="9" class="figure__glow-eye" />
         <circle cx="49" cy="73" r="2.6" fill="#ffffff" />
         <circle cx="77" cy="73" r="2.6" fill="#ffffff" />
+      }
+      @case ('angry') {
+        <circle cx="46" cy="78" r="9" fill="#ffffff" />
+        <circle cx="74" cy="78" r="9" fill="#ffffff" />
+        <circle cx="48" cy="80" r="4.5" fill="#2a2350" />
+        <circle cx="72" cy="80" r="4.5" fill="#2a2350" />
+        <line x1="34" y1="63" x2="55" y2="70" class="figure__line" />
+        <line x1="86" y1="63" x2="65" y2="70" class="figure__line" />
+      }
+      @case ('crazy') {
+        <circle cx="44" cy="75" r="13" fill="#ffffff" />
+        <circle cx="77" cy="79" r="7" fill="#ffffff" />
+        <circle cx="40" cy="71" r="4.5" fill="#2a2350" />
+        <circle cx="79" cy="82" r="3.5" fill="#2a2350" />
       }
     }
   </g>
@@ -212,6 +228,145 @@
       <rect x="38" y="33" width="44" height="7" fill="#e8483f" />
       <rect x="26" y="42" width="68" height="9" rx="4" fill="#222034" class="figure__outline" />
     }
+    @case ('cymbal') {
+      <line x1="60" y1="42" x2="60" y2="16" stroke="#2a2350" stroke-width="3" />
+      <ellipse cx="60" cy="16" rx="30" ry="6" fill="#e0b400" class="figure__outline" />
+      <ellipse cx="60" cy="13" rx="7" ry="3" fill="#ffd23f" class="figure__outline" />
+    }
+    @case ('robot') {
+      <line x1="46" y1="36" x2="40" y2="12" stroke="#2a2350" stroke-width="3" />
+      <line x1="74" y1="36" x2="80" y2="12" stroke="#2a2350" stroke-width="3" />
+      <circle cx="40" cy="11" r="5" class="figure__antenna-tip figure__outline" />
+      <circle cx="80" cy="11" r="5" class="figure__antenna-tip figure__outline" />
+      <rect x="36" y="34" width="48" height="12" rx="3" fill="#9aa0a6" class="figure__outline" />
+      <circle cx="43" cy="40" r="2" fill="#2a2350" />
+      <circle cx="77" cy="40" r="2" fill="#2a2350" />
+      <circle cx="22" cy="78" r="6" fill="#9aa0a6" class="figure__outline" />
+      <circle cx="98" cy="78" r="6" fill="#9aa0a6" class="figure__outline" />
+    }
+    @case ('fedora') {
+      <path d="M38 46 Q36 18 60 16 Q84 18 82 46 Z" fill="#6d5642" class="figure__outline" />
+      <rect x="37" y="36" width="46" height="6" fill="#2a2350" />
+      <ellipse cx="60" cy="46" rx="40" ry="7" fill="#5b4636" class="figure__outline" />
+    }
+    @case ('monitor') {
+      <rect x="52" y="40" width="16" height="6" fill="#9aa0a6" class="figure__outline" />
+      <rect x="30" y="4" width="60" height="38" rx="5" fill="#d9d4c7" class="figure__outline" />
+      <rect x="36" y="9" width="48" height="27" rx="3" fill="#1d6b4a" />
+      <rect x="47" y="15" width="5" height="6" fill="#a6ff4d" />
+      <rect x="68" y="15" width="5" height="6" fill="#a6ff4d" />
+      <path d="M50 26 Q60 33 70 26" fill="none" stroke="#a6ff4d" stroke-width="2.5" stroke-linecap="round" />
+    }
+    @case ('microwave') {
+      <rect x="28" y="6" width="64" height="38" rx="4" fill="#eef1f6" class="figure__outline" />
+      <rect x="33" y="11" width="38" height="28" rx="2" fill="#2a2350" opacity="0.85" />
+      <rect x="37" y="15" width="30" height="20" rx="2" fill="#ffcf5c" opacity="0.45" />
+      <circle cx="82" cy="18" r="3" fill="#9aa0a6" class="figure__outline" />
+      <circle cx="82" cy="29" r="3" fill="#9aa0a6" class="figure__outline" />
+    }
+    @case ('emergency-phone') {
+      <path d="M36 46 L42 26 L78 26 L84 46 Z" fill="#e8483f" class="figure__outline" />
+      <path d="M30 22 Q30 12 40 12 L80 12 Q90 12 90 22 L80 24 L76 18 L44 18 L40 24 Z" fill="#c2342c" class="figure__outline" />
+      <circle cx="60" cy="36" r="6" fill="#ffffff" class="figure__outline" />
+    }
+    @case ('ice-crystals') {
+      <polygon points="40,18 46,32 40,46 34,32" fill="#bdf3ff" class="figure__outline" />
+      <polygon points="80,18 86,32 80,46 74,32" fill="#bdf3ff" class="figure__outline" />
+      <polygon points="60,2 68,24 60,46 52,24" fill="#e6fbff" class="figure__outline" />
+      <line x1="58" y1="14" x2="58" y2="26" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+    }
+    @case ('ice-cream') {
+      <circle cx="60" cy="38" r="16" fill="#ffb3cf" class="figure__outline" />
+      <circle cx="60" cy="18" r="12" fill="#8b5a2b" class="figure__outline" />
+      <circle cx="60" cy="4" r="4" fill="#e8483f" class="figure__outline" />
+      <line x1="52" y1="34" x2="55" y2="31" stroke="#2bb7c9" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="66" y1="40" x2="69" y2="37" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round" />
+    }
+    @case ('door') {
+      <rect x="50" y="36" width="20" height="29" rx="2" fill="#a0703c" class="figure__outline" />
+      <rect x="53" y="40" width="14" height="9" fill="none" stroke="rgb(0 0 0 / 30%)" stroke-width="2" />
+      <circle cx="66" cy="55" r="2" fill="#ffd23f" />
+    }
+    @case ('letter-cap') {
+      <path d="M28 58 A32 30 0 0 1 92 58 Z" fill="#e8483f" class="figure__outline" />
+      <path d="M86 56 Q106 54 112 62 L86 62 Z" fill="#c2342c" class="figure__outline" />
+      <circle cx="60" cy="40" r="10" fill="#ffffff" class="figure__outline" />
+      <path
+        d="M56 46 L56 34 L61 34 Q66 34 66 37.5 Q66 41 61 41 L56 41"
+        fill="none"
+        stroke="#e8483f"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    }
+    @case ('flower-hair') {
+      <path d="M14 100 Q6 34 60 24 Q114 34 106 100 Z" fill="#3f8f3a" class="figure__outline" />
+      @for (spot of hairFlowers; track $index) {
+        <circle [attr.cx]="spot.x" [attr.cy]="spot.y" r="6" fill="#ff7eb6" class="figure__outline" />
+        <circle [attr.cx]="spot.x" [attr.cy]="spot.y" r="2.5" fill="#ffd23f" />
+      }
+    }
+    @case ('tall-ears') {
+      <ellipse cx="47" cy="28" rx="8" ry="20" [attr.fill]="current.color" class="figure__outline" />
+      <ellipse cx="73" cy="28" rx="8" ry="20" [attr.fill]="current.color" class="figure__outline" />
+      <ellipse cx="47" cy="28" rx="3.5" ry="13" fill="rgb(0 0 0 / 15%)" />
+      <ellipse cx="73" cy="28" rx="3.5" ry="13" fill="rgb(0 0 0 / 15%)" />
+    }
+    @case ('big-spikes') {
+      <polygon
+        points="22,70 10,20 40,44 46,0 60,38 74,0 80,44 110,20 98,70"
+        [attr.fill]="current.color"
+        class="figure__outline figure__shade"
+      />
+    }
+    @case ('wacky-ears') {
+      <path d="M44 46 Q18 12 30 0 Q46 18 56 42 Z" [attr.fill]="current.color" class="figure__outline" />
+      <path d="M66 42 Q76 20 98 24 Q84 12 104 2 Q74 4 60 40 Z" [attr.fill]="current.color" class="figure__outline" />
+    }
+    @case ('tree-crown') {
+      <circle cx="24" cy="74" r="14" fill="#2e7d32" class="figure__outline" />
+      <circle cx="96" cy="74" r="14" fill="#2e7d32" class="figure__outline" />
+      <circle cx="36" cy="46" r="18" fill="#3fae5a" class="figure__outline" />
+      <circle cx="84" cy="46" r="18" fill="#3fae5a" class="figure__outline" />
+      <circle cx="60" cy="28" r="22" fill="#4caf50" class="figure__outline" />
+      <circle cx="60" cy="14" r="3.5" fill="#e8483f" />
+      <circle cx="28" cy="36" r="3.5" fill="#e8483f" />
+      <circle cx="92" cy="36" r="3.5" fill="#e8483f" />
+    }
+    @case ('antenna-ears') {
+      <line x1="32" y1="36" x2="24" y2="8" stroke="#2a2350" stroke-width="3" />
+      <line x1="88" y1="36" x2="96" y2="8" stroke="#2a2350" stroke-width="3" />
+      <circle cx="24" cy="7" r="5" class="figure__antenna-tip figure__outline" />
+      <circle cx="96" cy="7" r="5" class="figure__antenna-tip figure__outline" />
+      <ellipse cx="32" cy="46" rx="12" ry="14" [attr.fill]="current.color" class="figure__outline" />
+      <ellipse cx="88" cy="46" rx="12" ry="14" [attr.fill]="current.color" class="figure__outline" />
+    }
+    @case ('cat-whiskers') {
+      <polygon points="26,62 28,22 56,44" [attr.fill]="current.color" class="figure__outline" />
+      <polygon points="94,62 92,22 64,44" [attr.fill]="current.color" class="figure__outline" />
+      <polygon points="32,52 33,32 48,44" fill="#ffb3cf" />
+      <polygon points="88,52 87,32 72,44" fill="#ffb3cf" />
+      <g stroke="#2a2350" stroke-width="2.5" stroke-linecap="round">
+        <line x1="32" y1="88" x2="4" y2="82" />
+        <line x1="32" y1="94" x2="4" y2="98" />
+        <line x1="88" y1="88" x2="116" y2="82" />
+        <line x1="88" y1="94" x2="116" y2="98" />
+      </g>
+    }
+    @case ('bunny-bow') {
+      <ellipse cx="44" cy="24" rx="9" ry="26" [attr.fill]="current.color" class="figure__outline" transform="rotate(-12 44 24)" />
+      <ellipse cx="76" cy="24" rx="9" ry="26" [attr.fill]="current.color" class="figure__outline" transform="rotate(12 76 24)" />
+      <ellipse cx="44" cy="26" rx="4" ry="17" fill="#ffb3cf" transform="rotate(-12 44 24)" />
+      <ellipse cx="76" cy="26" rx="4" ry="17" fill="#ffb3cf" transform="rotate(12 76 24)" />
+      <polygon points="42,12 30,4 30,20" fill="#ff4f9a" class="figure__outline" />
+      <polygon points="42,12 54,4 54,20" fill="#ff4f9a" class="figure__outline" />
+      <circle cx="42" cy="12" r="4" fill="#ff8fc0" class="figure__outline" />
+    }
+    @case ('hood') {
+      <circle cx="60" cy="76" r="47" fill="#2f5fd0" class="figure__outline" />
+      <circle cx="60" cy="76" r="43" fill="none" stroke="#ffffff" stroke-width="3" />
+    }
   }
 </svg:g>
 </ng-template>
@@ -258,6 +413,19 @@
       <rect x="64" y="112" width="13" height="36" rx="4" fill="#ff8a3d" class="figure__outline" transform="rotate(-10 70 112)" />
       <rect x="32" y="106" width="56" height="14" rx="7" fill="#ff8a3d" class="figure__outline" />
       <line x1="38" y1="113" x2="82" y2="113" stroke="#ffd23f" stroke-width="3" stroke-linecap="round" />
+    }
+    @case ('drum') {
+      <line x1="30" y1="126" x2="50" y2="142" stroke="#b5651d" stroke-width="4" stroke-linecap="round" />
+      <line x1="90" y1="126" x2="70" y2="142" stroke="#b5651d" stroke-width="4" stroke-linecap="round" />
+      <path d="M38 146 L38 174 A22 6 0 0 0 82 174 L82 146 Z" fill="#e8483f" class="figure__outline" />
+      <polyline
+        points="38,152 45,168 52,152 60,168 68,152 75,168 82,152"
+        fill="none"
+        stroke="#ffd23f"
+        stroke-width="2.5"
+        stroke-linejoin="round"
+      />
+      <ellipse cx="60" cy="146" rx="22" ry="6" fill="#f4f1ff" class="figure__outline" />
     }
   }
 </svg:g>

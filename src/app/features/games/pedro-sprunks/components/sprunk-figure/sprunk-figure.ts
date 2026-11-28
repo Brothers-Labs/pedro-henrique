@@ -5,7 +5,10 @@ import type { SprunkAccessory, SprunkCharacter, SprunkCostume } from '../../mode
 
 export type SprunkFigureVariant = 'full' | 'icon';
 
-/** Acessórios que ficam atrás da cabeça, como orelhas e chifres. */
+/**
+ * Acessórios que ficam atrás da cabeça, como orelhas e chifres. Os bigodes
+ * também: a cabeça esconde a raiz e só as pontas aparecem nas bochechas.
+ */
 const BACK_ACCESSORIES: ReadonlySet<SprunkAccessory> = new Set<SprunkAccessory>([
   'spikes',
   'antennas',
@@ -15,6 +18,15 @@ const BACK_ACCESSORIES: ReadonlySet<SprunkAccessory> = new Set<SprunkAccessory>(
   'sun-rays',
   'horns',
   'bunny-ears',
+  'flower-hair',
+  'tall-ears',
+  'big-spikes',
+  'wacky-ears',
+  'tree-crown',
+  'antenna-ears',
+  'cat-whiskers',
+  'bunny-bow',
+  'hood',
 ]);
 
 /**
@@ -30,6 +42,7 @@ const COSTUME_LAYERS: Readonly<Record<SprunkCostume, CostumeLayer>> = {
   overalls: 'body',
   stripes: 'body',
   skeleton: 'body',
+  drum: 'body',
   bowtie: 'neck',
   tie: 'neck',
   scarf: 'neck',
@@ -38,6 +51,7 @@ const COSTUME_LAYERS: Readonly<Record<SprunkCostume, CostumeLayer>> = {
 const VIEW_BOXES: Readonly<Record<SprunkCharacter['shape'], Readonly<Record<SprunkFigureVariant, string>>>> = {
   classic: { full: '0 0 120 200', icon: '0 0 120 124' },
   'iron-ball': { full: '0 0 120 200', icon: '22 72 100 100' },
+  head: { full: '0 0 120 200', icon: '0 0 120 124' },
 };
 
 const HEAD_CENTER_X = 60;
@@ -55,6 +69,20 @@ const SUN_RAYS: readonly string[] = Array.from({ length: 8 }, (_, index) => {
 
   return [point(34, -0.22), point(56, 0), point(34, 0.22)].join(' ');
 });
+
+interface FlowerSpot {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Flores do cabelo, só onde o cabelo passa da cabeça e a flor fica à vista. */
+const HAIR_FLOWERS: readonly FlowerSpot[] = [
+  { x: 26, y: 50 },
+  { x: 60, y: 30 },
+  { x: 94, y: 50 },
+  { x: 16, y: 84 },
+  { x: 104, y: 84 },
+];
 
 const BODY_TOP_Y = 104;
 const BODY_BOTTOM_Y = 196;
@@ -145,12 +173,15 @@ export class SprunkFigure {
   protected readonly stripes = STRIPES;
   protected readonly overallsLegs = OVERALLS_LEGS;
   protected readonly ribs = RIBS;
+  protected readonly hairFlowers = HAIR_FLOWERS;
 
   protected readonly viewBox = computed(() => VIEW_BOXES[this.character().shape][this.variant()]);
   protected readonly accessoryLayer = computed(() =>
     BACK_ACCESSORIES.has(this.character().accessory) ? 'back' : 'front',
   );
   protected readonly costumeLayer = computed(() => COSTUME_LAYERS[this.character().costume]);
+  /** A cabeça sozinha não tem corpo, então também não veste fantasia. */
+  protected readonly hasBody = computed(() => this.character().shape !== 'head');
   /** Corpo escuro da turma da noite: o rosto troca a tinta escura por uma clara para continuar visível. */
   protected readonly isDarkBody = computed(() => isDarkColor(this.character().color));
 }

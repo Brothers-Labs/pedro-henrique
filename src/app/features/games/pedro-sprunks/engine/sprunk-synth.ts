@@ -44,6 +44,8 @@ const VOICES: Readonly<Record<SprunkVoice, VoicePlayer>> = {
     tone(target, { wave: 'triangle', from: 190, to: 160, startAt, duration: 0.1, peak: 0.3 });
   },
   hat: (target, _hertz, startAt) => burst(target, { filter: 'highpass', frequency: 7000, startAt, duration: 0.05, peak: 0.25 }),
+  // O prato é um chimbal que fica soando: o mesmo chiado agudo, só que longo.
+  cymbal: (target, _hertz, startAt) => burst(target, { filter: 'highpass', frequency: 6000, startAt, duration: 0.7, peak: 0.18 }),
   clap: (target, _hertz, startAt) => {
     for (const offset of [0, 0.012, 0.024]) {
       burst(target, { filter: 'bandpass', frequency: 1200, startAt: startAt + offset, duration: 0.09, peak: 0.4 });
